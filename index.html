@@ -93,7 +93,9 @@ html[data-theme="light"] .cursor-glow{mix-blend-mode:multiply;background:radial-
   color:#fff;font-weight:700;font-size:13px;position:relative;z-index:60;
   box-shadow:0 10px 30px -24px rgba(0,38,249,.8)
 }
-.announce-inner{min-height:36px;display:flex;align-items:center;justify-content:center;gap:14px;padding:7px 18px;text-align:center}
+.announce-track{display:flex;align-items:center;justify-content:center;overflow:hidden}
+.announce-inner{min-height:36px;display:flex;align-items:center;justify-content:center;gap:14px;padding:7px 18px;text-align:center;flex:0 0 auto}
+.announce-inner-copy{display:none}
 .announce-offer{display:flex;align-items:center;gap:8px;white-space:nowrap}
 .announce-offer b{font-family:'Unbounded',sans-serif;font-size:13px}
 .announce-code{display:inline-flex;align-items:center;gap:7px;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.28);font-family:'Unbounded',sans-serif;font-size:12px;letter-spacing:.04em}
@@ -101,6 +103,7 @@ html[data-theme="light"] .cursor-glow{mix-blend-mode:multiply;background:radial-
 .announce-copy{padding:6px 11px;border-radius:999px;background:#fff;color:#0026F9;font-weight:800;font-size:12px;transition:transform .2s,box-shadow .2s}
 .announce-copy:hover{transform:translateY(-1px);box-shadow:0 8px 22px -14px rgba(255,255,255,.9)}
 .announce-copy:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(255,255,255,.28)}
+.announce:hover .announce-track,.announce:focus-within .announce-track{animation-play-state:paused}
 @keyframes scrollx{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
 /* ---------- header ---------- */
@@ -497,11 +500,15 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
 }
 @media(max-width:600px){
   .wrap{padding:0 16px}
-  .announce{font-size:12px}
-  .announce-inner{min-height:auto;flex-wrap:wrap;gap:6px 10px;padding:8px 12px}
-  .announce-offer{width:100%;justify-content:center;white-space:normal}
+  .announce{font-size:12px;overflow:hidden}
+  .announce-track{width:max-content;min-width:max-content;justify-content:flex-start;animation:scrollx 18s linear infinite;will-change:transform}
+  .announce-inner{min-height:38px;flex-wrap:nowrap;gap:12px;padding:7px 14px;text-align:left;white-space:nowrap}
+  .announce-inner-copy{display:flex}
+  .announce-offer{width:auto;justify-content:flex-start;white-space:nowrap}
+  .announce-offer b{font-size:12px}
   .announce-code{font-size:11px;padding:4px 9px}
-  .announce-copy{padding:5px 10px}
+  .announce-copy{padding:5px 10px;white-space:nowrap;flex:0 0 auto}
+  @media(prefers-reduced-motion:reduce){.announce-track{animation:none}}
   .nav{height:60px;gap:8px}
   .brand{font-size:20px}
   .brand small{display:none}
@@ -560,11 +567,19 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
 
 <!-- announcement -->
 <div class="announce">
-  <div class="announce-inner">
-    <div class="announce-offer"><b>−10% на первый заказ</b><span>по промокоду</span></div>
-    <div class="announce-code" id="promoCode">KOMUI10</div>
-    <div class="announce-timer">до конца дня: <span id="promoTimer">--:--:--</span></div>
-    <button class="announce-copy" id="promoCopy" type="button">Скопировать</button>
+  <div class="announce-track">
+    <div class="announce-inner">
+      <div class="announce-offer"><b>−10% на первый заказ</b><span>по промокоду</span></div>
+      <div class="announce-code" id="promoCode">KOMUI10</div>
+      <div class="announce-timer">до конца дня: <span id="promoTimer">--:--:--</span></div>
+      <button class="announce-copy" id="promoCopy" type="button">Скопировать</button>
+    </div>
+    <div class="announce-inner announce-inner-copy" aria-hidden="true">
+      <div class="announce-offer"><b>−10% на первый заказ</b><span>по промокоду</span></div>
+      <div class="announce-code">KOMUI10</div>
+      <div class="announce-timer">до конца дня: <span data-promo-timer-clone>--:--:--</span></div>
+      <span class="announce-copy">Скопировать</span>
+    </div>
   </div>
 </div>
 
@@ -1144,16 +1159,16 @@ addEventListener('scroll',()=>{$('#header').classList.toggle('solid',scrollY>20)
 
 /* ---------------- promo bar ---------------- */
 function initPromoBar(){
-  const timer=$('#promoTimer'),copy=$('#promoCopy'),code=$('#promoCode')?.textContent?.trim()||'KOMUI10';
+  const timers=$$('#promoTimer,[data-promo-timer-clone]'),copy=$('#promoCopy'),code=$('#promoCode')?.textContent?.trim()||'KOMUI10';
   function tickPromo(){
-    if(!timer)return;
+    if(!timers.length)return;
     const now=new Date(),end=new Date(now);
     end.setHours(23,59,59,999);
     const diff=Math.max(0,end-now);
     const h=String(Math.floor(diff/36e5)).padStart(2,'0');
     const m=String(Math.floor(diff%36e5/6e4)).padStart(2,'0');
     const s=String(Math.floor(diff%6e4/1e3)).padStart(2,'0');
-    timer.textContent=`${h}:${m}:${s}`;
+    timers.forEach(timer=>{timer.textContent=`${h}:${m}:${s}`;});
   }
   tickPromo();setInterval(tickPromo,1000);
   copy?.addEventListener('click',async()=>{
