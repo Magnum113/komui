@@ -592,11 +592,31 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
   .runway-viewport{margin-inline:-16px;padding:4px 0 54px 16px}
   .runway-track{--runway-scale:1.18}
   .runway-card{width:190px}
-  .modal{width:94vw;max-height:92vh;overflow:hidden}
-  .modal .mgrid{max-height:92vh}
-  .modal .mbody{padding:24px 20px;overflow:visible}
-  .modal h2{font-size:22px}
-  .modal .mmedia{width:100%;height:auto;aspect-ratio:1/1;padding:0}
+  .modal{
+    width:min(94vw,440px);max-height:92vh;max-height:calc(100dvh - 24px);
+    overflow:hidden;border-radius:20px
+  }
+  .modal .mgrid{
+    display:block;height:auto;max-height:92vh;max-height:calc(100dvh - 24px);
+    overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(116px + env(safe-area-inset-bottom))
+  }
+  .modal .mbody{display:flex;flex-direction:column;padding:18px 20px 0;overflow:visible}
+  .modal .col{order:1;margin-bottom:6px}
+  .modal h2{order:2;font-size:21px;line-height:1.08;margin-bottom:10px}
+  .modal .mprice{order:3;font-size:26px;margin-bottom:12px}
+  .modal .madd{
+    order:4;position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));z-index:8;
+    width:calc(min(94vw,440px) - 40px);max-width:400px;margin:0;transform:translateX(-50%);
+    box-shadow:0 16px 34px -14px rgba(0,38,249,.72),inset 0 1px 0 rgba(255,255,255,.22)
+  }
+  .modal .madd:hover{transform:translateX(-50%) translateY(-2px)}
+  .modal .mdesc{order:5;margin-bottom:20px}
+  .modal .mlabel{order:6}
+  .modal .size-pick{order:7}
+  .modal .mfeat{order:8}
+  .modal .mmedia{width:100%;height:auto;aspect-ratio:1/1;padding:0;overflow:hidden}
+  .modal .mmedia .product-photo,
+  .modal .mmedia .gtrack .gimg{width:100%;height:100%;object-fit:cover;object-position:center}
   .modal .mmedia .gdots{bottom:10px;padding:0 10px;overflow-x:auto;scrollbar-width:none}
   .modal .mmedia .gdots::-webkit-scrollbar{display:none}
   .modal .mclose{top:12px;right:12px}
