@@ -234,7 +234,7 @@ html[data-theme="light"] .cursor-glow{mix-blend-mode:multiply;background:radial-
 .runway h2{font-family:'Unbounded',sans-serif;font-size:clamp(26px,4vw,48px);line-height:1;letter-spacing:-.03em}
 .runway p{color:var(--txt-2);max-width:520px}
 .runway-viewport{overflow:hidden;margin-inline:calc((100vw - min(var(--maxw), calc(100vw - 48px)))/-2);padding:4px 0 12px}
-.runway-track{display:flex;gap:18px;width:max-content;padding-left:84px;animation:runwaySlide 42s linear infinite}
+.runway-track{--runway-scale:1;display:flex;gap:18px;width:max-content;padding-left:84px;transform-origin:left top;animation:runwaySlide 42s linear infinite;will-change:transform}
 .runway:hover .runway-track{animation-play-state:paused}
 .runway-card{
   width:260px;border:1px solid var(--line);border-radius:22px;background:var(--panel);
@@ -243,7 +243,7 @@ html[data-theme="light"] .cursor-glow{mix-blend-mode:multiply;background:radial-
 .runway-card img{width:100%;aspect-ratio:1/1.16;object-fit:cover;border-radius:16px;background:var(--media-bg)}
 .runway-card h3{font-size:14px;line-height:1.25;margin:10px 0 4px}
 .runway-card span{display:flex;justify-content:space-between;gap:10px;color:var(--txt-2);font-size:12px}
-@keyframes runwaySlide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes runwaySlide{from{transform:translateX(0) scale(var(--runway-scale))}to{transform:translateX(-50%) scale(var(--runway-scale))}}
 
 /* ---------- marquee strip ---------- */
 .strip{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--bg-2);overflow:hidden;white-space:nowrap}
@@ -542,6 +542,7 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
   }
   .mobile-collection-quick::-webkit-scrollbar{display:none}
   .runway-head p{display:none}
+  .runway{padding-bottom:18px}
   .hero-stats{gap:22px}
   .hero-stats .stat .n{font-size:22px}
   .features .wrap{grid-template-columns:1fr;padding:40px 16px}
@@ -565,7 +566,8 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
   .hero-product.side{left:4%;top:24%;width:32%;height:auto}
   .hero-product.mini{left:12%;bottom:2%;width:34%;height:auto}
   .hero-product.fourth{right:4%;bottom:3%;width:32%;height:auto}
-  .runway-viewport{margin-inline:-16px;padding-left:16px}
+  .runway-viewport{margin-inline:-16px;padding:4px 0 54px 16px}
+  .runway-track{--runway-scale:1.18}
   .runway-card{width:190px}
   .modal{width:94vw;max-height:92vh;overflow:hidden}
   .modal .mgrid{max-height:92vh}
