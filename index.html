@@ -205,7 +205,7 @@ html[data-theme="light"] .cursor-glow{mix-blend-mode:multiply;background:radial-
   position:absolute;border:1px solid rgba(255,255,255,.78);border-radius:28px;
   background:linear-gradient(135deg,rgba(255,255,255,.98),rgba(246,248,255,.9));
   overflow:hidden;box-shadow:0 34px 90px -42px rgba(0,0,0,.65);
-  backdrop-filter:blur(14px);
+  backdrop-filter:blur(14px);aspect-ratio:3/4;
 }
 .hero-product img{
   position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
@@ -213,10 +213,10 @@ html[data-theme="light"] .cursor-glow{mix-blend-mode:multiply;background:radial-
   transition:opacity .9s ease,transform 1.15s cubic-bezier(.2,.7,.2,1);
 }
 .hero-product img.is-active{opacity:1;transform:scale(1)}
-.hero-product.main{right:1%;top:3%;width:43%;height:61%;transform:rotate(2deg);animation:heroCardA 6s ease-in-out infinite}
-.hero-product.side{left:5%;top:15%;width:31%;height:42%;transform:rotate(-6deg);animation:heroCardB 7s ease-in-out infinite}
-.hero-product.mini{left:27%;bottom:3%;width:33%;height:39%;transform:rotate(5deg);animation:heroCardC 8s ease-in-out infinite}
-.hero-product.fourth{right:3%;bottom:5%;width:29%;height:35%;transform:rotate(-4deg);animation:heroCardD 7.5s ease-in-out infinite}
+.hero-product.main{right:1%;top:3%;width:43%;height:auto;transform:rotate(2deg);animation:heroCardA 6s ease-in-out infinite}
+.hero-product.side{left:5%;top:15%;width:31%;height:auto;transform:rotate(-6deg);animation:heroCardB 7s ease-in-out infinite}
+.hero-product.mini{left:27%;bottom:3%;width:33%;height:auto;transform:rotate(5deg);animation:heroCardC 8s ease-in-out infinite}
+.hero-product.fourth{right:3%;bottom:5%;width:29%;height:auto;transform:rotate(-4deg);animation:heroCardD 7.5s ease-in-out infinite}
 .hero-scanline{
   position:absolute;left:2%;right:2%;top:42%;height:2px;background:linear-gradient(90deg,transparent,var(--mag),transparent);
   filter:drop-shadow(0 0 10px var(--mag));animation:scanMove 3.6s ease-in-out infinite;
@@ -501,10 +501,10 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
   .hero-inner{width:100vw;max-width:100vw;margin:0;padding-left:24px;padding-right:24px;overflow:hidden}
   .hero p.sub,.hero-cta,.hero-stats{width:calc(100vw - 48px);max-width:min(760px, calc(100vw - 48px))}
   .hero-product-stage{position:relative;right:auto;left:auto;top:auto;bottom:auto;width:min(100%,760px);max-width:none;height:520px;margin:30px auto 0;transform:none}
-  .hero-product.main{left:auto;right:2%;top:2%;width:48%;height:58%}
-  .hero-product.side{left:3%;right:auto;top:17%;bottom:auto;width:36%;height:42%}
-  .hero-product.mini{left:18%;right:auto;bottom:5%;width:39%;height:40%}
-  .hero-product.fourth{right:3%;left:auto;bottom:7%;width:34%;height:37%}
+  .hero-product.main{left:auto;right:2%;top:2%;width:44%;height:auto}
+  .hero-product.side{left:3%;right:auto;top:18%;bottom:auto;width:32%;height:auto}
+  .hero-product.mini{left:19%;right:auto;bottom:3%;width:35%;height:auto}
+  .hero-product.fourth{right:3%;left:auto;bottom:5%;width:31%;height:auto}
   .scroll-ind{display:none}
   .runway-card{width:220px}
 }
@@ -561,10 +561,10 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
   .hero-stats .stat .n{font-size:20px}
   .hero-stats .stat .l{font-size:11px;line-height:1.25}
   .hero-product-stage{height:390px;margin-top:22px}
-  .hero-product.main{right:3%;top:0;width:59%;height:46%}
-  .hero-product.side{left:4%;top:26%;width:42%;height:33%}
-  .hero-product.mini{left:8%;bottom:7%;width:43%;height:32%}
-  .hero-product.fourth{right:3%;bottom:7%;width:40%;height:30%}
+  .hero-product.main{right:4%;top:0;width:48%;height:auto}
+  .hero-product.side{left:4%;top:24%;width:32%;height:auto}
+  .hero-product.mini{left:12%;bottom:2%;width:34%;height:auto}
+  .hero-product.fourth{right:4%;bottom:3%;width:32%;height:auto}
   .runway-viewport{margin-inline:-16px;padding-left:16px}
   .runway-card{width:190px}
   .modal{width:94vw;max-height:92vh;overflow:hidden}
