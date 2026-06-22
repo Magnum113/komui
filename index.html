@@ -339,9 +339,9 @@ html[data-theme="light"] .cursor-glow{mix-blend-mode:multiply;background:radial-
 .card .product-photo{width:100%;height:100%;object-fit:cover;position:relative;z-index:2;transition:transform .55s cubic-bezier(.2,.7,.2,1);mix-blend-mode:normal}
 .card:hover .product-photo{transform:scale(1.055) rotate(-.6deg)}
 /* ---- card image gallery ---- */
-.gallery{position:absolute;inset:0;z-index:2}
+.gallery{position:absolute;inset:0;z-index:2;overflow:hidden}
 .gallery[data-gallery]{touch-action:pan-y}
-.gtrack{display:flex;width:100%;height:100%;overflow:hidden;transition:transform .36s cubic-bezier(.2,.7,.2,1);will-change:transform}
+.gtrack{display:flex;width:100%;height:100%;transition:transform .36s cubic-bezier(.2,.7,.2,1);will-change:transform}
 .gtrack::-webkit-scrollbar{display:none}
 .gtrack .gimg{flex:0 0 100%;width:100%;height:100%;object-fit:cover;display:block;user-select:none}
 .garr{position:absolute;top:50%;transform:translateY(-50%) scale(.92);z-index:6;width:34px;height:34px;border-radius:50%;background:var(--ctrl-bg);border:1px solid var(--line-2);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;color:var(--txt);opacity:0;transition:opacity .25s,transform .25s,background .2s,color .2s,border-color .2s}
@@ -967,16 +967,17 @@ function garment(p){
   else{const s=isTee?1.5:1.34,cx=160,cy=isTee?208:196;mg=`<g transform="translate(${cx-50*s} ${cy-50*s}) scale(${s})">${motif(p.motif,ink,a)}</g>`;}
   return `<svg class="garment" viewBox="0 0 320 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${p.name}"><defs><linearGradient id="sh${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".10"/><stop offset=".5" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".30"/></linearGradient><clipPath id="cp${id}"><path d="${body}"/></clipPath></defs><g clip-path="url(#cp${id})"><path d="${body}" fill="${g}"/><rect width="320" height="360" fill="url(#sh${id})"/></g><path d="${body}" fill="none" stroke="${shade(g,20)}" stroke-width="2" opacity=".7"/>${extra}${mg}</svg>`;
 }
-function productImage(p, cls='product-photo'){
-  return `<img class="${cls}" src="${p.image}" alt="${p.name}" loading="lazy">`;
+function productImage(p, cls='product-photo', loading='lazy'){
+  return `<img class="${cls}" src="${p.image}" alt="${p.name}" loading="${loading}" decoding="async">`;
 }
 function productPhotos(p){
   return [...new Set([p.image,...(p.photos||[])].filter(Boolean))];
 }
-function productGallery(p){
+function productGallery(p, opts={}){
   const imgs=productPhotos(p);
-  if(imgs.length<=1)return `<div class="gallery">${productImage(p)}</div>`;
-  const slides=imgs.map((src,i)=>`<img class="gimg" src="${src}" alt="${p.name}" loading="${i===0?'eager':'lazy'}" draggable="false">`).join('');
+  const eagerAll=!!opts.eagerAll;
+  if(imgs.length<=1)return `<div class="gallery">${productImage(p,'product-photo',eagerAll?'eager':'lazy')}</div>`;
+  const slides=imgs.map((src,i)=>`<img class="gimg" src="${src}" alt="${p.name}" loading="${eagerAll||i===0?'eager':'lazy'}" decoding="async" draggable="false">`).join('');
   const dots=imgs.map((_,i)=>`<button class="gdot${i===0?' on':''}" data-go="${i}" type="button" aria-label="Фото ${i+1}"></button>`).join('');
   const arrow=d=>`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="${d}"/></svg>`;
   return `<div class="gallery" data-gallery>
@@ -1185,16 +1186,23 @@ function initGallerySwipe(g){
   g.addEventListener('lostpointercapture',finish);
 }
 // i is an absolute slide index (wrapped); the caller resolves next/prev to current±1
-function galleryGo(g,i){
+function preloadGallerySlide(g,i){
+  const track=g.querySelector('.gtrack');if(!track)return;
+  const n=track.children.length;if(!n)return;
+  const img=track.children[(i%n+n)%n];
+  if(img?.tagName==='IMG')img.loading='eager';
+}
+function galleryGo(g,i,opts={}){
   const track=g.querySelector('.gtrack');if(!track)return;
   const dots=[...g.querySelectorAll('.gdot')],n=track.children.length;
   i=(i%n+n)%n;
+  if(opts.forceLoad||g.closest('#modal'))preloadGallerySlide(g,i);
   g.dataset.index=String(i);
   track.style.transform=`translateX(${-i*100}%)`;
   dots.forEach((d,di)=>d.classList.toggle('on',di===i));
 }
 function galleryStep(g,dir){
-  galleryGo(g,(Number(g.dataset.index)||0)+dir);
+  galleryGo(g,(Number(g.dataset.index)||0)+dir,{forceLoad:true});
 }
 
 const lightboxState={scale:1,x:0,y:0,pointers:new Map(),startScale:1,startDist:0,startX:0,startY:0,startMid:null,lastTap:0};
@@ -1316,7 +1324,7 @@ function updateCart(){
 function openModal(id){
   const p=P.find(x=>x.id==id);let sel=p.sizes.includes('M')?'M':p.sizes[0];
   $('#modal').innerHTML=`<button class="mclose" id="mclose">✕</button><div class="mgrid">
-    <div class="mmedia"><div class="glow" style="position:absolute;width:60%;height:60%;border-radius:50%;filter:blur(70px);opacity:.6;background:${p.accent}"></div>${productGallery(p)}</div>
+    <div class="mmedia"><div class="glow" style="position:absolute;width:60%;height:60%;border-radius:50%;filter:blur(70px);opacity:.6;background:${p.accent}"></div>${productGallery(p,{eagerAll:true})}</div>
     <div class="mbody">
       <div class="col">${p.col}</div><h2>${p.name}</h2>
       <div class="mprice">${RUB(p.price)}</div><p class="mdesc">${p.desc}</p>
@@ -1361,7 +1369,7 @@ $('#rMin').addEventListener('input',()=>clampRange('min'));
 $('#rMax').addEventListener('input',()=>clampRange('max'));
 // grid delegation
 // gallery nav (cards + modal) — capture phase so card/modal clicks don't fire
-document.addEventListener('click',e=>{const nav=e.target.closest('[data-prev],[data-next],[data-go]');if(!nav)return;const g=nav.closest('.gallery');if(!g)return;e.stopPropagation();if(nav.matches('[data-go]'))galleryGo(g,+nav.dataset.go);else galleryStep(g,nav.matches('[data-next]')?1:-1);},true);
+document.addEventListener('click',e=>{const nav=e.target.closest('[data-prev],[data-next],[data-go]');if(!nav)return;const g=nav.closest('.gallery');if(!g)return;e.stopPropagation();if(nav.matches('[data-go]'))galleryGo(g,+nav.dataset.go,{forceLoad:true});else galleryStep(g,nav.matches('[data-next]')?1:-1);},true);
 document.addEventListener('click',e=>{
   if(e.target.closest('[data-prev],[data-next],[data-go]'))return;
   const gallery=e.target.closest('#modal .gallery');
