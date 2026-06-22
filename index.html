@@ -430,9 +430,19 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
 .modal .mdesc{color:var(--txt-2);font-size:15px;line-height:1.55;margin-bottom:22px;max-width:36ch}
 .modal .mlabel{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--txt-3);font-weight:700;margin-bottom:10px}
 .size-pick{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:24px}
-.size-pick button{min-width:50px;padding:12px 4px;border-radius:11px;border:1.5px solid var(--line-2);background:var(--panel-2);color:var(--txt);font-weight:700;font-size:14px;transition:all .18s}
+.size-pick button{
+  -webkit-appearance:none;appearance:none;display:flex;align-items:center;justify-content:center;
+  min-width:50px;min-height:50px;padding:0 14px;border-radius:11px;border:1.5px solid var(--line-2);
+  background:var(--panel-2);background-clip:padding-box;color:var(--txt);font-weight:700;font-size:14px;line-height:1;
+  overflow:hidden;box-shadow:none;transform:translateZ(0);
+  transition:background-color .18s,border-color .18s,color .18s,box-shadow .18s
+}
 .size-pick button:hover{border-color:var(--mag);color:var(--mag)}
-.size-pick button.sel{background:var(--sel);color:#fff;border-color:transparent;box-shadow:0 8px 22px -8px rgba(0,38,249,.55)}
+.size-pick button.sel{background:var(--sel);background-clip:border-box;color:#fff;border-color:transparent;box-shadow:0 10px 22px -14px rgba(0,38,249,.72)}
+.size-pick button.sel:hover{color:#fff;border-color:transparent}
+.size-pick button:focus{outline:none}
+.size-pick button:focus-visible{box-shadow:var(--focus-ring)}
+.size-pick button.sel:focus-visible{box-shadow:var(--focus-ring),0 10px 22px -14px rgba(0,38,249,.72)}
 .modal .madd{width:100%;padding:16px;border-radius:13px;background:var(--grad-action);color:var(--on-accent);font-weight:800;font-size:15px;background-size:200% 200%;animation:gradmove 6s ease infinite;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 12px 32px -16px rgba(0,38,249,.65),inset 0 1px 0 rgba(255,255,255,.22)}
 .modal .madd:hover{transform:translateY(-2px);box-shadow:0 14px 36px -12px rgba(0,38,249,.5)}
 .modal .mfeat{display:flex;gap:18px;margin-top:22px;flex-wrap:wrap}
@@ -593,7 +603,7 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
   .photo-lightbox .pl-close{top:14px;right:14px}
   .photo-lightbox .pl-hint{bottom:14px}
   .size-pick{gap:7px}
-  .size-pick button{min-width:0;flex:1 1 auto;padding:12px 6px}
+  .size-pick button{min-width:0;flex:1 1 auto;padding:0 6px}
   .cursor-glow{display:none}
 }
 @media(prefers-reduced-motion:reduce){
