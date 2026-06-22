@@ -258,6 +258,16 @@ html[data-theme="light"] .cursor-glow{mix-blend-mode:multiply;background:radial-
 .section-head .title{font-family:'Unbounded',sans-serif;font-weight:800;font-size:clamp(30px,4.5vw,52px);letter-spacing:-.02em;line-height:1}
 .section-head .title .jp{display:block;font-size:14px;color:var(--mag);letter-spacing:.3em;font-weight:400;margin-bottom:8px}
 .section-sub{color:var(--txt-2);max-width:520px;margin-bottom:30px}
+.mobile-collection-quick{display:none}
+.mobile-collection-quick:empty{display:none}
+.quick-collection{
+  flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;padding:9px 13px;border-radius:999px;
+  border:1px solid var(--line);background:var(--panel);color:var(--txt-2);
+  font-size:13px;font-weight:700;white-space:nowrap;transition:color .18s,border-color .18s,background .18s,box-shadow .18s
+}
+.quick-collection .cnt{font-size:11px;color:var(--txt-3);font-weight:800}
+.quick-collection.active{background:var(--sel);border-color:transparent;color:#fff;box-shadow:0 9px 22px -14px rgba(0,38,249,.65)}
+.quick-collection.active .cnt{color:rgba(255,255,255,.78)}
 .toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:24px}
 .result-count{color:var(--txt-2);font-size:14px}
 .result-count b{color:var(--txt);font-weight:700}
@@ -525,7 +535,12 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
   .quick .q-add{flex:1;justify-content:center;padding:11px}
   .toolbar{gap:10px}
   .result-count{order:2;width:100%}
-  .section-sub{margin-bottom:22px}
+  .section-sub{display:none}
+  .mobile-collection-quick{
+    display:flex;gap:8px;overflow-x:auto;overscroll-behavior-x:contain;
+    margin:0 -16px 16px;padding:0 16px 2px;scrollbar-width:none
+  }
+  .mobile-collection-quick::-webkit-scrollbar{display:none}
   .runway-head p{display:none}
   .hero-stats{gap:22px}
   .hero-stats .stat .n{font-size:22px}
@@ -684,6 +699,7 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
       <div class="title display"><span class="jp">КАТАЛОГ</span>Весь мерч</div>
     </div>
     <p class="section-sub">Фильтруй по коллекции, типу нанесения, размеру и цвету. Всё, что любишь — на одном экране.</p>
+    <div class="mobile-collection-quick" id="quickCollections" aria-label="Быстрые фильтры по коллекциям"></div>
 
     <div class="toolbar">
       <div class="result-count"><b id="rCount">0</b> товаров</div>
@@ -1003,6 +1019,18 @@ function colorSwatchStyle(color){
   const fromProduct=P.find(p=>p.color===color&&p.colorHex)?.colorHex;
   return fromProduct||SWATCH[color]||SWATCH['Другой'];
 }
+function collectionTotals(){
+  return COLS.map(name=>({name,count:P.filter(p=>p.col===name).length}))
+    .sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name,'ru'));
+}
+function renderQuickCollections(){
+  const box=$('#quickCollections');
+  if(!box)return;
+  box.innerHTML=collectionTotals().map(({name,count})=>`
+    <button class="quick-collection${st.cols.has(name)?' active':''}" type="button" data-quick-col="${name}">
+      ${name}<span class="cnt">${count}</span>
+    </button>`).join('');
+}
 function renderFilters(){
   $('#rMin').min=PMIN;$('#rMin').max=PMAX;$('#rMax').min=PMIN;$('#rMax').max=PMAX;
   $('#catChips').innerHTML=CATS.map(v=>chip('cat',v,st.cat===v)).join('');
@@ -1015,6 +1043,7 @@ function renderFilters(){
   const lo=(st.min-PMIN)/span*100,hi=(st.max-PMIN)/span*100;
   $('#rangeFill').style.left=lo+'%';$('#rangeFill').style.width=(hi-lo)+'%';
   $('#rMin').value=st.min;$('#rMax').value=st.max;
+  renderQuickCollections();
 }
 
 /* ---------------- active pills ---------------- */
@@ -1132,6 +1161,13 @@ $('#activePills').addEventListener('click',e=>{const b=e.target.closest('[data-c
 $('#resetBtn').onclick=()=>{st.cat=null;st.cols.clear();st.types.clear();st.sizes.clear();st.color=null;st.q='';st.min=PMIN;st.max=PMAX;$('#searchInput').value='';render();};
 $('#searchInput').addEventListener('input',e=>{st.q=e.target.value;render();});
 $('#sortSel').addEventListener('change',e=>{st.sort=e.target.value;renderGrid();});
+$('#quickCollections')?.addEventListener('click',e=>{
+  const b=e.target.closest('[data-quick-col]');
+  if(!b)return;
+  const col=b.dataset.quickCol;
+  st.cols.has(col)?st.cols.delete(col):st.cols.add(col);
+  render();
+});
 // range
 function clampRange(which){let lo=+$('#rMin').value,hi=+$('#rMax').value;if(lo>hi-100){if(which==='min')lo=hi-100;else hi=lo+100;}st.min=Math.max(PMIN,lo);st.max=Math.min(PMAX,hi);renderFilters();renderGrid();renderPills();}
 $('#rMin').addEventListener('input',()=>clampRange('min'));
