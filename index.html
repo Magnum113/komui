@@ -1247,28 +1247,65 @@ function renderRunway(){
 function initHeroProducts(){
   const slots=$$('[data-hero-slot]');
   if(!slots.length||!P.length)return;
-  const seen=new Set();
-  const take=fn=>{
-    const p=P.find(x=>!seen.has(String(x.id))&&fn(x));
-    if(p)seen.add(String(p.id));
-    return p;
+  const popular=[
+    {offerId:'D016-TSH-PRT-WGRY-V01-XL',photoIndex:0,kind:'full'},
+    {offerId:'D004-TSH-EMB-WHT-V01-XL',photoIndex:2,kind:'close'},
+    {offerId:'D016-TSH-PRT-WGRY-V02-XL',photoIndex:1,kind:'close'},
+    {offerId:'D002-SWT-EMB-BLK-V01-L',source:'product',kind:'full'},
+    {offerId:'D015-TSH-PRT-WHT-V01-S',photoIndex:0,kind:'full'}
+  ];
+  const offerMatch=(p,offerId)=>Array.isArray(p.offers)&&p.offers.some(o=>o.offer_id===offerId);
+  const offerPhotos=(p,offerId)=>{
+    const offer=(p.offers||[]).find(o=>o.offer_id===offerId)||{};
+    return [...new Set([offer.primary_image,...(offer.images||[]),p.image,...(p.photos||[])].filter(Boolean))];
   };
-  const preferred=[
-    take(p=>p.cat==='Худи'&&p.type==='Вышивка'),
-    take(p=>/вар[её]н/i.test([p.name,p.color].filter(Boolean).join(' '))),
-    take(p=>p.cat==='Футболки'&&p.type==='Принт'&&/черн|ч[её]рн|black/i.test([p.name,p.color].filter(Boolean).join(' '))),
-    take(p=>p.cat==='Футболки'&&p.type==='Вышивка'),
-    take(p=>p.cat==='Свитшоты'),
-    take(p=>p.cat==='Футболки'&&p.type==='Принт')
-  ].filter(Boolean);
-  const heroItems=[...preferred,...P.filter(p=>!seen.has(String(p.id)))].slice(0,12);
+  const entries=[];
+  const usedProducts=new Set();
+  const usedPhotos=new Set();
+  const addEntry=(p,src,meta={})=>{
+    if(!p||!src||usedPhotos.has(src))return;
+    entries.push({p,src,kind:meta.kind||'full',offerId:meta.offerId||''});
+    usedPhotos.add(src);
+    usedProducts.add(String(p.id));
+  };
+  popular.forEach(spec=>{
+    const p=P.find(x=>offerMatch(x,spec.offerId));
+    const photos=p?offerPhotos(p,spec.offerId):[];
+    const src=spec.source==='product'?p?.image:photos[spec.photoIndex]||photos[0]||p?.image;
+    addEntry(p,src,spec);
+  });
+  if(entries.length<4){
+    const seen=new Set(usedProducts);
+    const take=fn=>{
+      const p=P.find(x=>!seen.has(String(x.id))&&fn(x));
+      if(p)seen.add(String(p.id));
+      return p;
+    };
+    [
+      take(p=>p.cat==='Худи'&&p.type==='Вышивка'),
+      take(p=>/вар[её]н/i.test([p.name,p.color].filter(Boolean).join(' '))),
+      take(p=>p.cat==='Футболки'&&p.type==='Принт'&&/черн|ч[её]рн|black/i.test([p.name,p.color].filter(Boolean).join(' '))),
+      take(p=>p.cat==='Футболки'&&p.type==='Вышивка')
+    ].filter(Boolean).forEach(p=>addEntry(p,p.image,{kind:'full'}));
+  }
+  const catPriority=p=>p.cat==='Футболки'?0:p.cat==='Свитшоты'?1:p.cat==='Худи'?2:3;
+  P.filter(p=>!usedProducts.has(String(p.id))&&p.image)
+    .sort((a,b)=>catPriority(a)-catPriority(b)||b.pop-a.pop)
+    .forEach(p=>addEntry(p,p.image,{kind:'full'}));
+  const heroItems=entries.slice(0,18);
+  if(!heroItems.length)return;
   const slotState=slots.map((slot,i)=>{
     slot.innerHTML='<img class="is-active" alt="" draggable="false"><img alt="" draggable="false">';
     const imgs=[...slot.querySelectorAll('img')];
-    imgs[0].src=heroItems[i]?.image||P[0].image;
+    const item=heroItems[i]||{src:P[0].image,kind:'full',offerId:''};
+    imgs[0].src=item.src;
+    slot.dataset.heroOffer=item.offerId;
+    slot.dataset.heroPhotoKind=item.kind;
     return {slot,imgs,active:0};
   });
-  function swap(state, src){
+  function swap(state, item){
+    const src=item?.src;
+    if(!src)return;
     const next=1-state.active;
     const nextImg=state.imgs[next];
     const current=state.imgs[state.active];
@@ -1277,6 +1314,8 @@ function initHeroProducts(){
       nextImg.classList.add('is-active');
       current.classList.remove('is-active');
       state.active=next;
+      state.slot.dataset.heroOffer=item.offerId||'';
+      state.slot.dataset.heroPhotoKind=item.kind||'full';
       nextImg.onload=null;
     };
     nextImg.src=src;
@@ -1285,8 +1324,8 @@ function initHeroProducts(){
   if(!reduce) setInterval(()=>{
     step=(step+1)%heroItems.length;
     slotState.forEach((state,i)=>{
-      const p=heroItems[(step+i*2)%heroItems.length];
-      swap(state,p.image);
+      const item=heroItems[(step+i*2)%heroItems.length];
+      swap(state,item);
     });
   },5200);
 }
