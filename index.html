@@ -432,16 +432,16 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
 .size-pick{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:24px}
 .size-pick button{
   -webkit-appearance:none;appearance:none;display:flex;align-items:center;justify-content:center;
-  min-width:50px;min-height:50px;padding:0 14px;border-radius:11px;border:1.5px solid var(--line-2);
-  background:var(--panel-2);background-clip:padding-box;color:var(--txt);font-weight:700;font-size:14px;line-height:1;
-  overflow:hidden;box-shadow:none;transform:translateZ(0);
-  transition:background-color .18s,border-color .18s,color .18s,box-shadow .18s
+  box-sizing:border-box;min-width:50px;min-height:50px;padding:0 14px;border:0;border-radius:11px;
+  background:var(--panel-2);color:var(--txt);font-weight:700;font-size:14px;line-height:1;
+  box-shadow:inset 0 0 0 1.5px var(--line-2);
+  transition:background-color .18s,color .18s,box-shadow .18s
 }
-.size-pick button:hover{border-color:var(--mag);color:var(--mag)}
-.size-pick button.sel{background:var(--sel);background-clip:border-box;color:#fff;border-color:transparent;box-shadow:0 10px 22px -14px rgba(0,38,249,.72)}
-.size-pick button.sel:hover{color:#fff;border-color:transparent}
+.size-pick button:hover{color:var(--mag);box-shadow:inset 0 0 0 1.5px var(--mag)}
+.size-pick button.sel{background:var(--sel);color:#fff;box-shadow:0 10px 22px -14px rgba(0,38,249,.72)}
+.size-pick button.sel:hover{color:#fff;box-shadow:0 10px 22px -14px rgba(0,38,249,.72)}
 .size-pick button:focus{outline:none}
-.size-pick button:focus-visible{box-shadow:var(--focus-ring)}
+.size-pick button:focus-visible{box-shadow:var(--focus-ring),inset 0 0 0 1.5px var(--line-2)}
 .size-pick button.sel:focus-visible{box-shadow:var(--focus-ring),0 10px 22px -14px rgba(0,38,249,.72)}
 .modal .madd{width:100%;padding:16px;border-radius:13px;background:var(--grad-action);color:var(--on-accent);font-weight:800;font-size:15px;background-size:200% 200%;animation:gradmove 6s ease infinite;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 12px 32px -16px rgba(0,38,249,.65),inset 0 1px 0 rgba(255,255,255,.22)}
 .modal .madd:hover{transform:translateY(-2px);box-shadow:0 14px 36px -12px rgba(0,38,249,.5)}
