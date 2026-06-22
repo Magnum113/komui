@@ -1136,7 +1136,7 @@ function openModal(id){
       <div class="mlabel">Размер</div>
       <div class="size-pick" id="sizePick">${p.sizes.map(s=>`<button data-size="${s}"${s===sel?' class="sel"':''}>${s}</button>`).join('')}</div>
       <button class="madd" id="madd"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg> Добавить в корзину</button>
-      <div class="mfeat"><div>✦ ${p.type}</div><div>✦ 100% хлопок 240 г/м²</div><div>✦ Лимит. тираж</div></div>
+      <div class="mfeat"><div>✦ ${p.type}</div><div>✦ 100% хлопок</div><div>✦ Плотность 240 г/м²</div></div>
     </div></div>`;
   const m=$('#modal');m.classList.add('show');setOverlay(true);
   initGalleries();
