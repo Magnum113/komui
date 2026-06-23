@@ -415,7 +415,10 @@ html[data-theme="light"] .cursor-glow{mix-blend-mode:multiply;background:radial-
 .card .info .col{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mag);font-weight:700;margin-bottom:6px}
 .card .info h3{font-size:16px;font-weight:600;line-height:1.25;margin-bottom:10px}
 .card .info .meta{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.card .price{font-family:'Unbounded',sans-serif;font-weight:700;font-size:18px}
+.card .price{font-family:'Unbounded',sans-serif;font-weight:700;font-size:18px;display:inline-flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.card .price .price-old,.modal .mprice-old{font-family:'Inter',sans-serif;font-weight:500;color:var(--txt-3);text-decoration:line-through;text-decoration-thickness:1.5px;text-decoration-color:rgba(0,0,0,.32)}
+.card .price .price-old{font-size:13px}
+.modal .mprice-old{font-size:16px;margin-left:10px}
 .card .sizes{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
 .card .sizes span{font-size:11px;color:var(--txt-3);border:1px solid var(--line);border-radius:6px;padding:3px 6px}
 
@@ -1147,10 +1150,12 @@ function sortSizes(sizes){
   return [...new Set(sizes||[])].sort((a,b)=>sizeIndex(a)-sizeIndex(b)||String(a).localeCompare(String(b),'ru'));
 }
 function localProduct(p,i){
-  return {...p,sizes:sortSizes(p.sizes),accent:p.accent||AC.mag,pop:p.pop||100-i,badges:p.badge?[p.badge]:[],source:'local'};
+  const priceOld=p.priceOld!=null?Number(p.priceOld):null;
+  return {...p,priceOld:priceOld&&priceOld>Number(p.price||0)?priceOld:null,sizes:sortSizes(p.sizes),accent:p.accent||AC.mag,pop:p.pop||100-i,badges:p.badge?[p.badge]:[],source:'local'};
 }
 function supabaseProduct(row,i){
   const price=Number(row.price_min||row.price_max||0);
+  const compareAt=row.compare_at_price!=null?Number(row.compare_at_price):null;
   return {
     id:row.id,
     name:row.name,
@@ -1162,6 +1167,7 @@ function supabaseProduct(row,i){
     accent:AC.mag,
     price,
     priceMax:Number(row.price_max||price),
+    priceOld:compareAt&&compareAt>price?compareAt:null,
     sizes:sortSizes(row.sizes),
     badges:row.badges||[],
     pop:100-i,
@@ -1321,7 +1327,7 @@ function renderGrid(){
       <div class="info">
         <div class="col">${p.col}</div>
         <h3>${p.name}</h3>
-        <div class="meta"><span class="price">${RUB(p.price)}</span><span class="sizes">${p.sizes.map(s=>`<span>${s}</span>`).join('')}</span></div>
+        <div class="meta"><span class="price">${RUB(p.price)}${p.priceOld?`<s class="price-old">${RUB(p.priceOld)}</s>`:''}</span><span class="sizes">${p.sizes.map(s=>`<span>${s}</span>`).join('')}</span></div>
       </div>
     </article>`).join('');
   requestAnimationFrame(()=>$$('.card').forEach((c,i)=>setTimeout(()=>c.classList.add('in'),Math.min(i*45,400))));
@@ -1516,7 +1522,7 @@ function openModal(id){
     <div class="mmedia"><div class="glow" style="position:absolute;width:60%;height:60%;border-radius:50%;filter:blur(70px);opacity:.6;background:${p.accent}"></div>${productGallery(p,{eagerAll:true})}</div>
     <div class="mbody">
       <div class="col">${p.col}</div><h2>${p.name}</h2>
-      <div class="mprice">${RUB(p.price)}</div><p class="mdesc">${p.desc}</p>
+      <div class="mprice">${RUB(p.price)}${p.priceOld?`<s class="mprice-old">${RUB(p.priceOld)}</s>`:''}</div><p class="mdesc">${p.desc}</p>
       <div class="mlabel">Размер</div>
       <div class="size-pick" id="sizePick">${p.sizes.map(s=>`<button data-size="${s}"${s===sel?' class="sel"':''}>${s}</button>`).join('')}</div>
       <button class="madd" id="madd">${addBtn}</button>

@@ -28,8 +28,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Принт",
     "color": "Другой",
     "accent": "#0026F9",
-    "price": 4149,
-    "priceMax": 6700,
+    "price": 2800,
+    "priceMax": 2800,
     "sizes": [
       "S",
       "M",
@@ -40,7 +40,8 @@ window.KOMUI_PRODUCTS = [
     "badge": "hit",
     "pop": 100,
     "image": "./assets/ozon-main/01-футболка-с-принтом-сатору-годжо.jpg",
-    "desc": "Футболка KOMUI: принт, цвет вареный/меланж, размеры S, M, L, XL, XXL. Подойдет как акцентная вещь для повседневного streetwear-образа."
+    "desc": "Футболка KOMUI: принт, цвет вареный/меланж, размеры S, M, L, XL, XXL. Подойдет как акцентная вещь для повседневного streetwear-образа.",
+    "priceOld": 4500
   },
   {
     "id": 2,
@@ -116,8 +117,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Вышивка",
     "color": "Другой",
     "accent": "#0026F9",
-    "price": 4149,
-    "priceMax": 4700,
+    "price": 2800,
+    "priceMax": 2800,
     "sizes": [
       "S",
       "M",
@@ -127,7 +128,8 @@ window.KOMUI_PRODUCTS = [
     "badge": "new",
     "pop": 96,
     "image": "./assets/ozon-main/05-футболка-наруто-с-вышивкой-itachi.jpg",
-    "desc": "Футболка KOMUI: вышивка, цвет вареный/меланж, размеры S, M, L, XL. Подойдет как акцентная вещь для повседневного streetwear-образа."
+    "desc": "Футболка KOMUI: вышивка, цвет вареный/меланж, размеры S, M, L, XL. Подойдет как акцентная вещь для повседневного streetwear-образа.",
+    "priceOld": 4500
   },
   {
     "id": 6,
@@ -137,8 +139,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Принт",
     "color": "Белый",
     "accent": "#2447ff",
-    "price": 4194,
-    "priceMax": 5393,
+    "price": 2800,
+    "priceMax": 2800,
     "sizes": [
       "S",
       "M",
@@ -149,7 +151,8 @@ window.KOMUI_PRODUCTS = [
     "badge": "new",
     "pop": 95,
     "image": "./assets/ozon-main/06-футболка-с-принтом-сатору-годжо.jpg",
-    "desc": "Футболка KOMUI: принт, цвет белый, размеры S, M, L, XL, XXL. Подойдет как акцентная вещь для повседневного streetwear-образа."
+    "desc": "Футболка KOMUI: принт, цвет белый, размеры S, M, L, XL, XXL. Подойдет как акцентная вещь для повседневного streetwear-образа.",
+    "priceOld": 4500
   },
   {
     "id": 7,
@@ -159,8 +162,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Принт",
     "color": "Черный",
     "accent": "#001aaf",
-    "price": 4149,
-    "priceMax": 4611,
+    "price": 2800,
+    "priceMax": 2800,
     "sizes": [
       "S",
       "M",
@@ -171,7 +174,8 @@ window.KOMUI_PRODUCTS = [
     "badge": "new",
     "pop": 94,
     "image": "./assets/ozon-main/07-футболка-с-принтом-сатору-годжо.jpg",
-    "desc": "Футболка KOMUI: принт, цвет черный, размеры S, M, L, XL, XXL. Подойдет как акцентная вещь для повседневного streetwear-образа."
+    "desc": "Футболка KOMUI: принт, цвет черный, размеры S, M, L, XL, XXL. Подойдет как акцентная вещь для повседневного streetwear-образа.",
+    "priceOld": 4500
   },
   {
     "id": 8,
@@ -181,8 +185,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Принт",
     "color": "Белый",
     "accent": "#3354ff",
-    "price": 4183,
-    "priceMax": 4700,
+    "price": 2800,
+    "priceMax": 2800,
     "sizes": [
       "S",
       "M",
@@ -192,7 +196,8 @@ window.KOMUI_PRODUCTS = [
     "badge": "new",
     "pop": 93,
     "image": "./assets/ozon-main/08-футболка-с-принтом-сатору-годжо.jpg",
-    "desc": "Футболка KOMUI: принт, цвет белый, размеры S, M, L, XL. Подойдет как акцентная вещь для повседневного streetwear-образа."
+    "desc": "Футболка KOMUI: принт, цвет белый, размеры S, M, L, XL. Подойдет как акцентная вещь для повседневного streetwear-образа.",
+    "priceOld": 4500
   },
   {
     "id": 9,
@@ -202,8 +207,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Вышивка",
     "color": "Черный",
     "accent": "#0026F9",
-    "price": 4149,
-    "priceMax": 4724,
+    "price": 2800,
+    "priceMax": 2800,
     "sizes": [
       "S",
       "M",
@@ -213,7 +218,8 @@ window.KOMUI_PRODUCTS = [
     "badge": null,
     "pop": 92,
     "image": "./assets/ozon-main/09-футболка-наруто-с-вышивкой-akatsuki-swoosh.jpg",
-    "desc": "Футболка KOMUI: вышивка, цвет черный, размеры S, M, L, XL. Подойдет как акцентная вещь для повседневного streetwear-образа."
+    "desc": "Футболка KOMUI: вышивка, цвет черный, размеры S, M, L, XL. Подойдет как акцентная вещь для повседневного streetwear-образа.",
+    "priceOld": 4500
   },
   {
     "id": 10,
@@ -223,8 +229,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Вышивка",
     "color": "Белый",
     "accent": "#2447ff",
-    "price": 4149,
-    "priceMax": 4611,
+    "price": 2800,
+    "priceMax": 2800,
     "sizes": [
       "S",
       "M",
@@ -234,7 +240,8 @@ window.KOMUI_PRODUCTS = [
     "badge": null,
     "pop": 91,
     "image": "./assets/ozon-main/10-футболка-наруто-с-вышивкой-madara.jpg",
-    "desc": "Футболка KOMUI: вышивка, цвет белый, размеры S, M, L, XL. Подойдет как акцентная вещь для повседневного streetwear-образа."
+    "desc": "Футболка KOMUI: вышивка, цвет белый, размеры S, M, L, XL. Подойдет как акцентная вещь для повседневного streetwear-образа.",
+    "priceOld": 4500
   },
   {
     "id": 11,
@@ -244,8 +251,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Принт",
     "color": "Белый",
     "accent": "#001aaf",
-    "price": 4149,
-    "priceMax": 4611,
+    "price": 2800,
+    "priceMax": 2800,
     "sizes": [
       "S",
       "M",
@@ -255,7 +262,8 @@ window.KOMUI_PRODUCTS = [
     "badge": null,
     "pop": 90,
     "image": "./assets/ozon-main/11-футболка-наруто-с-принтом-akatsuki.jpg",
-    "desc": "Футболка KOMUI: принт, цвет белый, размеры S, M, L, XL. Подойдет как акцентная вещь для повседневного streetwear-образа."
+    "desc": "Футболка KOMUI: принт, цвет белый, размеры S, M, L, XL. Подойдет как акцентная вещь для повседневного streetwear-образа.",
+    "priceOld": 4500
   },
   {
     "id": 12,
@@ -265,8 +273,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Принт",
     "color": "Черный",
     "accent": "#3354ff",
-    "price": 4149,
-    "priceMax": 4724,
+    "price": 2800,
+    "priceMax": 2800,
     "sizes": [
       "S",
       "M",
@@ -276,7 +284,8 @@ window.KOMUI_PRODUCTS = [
     "badge": null,
     "pop": 89,
     "image": "./assets/ozon-main/12-футболка-наруто-с-принтом-akatsuki.jpg",
-    "desc": "Футболка KOMUI: принт, цвет черный, размеры S, M, L, XL. Подойдет как акцентная вещь для повседневного streetwear-образа."
+    "desc": "Футболка KOMUI: принт, цвет черный, размеры S, M, L, XL. Подойдет как акцентная вещь для повседневного streetwear-образа.",
+    "priceOld": 4500
   },
   {
     "id": 13,
@@ -286,8 +295,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Принт",
     "color": "Черный",
     "accent": "#0026F9",
-    "price": 4240,
-    "priceMax": 4611,
+    "price": 2800,
+    "priceMax": 2800,
     "sizes": [
       "S",
       "M",
@@ -297,7 +306,8 @@ window.KOMUI_PRODUCTS = [
     "badge": null,
     "pop": 88,
     "image": "./assets/ozon-main/13-футболка-наруто-akatsuki.jpg",
-    "desc": "Футболка KOMUI: принт, цвет черный, размеры S, M, L, XL. Подойдет как акцентная вещь для повседневного streetwear-образа."
+    "desc": "Футболка KOMUI: принт, цвет черный, размеры S, M, L, XL. Подойдет как акцентная вещь для повседневного streetwear-образа.",
+    "priceOld": 4500
   },
   {
     "id": 14,
@@ -307,8 +317,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Вышивка",
     "color": "Белый",
     "accent": "#2447ff",
-    "price": 4660,
-    "priceMax": 4660,
+    "price": 2800,
+    "priceMax": 2800,
     "sizes": [
       "S",
       "M",
@@ -318,7 +328,8 @@ window.KOMUI_PRODUCTS = [
     "badge": null,
     "pop": 87,
     "image": "./assets/ozon-main/14-футболка-с-вышивкой-gravity.jpg",
-    "desc": "Футболка KOMUI: вышивка, цвет белый, размеры S, M, L, XL. Подойдет как акцентная вещь для повседневного streetwear-образа."
+    "desc": "Футболка KOMUI: вышивка, цвет белый, размеры S, M, L, XL. Подойдет как акцентная вещь для повседневного streetwear-образа.",
+    "priceOld": 4500
   },
   {
     "id": 15,
@@ -328,8 +339,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Принт",
     "color": "Белый",
     "accent": "#001aaf",
-    "price": 4149,
-    "priceMax": 4611,
+    "price": 2800,
+    "priceMax": 2800,
     "sizes": [
       "S",
       "M",
@@ -339,7 +350,8 @@ window.KOMUI_PRODUCTS = [
     "badge": null,
     "pop": 86,
     "image": "./assets/ozon-main/15-футболка-с-принтом-наруто.jpg",
-    "desc": "Футболка KOMUI: принт, цвет белый, размеры S, M, L, XL. Подойдет как акцентная вещь для повседневного streetwear-образа."
+    "desc": "Футболка KOMUI: принт, цвет белый, размеры S, M, L, XL. Подойдет как акцентная вещь для повседневного streetwear-образа.",
+    "priceOld": 4500
   },
   {
     "id": 16,
@@ -349,8 +361,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Принт",
     "color": "Белый",
     "accent": "#3354ff",
-    "price": 4621,
-    "priceMax": 4773,
+    "price": 2800,
+    "priceMax": 2800,
     "sizes": [
       "S",
       "M",
@@ -360,7 +372,8 @@ window.KOMUI_PRODUCTS = [
     "badge": null,
     "pop": 85,
     "image": "./assets/ozon-main/16-футболка-с-принтом-gravity.jpg",
-    "desc": "Футболка KOMUI: принт, цвет белый, размеры S, M, L, XL. Подойдет как акцентная вещь для повседневного streetwear-образа."
+    "desc": "Футболка KOMUI: принт, цвет белый, размеры S, M, L, XL. Подойдет как акцентная вещь для повседневного streetwear-образа.",
+    "priceOld": 4500
   },
   {
     "id": 17,
@@ -370,8 +383,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Принт",
     "color": "Черный",
     "accent": "#0026F9",
-    "price": 4660,
-    "priceMax": 4660,
+    "price": 2800,
+    "priceMax": 2800,
     "sizes": [
       "S",
       "M",
@@ -381,7 +394,8 @@ window.KOMUI_PRODUCTS = [
     "badge": null,
     "pop": 84,
     "image": "./assets/ozon-main/17-футболка-с-принтом-gravity.jpg",
-    "desc": "Футболка KOMUI: принт, цвет черный, размеры S, M, L, XL. Подойдет как акцентная вещь для повседневного streetwear-образа."
+    "desc": "Футболка KOMUI: принт, цвет черный, размеры S, M, L, XL. Подойдет как акцентная вещь для повседневного streetwear-образа.",
+    "priceOld": 4500
   },
   {
     "id": 18,
@@ -412,8 +426,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Вышивка",
     "color": "Черный",
     "accent": "#001aaf",
-    "price": 4571,
-    "priceMax": 4611,
+    "price": 2800,
+    "priceMax": 2800,
     "sizes": [
       "S",
       "M",
@@ -423,7 +437,8 @@ window.KOMUI_PRODUCTS = [
     "badge": null,
     "pop": 82,
     "image": "./assets/ozon-main/19-футболка-с-вышивкой-gta.jpg",
-    "desc": "Футболка KOMUI: вышивка, цвет черный, размеры S, M, L, XL. Подойдет как акцентная вещь для повседневного streetwear-образа."
+    "desc": "Футболка KOMUI: вышивка, цвет черный, размеры S, M, L, XL. Подойдет как акцентная вещь для повседневного streetwear-образа.",
+    "priceOld": 4500
   },
   {
     "id": 20,
@@ -433,8 +448,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Вышивка",
     "color": "Белый",
     "accent": "#3354ff",
-    "price": 4149,
-    "priceMax": 4611,
+    "price": 2800,
+    "priceMax": 2800,
     "sizes": [
       "M",
       "L",
@@ -443,7 +458,8 @@ window.KOMUI_PRODUCTS = [
     "badge": null,
     "pop": 81,
     "image": "./assets/ozon-main/20-футболка-наруто-с-вышивкой-akatsuki.jpg",
-    "desc": "Футболка KOMUI: вышивка, цвет белый, размеры M, L, XL. Подойдет как акцентная вещь для повседневного streetwear-образа."
+    "desc": "Футболка KOMUI: вышивка, цвет белый, размеры M, L, XL. Подойдет как акцентная вещь для повседневного streetwear-образа.",
+    "priceOld": 4500
   },
   {
     "id": 21,
@@ -473,8 +489,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Принт",
     "color": "Другой",
     "accent": "#2447ff",
-    "price": 4660,
-    "priceMax": 4660,
+    "price": 2800,
+    "priceMax": 2800,
     "sizes": [
       "S",
       "M"
@@ -482,7 +498,8 @@ window.KOMUI_PRODUCTS = [
     "badge": null,
     "pop": 79,
     "image": "./assets/ozon-main/22-футболка-варенка-с-принтом-gravity-серая.jpg",
-    "desc": "Футболка KOMUI: принт, цвет вареный/меланж, размеры S, M. Подойдет как акцентная вещь для повседневного streetwear-образа."
+    "desc": "Футболка KOMUI: принт, цвет вареный/меланж, размеры S, M. Подойдет как акцентная вещь для повседневного streetwear-образа.",
+    "priceOld": 4500
   },
   {
     "id": 23,
@@ -492,8 +509,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Вышивка",
     "color": "Белый",
     "accent": "#001aaf",
-    "price": 6700,
-    "priceMax": 6700,
+    "price": 2800,
+    "priceMax": 2800,
     "sizes": [
       "S",
       "M"
@@ -501,7 +518,8 @@ window.KOMUI_PRODUCTS = [
     "badge": null,
     "pop": 78,
     "image": "./assets/ozon-main/23-футболка-наруто-с-вышивкой-дарт-вейдер.jpg",
-    "desc": "Футболка KOMUI: вышивка, цвет белый, размеры S, M. Подойдет как акцентная вещь для повседневного streetwear-образа."
+    "desc": "Футболка KOMUI: вышивка, цвет белый, размеры S, M. Подойдет как акцентная вещь для повседневного streetwear-образа.",
+    "priceOld": 4500
   },
   {
     "id": 24,
@@ -511,8 +529,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Вышивка",
     "color": "Белый",
     "accent": "#3354ff",
-    "price": 4149,
-    "priceMax": 4611,
+    "price": 2800,
+    "priceMax": 2800,
     "sizes": [
       "S",
       "M"
@@ -520,6 +538,7 @@ window.KOMUI_PRODUCTS = [
     "badge": null,
     "pop": 77,
     "image": "./assets/ozon-main/24-футболка-наруто-с-вышивкой-itachi.jpg",
-    "desc": "Футболка KOMUI: вышивка, цвет белый, размеры S, M. Подойдет как акцентная вещь для повседневного streetwear-образа."
+    "desc": "Футболка KOMUI: вышивка, цвет белый, размеры S, M. Подойдет как акцентная вещь для повседневного streetwear-образа.",
+    "priceOld": 4500
   }
 ];
