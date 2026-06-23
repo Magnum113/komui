@@ -382,13 +382,22 @@ html[data-theme="light"] .cursor-glow{mix-blend-mode:multiply;background:radial-
 .empty .em{font-size:54px;margin-bottom:14px}
 .empty h3{font-family:'Unbounded',sans-serif;color:var(--txt);margin-bottom:8px}
 
-/* ---------- features band ---------- */
-.features{border-top:1px solid var(--line);background:var(--bg-2)}
-.features .wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;padding:48px 24px}
-.feat{display:flex;gap:14px;align-items:flex-start}
-.feat .ic{width:46px;height:46px;border-radius:12px;background:var(--grad-soft);border:1px solid var(--line-2);display:flex;align-items:center;justify-content:center;color:var(--mag);flex-shrink:0}
-.feat h4{font-size:15px;font-weight:700;margin-bottom:4px}
-.feat p{font-size:13px;color:var(--txt-2)}
+/* ---------- choice guide ---------- */
+.features{border-top:1px solid var(--line);background:linear-gradient(180deg,var(--bg-2),var(--bg))}
+.features .wrap{display:grid;grid-template-columns:minmax(250px,.85fr) 2.15fr;gap:28px;padding:58px 24px;align-items:start}
+.guide-kicker{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--mag);font-weight:800;margin-bottom:12px}
+.guide-title{font-family:'Unbounded',sans-serif;font-size:clamp(25px,3vw,40px);line-height:1.04;letter-spacing:-.02em;margin-bottom:14px}
+.guide-sub{color:var(--txt-2);font-size:15px;max-width:32ch}
+.guide-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.guide-card{display:flex;flex-direction:column;gap:14px;min-height:220px;padding:20px;border:1px solid var(--line);border-radius:12px;background:var(--panel);box-shadow:0 20px 46px -36px rgba(0,0,0,.45)}
+.guide-card .ic{width:42px;height:42px;border-radius:10px;background:var(--grad-soft);border:1px solid var(--line-2);display:flex;align-items:center;justify-content:center;color:var(--mag);flex-shrink:0}
+.guide-card h4{font-size:17px;font-weight:800;line-height:1.2;margin-bottom:6px}
+.guide-card p{font-size:14px;color:var(--txt-2);line-height:1.5}
+.guide-label{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt-3);font-weight:800}
+.guide-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+.guide-link{display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--txt);font-size:13px;font-weight:800;transition:color .2s,border-color .2s,transform .2s}
+.guide-link:hover{color:var(--mag);border-color:rgba(0,38,249,.38);transform:translateY(-1px)}
+.guide-link svg{width:15px;height:15px;flex-shrink:0}
 
 /* ---------- footer ---------- */
 footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)}
@@ -523,7 +532,7 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
   .filters{position:fixed;top:0;left:0;height:100%;width:min(360px,86vw);z-index:95;border-radius:0;transform:translateX(-100%);transition:transform .35s;overflow-y:auto}
   .filters.show{transform:translateX(0)}
   .filter-toggle{display:inline-flex}
-  .features .wrap{grid-template-columns:repeat(2,1fr)}
+  .features .wrap{grid-template-columns:1fr}
   .grid{grid-template-columns:repeat(2,1fr)}
   .foot-grid{grid-template-columns:1fr 1fr}
   .modal .mgrid{grid-template-columns:1fr;height:auto;max-height:90vh;overflow:auto}
@@ -575,6 +584,9 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
   .runway-head p{display:none}
   .runway{padding-bottom:18px}
   .features .wrap{grid-template-columns:1fr;padding:40px 16px}
+  .guide-grid{grid-template-columns:1fr}
+  .guide-card{min-height:0;padding:18px}
+  .guide-link{width:100%;justify-content:space-between}
   .foot-grid{grid-template-columns:1fr;gap:30px}
   .hero{min-height:auto;padding:54px 0 48px}
   .blob{filter:blur(78px)}
@@ -829,24 +841,60 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
   </div>
 </main>
 
-<!-- features -->
+<!-- choice guide -->
 <section class="features" id="about">
   <div class="wrap">
-    <div class="feat">
-      <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></div>
-      <div><h4>Вещь видно сразу</h4><p>Крупные фото показывают силуэт, принт, вышивку и фактуру без лишних карточек.</p></div>
+    <div class="guide-intro">
+      <div class="guide-kicker">Как выбрать</div>
+      <h2 class="guide-title">Начни с того, как будешь носить вещь</h2>
+      <p class="guide-sub">Четыре быстрых сценария помогают не листать весь каталог подряд и сразу перейти к подходящей подборке.</p>
     </div>
-    <div class="feat">
-      <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5M2 12l10 5 10-5"/></svg></div>
-      <div><h4>Принты и вышивка</h4><p>В ассортименте есть крупные принты, аккуратная вышивка и комбинированные дропы.</p></div>
-    </div>
-    <div class="feat">
-      <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5v14"/></svg></div>
-      <div><h4>Футболки, худи, свитшоты</h4><p>Каталог сгруппирован по моделям, чтобы не показывать десятки дублей размеров.</p></div>
-    </div>
-    <div class="feat">
-      <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M3 8l3-5h12l3 5M12 3v18"/></svg></div>
-      <div><h4>Быстрый выбор</h4><p>Фильтры по категории, нанесению, размеру, цвету и цене остаются на одном экране.</p></div>
+    <div class="guide-grid">
+      <article class="guide-card">
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m4 13 8-9 8 9"/><path d="M5 12h14v7a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1Z"/><path d="M9 20v-6h6v6"/></svg></div>
+        <div>
+          <div class="guide-label">Принт</div>
+          <h4>Хочу заметный акцент</h4>
+          <p>Крупный принт работает как главный элемент образа: базовый низ, однотонная верхняя одежда, вещь сразу считывается на фото.</p>
+        </div>
+        <div class="guide-actions">
+          <a class="guide-link" href="#catalog" data-guide-type="Принт">Показать принты <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></a>
+        </div>
+      </article>
+      <article class="guide-card">
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18"/><path d="M5 8c3.5 0 3.5-3 7-3s3.5 3 7 3"/><path d="M5 16c3.5 0 3.5 3 7 3s3.5-3 7-3"/><path d="M4 12h16"/></svg></div>
+        <div>
+          <div class="guide-label">Вышивка</div>
+          <h4>Нужен спокойный мерч</h4>
+          <p>Вышивка выглядит тише и аккуратнее, её проще дарить тем, кто носит аниме-мерч без больших иллюстраций.</p>
+        </div>
+        <div class="guide-actions">
+          <a class="guide-link" href="#catalog" data-guide-type="Вышивка">Показать вышивку <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></a>
+        </div>
+      </article>
+      <article class="guide-card">
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6l2 3 4 2-3 5v8H6v-8L3 8l4-2Z"/><path d="M9 3c0 2 1.5 3 3 3s3-1 3-3"/></svg></div>
+        <div>
+          <div class="guide-label">Футболка</div>
+          <h4>Беру первую вещь</h4>
+          <p>Футболка меньше зависит от сезона и проще сочетается. Хороший старт, если пока не уверен между худи и свитшотом.</p>
+        </div>
+        <div class="guide-actions">
+          <a class="guide-link" href="#catalog" data-guide-cat="Футболки">Выбрать футболку <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></a>
+        </div>
+      </article>
+      <article class="guide-card">
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 4h8l3 4 2 1-2 5-2-1v8H7v-8l-2 1-2-5 2-1Z"/><path d="M9 4c0 2 1.5 3 3 3s3-1 3-3"/><path d="M9 15h6"/></svg></div>
+        <div>
+          <div class="guide-label">Худи / свитшот</div>
+          <h4>Нужен плотный верх</h4>
+          <p>Подойдёт как самостоятельный слой: заметнее силуэт, теплее посадка, проще собрать образ поверх базовой футболки.</p>
+        </div>
+        <div class="guide-actions">
+          <a class="guide-link" href="#catalog" data-guide-cat="Худи">Худи <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></a>
+          <a class="guide-link" href="#catalog" data-guide-cat="Свитшоты">Свитшоты <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></a>
+        </div>
+      </article>
     </div>
   </div>
 </section>
@@ -1063,6 +1111,11 @@ async function loadStorefrontProducts(){
 
 /* ---------------- state ---------------- */
 const st={cat:null,cols:new Set(),types:new Set(),sizes:new Set(),color:null,q:'',min:0,max:0,sort:'pop'};
+function resetCatalogFilters(){
+  st.cat=null;st.cols.clear();st.types.clear();st.sizes.clear();st.color=null;st.q='';st.min=PMIN;st.max=PMAX;
+  const search=$('#searchInput');if(search)search.value='';
+}
+function jumpToCatalog(){if(location.hash!=='#catalog')history.replaceState(null,'','#catalog');closeAll();setTimeout(()=>$('#catalog').scrollIntoView({behavior:'smooth'}),50);}
 
 /* facet predicates */
 const chk={cat:p=>!st.cat||p.cat===st.cat,col:p=>!st.cols.size||st.cols.has(p.col),type:p=>!st.types.size||st.types.has(p.type),size:p=>!st.sizes.size||p.sizes.some(s=>st.sizes.has(s)),color:p=>!st.color||p.color===st.color,price:p=>p.price>=st.min&&p.price<=st.max,q:p=>{const q=st.q.trim().toLowerCase();return !q||[p.name,p.col,p.titleName,p.animeTitle,p.characterName].filter(Boolean).some(v=>v.toLowerCase().includes(q));}};
@@ -1355,7 +1408,7 @@ let tt;function toast(msg){$('#toastMsg').textContent=msg;const t=$('#toast');t.
 ['catChips','colChips','typeChips','sizeChips'].forEach(idc=>{$('#'+idc).addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;const f=b.dataset.facet,v=b.dataset.val;if(f==='cat'){st.cat=st.cat===v?null:v;}else if(f==='col'){st.cols.has(v)?st.cols.delete(v):st.cols.add(v);}else if(f==='type'){st.types.has(v)?st.types.delete(v):st.types.add(v);}else if(f==='size'){st.sizes.has(v)?st.sizes.delete(v):st.sizes.add(v);}render();});});
 $('#colorSwatches').addEventListener('click',e=>{const s=e.target.closest('.swatch');if(!s)return;st.color=st.color===s.dataset.color?null:s.dataset.color;render();});
 $('#activePills').addEventListener('click',e=>{const b=e.target.closest('[data-clear]');if(!b)return;const f=b.dataset.clear,v=b.dataset.val;if(f==='cat')st.cat=null;else if(f==='col')st.cols.delete(v);else if(f==='type')st.types.delete(v);else if(f==='size')st.sizes.delete(v);else if(f==='color')st.color=null;else if(f==='q'){st.q='';$('#searchInput').value='';}else if(f==='price'){st.min=PMIN;st.max=PMAX;}render();});
-$('#resetBtn').onclick=()=>{st.cat=null;st.cols.clear();st.types.clear();st.sizes.clear();st.color=null;st.q='';st.min=PMIN;st.max=PMAX;$('#searchInput').value='';render();};
+$('#resetBtn').onclick=()=>{resetCatalogFilters();render();};
 $('#searchInput').addEventListener('input',e=>{st.q=e.target.value;render();});
 $('#sortSel').addEventListener('change',e=>{st.sort=e.target.value;renderGrid();});
 $('#quickCollections')?.addEventListener('click',e=>{
@@ -1397,7 +1450,18 @@ $('#filterToggle').onclick=()=>{$('#filters').classList.add('show');setOverlay(t
 $('#applyMobile').onclick=closeAll;
 $('#burger').onclick=()=>{const m=$('#mobileMenu');const open=m.classList.toggle('show');setOverlay(open);};
 // data-cat shortcuts (nav + footer + mobile)
-document.addEventListener('click',e=>{const l=e.target.closest('[data-cat]');if(!l)return;st.cat=l.dataset.cat;render();closeAll();setTimeout(()=>$('#catalog').scrollIntoView({behavior:'smooth'}),50);});
+document.addEventListener('click',e=>{const l=e.target.closest('[data-cat]');if(!l)return;st.cat=l.dataset.cat;render();jumpToCatalog();});
+// choice guide shortcuts
+document.addEventListener('click',e=>{
+  const l=e.target.closest('[data-guide-cat],[data-guide-type]');
+  if(!l)return;
+  e.preventDefault();
+  resetCatalogFilters();
+  if(l.dataset.guideCat)st.cat=l.dataset.guideCat;
+  if(l.dataset.guideType)st.types.add(l.dataset.guideType);
+  render();
+  jumpToCatalog();
+});
 // newsletter
 $('#newsForm').addEventListener('submit',e=>{e.preventDefault();e.target.reset();toast('Готово! Ты подписан на дропы ✦');});
 // header solid on scroll
