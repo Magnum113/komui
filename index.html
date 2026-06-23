@@ -117,11 +117,11 @@ html[data-theme="light"] .cursor-glow{mix-blend-mode:multiply;background:radial-
   transition:background .3s,border-color .3s;
 }
 .site-header.solid{background:var(--header-bg-solid)}
-.nav{display:flex;align-items:center;justify-content:space-between;height:72px;gap:24px}
+.nav{position:relative;display:flex;align-items:center;justify-content:space-between;height:72px;gap:24px}
 .brand{display:flex;align-items:baseline;gap:8px;font-family:'Unbounded',sans-serif;font-weight:900;font-size:24px;letter-spacing:.04em}
 .brand .dot{color:var(--mag);text-shadow:0 0 18px var(--mag)}
 .brand small{font-size:11px;color:var(--txt-3);letter-spacing:.3em;font-weight:400}
-.nav-links{display:flex;gap:30px;font-size:14px;font-weight:500}
+.nav-links{position:absolute;left:50%;transform:translateX(-50%);display:flex;justify-content:center;gap:30px;font-size:14px;font-weight:500}
 .nav-links a{color:var(--txt-2);position:relative;padding:4px 0;transition:color .2s;white-space:nowrap}
 .nav-links a:hover{color:var(--txt)}
 .nav-links a::after{content:"";position:absolute;left:0;bottom:-2px;height:2px;width:0;background:var(--grad);transition:width .25s}
@@ -180,15 +180,10 @@ html[data-theme="light"] .cursor-glow{mix-blend-mode:multiply;background:radial-
 }
 .btn-primary{background:var(--grad-action);color:var(--on-accent);background-size:200% 200%;animation:gradmove 6s ease infinite;box-shadow:0 12px 32px -16px rgba(0,38,249,.65),inset 0 1px 0 rgba(255,255,255,.22)}
 .btn-primary:hover{transform:translateY(-2px);box-shadow:0 18px 42px -14px rgba(0,38,249,.68),inset 0 1px 0 rgba(255,255,255,.26)}
-.btn-primary:focus-visible,.quick .q-add:focus-visible,.modal .madd:focus-visible,.cart-foot .checkout:focus-visible,.news button:focus-visible{outline:none;box-shadow:var(--focus-ring),0 18px 42px -14px rgba(0,38,249,.68)}
+.btn-primary:focus-visible,.quick .q-add:focus-visible,.modal .madd:focus-visible,.cart-foot .checkout:focus-visible,.toast-action:focus-visible,.news button:focus-visible{outline:none;box-shadow:var(--focus-ring),0 18px 42px -14px rgba(0,38,249,.68)}
 @keyframes gradmove{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
 .btn-ghost{border:1px solid var(--line-2);color:var(--txt);background:rgba(255,255,255,.02)}
 .btn-ghost:hover{border-color:var(--mag);background:rgba(0,38,249,.06);transform:translateY(-2px)}
-.scroll-ind{position:absolute;bottom:26px;right:40px;z-index:3;display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--txt-3);font-size:11px;letter-spacing:.2em;text-transform:uppercase}
-.mouse{width:24px;height:38px;border:2px solid var(--line-2);border-radius:14px;position:relative}
-.mouse::after{content:"";position:absolute;top:7px;left:50%;transform:translateX(-50%);width:4px;height:7px;border-radius:3px;background:var(--mag);animation:scrolldot 1.8s infinite}
-@keyframes scrolldot{0%{opacity:0;top:7px}40%{opacity:1}80%{opacity:0;top:18px}100%{opacity:0}}
-
 .hero-product-stage{
   position:absolute;right:clamp(22px,4.6vw,92px);top:50%;
   width:min(55vw,940px);height:min(72vh,700px);z-index:2;pointer-events:none;
@@ -401,7 +396,7 @@ html[data-theme="light"] .cursor-glow{mix-blend-mode:multiply;background:radial-
 
 /* ---------- footer ---------- */
 footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)}
-.foot-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1.4fr;gap:40px;margin-bottom:50px}
+.foot-grid{display:grid;grid-template-columns:1.4fr .9fr .9fr 1.15fr 1.25fr;gap:30px;margin-bottom:50px}
 .foot-brand .brand{margin-bottom:16px}
 .foot-brand p{color:var(--txt-2);font-size:14px;max-width:280px;margin-bottom:20px}
 .socials{display:flex;gap:10px}
@@ -409,10 +404,17 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
 .foot-col a{display:block;color:var(--txt-2);font-size:14px;padding:6px 0;transition:color .2s}
 .foot-col a:hover{color:var(--mag)}
 .news p{color:var(--txt-2);font-size:14px;margin-bottom:14px}
-.news form{display:flex;gap:8px}
+.news form{display:grid;gap:8px}
+.news-row{display:flex;gap:8px}
 .news input{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;color:var(--txt);font-family:inherit;font-size:14px}
+.news-row input{min-width:0}
 .news input:focus{outline:none;border-color:var(--mag)}
 .news button{padding:12px 18px;border-radius:12px;background:var(--grad-action);color:var(--on-accent);font-weight:700;box-shadow:0 10px 26px -16px rgba(0,38,249,.65),inset 0 1px 0 rgba(255,255,255,.22)}
+.news-consents{display:grid;gap:7px;margin-top:2px}
+.news-consents label{display:flex;align-items:flex-start;gap:8px;color:var(--txt-3);font-size:11.5px;line-height:1.35}
+.news-consents input{width:14px;height:14px;flex:0 0 auto;margin-top:1px;padding:0;border-radius:4px;accent-color:var(--mag)}
+.news-consents a{color:var(--txt-2);text-decoration:underline;text-underline-offset:2px}
+.news-consents a:hover{color:var(--mag)}
 .foot-bottom{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:24px;border-top:1px solid var(--line);color:var(--txt-3);font-size:13px;flex-wrap:wrap}
 
 /* ---------- modal (quick view) ---------- */
@@ -515,9 +517,13 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
 .cart-foot .note{text-align:center;font-size:12px;color:var(--txt-3);margin-top:12px}
 
 /* toast */
-.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(120px);z-index:120;background:var(--panel-2);border:1px solid var(--line-2);border-radius:14px;padding:14px 22px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow);transition:transform .4s cubic-bezier(.34,1.56,.64,1);font-size:14px;font-weight:500}
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(120px);z-index:120;max-width:calc(100vw - 32px);background:var(--panel-2);border:1px solid var(--line-2);border-radius:14px;padding:14px 16px 14px 18px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow);transition:transform .4s cubic-bezier(.34,1.56,.64,1);font-size:14px;font-weight:500}
 .toast.show{transform:translateX(-50%) translateY(0)}
-.toast .ic{color:var(--lime)}
+.toast .ic{color:var(--lime);flex:0 0 auto}
+.toast-msg{min-width:0;flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.toast-action{display:none;align-items:center;justify-content:center;flex:0 0 auto;min-height:38px;padding:9px 13px;border-radius:10px;background:var(--grad-action);color:var(--on-accent);font-size:13px;font-weight:800;white-space:nowrap;box-shadow:0 10px 26px -16px rgba(0,38,249,.65),inset 0 1px 0 rgba(255,255,255,.22);transition:transform .15s ease-out}
+.toast-action:active{transform:scale(.96)}
+.toast.has-action .toast-action{display:inline-flex}
 
 /* mobile nav */
 .mobile-menu{position:fixed;inset:0;z-index:80;background:var(--bg);transform:translateX(100%);transition:transform .35s;padding:90px 28px 28px;display:flex;flex-direction:column;gap:6px}
@@ -545,7 +551,6 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
   .hero-product.side{left:3%;right:auto;top:18%;bottom:auto;width:32%;height:auto}
   .hero-product.mini{left:19%;right:auto;bottom:3%;width:35%;height:auto}
   .hero-product.fourth{right:3%;left:auto;bottom:5%;width:31%;height:auto}
-  .scroll-ind{display:none}
   .runway-card{width:220px}
 }
 @media(max-width:600px){
@@ -573,6 +578,9 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
   .quick{left:8px;right:8px;bottom:8px}
   .quick .q-view{display:none}
   .quick .q-add{flex:1;justify-content:center;padding:11px}
+  .toast{left:16px;right:16px;max-width:none;transform:translateY(120px);flex-wrap:wrap;justify-content:center}
+  .toast.show{transform:translateY(0)}
+  .toast-action{width:100%;min-height:40px}
   .toolbar{gap:10px}
   .result-count{order:2;width:100%}
   .section-sub{display:none}
@@ -676,7 +684,6 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
       <a href="#catalog" data-cat="Футболки">Футболки</a>
       <a href="#catalog" data-cat="Худи">Худи</a>
       <a href="#strip">Коллекции</a>
-      <a href="#about">О бренде</a>
     </nav>
     <div class="nav-actions">
       <button class="icon-btn" id="themeBtn" title="Сменить тему" aria-label="Сменить тему"></button>
@@ -700,7 +707,6 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
   <a href="#catalog" data-cat="Футболки">Футболки</a>
   <a href="#catalog" data-cat="Худи">Худи</a>
   <a href="#strip">Коллекции</a>
-  <a href="#about">О бренде</a>
 </div>
 
 <!-- hero -->
@@ -731,7 +737,6 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
     <div class="hero-product mini" data-hero-slot="2"></div>
     <div class="hero-product fourth" data-hero-slot="3"></div>
   </div>
-  <div class="scroll-ind"><div class="mouse"></div>листай вниз</div>
 </section>
 
 <!-- product runway -->
@@ -921,23 +926,36 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
       </div>
       <div class="foot-col">
         <h5>Инфо</h5>
-        <a href="#">Доставка и оплата</a>
-        <a href="#">Размерная сетка</a>
-        <a href="#">Уход за вещами</a>
-        <a href="#">Возврат</a>
+        <a href="./delivery.html">Доставка и оплата</a>
+        <a href="./returns.html">Возврат и обмен</a>
+        <a href="./sizes.html">Размерная сетка</a>
+        <a href="./care.html">Уход за вещами</a>
+      </div>
+      <div class="foot-col">
+        <h5>Документы</h5>
+        <a href="./seller.html">Продавец и контакты</a>
+        <a href="./offer.html">Публичная оферта</a>
+        <a href="./privacy.html">Политика обработки ПДн</a>
+        <a href="./personal-data-consent.html">Согласие на обработку ПДн</a>
+        <a href="./marketing-consent.html">Согласие на рекламу</a>
       </div>
       <div class="foot-col news">
         <h5>Не пропусти дроп</h5>
         <p>Подпишись — и узнаешь о новых коллекциях первым.</p>
         <form id="newsForm">
-          <input type="email" placeholder="твой email" required>
-          <button type="submit">→</button>
+          <div class="news-row">
+            <input type="email" placeholder="твой email" required>
+            <button type="submit">→</button>
+          </div>
+          <div class="news-consents">
+            <label><input type="checkbox" required> <span>Согласен с <a href="./personal-data-consent.html">обработкой персональных данных</a>.</span></label>
+            <label><input type="checkbox" required> <span>Согласен получать <a href="./marketing-consent.html">рекламную рассылку KOMUI</a>.</span></label>
+          </div>
         </form>
       </div>
     </div>
     <div class="foot-bottom">
-      <div>© 2026 KOMUI. Аниме-мерч для повседневного streetwear-образа.</div>
-      <div>Демо-витрина · оплата и доставка появятся позже</div>
+      <div>© 2026 KOMUI. ИП Кадимагомедов М. А., ИНН 053602598018, ОГРНИП 325050000200836.</div>
     </div>
   </div>
 </footer>
@@ -962,7 +980,7 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
   <div class="cart-foot" id="cartFoot"></div>
 </aside>
 
-<div class="toast" id="toast"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg></span><span id="toastMsg">Добавлено в корзину</span></div>
+<div class="toast" id="toast"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg></span><span class="toast-msg" id="toastMsg">Добавлено в корзину</span><button class="toast-action" id="toastCart" type="button">Перейти в корзину</button></div>
 
 <script src="./data/storefront-products.js"></script>
 <script src="./data/supabase-config.js"></script>
@@ -1360,7 +1378,7 @@ function render(){renderFilters();renderPills();renderGrid();}
 
 /* ---------------- cart ---------------- */
 let cart=[];
-function addToCart(id,size){id=String(id);const p=P.find(x=>String(x.id)===id);const key=id+'-'+size;const ex=cart.find(c=>c.key===key);if(ex)ex.qty++;else cart.push({key,id,size,qty:1});updateCart();toast(p.name+' ('+size+') в корзине');}
+function addToCart(id,size){id=String(id);const p=P.find(x=>String(x.id)===id);const key=id+'-'+size;const ex=cart.find(c=>c.key===key);if(ex)ex.qty++;else cart.push({key,id,size,qty:1});updateCart();toast(p.name+' ('+size+') в корзине',{cart:true});}
 function updateCart(){
   const n=cart.reduce((s,c)=>s+c.qty,0);const cc=$('#cartCount');cc.textContent=n;cc.classList.toggle('show',n>0);
   const body=$('#cartBody'),foot=$('#cartFoot');
@@ -1372,7 +1390,7 @@ function updateCart(){
       <div class="cright"><span class="cprice">${RUB(p.price*c.qty)}</span><button class="crm" data-rm="${c.key}">удалить</button></div>
     </div>`;}).join('');
   const sum=cart.reduce((s,c)=>s+P.find(x=>String(x.id)===String(c.id)).price*c.qty,0);
-  foot.innerHTML=`<div class="row"><span>Товары</span><span>${RUB(sum)}</span></div><div class="row"><span>Доставка</span><span>бесплатно</span></div><div class="row total"><span>Итого</span><span>${RUB(sum)}</span></div><button class="checkout" id="checkout">Оформить заказ</button><div class="note">Демо-витрина · оплата и доставка появятся позже</div>`;
+  foot.innerHTML=`<div class="row"><span>Товары</span><span>${RUB(sum)}</span></div><div class="row"><span>Доставка</span><span>бесплатно</span></div><div class="row total"><span>Итого</span><span>${RUB(sum)}</span></div><button class="checkout" id="checkout">Оформить заказ</button>`;
 }
 
 /* ---------------- quick view ---------------- */
@@ -1392,7 +1410,7 @@ function openModal(id){
   initGalleries();
   $('#mclose').onclick=closeAll;
   $('#sizePick').onclick=e=>{const b=e.target.closest('[data-size]');if(!b)return;sel=b.dataset.size;$$('#sizePick button').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');};
-  $('#madd').onclick=()=>{addToCart(p.id,sel);closeAll();openCart();};
+  $('#madd').onclick=()=>{addToCart(p.id,sel);closeAll();};
 }
 
 /* ---------------- overlay / panels ---------------- */
@@ -1401,7 +1419,7 @@ function closeAll(){closePhotoLightbox();$('#modal').classList.remove('show');$(
 function openCart(){updateCart();$('#cart').classList.add('show');setOverlay(true);}
 
 /* ---------------- toast ---------------- */
-let tt;function toast(msg){$('#toastMsg').textContent=msg;const t=$('#toast');t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2200);}
+let tt;function toast(msg,opts={}){const t=$('#toast');$('#toastMsg').textContent=msg;t.classList.toggle('has-action',!!opts.cart);t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),opts.cart?5200:2200);}
 
 /* ---------------- wiring ---------------- */
 // filter chip delegation
@@ -1440,8 +1458,9 @@ document.addEventListener('click',e=>{
 $('#grid').addEventListener('click',e=>{if(e.target.closest('.gallery[data-swiped="1"]'))return;const v=e.target.closest('[data-view]'),a=e.target.closest('[data-add]'),card=e.target.closest('.card');if(v){openModal(v.dataset.view);return;}if(a){const p=P.find(x=>x.id==a.dataset.add);addToCart(p.id,p.sizes.includes('M')?'M':p.sizes[0]);return;}if(card)openModal(card.dataset.id);});
 // cart
 $('#cartBtn').onclick=openCart;$('#cartClose').onclick=closeAll;
+$('#toastCart').onclick=()=>{clearTimeout(tt);$('#toast').classList.remove('show');openCart();};
 $('#cartBody').addEventListener('click',e=>{const inc=e.target.closest('[data-inc]'),dec=e.target.closest('[data-dec]'),rm=e.target.closest('[data-rm]');if(inc){const c=cart.find(x=>x.key===inc.dataset.inc);c.qty++;updateCart();}if(dec){const c=cart.find(x=>x.key===dec.dataset.dec);c.qty--;if(c.qty<=0)cart=cart.filter(x=>x!==c);updateCart();}if(rm){cart=cart.filter(x=>x.key!==rm.dataset.rm);updateCart();}});
-$('#cartFoot').addEventListener('click',e=>{if(e.target.closest('#checkout'))toast('Это демо-витрина — оплата появится позже');});
+$('#cartFoot').addEventListener('click',e=>{if(e.target.closest('#checkout'))toast('Заказ принят в обработку');});
 // overlay + esc
 $('#overlay').onclick=closeAll;document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('#photoLightbox').classList.contains('show'))closePhotoLightbox();else closeAll();}});
 // header buttons
