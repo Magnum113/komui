@@ -121,11 +121,50 @@ html[data-theme="light"] .cursor-glow{mix-blend-mode:multiply;background:radial-
 .brand{display:flex;align-items:baseline;gap:8px;font-family:'Unbounded',sans-serif;font-weight:900;font-size:24px;letter-spacing:.04em}
 .brand .dot{color:var(--mag);text-shadow:0 0 18px var(--mag)}
 .brand small{font-size:11px;color:var(--txt-3);letter-spacing:.3em;font-weight:400}
-.nav-links{position:absolute;left:50%;transform:translateX(-50%);display:flex;justify-content:center;gap:30px;font-size:14px;font-weight:500}
-.nav-links a{color:var(--txt-2);position:relative;padding:4px 0;transition:color .2s;white-space:nowrap}
-.nav-links a:hover{color:var(--txt)}
-.nav-links a::after{content:"";position:absolute;left:0;bottom:-2px;height:2px;width:0;background:var(--grad);transition:width .25s}
-.nav-links a:hover::after{width:100%}
+.nav-links{position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;justify-content:center;gap:30px;font-size:14px;font-weight:500}
+.nav-links a,.nav-collection-trigger{color:var(--txt-2);position:relative;padding:4px 0;transition:color .2s;white-space:nowrap;font-size:14px;font-weight:500}
+.nav-links a:hover,.nav-collection-trigger:hover,.nav-collections.open .nav-collection-trigger{color:var(--txt)}
+.nav-links a::after,.nav-collection-trigger::after{content:"";position:absolute;left:0;bottom:-2px;height:2px;width:0;background:var(--grad);transition:width .25s}
+.nav-links a:hover::after,.nav-collections.open .nav-collection-trigger::after{width:100%}
+.nav-collections{position:relative}
+.nav-collection-trigger{display:inline-flex;align-items:center;gap:6px}
+.nav-collection-trigger svg{width:14px;height:14px;transition:transform .2s}
+.nav-collections.open .nav-collection-trigger svg{transform:rotate(180deg)}
+.nav-collection-trigger:focus-visible,.mobile-collection-trigger:focus-visible,.collection-item:focus-visible{outline:2px solid rgba(0,38,249,.48);outline-offset:4px}
+.collection-menu{
+  position:absolute;top:calc(100% + 18px);left:50%;width:min(720px,calc(100vw - 48px));
+  transform:translateX(-50%) translateY(10px);z-index:70;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;
+  padding:14px;border-radius:16px;border:1px solid var(--line);background:var(--panel);
+  box-shadow:0 26px 70px -34px rgba(0,0,0,.55);opacity:0;visibility:hidden;pointer-events:none;
+  transition:opacity .2s,transform .2s,visibility .2s
+}
+.nav-collections.open .collection-menu{opacity:1;visibility:visible;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+.collection-menu::before{content:"";position:absolute;left:0;right:0;top:-19px;height:19px}
+.collection-item{
+  display:grid;grid-template-columns:54px minmax(0,1fr) auto;align-items:center;gap:12px;
+  min-height:76px;padding:10px;border-radius:12px;border:1px solid var(--line);
+  background:var(--panel-2);text-align:left;transition:transform .18s,border-color .18s,background .18s
+}
+.collection-item:hover{transform:translateY(-1px);border-color:rgba(0,38,249,.38);background:var(--panel)}
+.collection-logo{
+  width:54px;height:54px;border-radius:12px;border:1px solid var(--line-2);
+  display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;
+  font-family:'Unbounded',sans-serif;font-size:17px;font-weight:900;letter-spacing:.02em;color:#fff;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.22)
+}
+.collection-logo::after{content:"";position:absolute;inset:auto -12px -18px -12px;height:28px;background:rgba(255,255,255,.18);transform:rotate(-8deg)}
+.collection-logo.jjk{background:linear-gradient(135deg,#13225f,#0026F9)}
+.collection-logo.naruto{background:linear-gradient(135deg,#f26a21,#12131a)}
+.collection-logo.gta{background:linear-gradient(135deg,#1d7a42,#111)}
+.collection-logo.gravity{background:linear-gradient(135deg,#6f2dbd,#0b1020)}
+.collection-logo.starwars{background:linear-gradient(135deg,#0f172a,#f5c542);color:#111}
+.collection-logo.komui{background:var(--grad-action)}
+.collection-copy{min-width:0}
+.collection-name{display:block;color:var(--txt);font-size:14px;font-weight:800;line-height:1.2;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.collection-brand{display:block;color:var(--txt-2);font-size:12px;font-weight:600;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.collection-count{color:var(--txt-3);font-size:12px;font-weight:800;white-space:nowrap}
+.mobile-collections{display:none}
+.mobile-collection-panel{display:none}
 .nav-actions{display:flex;align-items:center;gap:8px}
 .icon-btn{
   display:inline-flex;align-items:center;justify-content:center;
@@ -225,7 +264,7 @@ html[data-theme="light"] .cursor-glow{mix-blend-mode:multiply;background:radial-
 /* ---------- product runway ---------- */
 .runway{padding:48px 0 58px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,var(--bg),var(--bg-2))}
 .runway-head{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:22px}
-.runway h2{font-family:'Unbounded',sans-serif;font-size:clamp(26px,4vw,48px);line-height:1;letter-spacing:-.03em}
+.runway h2{font-family:'Unbounded',sans-serif;font-size:clamp(26px,4vw,48px);line-height:1;letter-spacing:-.03em;margin-bottom:14px}
 .runway p{color:var(--txt-2);max-width:520px}
 .runway-viewport{overflow:hidden;margin-inline:calc((100vw - min(var(--maxw), calc(100vw - 48px)))/-2);padding:4px 0 12px}
 .runway-track{--runway-scale:1;display:flex;gap:18px;width:max-content;padding-left:84px;transform-origin:left top;animation:runwaySlide 42s linear infinite;will-change:transform}
@@ -245,6 +284,13 @@ html[data-theme="light"] .cursor-glow{mix-blend-mode:multiply;background:radial-
 .strip .item{font-family:'Unbounded',sans-serif;font-weight:800;font-size:clamp(22px,3vw,34px);color:transparent;-webkit-text-stroke:1px var(--line-2);padding:16px 28px;display:inline-flex;align-items:center;gap:28px;text-transform:uppercase}
 .strip .item .star{color:var(--mag);-webkit-text-stroke:0;font-size:.6em}
 .strip .item:hover{color:var(--txt);-webkit-text-stroke:0}
+.strip-logo{width:42px;height:42px;border-radius:11px;border:1px solid var(--line-2);display:inline-flex;align-items:center;justify-content:center;color:#fff;-webkit-text-stroke:0;font-size:12px;font-weight:900;letter-spacing:.02em;box-shadow:inset 0 1px 0 rgba(255,255,255,.22)}
+.strip-logo.jjk{background:linear-gradient(135deg,#13225f,#0026F9)}
+.strip-logo.naruto{background:linear-gradient(135deg,#f26a21,#12131a)}
+.strip-logo.gta{background:linear-gradient(135deg,#1d7a42,#111)}
+.strip-logo.gravity{background:linear-gradient(135deg,#6f2dbd,#0b1020)}
+.strip-logo.starwars{background:linear-gradient(135deg,#0f172a,#f5c542);color:#111}
+.strip-logo.komui{background:var(--grad-action)}
 
 /* ---------- catalog ---------- */
 .catalog{padding:70px 0 90px}
@@ -410,9 +456,10 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
 .news-row input{min-width:0}
 .news input:focus{outline:none;border-color:var(--mag)}
 .news button{padding:12px 18px;border-radius:12px;background:var(--grad-action);color:var(--on-accent);font-weight:700;box-shadow:0 10px 26px -16px rgba(0,38,249,.65),inset 0 1px 0 rgba(255,255,255,.22)}
-.news-consents{display:grid;gap:7px;margin-top:2px}
-.news-consents label{display:flex;align-items:flex-start;gap:8px;color:var(--txt-3);font-size:11.5px;line-height:1.35}
-.news-consents input{width:14px;height:14px;flex:0 0 auto;margin-top:1px;padding:0;border-radius:4px;accent-color:var(--mag)}
+.news-consents{display:flex;align-items:center;flex-wrap:wrap;gap:6px 9px;margin-top:0;color:var(--txt-3);font-size:11px;line-height:1.15}
+.news-consents-title{flex:0 0 auto}
+.news-consents label{display:inline-flex;align-items:center;gap:5px;min-height:22px;color:var(--txt-3);font-size:11px;line-height:1;white-space:nowrap}
+.news-consents input{width:12px;height:12px;flex:0 0 auto;margin:0;padding:0;border-radius:3px;accent-color:var(--mag)}
 .news-consents a{color:var(--txt-2);text-decoration:underline;text-underline-offset:2px}
 .news-consents a:hover{color:var(--mag)}
 .foot-bottom{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:24px;border-top:1px solid var(--line);color:var(--txt-3);font-size:13px;flex-wrap:wrap}
@@ -458,6 +505,7 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
 .size-pick button.sel:focus-visible{box-shadow:var(--focus-ring),0 10px 22px -14px rgba(0,38,249,.72)}
 .modal .madd{width:100%;padding:16px;border-radius:13px;background:var(--grad-action);color:var(--on-accent);font-weight:800;font-size:15px;background-size:200% 200%;animation:gradmove 6s ease infinite;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 12px 32px -16px rgba(0,38,249,.65),inset 0 1px 0 rgba(255,255,255,.22)}
 .modal .madd:hover{transform:translateY(-2px);box-shadow:0 14px 36px -12px rgba(0,38,249,.5)}
+.modal .madd-float{display:none}
 .modal .mfeat{display:flex;gap:18px;margin-top:22px;flex-wrap:wrap}
 .modal .mfeat div{font-size:12px;color:var(--txt-2);display:flex;align-items:center;gap:7px}
 .photo-lightbox{
@@ -526,13 +574,24 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
 .toast.has-action .toast-action{display:inline-flex}
 
 /* mobile nav */
-.mobile-menu{position:fixed;inset:0;z-index:80;background:var(--bg);transform:translateX(100%);transition:transform .35s;padding:90px 28px 28px;display:flex;flex-direction:column;gap:6px}
+.mobile-menu{position:fixed;inset:0;z-index:110;background:var(--bg);transform:translateX(100%);transition:transform .35s;padding:90px 28px 28px;display:flex;flex-direction:column;gap:6px}
 .mobile-menu.show{transform:translateX(0)}
 .mobile-menu a{font-family:'Unbounded',sans-serif;font-size:28px;font-weight:700;padding:14px 0;border-bottom:1px solid var(--line)}
+.mobile-collections{display:block;border-bottom:1px solid var(--line)}
+.mobile-collection-trigger{width:100%;display:flex;align-items:center;justify-content:space-between;font-family:'Unbounded',sans-serif;font-size:28px;font-weight:700;padding:14px 0;color:var(--txt)}
+.mobile-collection-trigger svg{width:20px;height:20px;transition:transform .2s;color:var(--txt-2)}
+.mobile-collections.open .mobile-collection-trigger svg{transform:rotate(180deg)}
+.mobile-collection-panel{display:grid;gap:9px;max-height:0;overflow:hidden;transition:max-height .28s ease;padding:0}
+.mobile-collections.open .mobile-collection-panel{max-height:60vh;padding:2px 0 14px;overflow-y:auto}
+.mobile-collection-panel .collection-item{grid-template-columns:46px minmax(0,1fr) auto;min-height:64px;padding:9px}
+.mobile-collection-panel .collection-logo{width:46px;height:46px;border-radius:11px;font-size:14px}
+.mobile-collection-panel .collection-name{font-size:13px}
+.mobile-collection-panel .collection-brand{font-size:11.5px}
 
 /* ---------- responsive ---------- */
 @media(max-width:1024px){
   .nav-links{display:none}
+  .collection-menu{display:none}
   .burger{display:flex}
   .layout{grid-template-columns:1fr}
   .filters{position:fixed;top:0;left:0;height:100%;width:min(360px,86vw);z-index:95;border-radius:0;transform:translateX(-100%);transition:transform .35s;overflow-y:auto}
@@ -620,23 +679,30 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
   }
   .modal .mgrid{
     display:block;height:auto;max-height:92vh;max-height:calc(100dvh - 24px);
-    overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(116px + env(safe-area-inset-bottom))
+    overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(24px + env(safe-area-inset-bottom))
   }
+  .modal.madd-floating .mgrid{padding-bottom:calc(104px + env(safe-area-inset-bottom))}
   .modal .mbody{display:flex;flex-direction:column;padding:18px 20px 0;overflow:visible}
   .modal .col{order:1;margin-bottom:6px}
   .modal h2{order:2;font-size:21px;line-height:1.08;margin-bottom:10px}
   .modal .mprice{order:3;font-size:26px;margin-bottom:12px}
   .modal .madd{
-    order:4;position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));z-index:8;
-    width:calc(min(94vw,440px) - 40px);max-width:400px;margin:0;transform:translateX(-50%);
+    order:4;width:100%;margin:0 0 18px;
     box-shadow:0 16px 34px -14px rgba(0,38,249,.72),inset 0 1px 0 rgba(255,255,255,.22)
   }
-  .modal .madd:hover{transform:translateX(-50%) translateY(-2px)}
+  .modal .madd-float{
+    display:flex;position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));z-index:8;
+    width:calc(min(94vw,440px) - 40px);max-width:400px;margin:0;transform:translateX(-50%) translateY(12px);
+    opacity:0;pointer-events:none;transition:opacity .22s ease,transform .22s ease;
+    box-shadow:0 18px 38px -14px rgba(0,38,249,.78),inset 0 1px 0 rgba(255,255,255,.22)
+  }
+  .modal.madd-floating .madd-float{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+  .modal .madd-float:hover{transform:translateX(-50%) translateY(-2px)}
   .modal .mdesc{order:5;margin-bottom:20px}
   .modal .mlabel{order:6}
   .modal .size-pick{order:7}
   .modal .mfeat{order:8}
-  .modal .mmedia{width:100%;height:auto;aspect-ratio:1/1;padding:0;overflow:hidden}
+  .modal .mmedia{width:100%;height:auto;aspect-ratio:4/5;padding:0;overflow:hidden}
   .modal .mmedia .product-photo,
   .modal .mmedia .gtrack .gimg{width:100%;height:100%;object-fit:cover;object-position:center}
   .modal .mmedia .gdots{bottom:10px;padding:0 10px;overflow-x:auto;scrollbar-width:none}
@@ -683,7 +749,13 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
       <a href="#catalog">Каталог</a>
       <a href="#catalog" data-cat="Футболки">Футболки</a>
       <a href="#catalog" data-cat="Худи">Худи</a>
-      <a href="#strip">Коллекции</a>
+      <div class="nav-collections" id="navCollections">
+        <button class="nav-collection-trigger" id="collectionMenuBtn" type="button" aria-expanded="false" aria-controls="collectionMenu">
+          Коллекции
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="collection-menu" id="collectionMenu" aria-label="Коллекции"></div>
+      </div>
     </nav>
     <div class="nav-actions">
       <button class="icon-btn" id="themeBtn" title="Сменить тему" aria-label="Сменить тему"></button>
@@ -706,7 +778,13 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
   <a href="#catalog">Каталог</a>
   <a href="#catalog" data-cat="Футболки">Футболки</a>
   <a href="#catalog" data-cat="Худи">Худи</a>
-  <a href="#strip">Коллекции</a>
+  <div class="mobile-collections" id="mobileCollections">
+    <button class="mobile-collection-trigger" id="mobileCollectionBtn" type="button" aria-expanded="false" aria-controls="mobileCollectionList">
+      Коллекции
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <div class="mobile-collection-panel" id="mobileCollectionList" aria-label="Коллекции"></div>
+  </div>
 </div>
 
 <!-- hero -->
@@ -948,8 +1026,9 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
             <button type="submit">→</button>
           </div>
           <div class="news-consents">
-            <label><input type="checkbox" required> <span>Согласен с <a href="./personal-data-consent.html">обработкой персональных данных</a>.</span></label>
-            <label><input type="checkbox" required> <span>Согласен получать <a href="./marketing-consent.html">рекламную рассылку KOMUI</a>.</span></label>
+            <span class="news-consents-title">Согласен:</span>
+            <label><input type="checkbox" required aria-label="Согласен на обработку персональных данных"> <a href="./personal-data-consent.html">ПДн</a></label>
+            <label><input type="checkbox" required aria-label="Согласен получать рекламную рассылку KOMUI"> <a href="./marketing-consent.html">рассылка</a></label>
           </div>
         </form>
       </div>
@@ -989,6 +1068,7 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
 'use strict';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const RUB=n=>n.toLocaleString('ru-RU')+' ₽';
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 /* ---------------- theme ---------------- */
 const SUN='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4.4"/><path d="M12 2v2.4M12 19.6V22M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2 12h2.4M19.6 12H22M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/></svg>';
@@ -1151,6 +1231,38 @@ function collectionTotals(){
   return COLS.map(name=>({name,count:P.filter(p=>p.col===name).length}))
     .sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name,'ru'));
 }
+function collectionMeta(name){
+  const items=P.filter(p=>p.col===name);
+  const collectionName=String(name||'').toLowerCase();
+  const hay=[collectionName,...items.flatMap(p=>[p.name,p.titleName,p.animeTitle,p.characterName,p.designKey])].filter(Boolean).join(' ').toLowerCase();
+  if(/satoru|gojo|годжо|jujutsu|магичес|jjk|呪術/.test(collectionName)||/satoru|gojo|годжо|jujutsu|магичес|jjk|呪術/.test(hay))return {brand:'Магическая битва',mark:'JJK',cls:'jjk'};
+  if(/darth|vader|дарт|вейдер|star wars|звездн/.test(collectionName)||/darth|vader|дарт|вейдер|star wars|звездн/.test(hay))return {brand:'Star Wars',mark:'SW',cls:'starwars'};
+  if(/naruto|наруто|itachi|akatsuki|madara|итачи|акацуки|мадара/.test(collectionName)||/naruto|наруто|itachi|akatsuki|madara|итачи|акацуки|мадара/.test(hay))return {brand:'Naruto',mark:'忍',cls:'naruto'};
+  if(/gta|grand theft/.test(collectionName)||/gta|grand theft/.test(hay))return {brand:'GTA',mark:'GTA',cls:'gta'};
+  if(/gravity|гравити|falls/.test(collectionName)||/gravity|гравити|falls/.test(hay))return {brand:'Gravity Falls',mark:'GF',cls:'gravity'};
+  return {brand:'KOMUI',mark:'K',cls:'komui'};
+}
+function collectionLogo(meta,cls='collection-logo'){
+  return `<span class="${cls} ${meta.cls}" aria-hidden="true">${esc(meta.mark)}</span>`;
+}
+function collectionItemHtml({name,count}){
+  const meta=collectionMeta(name);
+  const cats=[...new Set(P.filter(p=>p.col===name).map(p=>p.cat).filter(Boolean))].join(' · ');
+  return `<button class="collection-item" type="button" data-nav-col="${esc(name)}">
+    ${collectionLogo(meta)}
+    <span class="collection-copy">
+      <span class="collection-name">${esc(name)}</span>
+      <span class="collection-brand">${esc(meta.brand)}${cats?' · '+esc(cats):''}</span>
+    </span>
+    <span class="collection-count">${count}</span>
+  </button>`;
+}
+function renderCollectionMenus(){
+  const html=collectionTotals().map(collectionItemHtml).join('');
+  const desktop=$('#collectionMenu'),mobile=$('#mobileCollectionList');
+  if(desktop)desktop.innerHTML=html||'<span class="collection-brand">Коллекции появятся после загрузки каталога</span>';
+  if(mobile)mobile.innerHTML=html||'<span class="collection-brand">Коллекции появятся после загрузки каталога</span>';
+}
 function renderQuickCollections(){
   const box=$('#quickCollections');
   if(!box)return;
@@ -1172,6 +1284,7 @@ function renderFilters(){
   $('#rangeFill').style.left=lo+'%';$('#rangeFill').style.width=(hi-lo)+'%';
   $('#rMin').value=st.min;$('#rMax').value=st.max;
   renderQuickCollections();
+  renderCollectionMenus();
 }
 
 /* ---------------- active pills ---------------- */
@@ -1396,26 +1509,50 @@ function updateCart(){
 /* ---------------- quick view ---------------- */
 function openModal(id){
   const p=P.find(x=>x.id==id);let sel=p.sizes.includes('M')?'M':p.sizes[0];
-  $('#modal').innerHTML=`<button class="mclose" id="mclose">✕</button><div class="mgrid">
+  const addBtn=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg> Добавить в корзину`;
+  $('#modal').innerHTML=`<button class="mclose" id="mclose">✕</button>
+    <button class="madd madd-float" id="maddFloat" type="button" aria-label="Добавить в корзину">${addBtn}</button>
+    <div class="mgrid">
     <div class="mmedia"><div class="glow" style="position:absolute;width:60%;height:60%;border-radius:50%;filter:blur(70px);opacity:.6;background:${p.accent}"></div>${productGallery(p,{eagerAll:true})}</div>
     <div class="mbody">
       <div class="col">${p.col}</div><h2>${p.name}</h2>
       <div class="mprice">${RUB(p.price)}</div><p class="mdesc">${p.desc}</p>
       <div class="mlabel">Размер</div>
       <div class="size-pick" id="sizePick">${p.sizes.map(s=>`<button data-size="${s}"${s===sel?' class="sel"':''}>${s}</button>`).join('')}</div>
-      <button class="madd" id="madd"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg> Добавить в корзину</button>
+      <button class="madd" id="madd">${addBtn}</button>
       <div class="mfeat"><div>✦ ${p.type}</div><div>✦ 100% хлопок</div><div>✦ Плотность 240 г/м²</div></div>
     </div></div>`;
-  const m=$('#modal');m.classList.add('show');setOverlay(true);
+  const m=$('#modal');m.classList.add('show');m.classList.remove('madd-floating');setOverlay(true);
   initGalleries();
   $('#mclose').onclick=closeAll;
   $('#sizePick').onclick=e=>{const b=e.target.closest('[data-size]');if(!b)return;sel=b.dataset.size;$$('#sizePick button').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');};
-  $('#madd').onclick=()=>{addToCart(p.id,sel);closeAll();};
+  const handleAdd=()=>{addToCart(p.id,sel);closeAll();};
+  $('#madd').onclick=handleAdd;
+  $('#maddFloat').onclick=handleAdd;
+  if(window.__maddIO){try{window.__maddIO.disconnect();}catch(e){}}
+  const mgrid=m.querySelector('.mgrid');
+  const maddEl=m.querySelector('#madd');
+  if('IntersectionObserver' in window && mgrid && maddEl){
+    window.__maddIO=new IntersectionObserver(entries=>{
+      const e=entries[0];if(!e)return;
+      m.classList.toggle('madd-floating',!e.isIntersecting);
+    },{root:mgrid,threshold:0.05});
+    window.__maddIO.observe(maddEl);
+  }
 }
 
 /* ---------------- overlay / panels ---------------- */
 function setOverlay(on){$('#overlay').classList.toggle('show',on);document.body.classList.toggle('no-scroll',on);}
-function closeAll(){closePhotoLightbox();$('#modal').classList.remove('show');$('#cart').classList.remove('show');$('#filters').classList.remove('show');$('#mobileMenu').classList.remove('show');setOverlay(false);}
+function setCollectionMenu(open){
+  const box=$('#navCollections'),btn=$('#collectionMenuBtn');
+  box?.classList.toggle('open',open);btn?.setAttribute('aria-expanded',open?'true':'false');
+}
+function setMobileCollectionMenu(open){
+  const box=$('#mobileCollections'),btn=$('#mobileCollectionBtn');
+  box?.classList.toggle('open',open);btn?.setAttribute('aria-expanded',open?'true':'false');
+}
+function closeCollectionMenus(){setCollectionMenu(false);setMobileCollectionMenu(false);}
+function closeAll(){closePhotoLightbox();closeCollectionMenus();const _m=$('#modal');_m.classList.remove('show');_m.classList.remove('madd-floating');if(window.__maddIO){try{window.__maddIO.disconnect();}catch(e){}window.__maddIO=null;}$('#cart').classList.remove('show');$('#filters').classList.remove('show');$('#mobileMenu').classList.remove('show');setOverlay(false);}
 function openCart(){updateCart();$('#cart').classList.add('show');setOverlay(true);}
 
 /* ---------------- toast ---------------- */
@@ -1468,6 +1605,18 @@ $('#searchBtn').onclick=()=>{$('#catalog').scrollIntoView({behavior:'smooth'});s
 $('#filterToggle').onclick=()=>{$('#filters').classList.add('show');setOverlay(true);$('#applyMobile').style.display='block';};
 $('#applyMobile').onclick=closeAll;
 $('#burger').onclick=()=>{const m=$('#mobileMenu');const open=m.classList.toggle('show');setOverlay(open);};
+$('#collectionMenuBtn')?.addEventListener('click',e=>{e.stopPropagation();const open=!$('#navCollections').classList.contains('open');setCollectionMenu(open);setMobileCollectionMenu(false);});
+$('#mobileCollectionBtn')?.addEventListener('click',e=>{e.stopPropagation();const open=!$('#mobileCollections').classList.contains('open');setMobileCollectionMenu(open);});
+document.addEventListener('click',e=>{if(e.target.closest('#navCollections,#mobileCollections'))return;closeCollectionMenus();});
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-nav-col]');
+  if(!b)return;
+  e.preventDefault();
+  resetCatalogFilters();
+  st.cols.add(b.dataset.navCol);
+  render();
+  jumpToCatalog();
+});
 // data-cat shortcuts (nav + footer + mobile)
 document.addEventListener('click',e=>{const l=e.target.closest('[data-cat]');if(!l)return;st.cat=l.dataset.cat;render();jumpToCatalog();});
 // choice guide shortcuts
@@ -1508,7 +1657,7 @@ function initPromoBar(){
 }
 function renderCollectionStrip(){
   const list=COLS.length?COLS:['KOMUI'];
-  const stripOne=list.map(c=>`<span class="item">${c}<span class="star">✦</span></span>`).join('');
+  const stripOne=list.map(c=>{const meta=collectionMeta(c);return `<span class="item">${collectionLogo(meta,'strip-logo')}${esc(c)}<span class="star">✦</span></span>`;}).join('');
   $('#stripTrack').innerHTML=stripOne+stripOne;
 }
 
