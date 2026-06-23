@@ -28,8 +28,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Принт",
     "color": "Другой",
     "accent": "#0026F9",
-    "price": 2800,
-    "priceMax": 2800,
+    "price": 2900,
+    "priceMax": 2900,
     "sizes": [
       "S",
       "M",
@@ -117,8 +117,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Вышивка",
     "color": "Другой",
     "accent": "#0026F9",
-    "price": 2800,
-    "priceMax": 2800,
+    "price": 2900,
+    "priceMax": 2900,
     "sizes": [
       "S",
       "M",
@@ -139,8 +139,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Принт",
     "color": "Белый",
     "accent": "#2447ff",
-    "price": 2800,
-    "priceMax": 2800,
+    "price": 2900,
+    "priceMax": 2900,
     "sizes": [
       "S",
       "M",
@@ -162,8 +162,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Принт",
     "color": "Черный",
     "accent": "#001aaf",
-    "price": 2800,
-    "priceMax": 2800,
+    "price": 2900,
+    "priceMax": 2900,
     "sizes": [
       "S",
       "M",
@@ -185,8 +185,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Принт",
     "color": "Белый",
     "accent": "#3354ff",
-    "price": 2800,
-    "priceMax": 2800,
+    "price": 2900,
+    "priceMax": 2900,
     "sizes": [
       "S",
       "M",
@@ -207,8 +207,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Вышивка",
     "color": "Черный",
     "accent": "#0026F9",
-    "price": 2800,
-    "priceMax": 2800,
+    "price": 2900,
+    "priceMax": 2900,
     "sizes": [
       "S",
       "M",
@@ -229,8 +229,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Вышивка",
     "color": "Белый",
     "accent": "#2447ff",
-    "price": 2800,
-    "priceMax": 2800,
+    "price": 2900,
+    "priceMax": 2900,
     "sizes": [
       "S",
       "M",
@@ -251,8 +251,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Принт",
     "color": "Белый",
     "accent": "#001aaf",
-    "price": 2800,
-    "priceMax": 2800,
+    "price": 2900,
+    "priceMax": 2900,
     "sizes": [
       "S",
       "M",
@@ -273,8 +273,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Принт",
     "color": "Черный",
     "accent": "#3354ff",
-    "price": 2800,
-    "priceMax": 2800,
+    "price": 2900,
+    "priceMax": 2900,
     "sizes": [
       "S",
       "M",
@@ -295,8 +295,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Принт",
     "color": "Черный",
     "accent": "#0026F9",
-    "price": 2800,
-    "priceMax": 2800,
+    "price": 2900,
+    "priceMax": 2900,
     "sizes": [
       "S",
       "M",
@@ -317,8 +317,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Вышивка",
     "color": "Белый",
     "accent": "#2447ff",
-    "price": 2800,
-    "priceMax": 2800,
+    "price": 2900,
+    "priceMax": 2900,
     "sizes": [
       "S",
       "M",
@@ -339,8 +339,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Принт",
     "color": "Белый",
     "accent": "#001aaf",
-    "price": 2800,
-    "priceMax": 2800,
+    "price": 2900,
+    "priceMax": 2900,
     "sizes": [
       "S",
       "M",
@@ -361,8 +361,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Принт",
     "color": "Белый",
     "accent": "#3354ff",
-    "price": 2800,
-    "priceMax": 2800,
+    "price": 2900,
+    "priceMax": 2900,
     "sizes": [
       "S",
       "M",
@@ -383,8 +383,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Принт",
     "color": "Черный",
     "accent": "#0026F9",
-    "price": 2800,
-    "priceMax": 2800,
+    "price": 2900,
+    "priceMax": 2900,
     "sizes": [
       "S",
       "M",
@@ -426,8 +426,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Вышивка",
     "color": "Черный",
     "accent": "#001aaf",
-    "price": 2800,
-    "priceMax": 2800,
+    "price": 2900,
+    "priceMax": 2900,
     "sizes": [
       "S",
       "M",
@@ -448,8 +448,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Вышивка",
     "color": "Белый",
     "accent": "#3354ff",
-    "price": 2800,
-    "priceMax": 2800,
+    "price": 2900,
+    "priceMax": 2900,
     "sizes": [
       "M",
       "L",
@@ -489,8 +489,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Принт",
     "color": "Другой",
     "accent": "#2447ff",
-    "price": 2800,
-    "priceMax": 2800,
+    "price": 2900,
+    "priceMax": 2900,
     "sizes": [
       "S",
       "M"
@@ -509,8 +509,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Вышивка",
     "color": "Белый",
     "accent": "#001aaf",
-    "price": 2800,
-    "priceMax": 2800,
+    "price": 2900,
+    "priceMax": 2900,
     "sizes": [
       "S",
       "M"
@@ -529,8 +529,8 @@ window.KOMUI_PRODUCTS = [
     "type": "Вышивка",
     "color": "Белый",
     "accent": "#3354ff",
-    "price": 2800,
-    "priceMax": 2800,
+    "price": 2900,
+    "priceMax": 2900,
     "sizes": [
       "S",
       "M"
