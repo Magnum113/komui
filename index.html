@@ -1539,6 +1539,19 @@ function openModal(id){
     },{root:mgrid,threshold:0.05});
     window.__maddIO.observe(maddEl);
   }
+  if(window.__modalAutoplay){clearInterval(window.__modalAutoplay);window.__modalAutoplay=null;}
+  const mmedia=m.querySelector('.mmedia');
+  const gal=mmedia?.querySelector('.gallery[data-gallery]');
+  if(gal){
+    const stopAutoplay=()=>{if(window.__modalAutoplay){clearInterval(window.__modalAutoplay);window.__modalAutoplay=null;}};
+    window.__modalAutoplay=setInterval(()=>{
+      if(!m.classList.contains('show')){stopAutoplay();return;}
+      galleryStep(gal,1);
+    },3000);
+    const onUserInteract=()=>stopAutoplay();
+    gal.addEventListener('pointerdown',onUserInteract,{once:true});
+    mmedia.addEventListener('click',onUserInteract,{once:true});
+  }
 }
 
 /* ---------------- overlay / panels ---------------- */
@@ -1552,7 +1565,7 @@ function setMobileCollectionMenu(open){
   box?.classList.toggle('open',open);btn?.setAttribute('aria-expanded',open?'true':'false');
 }
 function closeCollectionMenus(){setCollectionMenu(false);setMobileCollectionMenu(false);}
-function closeAll(){closePhotoLightbox();closeCollectionMenus();const _m=$('#modal');_m.classList.remove('show');_m.classList.remove('madd-floating');if(window.__maddIO){try{window.__maddIO.disconnect();}catch(e){}window.__maddIO=null;}$('#cart').classList.remove('show');$('#filters').classList.remove('show');$('#mobileMenu').classList.remove('show');setOverlay(false);}
+function closeAll(){closePhotoLightbox();closeCollectionMenus();const _m=$('#modal');_m.classList.remove('show');_m.classList.remove('madd-floating');if(window.__maddIO){try{window.__maddIO.disconnect();}catch(e){}window.__maddIO=null;}if(window.__modalAutoplay){clearInterval(window.__modalAutoplay);window.__modalAutoplay=null;}$('#cart').classList.remove('show');$('#filters').classList.remove('show');$('#mobileMenu').classList.remove('show');setOverlay(false);}
 function openCart(){updateCart();$('#cart').classList.add('show');setOverlay(true);}
 
 /* ---------------- toast ---------------- */
