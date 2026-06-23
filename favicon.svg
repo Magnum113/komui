@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="KOMUI">
+  <defs>
+    <linearGradient id="blue" x1="10" y1="8" x2="58" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0026F9"/>
+      <stop offset=".62" stop-color="#173cff"/>
+      <stop offset="1" stop-color="#6f83ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="18" fill="#f5f6fa"/>
+  <rect x="4.5" y="4.5" width="55" height="55" rx="16" fill="#fff" stroke="url(#blue)" stroke-width="3"/>
+  <path d="M15 13h10v17l16-17h13L36 31l20 20H42L25 35v16H15V13Z" fill="#14151c"/>
+  <circle cx="52" cy="50" r="6" fill="url(#blue)"/>
+</svg>
