@@ -417,6 +417,8 @@ html[data-theme="light"] .cursor-glow{mix-blend-mode:multiply;background:radial-
 .card .info .meta{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .card .price{font-family:'Unbounded',sans-serif;font-weight:700;font-size:18px;display:inline-flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .card .price .price-old,.modal .mprice-old{font-family:inherit;font-weight:500;color:var(--txt-3);opacity:.7;text-decoration:line-through;text-decoration-thickness:1.5px;text-decoration-color:currentColor}
+.price-badge,.mprice-badge{display:inline-flex;align-items:center;background:#ff3450;color:#fff;font-family:'Unbounded',sans-serif;font-weight:800;font-size:11px;letter-spacing:.02em;padding:3px 8px;border-radius:7px;line-height:1.2;box-shadow:0 6px 16px -8px rgba(255,52,80,.65)}
+.modal .mprice-badge{font-size:13px;padding:4px 10px;border-radius:8px}
 .card .price .price-old{font-size:13px}
 .modal .mprice-old{font-size:16px;margin-left:10px}
 .card .sizes{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
@@ -425,6 +427,7 @@ html[data-theme="light"] .cursor-glow{mix-blend-mode:multiply;background:radial-
 .empty{grid-column:1/-1;text-align:center;padding:80px 20px;color:var(--txt-2)}
 .empty .em{font-size:54px;margin-bottom:14px}
 .empty h3{font-family:'Unbounded',sans-serif;color:var(--txt);margin-bottom:8px}
+.empty .btn,.cart-empty .btn{margin-top:18px}
 
 /* ---------- choice guide ---------- */
 .features{border-top:1px solid var(--line);background:linear-gradient(180deg,var(--bg-2),var(--bg))}
@@ -545,6 +548,7 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
 .cart-body{flex:1;overflow:auto;padding:14px 24px}
 .cart-empty{text-align:center;padding:70px 10px;color:var(--txt-2)}
 .cart-empty .em{font-size:46px;margin-bottom:12px;opacity:.6}
+.cart-empty h3{font-family:'Unbounded',sans-serif;color:var(--txt);font-size:18px;margin-bottom:6px}
 .citem{display:flex;gap:14px;padding:16px 0;border-bottom:1px solid var(--line)}
 .citem .cthumb{width:72px;height:72px;border-radius:12px;background:var(--media-bg);flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .citem .cthumb .garment{width:86%}
@@ -730,15 +734,15 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
 <div class="announce">
   <div class="announce-track">
     <div class="announce-inner">
-      <div class="announce-offer"><b>−10% на первый заказ</b><span>по промокоду</span></div>
+      <div class="announce-offer"><b>−10% на первый заказ</b></div>
       <div class="announce-code" id="promoCode">KOMUI10</div>
-      <div class="announce-timer">до конца дня: <span id="promoTimer">--:--:--</span></div>
+      <div class="announce-timer">сгорит через <span id="promoTimer">--:--:--</span></div>
       <button class="announce-copy" id="promoCopy" type="button">Скопировать</button>
     </div>
     <div class="announce-inner announce-inner-copy" aria-hidden="true">
-      <div class="announce-offer"><b>−10% на первый заказ</b><span>по промокоду</span></div>
+      <div class="announce-offer"><b>−10% на первый заказ</b></div>
       <div class="announce-code">KOMUI10</div>
-      <div class="announce-timer">до конца дня: <span data-promo-timer-clone>--:--:--</span></div>
+      <div class="announce-timer">сгорит через <span data-promo-timer-clone>--:--:--</span></div>
       <span class="announce-copy">Скопировать</span>
     </div>
   </div>
@@ -859,10 +863,10 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
         </button>
         <div class="select-wrap">
           <select id="sortSel">
-            <option value="pop">Сначала популярные</option>
-            <option value="new">Сначала новинки</option>
-            <option value="asc">Цена: по возрастанию</option>
-            <option value="desc">Цена: по убыванию</option>
+            <option value="pop">Популярные</option>
+            <option value="new">Новинки</option>
+            <option value="asc">Цена ↑</option>
+            <option value="desc">Цена ↓</option>
           </select>
         </div>
       </div>
@@ -940,7 +944,7 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
         <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m4 13 8-9 8 9"/><path d="M5 12h14v7a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1Z"/><path d="M9 20v-6h6v6"/></svg></div>
         <div>
           <div class="guide-label">Принт</div>
-          <h4>Хочу заметный акцент</h4>
+          <h4>Хочу, чтобы заметили</h4>
           <p>Крупный принт работает как главный элемент образа: базовый низ, однотонная верхняя одежда, вещь сразу считывается на фото.</p>
         </div>
         <div class="guide-actions">
@@ -951,7 +955,7 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
         <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18"/><path d="M5 8c3.5 0 3.5-3 7-3s3.5 3 7 3"/><path d="M5 16c3.5 0 3.5 3 7 3s3.5-3 7-3"/><path d="M4 12h16"/></svg></div>
         <div>
           <div class="guide-label">Вышивка</div>
-          <h4>Нужен спокойный мерч</h4>
+          <h4>Хочу аккуратно и тихо</h4>
           <p>Вышивка выглядит тише и аккуратнее, её проще дарить тем, кто носит аниме-мерч без больших иллюстраций.</p>
         </div>
         <div class="guide-actions">
@@ -962,7 +966,7 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
         <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6l2 3 4 2-3 5v8H6v-8L3 8l4-2Z"/><path d="M9 3c0 2 1.5 3 3 3s3-1 3-3"/></svg></div>
         <div>
           <div class="guide-label">Футболка</div>
-          <h4>Беру первую вещь</h4>
+          <h4>Первая вещь от KOMUI</h4>
           <p>Футболка меньше зависит от сезона и проще сочетается. Хороший старт, если пока не уверен между худи и свитшотом.</p>
         </div>
         <div class="guide-actions">
@@ -973,7 +977,7 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
         <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 4h8l3 4 2 1-2 5-2-1v8H7v-8l-2 1-2-5 2-1Z"/><path d="M9 4c0 2 1.5 3 3 3s3-1 3-3"/><path d="M9 15h6"/></svg></div>
         <div>
           <div class="guide-label">Худи / свитшот</div>
-          <h4>Нужен плотный верх</h4>
+          <h4>Беру на холодный сезон</h4>
           <p>Подойдёт как самостоятельный слой: заметнее силуэт, теплее посадка, проще собрать образ поверх базовой футболки.</p>
         </div>
         <div class="guide-actions">
@@ -1022,16 +1026,15 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
       </div>
       <div class="foot-col news">
         <h5>Не пропусти дроп</h5>
-        <p>Подпишись — и узнаешь о новых коллекциях первым.</p>
+        <p>Расскажем о новых дропах и закрытых распродажах. Без спама.</p>
         <form id="newsForm">
           <div class="news-row">
             <input type="email" placeholder="твой email" required>
             <button type="submit">→</button>
           </div>
           <div class="news-consents">
-            <span class="news-consents-title">Согласен:</span>
-            <label><input type="checkbox" required aria-label="Согласен на обработку персональных данных"> <a href="./personal-data-consent.html">ПДн</a></label>
-            <label><input type="checkbox" required aria-label="Согласен получать рекламную рассылку KOMUI"> <a href="./marketing-consent.html">рассылка</a></label>
+            <label><input type="checkbox" required aria-label="Согласен на обработку персональных данных"> Согласен на <a href="./personal-data-consent.html">обработку персональных данных</a></label>
+            <label><input type="checkbox" required aria-label="Согласен получать письма от KOMUI"> Согласен получать <a href="./marketing-consent.html">письма от KOMUI</a></label>
           </div>
         </form>
       </div>
@@ -1062,7 +1065,7 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
   <div class="cart-foot" id="cartFoot"></div>
 </aside>
 
-<div class="toast" id="toast"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg></span><span class="toast-msg" id="toastMsg">Добавлено в корзину</span><button class="toast-action" id="toastCart" type="button">Перейти в корзину</button></div>
+<div class="toast" id="toast"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg></span><span class="toast-msg" id="toastMsg">Добавлено в корзину</span><button class="toast-action" id="toastCart" type="button">Открыть</button></div>
 
 <script src="./data/storefront-products.js"></script>
 <script src="./data/supabase-config.js"></script>
@@ -1310,7 +1313,7 @@ function renderPills(){
 function renderGrid(){
   const list=filtered();$('#rCount').textContent=list.length;
   const grid=$('#grid');
-  if(!list.length){grid.innerHTML=`<div class="empty"><div class="em">⛩️</div><h3>Ничего не найдено</h3><p>Попробуй сбросить часть фильтров.</p></div>`;return;}
+  if(!list.length){grid.innerHTML=`<div class="empty"><div class="em">⛩️</div><h3>Тут пока пусто</h3><p>Снимем фильтры — покажем всё, что есть.</p><button class="btn btn-primary" id="emptyReset" type="button">Сбросить фильтры</button></div>`;const er=document.getElementById('emptyReset');if(er)er.onclick=()=>{resetCatalogFilters();render();};return;}
   const badgeHtml=p=>((p.badges||[]).includes('new')?'<span class="tag new">Новинка</span>':'')+((p.badges||[]).includes('hit')?'<span class="tag hit">Хит</span>':'');
   grid.innerHTML=list.map(p=>`
     <article class="card" data-id="${p.id}">
@@ -1327,7 +1330,7 @@ function renderGrid(){
       <div class="info">
         <div class="col">${p.col}</div>
         <h3>${p.name}</h3>
-        <div class="meta"><span class="price">${RUB(p.price)}${p.priceOld?`<s class="price-old">${RUB(p.priceOld)}</s>`:''}</span><span class="sizes">${p.sizes.map(s=>`<span>${s}</span>`).join('')}</span></div>
+        <div class="meta"><span class="price">${RUB(p.price)}${p.priceOld?`<s class="price-old">${RUB(p.priceOld)}</s><span class="price-badge">−${Math.round((1-p.price/p.priceOld)*100)}%</span>`:''}</span><span class="sizes">${p.sizes.map(s=>`<span>${s}</span>`).join('')}</span></div>
       </div>
     </article>`).join('');
   requestAnimationFrame(()=>$$('.card').forEach((c,i)=>setTimeout(()=>c.classList.add('in'),Math.min(i*45,400))));
@@ -1497,11 +1500,11 @@ function render(){renderFilters();renderPills();renderGrid();}
 
 /* ---------------- cart ---------------- */
 let cart=[];
-function addToCart(id,size){id=String(id);const p=P.find(x=>String(x.id)===id);const key=id+'-'+size;const ex=cart.find(c=>c.key===key);if(ex)ex.qty++;else cart.push({key,id,size,qty:1});updateCart();toast(p.name+' ('+size+') в корзине',{cart:true});}
+function addToCart(id,size){id=String(id);const p=P.find(x=>String(x.id)===id);const key=id+'-'+size;const ex=cart.find(c=>c.key===key);if(ex)ex.qty++;else cart.push({key,id,size,qty:1});updateCart();toast('Добавлено в корзину · '+size,{cart:true});}
 function updateCart(){
   const n=cart.reduce((s,c)=>s+c.qty,0);const cc=$('#cartCount');cc.textContent=n;cc.classList.toggle('show',n>0);
   const body=$('#cartBody'),foot=$('#cartFoot');
-  if(!cart.length){body.innerHTML=`<div class="cart-empty"><div class="em">🛒</div><p>Корзина пуста.<br>Самое время выбрать мерч.</p></div>`;foot.innerHTML='';return;}
+  if(!cart.length){body.innerHTML=`<div class="cart-empty"><div class="em">🛒</div><h3>Пока пусто</h3><p>Загляни в каталог — там новые дропы.</p><a class="btn btn-primary" id="emptyToCatalog" href="#catalog">В каталог</a></div>`;foot.innerHTML='';const ec=document.getElementById('emptyToCatalog');if(ec)ec.onclick=()=>closeAll();return;}
   body.innerHTML=cart.map(c=>{const p=P.find(x=>String(x.id)===String(c.id));return `<div class="citem">
       <div class="cthumb">${productImage(p)}</div>
       <div class="cmeta"><h4>${p.name}</h4><div class="cs">${p.col} · ${p.type} · ${c.size}</div>
@@ -1522,7 +1525,7 @@ function openModal(id){
     <div class="mmedia"><div class="glow" style="position:absolute;width:60%;height:60%;border-radius:50%;filter:blur(70px);opacity:.6;background:${p.accent}"></div>${productGallery(p,{eagerAll:true})}</div>
     <div class="mbody">
       <div class="col">${p.col}</div><h2>${p.name}</h2>
-      <div class="mprice">${RUB(p.price)}${p.priceOld?`<s class="mprice-old">${RUB(p.priceOld)}</s>`:''}</div><p class="mdesc">${p.desc}</p>
+      <div class="mprice">${RUB(p.price)}${p.priceOld?`<s class="mprice-old">${RUB(p.priceOld)}</s><span class="mprice-badge">−${Math.round((1-p.price/p.priceOld)*100)}%</span>`:''}</div><p class="mdesc">${p.desc}</p>
       <div class="mlabel">Размер</div>
       <div class="size-pick" id="sizePick">${p.sizes.map(s=>`<button data-size="${s}"${s===sel?' class="sel"':''}>${s}</button>`).join('')}</div>
       <button class="madd" id="madd">${addBtn}</button>
@@ -1650,7 +1653,7 @@ document.addEventListener('click',e=>{
   jumpToCatalog();
 });
 // newsletter
-$('#newsForm').addEventListener('submit',e=>{e.preventDefault();e.target.reset();toast('Готово! Ты подписан на дропы ✦');});
+$('#newsForm').addEventListener('submit',e=>{e.preventDefault();e.target.reset();toast('Подписка оформлена ✦');});
 // header solid on scroll
 addEventListener('scroll',()=>{$('#header').classList.toggle('solid',scrollY>20);},{passive:true});
 
@@ -1669,9 +1672,11 @@ function initPromoBar(){
   }
   tickPromo();setInterval(tickPromo,1000);
   copy?.addEventListener('click',async()=>{
-    try{await navigator.clipboard.writeText(code);copy.textContent='Скопировано';}
+    let ok=false;
+    try{await navigator.clipboard.writeText(code);copy.textContent='Готово ✓';ok=true;}
     catch(e){copy.textContent=code;}
-    setTimeout(()=>copy.textContent='Скопировать',1800);
+    toast(ok?'Промокод скопирован':'Промокод: '+code);
+    setTimeout(()=>copy.textContent='Скопировать',2000);
   });
 }
 function renderCollectionStrip(){
