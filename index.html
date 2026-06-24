@@ -995,18 +995,18 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
       </div>
       <div class="foot-col">
         <h5>Инфо</h5>
-        <a href="./delivery.html">Доставка и оплата</a>
-        <a href="./returns.html">Возврат и обмен</a>
-        <a href="./sizes.html">Размерная сетка</a>
-        <a href="./care.html">Уход за вещами</a>
+        <a href="/delivery">Доставка и оплата</a>
+        <a href="/returns">Возврат и обмен</a>
+        <a href="/sizes">Размерная сетка</a>
+        <a href="/care">Уход за вещами</a>
       </div>
       <div class="foot-col">
         <h5>Документы</h5>
-        <a href="./seller.html">Продавец и контакты</a>
-        <a href="./offer.html">Публичная оферта</a>
-        <a href="./privacy.html">Политика обработки ПДн</a>
-        <a href="./personal-data-consent.html">Согласие на обработку ПДн</a>
-        <a href="./marketing-consent.html">Согласие на рекламу</a>
+        <a href="/seller">Продавец и контакты</a>
+        <a href="/offer">Публичная оферта</a>
+        <a href="/privacy">Политика обработки ПДн</a>
+        <a href="/personal-data-consent">Согласие на обработку ПДн</a>
+        <a href="/marketing-consent">Согласие на рекламу</a>
       </div>
       <div class="foot-col news">
         <h5>Не пропусти дроп</h5>
@@ -1017,8 +1017,8 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
             <button type="submit">→</button>
           </div>
           <div class="news-consents">
-            <label><input type="checkbox" required aria-label="Согласен на обработку персональных данных"> Согласен на <a href="./personal-data-consent.html">обработку персональных данных</a></label>
-            <label><input type="checkbox" required aria-label="Согласен получать письма от KOMUI"> Согласен получать <a href="./marketing-consent.html">письма от KOMUI</a></label>
+            <label><input type="checkbox" required aria-label="Согласен на обработку персональных данных"> Согласен на <a href="/personal-data-consent">обработку персональных данных</a></label>
+            <label><input type="checkbox" required aria-label="Согласен получать письма от KOMUI"> Согласен получать <a href="/marketing-consent">письма от KOMUI</a></label>
           </div>
         </form>
       </div>
@@ -1634,7 +1634,7 @@ $('#cartFoot').addEventListener('click',e=>{
   const snapshot=checkoutSnapshot();
   if(!snapshot.length){toast('Корзина пуста');return;}
   try{localStorage.setItem(CHECKOUT_STORAGE_KEY,JSON.stringify(snapshot));}catch(err){}
-  location.href='./checkout.html';
+  location.href='/checkout';
 });
 // overlay + esc
 $('#overlay').onclick=closeAll;document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('#photoLightbox').classList.contains('show'))closePhotoLightbox();else closeAll();}});

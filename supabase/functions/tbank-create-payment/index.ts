@@ -415,9 +415,9 @@ Deno.serve(async (request) => {
       Language: "ru",
       NotificationURL: `${supabaseUrl}/functions/v1/tbank-webhook`,
       SuccessURL:
-        `${siteUrl}/payment-result.html?status=success&order=${encodeURIComponent(number)}`,
+        `${siteUrl}/payment-result?status=success&order=${encodeURIComponent(number)}`,
       FailURL:
-        `${siteUrl}/payment-result.html?status=fail&order=${encodeURIComponent(number)}`,
+        `${siteUrl}/payment-result?status=fail&order=${encodeURIComponent(number)}`,
       DATA: {
         Phone: phone,
         name: `${lastName} ${firstName}`.slice(0, 100),

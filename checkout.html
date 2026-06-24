@@ -193,7 +193,7 @@ img,svg{display:block}
 }
 .primary-button:hover{transform:translateY(-2px);box-shadow:0 20px 42px -16px rgba(0,38,249,.74),inset 0 1px 0 rgba(255,255,255,.24)}
 .primary-button:disabled{cursor:wait;opacity:.72;transform:none}
-.trust-list{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.trust-list{display:grid;grid-template-columns:1fr;gap:10px;margin-top:16px}
 .trust-item{display:flex;align-items:center;gap:7px;color:var(--txt-3);font-size:11px;line-height:1.3}
 .trust-item svg{width:17px;height:17px;color:var(--blue);flex:0 0 auto}
 .empty-checkout{
@@ -352,8 +352,8 @@ img,svg{display:block}
 <body>
 <header class="checkout-header">
   <div class="wrap header-inner">
-    <a class="brand" href="./index.html" aria-label="KOMUI, на главную">KOMUI<span class="dot">.</span></a>
-    <a class="back-link" href="./index.html">
+    <a class="brand" href="/" aria-label="KOMUI, на главную">KOMUI<span class="dot">.</span></a>
+    <a class="back-link" href="/">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
       <span>Вернуться в магазин</span>
     </a>
@@ -450,7 +450,7 @@ img,svg{display:block}
           <div class="consents" id="consents">
             <label class="check-row">
               <input id="legalConsent" type="checkbox" required>
-              <span>Я принимаю условия <a href="./offer.html" target="_blank">публичной оферты</a> и даю согласие на <a href="./personal-data-consent.html" target="_blank">обработку персональных данных</a>.</span>
+              <span>Я принимаю условия <a href="/offer" target="_blank">публичной оферты</a> и даю согласие на <a href="/personal-data-consent" target="_blank">обработку персональных данных</a>.</span>
             </label>
             <label class="check-row">
               <input id="marketingConsent" type="checkbox">
@@ -464,7 +464,7 @@ img,svg{display:block}
       <aside class="summary-card" id="summaryCard">
         <div class="summary-head">
           <h2>Ваш заказ</h2>
-          <a class="summary-edit" href="./index.html">Изменить</a>
+          <a class="summary-edit" href="/">Изменить</a>
           <button class="summary-toggle" id="summaryToggle" type="button" aria-expanded="true">
             <span id="summaryToggleText">Свернуть</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>
@@ -500,10 +500,6 @@ img,svg{display:block}
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
               Безопасная онлайн-оплата
             </div>
-            <div class="trust-item">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
-              Доставка в ПВЗ СДЭК
-            </div>
           </div>
         </div>
       </aside>
@@ -516,7 +512,7 @@ img,svg{display:block}
     </div>
     <h1>Корзина пуста</h1>
     <p>Добавьте вещи из каталога, чтобы перейти к выбору доставки и оплате.</p>
-    <a class="primary-button" href="./index.html#catalog">Перейти в каталог</a>
+    <a class="primary-button" href="/#catalog">Перейти в каталог</a>
   </div>
 </main>
 
