@@ -8,8 +8,9 @@
 <link rel="icon" href="./favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://api-maps.yandex.ru">
+<link rel="preconnect" href="https://yastatic.net">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Unbounded:wght@600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
   --bg:#f5f6fa;
@@ -252,8 +253,8 @@ img,svg{display:block}
 .point-card address{margin-top:5px;color:var(--txt-2);font-style:normal;font-size:12px;line-height:1.4}
 .point-card div{display:flex;justify-content:space-between;gap:12px;margin-top:10px;color:var(--txt-3);font-size:11px}
 .point-card b{color:var(--blue);font-size:12px}
-.map-wrap{position:relative;min-height:0}
-#pickupMap{width:100%;height:100%;min-height:620px;background:#dde2eb}
+.map-wrap{position:relative;min-height:0;background:#eef2f7}
+#pickupMap{width:100%;height:100%;min-height:620px;background:#eef2f7}
 .map-fallback{
   display:none;position:absolute;inset:auto 16px 16px 16px;z-index:500;padding:12px 14px;border-radius:12px;
   background:rgba(255,255,255,.95);box-shadow:0 18px 45px -30px rgba(0,0,0,.55);color:var(--txt-2);font-size:12px
@@ -547,7 +548,6 @@ img,svg{display:block}
 
 <script src="./data/storefront-products.js"></script>
 <script src="./data/supabase-config.js"></script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 (function(){
 'use strict';
@@ -598,6 +598,8 @@ let pendingPoint=null;
 let promoApplied=localStorage.getItem(PROMO_KEY)==='KOMUI10';
 let map=null;
 let markers=[];
+let yandexMapsPromise=null;
+let deliveryConfigPromise=null;
 let toastTimer=null;
 let points=[];
 let selectedCity=null;
@@ -688,6 +690,58 @@ function supabaseConfig(){
   return {url:config.url.replace(/\/$/,''),anonKey:config.anonKey};
 }
 
+function deliveryConfig(){
+  return window.KOMUI_DELIVERY||{};
+}
+
+function loadScript(src){
+  return new Promise((resolve,reject)=>{
+    const existing=document.querySelector(`script[data-runtime-src="${src}"]`);
+    if(existing){
+      if(existing.dataset.loaded==='true')resolve();
+      else existing.addEventListener('load',resolve,{once:true});
+      existing.addEventListener('error',reject,{once:true});
+      return;
+    }
+    const script=document.createElement('script');
+    script.src=src;
+    script.async=true;
+    script.dataset.runtimeSrc=src;
+    script.onload=()=>{script.dataset.loaded='true';resolve()};
+    script.onerror=()=>reject(new Error('Не удалось загрузить '+src));
+    document.head.appendChild(script);
+  });
+}
+
+async function ensureDeliveryConfig(){
+  if(deliveryConfig().yandexMapsApiKey)return;
+  if(deliveryConfigPromise)return deliveryConfigPromise;
+  const sources=location.protocol==='file:'?['./data/delivery-config.js']:['/api/delivery-config','./data/delivery-config.js'];
+  deliveryConfigPromise=(async()=>{
+    for(const source of sources){
+      if(deliveryConfig().yandexMapsApiKey)return;
+      try{await loadScript(source)}catch(e){}
+    }
+  })();
+  return deliveryConfigPromise;
+}
+
+async function loadYandexMaps(){
+  if(window.ymaps)return window.ymaps;
+  if(yandexMapsPromise)return yandexMapsPromise;
+  yandexMapsPromise=(async()=>{
+    await ensureDeliveryConfig();
+    const apiKey=String(deliveryConfig().yandexMapsApiKey||'').trim();
+    if(!apiKey)throw new Error('Ключ Яндекс.Карт не настроен');
+    await loadScript('https://api-maps.yandex.ru/2.1/?apikey='+encodeURIComponent(apiKey)+'&lang=ru_RU');
+    return new Promise((resolve,reject)=>{
+      if(!window.ymaps){reject(new Error('Яндекс.Карты не загрузились'));return}
+      window.ymaps.ready(()=>resolve(window.ymaps));
+    });
+  })();
+  return yandexMapsPromise;
+}
+
 function filteredPoints(query=''){
   const q=query.trim().toLowerCase();
   if(!q)return points;
@@ -711,45 +765,62 @@ function renderPointList(query=''){
 }
 
 function clearMarkers(){
-  markers.forEach(item=>{try{item.marker.remove()}catch(e){}});
+  markers.forEach(item=>{try{map.geoObjects.remove(item.marker)}catch(e){}});
   markers=[];
 }
 
 function renderMarkers(){
-  if(!map)return;
+  if(!map||!window.ymaps)return;
   clearMarkers();
   const visible=filteredPoints($('#pointSearch').value).filter(point=>Number.isFinite(point.lat)&&Number.isFinite(point.lng));
   markers=visible.map(point=>{
-    const marker=L.marker([point.lat,point.lng],{title:point.title}).addTo(map);
-    marker.bindTooltip(point.code+' · '+point.address,{direction:'top'});
-    marker.on('click',()=>choosePointByCode(point.code));
+    const active=pendingPoint&&pendingPoint.code===point.code;
+    const marker=new window.ymaps.Placemark([point.lat,point.lng],{
+      hintContent:point.code+' · '+point.address,
+      balloonContentHeader:escapeHtml(point.title+' · '+point.code),
+      balloonContentBody:escapeHtml(point.address),
+      balloonContentFooter:'Нажмите маркер или пункт в списке, чтобы выбрать'
+    },{
+      preset:active?'islands#blueDeliveryIcon':'islands#blueDotIcon',
+      iconColor:active?'#0026F9':'#1787e0',
+      hideIconOnBalloonOpen:false
+    });
+    marker.events.add('click',()=>choosePointByCode(point.code));
+    map.geoObjects.add(marker);
     return {code:point.code,marker};
   });
   if(visible.length){
-    const bounds=L.latLngBounds(visible.map(point=>[point.lat,point.lng]));
-    map.fitBounds(bounds,{padding:[34,34],maxZoom:13});
+    const bounds=window.ymaps.util.bounds.fromPoints(visible.map(point=>[point.lat,point.lng]));
+    const boundsResult=map.setBounds(bounds,{checkZoomRange:true,zoomMargin:42,duration:260});
+    const limitZoom=()=>{
+      if(map.getZoom()>13)map.setZoom(13,{duration:160});
+    };
+    if(boundsResult&&typeof boundsResult.then==='function')boundsResult.then(limitZoom);
+    else limitZoom();
   }else if(selectedCity?.lat&&selectedCity?.lng){
-    map.setView([selectedCity.lat,selectedCity.lng],11);
+    map.setCenter([selectedCity.lat,selectedCity.lng],11,{duration:260});
   }
 }
 
 function initMap(){
   if(map)return;
-  if(!window.L){
-    $('#mapFallback').classList.add('show');
-    return;
-  }
-  try{
-    map=L.map('pickupMap',{zoomControl:true,attributionControl:true}).setView([55.7558,37.6176],5);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-      maxZoom:19,
-      attribution:'© OpenStreetMap'
-    }).addTo(map);
+  $('#mapFallback').classList.remove('show');
+  loadYandexMaps().then(ymaps=>{
+    map=new ymaps.Map('pickupMap',{
+      center:[55.7558,37.6176],
+      zoom:5,
+      controls:['zoomControl','fullscreenControl']
+    },{
+      suppressMapOpenBlock:true,
+      yandexMapDisablePoiInteractivity:true
+    });
+    map.behaviors.disable('scrollZoom');
     renderMarkers();
-    setTimeout(()=>map.invalidateSize(),80);
-  }catch(e){
+    setTimeout(()=>{try{map.container.fitToViewport()}catch(e){}},80);
+  }).catch(error=>{
+    $('#mapFallback').textContent=error?.message||'Карта временно недоступна. Выберите пункт из списка слева.';
     $('#mapFallback').classList.add('show');
-  }
+  });
 }
 
 async function loadDeliveryPoints(){
@@ -801,11 +872,12 @@ function schedulePointLoad(){
 function selectPendingPoint(code){
   pendingPoint=points.find(point=>point.code===code)||null;
   renderPointList($('#pointSearch').value);
+  renderMarkers();
   $('#confirmPoint').disabled=!pendingPoint||quoteLoading;
   if(map&&pendingPoint&&Number.isFinite(pendingPoint.lat)&&Number.isFinite(pendingPoint.lng)){
-    map.flyTo([pendingPoint.lat,pendingPoint.lng],15,{duration:.6});
+    map.setCenter([pendingPoint.lat,pendingPoint.lng],15,{duration:350});
     const found=markers.find(marker=>marker.code===code);
-    if(found)found.marker.openTooltip();
+    if(found)found.marker.balloon.open();
   }
 }
 
@@ -847,7 +919,7 @@ function openPickup(){
   document.body.classList.add('modal-open');
   initMap();
   if(!pointsLoaded||selectedPoint?.city!==$('#citySearch').value.trim())loadDeliveryPoints();
-  setTimeout(()=>{if(map)map.invalidateSize();$('#citySearch').focus()},120);
+  setTimeout(()=>{try{if(map)map.container.fitToViewport()}catch(e){};$('#citySearch').focus()},120);
 }
 
 function closePickup(){
