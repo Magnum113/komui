@@ -1228,14 +1228,14 @@ function collectionMeta(name){
   const items=P.filter(p=>p.col===name);
   const collectionName=String(name||'').toLowerCase();
   const hay=[collectionName,...items.flatMap(p=>[p.name,p.titleName,p.animeTitle,p.characterName,p.designKey])].filter(Boolean).join(' ').toLowerCase();
-  if(/akatsuki|акацуки/.test(collectionName))return {brand:'Naruto',logo:'./assets/collection-logos/akatsuki-cloud.svg'};
+  if(/akatsuki|акацуки/.test(collectionName))return {brand:'Naruto',logo:'./assets/collection-logos/akatsuki-cloud-single.svg'};
   if(/itachi|итачи/.test(collectionName))return {brand:'Naruto',logo:'./assets/collection-logos/itachi-sharingan.svg'};
   if(/madara|мадара/.test(collectionName))return {brand:'Naruto',logo:'./assets/collection-logos/madara-sharingan.svg'};
   if(/satoru|gojo|годжо|jujutsu|магичес|jjk|呪術/.test(collectionName)||/satoru|gojo|годжо|jujutsu|магичес|jjk|呪術/.test(hay))return {brand:'Магическая битва',logo:'./assets/collection-logos/jujutsu-kaisen.svg'};
   if(/darth|vader|дарт|вейдер|star wars|звездн/.test(collectionName)||/darth|vader|дарт|вейдер|star wars|звездн/.test(hay))return {brand:'Star Wars',logo:'./assets/collection-logos/star-wars.svg'};
   if(/naruto|наруто/.test(collectionName)||/naruto|наруто/.test(hay))return {brand:'Naruto',logo:'./assets/collection-logos/naruto.svg'};
   if(/gta|grand theft/.test(collectionName)||/gta|grand theft/.test(hay))return {brand:'GTA',logo:'./assets/collection-logos/gta.svg'};
-  if(/gravity|гравити|falls/.test(collectionName)||/gravity|гравити|falls/.test(hay))return {brand:'Gravity Falls',logo:'./assets/collection-logos/gravity-falls.svg'};
+  if(/gravity|гравити|defied/.test(collectionName)||/gravity|гравити|defied/.test(hay))return {brand:'Gravity Defied',logo:'./assets/collection-logos/gravity-defied.png'};
   return {brand:'KOMUI',logo:'./favicon.svg'};
 }
 function collectionLogo(meta){
