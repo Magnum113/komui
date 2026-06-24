@@ -96,10 +96,11 @@ img,svg{display:block}
 .field-error{display:none;color:var(--red);font-size:12px;font-weight:600}
 .field.has-error .field-error{display:block}
 .cdek-mark{
-  display:inline-flex;align-items:center;gap:7px;flex:0 0 auto;color:var(--green);
-  font-size:12px;font-weight:900;letter-spacing:.08em
+  display:inline-flex;align-items:center;flex:0 0 auto
 }
-.cdek-mark::before{content:"";width:9px;height:9px;border-radius:3px;background:var(--green)}
+.cdek-mark img{
+  width:82px;height:auto;display:block
+}
 .delivery-empty{
   display:flex;align-items:center;justify-content:space-between;gap:18px;
   padding:18px;border:1px dashed #c9cddd;border-radius:14px;background:var(--panel-2)
@@ -261,7 +262,7 @@ img,svg{display:block}
   padding:9px 12px;border-radius:10px;background:rgba(255,255,255,.94);border:1px solid var(--line);
   box-shadow:0 10px 30px -20px rgba(0,0,0,.55);font-size:12px;font-weight:800
 }
-.map-brand .cdek-mark{font-size:11px}
+.map-brand .cdek-mark img{width:60px}
 .map-fallback{
   display:none;position:absolute;inset:0;z-index:450;align-items:center;justify-content:center;
   padding:30px;background:var(--panel-2);text-align:center;color:var(--txt-2);font-size:13px
@@ -382,18 +383,17 @@ img,svg{display:block}
           <div class="field-grid">
             <div class="field" data-field="lastName">
               <label for="lastName">Фамилия</label>
-              <div class="input-wrap"><input id="lastName" name="lastName" type="text" autocomplete="family-name" placeholder="Кадимагомедов" required></div>
+              <div class="input-wrap"><input id="lastName" name="lastName" type="text" autocomplete="family-name" placeholder="Иванов" required></div>
               <div class="field-error">Укажите фамилию</div>
             </div>
             <div class="field" data-field="firstName">
               <label for="firstName">Имя</label>
-              <div class="input-wrap"><input id="firstName" name="firstName" type="text" autocomplete="given-name" placeholder="Магомед" required></div>
+              <div class="input-wrap"><input id="firstName" name="firstName" type="text" autocomplete="given-name" placeholder="Иван" required></div>
               <div class="field-error">Укажите имя</div>
             </div>
             <div class="field field-wide" data-field="phone">
               <label for="phone">Номер телефона</label>
               <div class="input-wrap"><input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (999) 123-45-67" required></div>
-              <div class="field-hint">Позвоним только по вопросам заказа и доставки.</div>
               <div class="field-error">Введите российский номер телефона полностью</div>
             </div>
           </div>
@@ -408,7 +408,9 @@ img,svg{display:block}
                 <p>До выбранного пункта выдачи.</p>
               </div>
             </div>
-            <span class="cdek-mark">СДЭК</span>
+            <span class="cdek-mark" aria-label="СДЭК">
+              <img src="/assets/cdek-logo.svg" alt="" width="145" height="41" loading="lazy">
+            </span>
           </div>
           <div class="delivery-empty" id="deliveryEmpty">
             <div>
@@ -546,7 +548,12 @@ img,svg{display:block}
     </div>
     <div class="pickup-map">
       <div id="pickupMap"></div>
-      <div class="map-brand"><span class="cdek-mark">СДЭК</span><span>Пункты выдачи</span></div>
+      <div class="map-brand">
+        <span class="cdek-mark" aria-label="СДЭК">
+          <img src="/assets/cdek-logo.svg" alt="" width="145" height="41" loading="lazy">
+        </span>
+        <span>Пункты выдачи</span>
+      </div>
       <div class="map-fallback" id="mapFallback">Карта не загрузилась. Выберите пункт в списке — оформление останется доступным.</div>
     </div>
   </div>
