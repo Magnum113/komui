@@ -53,6 +53,12 @@ Deno.serve(async (request) => {
       .limit(1)
       .maybeSingle();
 
+    const { data: shipment } = await admin
+      .from("merch_cdek_shipments")
+      .select("status,cdek_uuid,cdek_number,error_message,updated_at")
+      .eq("order_id", order.id)
+      .maybeSingle();
+
     return jsonResponse({
       orderNumber: order.order_number,
       status: order.status,
@@ -64,6 +70,15 @@ Deno.serve(async (request) => {
       paidAt: order.paid_at,
       errorCode: attempt?.error_code ?? null,
       errorMessage: attempt?.error_message ?? null,
+      cdek: shipment
+        ? {
+          status: shipment.status,
+          uuid: shipment.cdek_uuid,
+          number: shipment.cdek_number,
+          errorMessage: shipment.error_message,
+          updatedAt: shipment.updated_at,
+        }
+        : null,
     }, 200, cors);
   } catch (error) {
     console.error("tbank-payment-status", error);

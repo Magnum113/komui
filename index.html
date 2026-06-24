@@ -1189,14 +1189,18 @@ async function loadStorefrontProducts(){
   setProducts(window.KOMUI_PRODUCTS||[],window.KOMUI_STORE_STATS||{});
   const cfg=window.KOMUI_SUPABASE;
   if(!cfg?.url||!cfg?.anonKey)return;
+  const ctrl=new AbortController();
+  const timer=setTimeout(()=>ctrl.abort(),3000);
   try{
-    const url=cfg.url.replace(/\/$/,'')+'/rest/v1/merch_storefront_products?select=*&order=sort_order.asc';
-    const res=await fetch(url,{headers:{apikey:cfg.anonKey,Authorization:'Bearer '+cfg.anonKey}});
+    const url=cfg.url.replace(/\/$/,'')+'/rest/v1/merch_storefront_products?select=*&is_active=eq.true&order=sort_order.asc';
+    const res=await fetch(url,{headers:{apikey:cfg.anonKey,Authorization:'Bearer '+cfg.anonKey},signal:ctrl.signal});
     if(!res.ok)throw new Error('Supabase '+res.status);
     const rows=await res.json();
     if(Array.isArray(rows)&&rows.length)setProducts(rows,{cards:rows.length});
   }catch(err){
     console.warn('KOMUI: Supabase products fallback to local data',err);
+  }finally{
+    clearTimeout(timer);
   }
 }
 

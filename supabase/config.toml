@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.tbank-payment-status]
 verify_jwt = false
+
+[functions.cdek-delivery-points]
+verify_jwt = false
+
+[functions.cdek-delivery-quote]
+verify_jwt = false

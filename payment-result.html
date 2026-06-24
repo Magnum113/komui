@@ -51,6 +51,7 @@ h1{font:800 clamp(26px,5vw,38px)/1.12 'Unbounded',sans-serif;letter-spacing:-.03
       <h1 id="statusTitle">Проверяем оплату</h1>
       <p class="lead" id="statusText">Ждём защищённое подтверждение от Т‑Банка. Обычно это занимает несколько секунд.</p>
       <div class="order"><span>Заказ</span><b id="orderNumber">—</b></div>
+      <div class="order" id="cdekOrder" style="display:none"><span>СДЭК</span><b id="cdekStatus">—</b></div>
       <div class="actions" id="actions">
         <a class="button" href="/">Вернуться в магазин</a>
       </div>
@@ -91,11 +92,26 @@ function render(kind,title,text,hint,actions){
   $('#actions').innerHTML=actions;
 }
 
-function paid(){
+function cdekLabel(cdek){
+  if(!cdek)return 'накладная создаётся';
+  if(cdek.number)return 'накладная '+cdek.number;
+  if(cdek.status==='created')return 'накладная создана';
+  if(cdek.status==='accepted')return 'заявка принята';
+  if(cdek.status==='invalid'||cdek.status==='failed')return 'проверим вручную';
+  return 'создаётся';
+}
+
+function showCdek(cdek){
+  $('#cdekOrder').style.display='flex';
+  $('#cdekStatus').textContent=cdekLabel(cdek);
+}
+
+function paid(result){
   localStorage.removeItem(CART_KEY);
   localStorage.removeItem(CHECKOUT_KEY);
   sessionStorage.removeItem(FORM_KEY);
   sessionStorage.removeItem(PAYMENT_DRAFT_KEY);
+  showCdek(result?.cdek||null);
   render('paid','Заказ оплачен','Подтверждение получено. Мы начнём готовить заказ и свяжемся, если потребуется уточнение.','Сохраните номер заказа до получения уведомления.',
     '<a class="button primary" href="/">Продолжить покупки</a><a class="button" href="/delivery">Доставка и оплата</a>');
 }
@@ -135,7 +151,7 @@ async function check(){
     });
     const result=await response.json();
     if(!response.ok)throw new Error(result.error||'Не удалось проверить заказ');
-    if(result.status==='paid'){paid();return}
+    if(result.status==='paid'){paid(result);return}
     if(result.status==='payment_review'){pending(true);return}
     if(['payment_failed','canceled','refunded'].includes(result.status)){failed(result.errorMessage);return}
     pending(false);

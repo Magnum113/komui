@@ -8,6 +8,7 @@ import {
   sha256Hex,
   tbankConfig,
 } from "../_shared/tbank.ts";
+import { createCdekShipmentForOrder } from "../_shared/cdek-shipments.ts";
 
 function text(value: unknown, maxLength = 500): string {
   return String(value ?? "").trim().slice(0, maxLength);
@@ -167,6 +168,18 @@ Deno.serve(async (request) => {
         }
         await admin.from("merch_customer_orders").update(orderUpdate)
           .eq("id", order.id);
+
+        if (nextStatus === "paid") {
+          try {
+            await createCdekShipmentForOrder(admin, order.id);
+          } catch (error) {
+            console.error("CDEK shipment creation failed", {
+              orderId: order.id,
+              orderNumber: order.order_number,
+              error,
+            });
+          }
+        }
       }
     }
 

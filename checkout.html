@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Unbounded:wght@600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
   --bg:#f5f6fa;
@@ -217,13 +217,12 @@ img,svg{display:block}
 }
 .dialog-backdrop.show{opacity:1;visibility:visible}
 .pickup-dialog{
-  width:min(1120px,100%);height:min(760px,calc(100dvh - 48px));display:grid;
-  grid-template-columns:380px minmax(0,1fr);overflow:hidden;background:#fff;
+  width:min(1120px,100%);height:min(780px,calc(100dvh - 48px));display:flex;flex-direction:column;
+  overflow:hidden;background:#fff;
   border:1px solid rgba(255,255,255,.5);border-radius:22px;box-shadow:0 34px 90px -35px rgba(0,0,0,.58);
   transform:translateY(12px) scale(.985);transition:transform .22s
 }
 .dialog-backdrop.show .pickup-dialog{transform:translateY(0) scale(1)}
-.pickup-side{display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--line)}
 .dialog-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:22px 22px 17px;border-bottom:1px solid var(--line)}
 .dialog-head h2{font-family:'Unbounded',sans-serif;font-size:20px;line-height:1.2}
 .dialog-head p{margin-top:6px;color:var(--txt-2);font-size:12px}
@@ -233,43 +232,34 @@ img,svg{display:block}
 }
 .icon-button:hover{color:var(--blue);border-color:rgba(0,38,249,.35)}
 .icon-button svg{width:18px;height:18px}
-.point-search{padding:16px 18px;border-bottom:1px solid var(--line)}
-.point-search-wrap{position:relative}
-.point-search svg{position:absolute;left:13px;top:50%;width:18px;height:18px;color:var(--txt-3);transform:translateY(-50%)}
+.pickup-layout{min-height:0;flex:1;display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);background:var(--bg-2)}
+.point-panel{display:flex;min-height:0;flex-direction:column;border-right:1px solid var(--line);background:#fff}
+.point-search{display:flex;flex-direction:column;gap:10px;padding:14px;border-bottom:1px solid var(--line)}
 .point-search input{
-  width:100%;height:46px;padding:0 13px 0 40px;border:1px solid var(--line-2);border-radius:11px;background:var(--panel-2)
+  width:100%;height:44px;padding:0 13px;border:1px solid var(--line-2);border-radius:11px;background:#fff;
+  color:var(--txt);font-size:13px
 }
-.point-search input:focus{outline:0;border-color:var(--blue);box-shadow:var(--focus);background:#fff}
-.point-demo-note{margin-top:10px;color:var(--txt-3);font-size:11px;line-height:1.4}
-.point-list{flex:1;overflow:auto;padding:10px}
+.point-search input:focus{outline:0;border-color:var(--blue);box-shadow:var(--focus)}
+.point-demo-note{color:var(--txt-3);font-size:11px;line-height:1.45}
+.point-list{min-height:0;overflow:auto;padding:10px;display:flex;flex-direction:column;gap:9px}
 .point-card{
-  width:100%;padding:14px;border:1px solid transparent;border-radius:12px;text-align:left;
-  transition:border-color .18s,background .18s
+  width:100%;padding:13px;border:1px solid var(--line);border-radius:12px;background:#fff;text-align:left;
+  transition:border-color .18s,box-shadow .18s,transform .18s
 }
-.point-card:hover{background:var(--panel-2)}
-.point-card.active{border-color:rgba(0,38,249,.28);background:rgba(0,38,249,.055)}
-.point-card strong{display:block;font-size:13px}
-.point-card address{margin-top:4px;color:var(--txt-2);font-style:normal;font-size:12px}
-.point-card div{display:flex;justify-content:space-between;gap:10px;margin-top:9px;color:var(--txt-3);font-size:11px}
-.point-card b{color:var(--txt);font-weight:700}
-.point-action{padding:16px 18px 18px;border-top:1px solid var(--line)}
-.point-action .primary-button{margin:0}
-.point-action .primary-button:disabled{cursor:not-allowed;opacity:.42}
-.pickup-map{position:relative;min-width:0;background:var(--bg-2)}
-#pickupMap{width:100%;height:100%}
-.map-brand{
-  position:absolute;left:16px;top:16px;z-index:500;display:flex;align-items:center;gap:9px;
-  padding:9px 12px;border-radius:10px;background:rgba(255,255,255,.94);border:1px solid var(--line);
-  box-shadow:0 10px 30px -20px rgba(0,0,0,.55);font-size:12px;font-weight:800
-}
-.map-brand .cdek-mark img{width:60px}
+.point-card:hover,.point-card.active{border-color:rgba(0,38,249,.42);box-shadow:0 16px 34px -24px rgba(0,38,249,.55);transform:translateY(-1px)}
+.point-card strong{display:block;font-size:13px;line-height:1.35}
+.point-card address{margin-top:5px;color:var(--txt-2);font-style:normal;font-size:12px;line-height:1.4}
+.point-card div{display:flex;justify-content:space-between;gap:12px;margin-top:10px;color:var(--txt-3);font-size:11px}
+.point-card b{color:var(--blue);font-size:12px}
+.map-wrap{position:relative;min-height:0}
+#pickupMap{width:100%;height:100%;min-height:620px;background:#dde2eb}
 .map-fallback{
-  display:none;position:absolute;inset:0;z-index:450;align-items:center;justify-content:center;
-  padding:30px;background:var(--panel-2);text-align:center;color:var(--txt-2);font-size:13px
+  display:none;position:absolute;inset:auto 16px 16px 16px;z-index:500;padding:12px 14px;border-radius:12px;
+  background:rgba(255,255,255,.95);box-shadow:0 18px 45px -30px rgba(0,0,0,.55);color:var(--txt-2);font-size:12px
 }
-.map-fallback.show{display:flex}
-.leaflet-control-attribution{font-size:9px!important}
-.leaflet-marker-icon.komui-marker{filter:hue-rotate(210deg) saturate(1.8)}
+.map-fallback.show{display:block}
+.pickup-actions{display:flex;gap:12px;align-items:center;justify-content:flex-end;padding:14px 16px;border-top:1px solid var(--line);background:#fff}
+.pickup-actions .primary-button{width:auto;min-width:210px;margin:0}
 .notice-dialog{
   width:min(500px,100%);padding:30px;background:#fff;border-radius:20px;border:1px solid var(--line);
   box-shadow:0 34px 90px -35px rgba(0,0,0,.58);transform:translateY(12px) scale(.985);transition:transform .22s
@@ -334,15 +324,14 @@ img,svg{display:block}
   .summary-content{padding:0 18px 18px}
   .trust-list{grid-template-columns:1fr}
   .dialog-backdrop{padding:0}
-  .pickup-dialog{width:100%;height:100dvh;grid-template-columns:1fr;border:0;border-radius:0}
-  .pickup-side{height:58dvh;border-right:0;border-bottom:1px solid var(--line);order:2}
-  .pickup-map{height:42dvh;order:1}
-  .map-brand{left:10px;top:10px}
+  .pickup-dialog{width:100%;height:100dvh;border:0;border-radius:0}
   .dialog-head{padding:16px 16px 13px}
   .dialog-head h2{font-size:17px}
-  .point-search{padding:12px 14px}
-  .point-list{padding:6px}
-  .point-action{padding:11px 14px calc(11px + env(safe-area-inset-bottom))}
+  .pickup-layout{grid-template-columns:1fr;grid-template-rows:minmax(260px,48%) minmax(240px,1fr)}
+  .point-panel{border-right:0;border-bottom:1px solid var(--line)}
+  #pickupMap{min-height:240px}
+  .pickup-actions{padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
+  .pickup-actions .primary-button{width:100%;min-width:0}
   .notice-dialog{min-height:100dvh;width:100%;display:flex;flex-direction:column;justify-content:center;border-radius:0;padding:28px}
 }
 @media(prefers-reduced-motion:reduce){
@@ -524,37 +513,31 @@ img,svg{display:block}
 
 <div class="dialog-backdrop" id="pickupBackdrop" aria-hidden="true">
   <div class="pickup-dialog" role="dialog" aria-modal="true" aria-labelledby="pickupTitle">
-    <div class="pickup-side">
-      <div class="dialog-head">
-        <div>
-          <h2 id="pickupTitle">Пункт выдачи СДЭК</h2>
-          <p>Найдите удобный адрес и подтвердите выбор.</p>
-        </div>
-        <button class="icon-button" id="closePickup" type="button" aria-label="Закрыть выбор пункта">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
-        </button>
+    <div class="dialog-head">
+      <div>
+        <h2 id="pickupTitle">Пункт выдачи СДЭК</h2>
+        <p>Введите город получения и выберите пункт выдачи.</p>
       </div>
-      <div class="point-search">
-        <div class="point-search-wrap">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+      <button class="icon-button" id="closePickup" type="button" aria-label="Закрыть выбор пункта">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="pickup-layout">
+      <div class="point-panel">
+        <div class="point-search">
+          <input id="citySearch" type="search" placeholder="Город получения" autocomplete="address-level2">
           <input id="pointSearch" type="search" placeholder="Метро, улица или код пункта" autocomplete="off">
+          <p class="point-demo-note">Пункты и стоимость доставки загружаются из СДЭК.</p>
         </div>
-        <div class="point-demo-note">Демонстрационные пункты для макета. При подключении их заменит официальный виджет СДЭК.</div>
+        <div class="point-list" id="pointList"></div>
       </div>
-      <div class="point-list" id="pointList"></div>
-      <div class="point-action">
-        <button class="primary-button" id="confirmPoint" type="button" disabled>Выбрать этот пункт</button>
+      <div class="map-wrap">
+        <div id="pickupMap"></div>
+        <p class="map-fallback" id="mapFallback">Карта не загрузилась, но пункт можно выбрать из списка.</p>
       </div>
     </div>
-    <div class="pickup-map">
-      <div id="pickupMap"></div>
-      <div class="map-brand">
-        <span class="cdek-mark" aria-label="СДЭК">
-          <img src="/assets/cdek-logo.svg" alt="" width="145" height="41" loading="lazy">
-        </span>
-        <span>Пункты выдачи</span>
-      </div>
-      <div class="map-fallback" id="mapFallback">Карта не загрузилась. Выберите пункт в списке — оформление останется доступным.</div>
+    <div class="pickup-actions">
+      <button class="primary-button" id="confirmPoint" type="button" disabled>Выбрать этот пункт</button>
     </div>
   </div>
 </div>
@@ -563,7 +546,7 @@ img,svg{display:block}
 
 <script src="./data/storefront-products.js"></script>
 <script src="./data/supabase-config.js"></script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 (function(){
 'use strict';
@@ -581,8 +564,14 @@ function readJson(key,fallback){
 }
 
 const localProducts=(window.KOMUI_PRODUCTS||[]).map(p=>({
-  id:String(p.id),name:p.name,price:Number(p.price)||0,priceOld:Number(p.priceOld)||null,
-  image:p.image,collection:p.col,type:p.type,color:p.color||''
+  id:String(p.id),
+  name:p.name,
+  price:Number(p.price??p.price_min??p.price_max)||0,
+  priceOld:Number(p.priceOld??p.compare_at_price)||null,
+  image:p.image||p.main_image_path||p.primary_image_url||(Array.isArray(p.image_urls)?p.image_urls[0]:''),
+  collection:p.col||p.collection_name||p.title_name||p.design_name,
+  type:p.type||p.product_type||p.decoration_type,
+  color:p.color||p.color_name||''
 }));
 
 function loadItems(){
@@ -609,19 +598,17 @@ let promoApplied=localStorage.getItem(PROMO_KEY)==='KOMUI10';
 let map=null;
 let markers=[];
 let toastTimer=null;
-
-const points=[
-  {code:'MSK214',title:'СДЭК на Тверской',city:'Москва',address:'Тверская улица, 12с8',hours:'Пн–Вс, 10:00–21:00',days:'1–2 дня',price:390,lat:55.7637,lng:37.6084,metro:'Пушкинская'},
-  {code:'MSK1177',title:'СДЭК на Арбате',city:'Москва',address:'улица Арбат, 19',hours:'Пн–Вс, 09:00–21:00',days:'1–3 дня',price:420,lat:55.7498,lng:37.5912,metro:'Арбатская'},
-  {code:'MSK565',title:'СДЭК Павелецкая',city:'Москва',address:'Кожевническая улица, 7с1',hours:'Пн–Пт, 09:00–20:00',days:'1–2 дня',price:360,lat:55.7303,lng:37.6441,metro:'Павелецкая'},
-  {code:'MSK1924',title:'СДЭК Бауманская',city:'Москва',address:'Бакунинская улица, 14с1',hours:'Пн–Вс, 10:00–20:00',days:'2–3 дня',price:390,lat:55.7724,lng:37.6784,metro:'Бауманская'},
-  {code:'MSK130',title:'СДЭК Киевская',city:'Москва',address:'Брянская улица, 2',hours:'Пн–Вс, 09:00–21:00',days:'1–2 дня',price:410,lat:55.7438,lng:37.5661,metro:'Киевская'}
-];
+let points=[];
+let selectedCity=null;
+let pointsLoading=false;
+let pointsLoaded=false;
+let quoteLoading=false;
+let pointLoadTimer=null;
 
 function saveForm(){
   const state={
     lastName:$('#lastName').value,firstName:$('#firstName').value,phone:$('#phone').value,
-    legal:$('#legalConsent').checked,marketing:$('#marketingConsent').checked,point:selectedPoint
+    legal:$('#legalConsent').checked,marketing:$('#marketingConsent').checked,point:selectedPoint,city:selectedCity
   };
   try{sessionStorage.setItem(FORM_KEY,JSON.stringify(state));}catch(e){}
 }
@@ -635,6 +622,9 @@ function restoreForm(){
     $('#legalConsent').checked=!!saved.legal;
     $('#marketingConsent').checked=!!saved.marketing;
     selectedPoint=saved.point||null;
+    if(selectedPoint&&(!selectedPoint.cityCode||!Number.isFinite(Number(selectedPoint.price))))selectedPoint=null;
+    selectedCity=saved.city||(selectedPoint?{code:selectedPoint.cityCode||null,name:selectedPoint.city||''}:null);
+    if($('#citySearch'))$('#citySearch').value=selectedCity?.name||'';
   }catch(e){}
 }
 
@@ -691,54 +681,145 @@ function renderSelectedPoint(){
   renderTotals();
 }
 
-function renderPointList(query=''){
+function supabaseConfig(){
+  const config=window.KOMUI_SUPABASE;
+  if(!config?.url||!config?.anonKey)return null;
+  return {url:config.url.replace(/\/$/,''),anonKey:config.anonKey};
+}
+
+function filteredPoints(query=''){
   const q=query.trim().toLowerCase();
-  const filtered=points.filter(p=>[p.code,p.title,p.city,p.address,p.metro].join(' ').toLowerCase().includes(q));
-  $('#pointList').innerHTML=filtered.length?filtered.map(p=>`
-    <button class="point-card${pendingPoint&&pendingPoint.code===p.code?' active':''}" type="button" data-code="${p.code}">
-      <strong>${escapeHtml(p.title)} · ${escapeHtml(p.code)}</strong>
-      <address>${escapeHtml(p.address)} · м. ${escapeHtml(p.metro)}</address>
-      <div><span>${escapeHtml(p.hours)}</span><b>${money(p.price)}</b></div>
-    </button>`).join(''):'<div style="padding:26px 14px;color:var(--txt-2);font-size:13px;text-align:center">Подходящих пунктов не найдено</div>';
+  if(!q)return points;
+  return points.filter(point=>[point.code,point.title,point.city,point.address,point.metro].join(' ').toLowerCase().includes(q));
+}
+
+function pointEmptyMessage(){
+  if(pointsLoading)return 'Загружаем пункты СДЭК…';
+  if(!pointsLoaded)return 'Введите город получения, чтобы показать пункты СДЭК';
+  return 'Подходящих пунктов не найдено';
+}
+
+function renderPointList(query=''){
+  const filtered=filteredPoints(query);
+  $('#pointList').innerHTML=filtered.length?filtered.map(point=>`
+    <button class="point-card${pendingPoint&&pendingPoint.code===point.code?' active':''}" type="button" data-code="${escapeHtml(point.code)}">
+      <strong>${escapeHtml(point.title)} · ${escapeHtml(point.code)}</strong>
+      <address>${escapeHtml(point.address)}${point.metro?' · м. '+escapeHtml(point.metro):''}</address>
+      <div><span>${escapeHtml(point.hours)}</span><b>${point.price?money(point.price):'рассчитать'}</b></div>
+    </button>`).join(''):`<div style="padding:26px 14px;color:var(--txt-2);font-size:13px;text-align:center">${escapeHtml(pointEmptyMessage())}</div>`;
+}
+
+function clearMarkers(){
+  markers.forEach(item=>{try{item.marker.remove()}catch(e){}});
+  markers=[];
+}
+
+function renderMarkers(){
+  if(!map)return;
+  clearMarkers();
+  const visible=filteredPoints($('#pointSearch').value).filter(point=>Number.isFinite(point.lat)&&Number.isFinite(point.lng));
+  markers=visible.map(point=>{
+    const marker=L.marker([point.lat,point.lng],{title:point.title}).addTo(map);
+    marker.bindTooltip(point.code+' · '+point.address,{direction:'top'});
+    marker.on('click',()=>selectPendingPoint(point.code));
+    return {code:point.code,marker};
+  });
+  if(visible.length){
+    const bounds=L.latLngBounds(visible.map(point=>[point.lat,point.lng]));
+    map.fitBounds(bounds,{padding:[34,34],maxZoom:13});
+  }else if(selectedCity?.lat&&selectedCity?.lng){
+    map.setView([selectedCity.lat,selectedCity.lng],11);
+  }
 }
 
 function initMap(){
-  if(map||!window.L)return;
+  if(map)return;
+  if(!window.L){
+    $('#mapFallback').classList.add('show');
+    return;
+  }
   try{
-    map=L.map('pickupMap',{zoomControl:true,attributionControl:true}).setView([55.7558,37.6176],11);
+    map=L.map('pickupMap',{zoomControl:true,attributionControl:true}).setView([55.7558,37.6176],5);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-      maxZoom:19,attribution:'© OpenStreetMap'
+      maxZoom:19,
+      attribution:'© OpenStreetMap'
     }).addTo(map);
-    markers=points.map(point=>{
-      const marker=L.marker([point.lat,point.lng],{title:point.title}).addTo(map);
-      marker.bindTooltip(point.code+' · '+point.address,{direction:'top'});
-      marker.on('click',()=>selectPendingPoint(point.code));
-      return {code:point.code,marker};
-    });
+    renderMarkers();
     setTimeout(()=>map.invalidateSize(),80);
-  }catch(e){$('#mapFallback').classList.add('show')}
+  }catch(e){
+    $('#mapFallback').classList.add('show');
+  }
+}
+
+async function loadDeliveryPoints(){
+  const city=$('#citySearch').value.trim();
+  if(city.length<2){
+    points=[];selectedCity=null;pointsLoaded=false;pendingPoint=null;
+    renderPointList();renderMarkers();$('#confirmPoint').disabled=true;
+    return;
+  }
+
+  const config=supabaseConfig();
+  if(!config||previewMode){
+    points=[];pointsLoaded=true;renderPointList();renderMarkers();
+    showToast('Пункты СДЭК доступны только на опубликованном сайте');
+    return;
+  }
+
+  pointsLoading=true;
+  renderPointList($('#pointSearch').value);
+  try{
+    const response=await fetch(config.url+'/functions/v1/cdek-delivery-points',{
+      method:'POST',
+      headers:{'Content-Type':'application/json',apikey:config.anonKey,Authorization:'Bearer '+config.anonKey},
+      body:JSON.stringify({city,query:$('#pointSearch').value})
+    });
+    const result=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(result.error||'Не удалось загрузить пункты СДЭК');
+    selectedCity=result.city||null;
+    points=Array.isArray(result.points)?result.points:[];
+    pointsLoaded=true;
+    if(pendingPoint&&!points.some(point=>point.code===pendingPoint.code))pendingPoint=null;
+    renderPointList($('#pointSearch').value);renderMarkers();
+    $('#confirmPoint').disabled=!pendingPoint;
+  }catch(error){
+    points=[];pointsLoaded=true;pendingPoint=null;
+    renderPointList();renderMarkers();$('#confirmPoint').disabled=true;
+    showToast(error?.message||'Не удалось загрузить пункты СДЭК');
+  }finally{
+    pointsLoading=false;
+    renderPointList($('#pointSearch').value);
+  }
+}
+
+function schedulePointLoad(){
+  clearTimeout(pointLoadTimer);
+  pointLoadTimer=setTimeout(loadDeliveryPoints,360);
 }
 
 function selectPendingPoint(code){
-  pendingPoint=points.find(p=>p.code===code)||null;
+  pendingPoint=points.find(point=>point.code===code)||null;
   renderPointList($('#pointSearch').value);
-  $('#confirmPoint').disabled=!pendingPoint;
-  if(map&&pendingPoint){
+  $('#confirmPoint').disabled=!pendingPoint||quoteLoading;
+  if(map&&pendingPoint&&Number.isFinite(pendingPoint.lat)&&Number.isFinite(pendingPoint.lng)){
     map.flyTo([pendingPoint.lat,pendingPoint.lng],15,{duration:.6});
-    const found=markers.find(m=>m.code===code);
+    const found=markers.find(marker=>marker.code===code);
     if(found)found.marker.openTooltip();
   }
 }
 
 function openPickup(){
   pendingPoint=selectedPoint||null;
+  if(selectedCity?.name)$('#citySearch').value=selectedCity.name;
+  if(!$('#citySearch').value.trim())$('#citySearch').value=selectedPoint?.city||'Москва';
   renderPointList($('#pointSearch').value);
   $('#confirmPoint').disabled=!pendingPoint;
   $('#pickupBackdrop').classList.add('show');
   $('#pickupBackdrop').setAttribute('aria-hidden','false');
   document.body.classList.add('modal-open');
   initMap();
-  setTimeout(()=>{if(map)map.invalidateSize();$('#pointSearch').focus()},120);
+  if(!pointsLoaded||selectedPoint?.city!==$('#citySearch').value.trim())loadDeliveryPoints();
+  setTimeout(()=>{if(map)map.invalidateSize();$('#citySearch').focus()},120);
 }
 
 function closePickup(){
@@ -790,6 +871,34 @@ function validate(){
   return true;
 }
 
+async function quotePendingPoint(){
+  if(!pendingPoint)return null;
+  const config=supabaseConfig();
+  if(!config||previewMode){
+    throw new Error('Расчёт СДЭК доступен только на опубликованном сайте');
+  }
+
+  const response=await fetch(config.url+'/functions/v1/cdek-delivery-quote',{
+    method:'POST',
+    headers:{'Content-Type':'application/json',apikey:config.anonKey,Authorization:'Bearer '+config.anonKey},
+    body:JSON.stringify({
+      delivery:{code:pendingPoint.code,cityCode:pendingPoint.cityCode},
+      items:items.map(item=>({id:String(item.id),size:String(item.size),qty:Number(item.qty)}))
+    })
+  });
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(result.error||'Не удалось рассчитать доставку СДЭК');
+  return {
+    ...pendingPoint,
+    price:Math.round((Number(result.amount)||0)/100),
+    days:result.eta||'срок уточняется',
+    tariffCode:result.tariffCode||null,
+    tariffName:result.tariffName||'',
+    deliveryMode:result.deliveryMode||null,
+    packages:result.packages||null
+  };
+}
+
 function randomToken(bytesLength=32){
   const bytes=crypto.getRandomValues(new Uint8Array(bytesLength));
   let binary='';
@@ -809,6 +918,7 @@ function paymentIdentity(){
   const fingerprint=JSON.stringify({
     items:items.map(item=>[String(item.id),String(item.size),Number(item.qty)]),
     point:selectedPoint?.code||'',
+    delivery:selectedPoint?[Number(selectedPoint.price)||0,selectedPoint.tariffCode||'',selectedPoint.cityCode||'']:'',
     promo:promoApplied?'KOMUI10':'',
     phone:$('#phone').value.replace(/\D/g,'')
   });
@@ -836,8 +946,8 @@ async function submitCheckout(){
     showToast('Оплата доступна только на опубликованном сайте');
     return;
   }
-  const config=window.KOMUI_SUPABASE;
-  if(!config?.url||!config?.anonKey){
+  const config=supabaseConfig();
+  if(!config){
     showToast('Платёжный сервис не настроен');
     return;
   }
@@ -845,7 +955,7 @@ async function submitCheckout(){
   const identity=paymentIdentity();
   setPaymentLoading(true);
   try{
-    const response=await fetch(config.url.replace(/\/$/,'')+'/functions/v1/tbank-create-payment',{
+    const response=await fetch(config.url+'/functions/v1/tbank-create-payment',{
       method:'POST',
       headers:{
         'Content-Type':'application/json',
@@ -862,7 +972,17 @@ async function submitCheckout(){
           legalConsent:$('#legalConsent').checked,
           marketingConsent:$('#marketingConsent').checked
         },
-        delivery:{code:selectedPoint.code},
+        delivery:{
+          code:selectedPoint.code,
+          cityCode:selectedPoint.cityCode,
+          city:selectedPoint.city,
+          address:selectedPoint.addressFull||selectedPoint.address,
+          title:selectedPoint.title,
+          hours:selectedPoint.hours,
+          tariffCode:selectedPoint.tariffCode,
+          tariffName:selectedPoint.tariffName,
+          deliveryMode:selectedPoint.deliveryMode
+        },
         items:items.map(item=>({id:String(item.id),size:String(item.size),qty:Number(item.qty)})),
         promoCode:promoApplied?'KOMUI10':null
       })
@@ -941,12 +1061,31 @@ function init(){
   $('#openPickup').addEventListener('click',openPickup);
   $('#closePickup').addEventListener('click',closePickup);
   $('#pickupBackdrop').addEventListener('click',e=>{if(e.target===e.currentTarget)closePickup()});
-  $('#pointSearch').addEventListener('input',e=>renderPointList(e.target.value));
+  $('#citySearch').addEventListener('input',()=>{
+    pendingPoint=null;
+    $('#confirmPoint').disabled=true;
+    schedulePointLoad();
+  });
+  $('#pointSearch').addEventListener('input',e=>{renderPointList(e.target.value);renderMarkers()});
   $('#pointList').addEventListener('click',e=>{const card=e.target.closest('[data-code]');if(card)selectPendingPoint(card.dataset.code)});
-  $('#confirmPoint').addEventListener('click',()=>{
-    if(!pendingPoint)return;
-    selectedPoint={...pendingPoint};
-    saveForm();renderSelectedPoint();closePickup();showToast('Пункт СДЭК выбран');
+  $('#confirmPoint').addEventListener('click',async()=>{
+    if(!pendingPoint||quoteLoading)return;
+    const button=$('#confirmPoint');
+    quoteLoading=true;
+    button.disabled=true;
+    const defaultLabel='Выбрать этот пункт';
+    button.textContent='Считаем доставку...';
+    try{
+      selectedPoint=await quotePendingPoint();
+      selectedCity=selectedCity||{code:selectedPoint.cityCode||null,name:selectedPoint.city||''};
+      saveForm();renderSelectedPoint();closePickup();showToast('Пункт СДЭК выбран');
+    }catch(error){
+      showToast(error?.message||'Не удалось рассчитать доставку СДЭК');
+    }finally{
+      quoteLoading=false;
+      button.textContent=defaultLabel;
+      button.disabled=!pendingPoint;
+    }
   });
   $('#promoToggle').addEventListener('click',()=>{
     const promo=$('#promo');const open=promo.classList.toggle('open');

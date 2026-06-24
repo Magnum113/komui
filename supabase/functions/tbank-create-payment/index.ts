@@ -12,6 +12,13 @@ import {
   sha256Hex,
   tbankConfig,
 } from "../_shared/tbank.ts";
+import {
+  buildCdekPackages,
+  cdekConfig,
+  cdekProfileForProduct,
+  findCdekDeliveryPoint,
+  quoteCdekDelivery,
+} from "../_shared/cdek.ts";
 
 type CartItemInput = {
   id: string;
@@ -28,6 +35,8 @@ type ProductRow = {
   offers: Array<Record<string, unknown>>;
   main_image_path: string | null;
   primary_image_url: string | null;
+  product_type_slug: string | null;
+  category_slug: string | null;
 };
 
 type OrderItem = {
@@ -42,49 +51,6 @@ type OrderItem = {
   image_url: string | null;
   product_snapshot: Record<string, unknown>;
 };
-
-const deliveryPoints = new Map([
-  ["MSK214", {
-    code: "MSK214",
-    city: "Москва",
-    address: "Тверская улица, 12с8",
-    hours: "Пн–Вс, 10:00–21:00",
-    eta: "1–2 дня",
-    amount: 39000,
-  }],
-  ["MSK1177", {
-    code: "MSK1177",
-    city: "Москва",
-    address: "улица Арбат, 19",
-    hours: "Пн–Вс, 09:00–21:00",
-    eta: "1–3 дня",
-    amount: 42000,
-  }],
-  ["MSK565", {
-    code: "MSK565",
-    city: "Москва",
-    address: "Кожевническая улица, 7с1",
-    hours: "Пн–Пт, 09:00–20:00",
-    eta: "1–2 дня",
-    amount: 36000,
-  }],
-  ["MSK1924", {
-    code: "MSK1924",
-    city: "Москва",
-    address: "Бакунинская улица, 14с1",
-    hours: "Пн–Вс, 10:00–20:00",
-    eta: "2–3 дня",
-    amount: 39000,
-  }],
-  ["MSK130", {
-    code: "MSK130",
-    city: "Москва",
-    address: "Брянская улица, 2",
-    hours: "Пн–Вс, 09:00–21:00",
-    eta: "1–2 дня",
-    amount: 41000,
-  }],
-]);
 
 function text(value: unknown, maxLength: number): string {
   return String(value ?? "").trim().slice(0, maxLength);
@@ -263,8 +229,18 @@ Deno.serve(async (request) => {
       throw new Error("Не удалось создать безопасный идентификатор заказа");
     }
 
-    const delivery = deliveryPoints.get(text(deliveryInput.code, 24));
-    if (!delivery) {
+    const deliveryPointCode = text(deliveryInput.code, 40).toUpperCase();
+    const deliveryCityCode = Number(deliveryInput.cityCode);
+    const requestedTariffCode = Number(deliveryInput.tariffCode);
+    const tariffCode = Number.isInteger(requestedTariffCode) &&
+        requestedTariffCode > 0
+      ? requestedTariffCode
+      : null;
+    if (
+      !deliveryPointCode ||
+      !Number.isInteger(deliveryCityCode) ||
+      deliveryCityCode <= 0
+    ) {
       throw new Error("Выберите доступный пункт выдачи СДЭК");
     }
 
@@ -314,7 +290,7 @@ Deno.serve(async (request) => {
     const { data: products, error: productsError } = await admin
       .from("merch_storefront_products")
       .select(
-        "id,name,price_min,is_active,sizes,offers,main_image_path,primary_image_url",
+        "id,name,price_min,is_active,sizes,offers,main_image_path,primary_image_url,product_type_slug,category_slug",
       )
       .in("id", productIds)
       .eq("is_active", true);
@@ -336,6 +312,7 @@ Deno.serve(async (request) => {
       }
       const unitPrice = Math.round(priceRub * 100);
       const offer = offerForSize(product, cartItem.size);
+      const cdekProfile = cdekProfileForProduct(product);
 
       return {
         product_id: product.id,
@@ -351,6 +328,10 @@ Deno.serve(async (request) => {
           storefront_product_id: product.id,
           offer_id: offer?.offer_id ?? null,
           sku: offer?.sku ?? null,
+          product_type_slug: product.product_type_slug,
+          category_slug: product.category_slug,
+          cdek_profile: cdekProfile.key,
+          cdek_package_profile: cdekProfile,
         },
       };
     });
@@ -361,8 +342,56 @@ Deno.serve(async (request) => {
     );
     const promoCode = text(body.promoCode, 32).toUpperCase();
     const discount = promoCode === "KOMUI10" ? Math.round(subtotal * 0.1) : 0;
-    const total = subtotal - discount + delivery.amount;
     const number = orderNumber();
+    const cdekPackages = buildCdekPackages(
+      number,
+      orderItems.map((item) => ({
+        productId: item.product_id,
+        offerId: item.offer_id,
+        sku: item.sku,
+        productName: item.product_name,
+        size: item.size,
+        quantity: item.quantity,
+        unitPriceAmount: item.unit_price_amount,
+        productTypeSlug: text(item.product_snapshot.product_type_slug, 80),
+        categorySlug: text(item.product_snapshot.category_slug, 80),
+        profileKey: text(item.product_snapshot.cdek_profile, 40),
+      })),
+    );
+    const deliveryPoint = await findCdekDeliveryPoint(
+      deliveryCityCode,
+      deliveryPointCode,
+    );
+    if (!deliveryPoint) {
+      throw new Error("Выбранный пункт выдачи СДЭК недоступен");
+    }
+    const cdekQuote = await quoteCdekDelivery({
+      deliveryCityCode,
+      packages: cdekPackages,
+      tariffCode,
+    });
+    const pointLocation = deliveryPoint.location ?? {};
+    const delivery = {
+      code: deliveryPoint.code,
+      cityCode: deliveryCityCode,
+      city: text(pointLocation.city, 100) || text(deliveryInput.city, 100),
+      address: text(pointLocation.address_full ?? pointLocation.address, 220) ||
+        text(deliveryInput.address, 220),
+      title: text(deliveryPoint.name, 160) || text(deliveryInput.title, 160),
+      hours: text(deliveryPoint.work_time, 160) ||
+        text(deliveryInput.hours, 160),
+      eta: cdekQuote.eta,
+      amount: cdekQuote.amountKopecks,
+      tariffCode: cdekQuote.tariffCode,
+      tariffName: cdekQuote.tariffName,
+      deliveryMode: cdekQuote.deliveryMode,
+      periodMin: cdekQuote.periodMin,
+      periodMax: cdekQuote.periodMax,
+      pointType: deliveryPoint.type ?? null,
+      pointLat: Number(pointLocation.latitude) || null,
+      pointLng: Number(pointLocation.longitude) || null,
+    };
+    const total = subtotal - discount + delivery.amount;
     const legalAcceptedAt = new Date().toISOString();
 
     const { data: createdOrderId, error: createOrderError } = await admin.rpc(
@@ -380,9 +409,9 @@ Deno.serve(async (request) => {
           legal_accepted_at: legalAcceptedAt,
           delivery_provider: "cdek",
           delivery_point_code: delivery.code,
-          delivery_city: delivery.city,
-          delivery_address: delivery.address,
-          delivery_hours: delivery.hours,
+          delivery_city: delivery.city || "СДЭК",
+          delivery_address: delivery.address || delivery.title || delivery.code,
+          delivery_hours: delivery.hours || null,
           delivery_eta: delivery.eta,
           delivery_amount: delivery.amount,
           currency: "RUB",
@@ -393,6 +422,22 @@ Deno.serve(async (request) => {
           source: "storefront",
           metadata: {
             user_agent: text(request.headers.get("user-agent"), 300),
+            cdek: {
+              shipment_point: cdekConfig().shipmentPoint,
+              delivery_point: delivery.code,
+              delivery_city_code: delivery.cityCode,
+              delivery_point_name: delivery.title,
+              delivery_point_type: delivery.pointType,
+              delivery_point_lat: delivery.pointLat,
+              delivery_point_lng: delivery.pointLng,
+              tariff_code: delivery.tariffCode,
+              tariff_name: delivery.tariffName,
+              delivery_mode: delivery.deliveryMode,
+              period_min: delivery.periodMin,
+              period_max: delivery.periodMax,
+              package_snapshot: cdekPackages,
+              quote: cdekQuote.raw,
+            },
           },
         },
         p_items: orderItems,
