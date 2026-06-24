@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Оформление заказа — KOMUI</title>
+<meta name="description" content="Оформление заказа KOMUI: контактные данные, выбор пункта СДЭК и онлайн-оплата.">
+<link rel="icon" href="./favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Unbounded:wght@600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<style>
+:root{
+  --bg:#f5f6fa;
+  --bg-2:#eceef4;
+  --panel:#ffffff;
+  --panel-2:#f1f2f7;
+  --line:#e5e7ef;
+  --line-2:#d3d6e1;
+  --txt:#14151c;
+  --txt-2:#52566a;
+  --txt-3:#8a8fa3;
+  --blue:#0026F9;
+  --blue-2:#173cff;
+  --blue-3:#304fff;
+  --green:#0ea95b;
+  --red:#d93852;
+  --grad:linear-gradient(135deg,#0026F9 0%,#173cff 58%,#304fff 100%);
+  --shadow:0 24px 55px -30px rgba(30,30,60,.28);
+  --focus:0 0 0 4px rgba(0,38,249,.14);
+  --maxw:1180px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  min-height:100vh;background:var(--bg);color:var(--txt);
+  font-family:'Inter',system-ui,sans-serif;font-size:16px;line-height:1.5;
+  -webkit-font-smoothing:antialiased
+}
+body.modal-open{overflow:hidden}
+button,input{font:inherit}
+button{border:0;background:none;color:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+img,svg{display:block}
+.wrap{width:min(100% - 48px,var(--maxw));margin:0 auto}
+.checkout-header{
+  position:sticky;top:0;z-index:40;background:rgba(255,255,255,.88);
+  border-bottom:1px solid var(--line);backdrop-filter:blur(16px)
+}
+.header-inner{height:72px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.brand{font-family:'Unbounded',sans-serif;font-size:24px;font-weight:900;letter-spacing:.04em}
+.brand .dot{color:var(--blue);text-shadow:0 0 18px rgba(0,38,249,.38)}
+.back-link{
+  display:inline-flex;align-items:center;gap:9px;color:var(--txt-2);
+  font-size:14px;font-weight:700;transition:color .18s
+}
+.back-link:hover{color:var(--blue)}
+.back-link svg{width:18px;height:18px}
+.checkout-main{padding:52px 0 92px}
+.page-head{margin-bottom:32px}
+.page-head h1{
+  max-width:760px;font-family:'Unbounded',sans-serif;font-size:clamp(36px,5vw,58px);
+  line-height:1.02;letter-spacing:-.04em
+}
+.page-head p{margin-top:14px;color:var(--txt-2);font-size:17px}
+.checkout-layout{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:28px;align-items:start}
+.checkout-form{display:flex;flex-direction:column;gap:18px}
+.section-card,.summary-card{
+  background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)
+}
+.section-card{padding:28px}
+.section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:23px}
+.section-title{display:flex;align-items:flex-start;gap:14px}
+.section-number{
+  width:30px;height:30px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;
+  border-radius:9px;background:rgba(0,38,249,.08);color:var(--blue);
+  font-family:'Unbounded',sans-serif;font-size:12px;font-weight:800
+}
+.section-title h2{font-family:'Unbounded',sans-serif;font-size:20px;line-height:1.2}
+.section-title p{margin-top:6px;color:var(--txt-2);font-size:14px}
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.field{display:flex;flex-direction:column;gap:8px}
+.field-wide{grid-column:1/-1}
+.field label{font-size:13px;font-weight:700;color:var(--txt-2)}
+.input-wrap{position:relative}
+.input-wrap input{
+  width:100%;height:52px;padding:0 15px;border:1px solid var(--line-2);border-radius:12px;
+  background:#fff;color:var(--txt);font-size:15px;transition:border-color .18s,box-shadow .18s
+}
+.input-wrap input::placeholder{color:#aaadba}
+.input-wrap input:hover{border-color:#bfc3d1}
+.input-wrap input:focus{outline:0;border-color:var(--blue);box-shadow:var(--focus)}
+.input-wrap input.invalid{border-color:var(--red);box-shadow:0 0 0 3px rgba(217,56,82,.10)}
+.field-hint{color:var(--txt-3);font-size:12px}
+.field-error{display:none;color:var(--red);font-size:12px;font-weight:600}
+.field.has-error .field-error{display:block}
+.cdek-mark{
+  display:inline-flex;align-items:center;gap:7px;flex:0 0 auto;color:var(--green);
+  font-size:12px;font-weight:900;letter-spacing:.08em
+}
+.cdek-mark::before{content:"";width:9px;height:9px;border-radius:3px;background:var(--green)}
+.delivery-empty{
+  display:flex;align-items:center;justify-content:space-between;gap:18px;
+  padding:18px;border:1px dashed #c9cddd;border-radius:14px;background:var(--panel-2)
+}
+.delivery-empty strong{display:block;font-size:15px}
+.delivery-empty p{margin-top:5px;color:var(--txt-2);font-size:13px}
+.secondary-button{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;
+  border:1px solid var(--line-2);border-radius:11px;background:#fff;color:var(--txt);
+  font-size:13px;font-weight:800;white-space:nowrap;transition:border-color .18s,color .18s,transform .18s
+}
+.secondary-button:hover{border-color:var(--blue);color:var(--blue);transform:translateY(-1px)}
+.secondary-button:focus-visible,.primary-button:focus-visible,.icon-button:focus-visible,.point-card:focus-visible,.summary-toggle:focus-visible{outline:0;box-shadow:var(--focus)}
+.selected-point{display:none}
+.selected-point.show{display:block}
+.point-selected-card{
+  position:relative;padding:20px;border:1px solid rgba(14,169,91,.32);
+  border-radius:14px;background:linear-gradient(135deg,rgba(14,169,91,.06),rgba(255,255,255,.72))
+}
+.point-status{display:flex;align-items:center;gap:8px;color:var(--green);font-size:12px;font-weight:800;margin-bottom:10px}
+.point-status svg{width:17px;height:17px}
+.point-selected-card h3{font-size:16px;margin-bottom:5px}
+.point-selected-card address{font-style:normal;color:var(--txt-2);font-size:14px}
+.point-meta{display:flex;gap:10px 18px;flex-wrap:wrap;margin-top:14px;color:var(--txt-2);font-size:12px}
+.point-meta span{display:inline-flex;align-items:center;gap:6px}
+.point-change{margin-top:16px}
+.payment-option{
+  display:flex;align-items:center;gap:15px;padding:18px;border:1px solid rgba(0,38,249,.25);
+  border-radius:14px;background:rgba(0,38,249,.035)
+}
+.payment-radio{
+  width:20px;height:20px;border:6px solid var(--blue);border-radius:50%;background:#fff;flex:0 0 auto
+}
+.payment-icon{
+  width:44px;height:44px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;
+  border-radius:12px;background:#fff;border:1px solid var(--line);color:var(--blue)
+}
+.payment-icon svg{width:23px;height:23px}
+.payment-copy{min-width:0}
+.payment-copy strong{display:block;font-size:15px}
+.payment-copy p{margin-top:4px;color:var(--txt-2);font-size:13px}
+.payment-badge{margin-left:auto;color:var(--txt-3);font-size:11px;font-weight:800;white-space:nowrap}
+.consents{display:flex;flex-direction:column;gap:13px}
+.check-row{display:grid;grid-template-columns:20px 1fr;gap:10px;align-items:start;color:var(--txt-2);font-size:13px}
+.check-row input{width:18px;height:18px;margin-top:1px;accent-color:var(--blue)}
+.check-row a{text-decoration:underline;text-underline-offset:2px}
+.check-row a:hover{color:var(--blue)}
+.consent-error{display:none;color:var(--red);font-size:12px;font-weight:600;margin-top:3px}
+.consents.has-error .consent-error{display:block}
+.summary-card{position:sticky;top:96px;overflow:hidden}
+.summary-head{display:flex;align-items:center;justify-content:space-between;padding:24px;border-bottom:1px solid var(--line)}
+.summary-head h2{font-family:'Unbounded',sans-serif;font-size:18px}
+.summary-edit{color:var(--blue);font-size:12px;font-weight:800}
+.summary-toggle{display:none}
+.summary-content{padding:0 24px 24px}
+.order-items{max-height:330px;overflow:auto}
+.order-item{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:13px;padding:18px 0;border-bottom:1px solid var(--line)}
+.item-image{width:72px;height:82px;border-radius:12px;overflow:hidden;background:var(--panel-2);border:1px solid var(--line)}
+.item-image img{width:100%;height:100%;object-fit:contain}
+.item-copy{min-width:0}
+.item-copy h3{font-size:13px;line-height:1.35;font-weight:700}
+.item-copy p{margin-top:6px;color:var(--txt-3);font-size:11px;line-height:1.45}
+.item-price{text-align:right;font-family:'Unbounded',sans-serif;font-size:12px;font-weight:700;white-space:nowrap}
+.item-price span{display:block;margin-top:6px;color:var(--txt-3);font-family:'Inter',sans-serif;font-size:11px;font-weight:600}
+.promo{padding:16px 0;border-bottom:1px solid var(--line)}
+.promo-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;color:var(--txt-2);font-size:13px;font-weight:700}
+.promo-toggle svg{width:16px;height:16px;transition:transform .18s}
+.promo.open .promo-toggle svg{transform:rotate(180deg)}
+.promo-form{display:none;grid-template-columns:1fr auto;gap:8px;margin-top:12px}
+.promo.open .promo-form{display:grid}
+.promo-form input{min-width:0;height:42px;padding:0 12px;border:1px solid var(--line-2);border-radius:10px;background:#fff;text-transform:uppercase}
+.promo-form input:focus{outline:0;border-color:var(--blue);box-shadow:var(--focus)}
+.promo-apply{padding:0 13px;border-radius:10px;background:var(--panel-2);font-size:12px;font-weight:800}
+.promo-message{display:none;margin-top:8px;font-size:11px;font-weight:700}
+.promo-message.show{display:block}
+.promo-message.success{color:var(--green)}
+.promo-message.error{color:var(--red)}
+.totals{padding:18px 0 2px;display:flex;flex-direction:column;gap:10px}
+.total-row{display:flex;justify-content:space-between;gap:16px;color:var(--txt-2);font-size:13px}
+.total-row.discount{display:none;color:var(--green)}
+.total-row.discount.show{display:flex}
+.total-row.grand{
+  margin-top:5px;padding-top:16px;border-top:1px solid var(--line);
+  color:var(--txt);font-family:'Unbounded',sans-serif;font-size:17px;font-weight:800
+}
+.primary-button{
+  width:100%;min-height:54px;display:flex;align-items:center;justify-content:center;gap:9px;
+  margin-top:18px;padding:0 18px;border-radius:13px;background:var(--grad);color:#fff;
+  font-size:14px;font-weight:800;box-shadow:0 16px 34px -17px rgba(0,38,249,.7),inset 0 1px 0 rgba(255,255,255,.24);
+  transition:transform .18s,box-shadow .18s
+}
+.primary-button:hover{transform:translateY(-2px);box-shadow:0 20px 42px -16px rgba(0,38,249,.74),inset 0 1px 0 rgba(255,255,255,.24)}
+.primary-button:disabled{cursor:wait;opacity:.72;transform:none}
+.trust-list{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.trust-item{display:flex;align-items:center;gap:7px;color:var(--txt-3);font-size:11px;line-height:1.3}
+.trust-item svg{width:17px;height:17px;color:var(--blue);flex:0 0 auto}
+.empty-checkout{
+  display:none;max-width:620px;margin:80px auto;padding:44px;text-align:center;
+  background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow)
+}
+.empty-checkout.show{display:block}
+.empty-visual{
+  width:64px;height:64px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;
+  border-radius:18px;background:rgba(0,38,249,.08);color:var(--blue)
+}
+.empty-visual svg{width:30px;height:30px}
+.empty-checkout h1{font-family:'Unbounded',sans-serif;font-size:28px}
+.empty-checkout p{margin:12px auto 24px;color:var(--txt-2);max-width:42ch}
+.empty-checkout .primary-button{width:auto;display:inline-flex;padding:0 24px}
+.mobile-action{display:none}
+.dialog-backdrop{
+  position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:24px;
+  background:rgba(8,9,16,.62);backdrop-filter:blur(8px);opacity:0;visibility:hidden;transition:opacity .22s,visibility .22s
+}
+.dialog-backdrop.show{opacity:1;visibility:visible}
+.pickup-dialog{
+  width:min(1120px,100%);height:min(760px,calc(100dvh - 48px));display:grid;
+  grid-template-columns:380px minmax(0,1fr);overflow:hidden;background:#fff;
+  border:1px solid rgba(255,255,255,.5);border-radius:22px;box-shadow:0 34px 90px -35px rgba(0,0,0,.58);
+  transform:translateY(12px) scale(.985);transition:transform .22s
+}
+.dialog-backdrop.show .pickup-dialog{transform:translateY(0) scale(1)}
+.pickup-side{display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--line)}
+.dialog-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:22px 22px 17px;border-bottom:1px solid var(--line)}
+.dialog-head h2{font-family:'Unbounded',sans-serif;font-size:20px;line-height:1.2}
+.dialog-head p{margin-top:6px;color:var(--txt-2);font-size:12px}
+.icon-button{
+  width:38px;height:38px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;
+  border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--txt-2)
+}
+.icon-button:hover{color:var(--blue);border-color:rgba(0,38,249,.35)}
+.icon-button svg{width:18px;height:18px}
+.point-search{padding:16px 18px;border-bottom:1px solid var(--line)}
+.point-search-wrap{position:relative}
+.point-search svg{position:absolute;left:13px;top:50%;width:18px;height:18px;color:var(--txt-3);transform:translateY(-50%)}
+.point-search input{
+  width:100%;height:46px;padding:0 13px 0 40px;border:1px solid var(--line-2);border-radius:11px;background:var(--panel-2)
+}
+.point-search input:focus{outline:0;border-color:var(--blue);box-shadow:var(--focus);background:#fff}
+.point-demo-note{margin-top:10px;color:var(--txt-3);font-size:11px;line-height:1.4}
+.point-list{flex:1;overflow:auto;padding:10px}
+.point-card{
+  width:100%;padding:14px;border:1px solid transparent;border-radius:12px;text-align:left;
+  transition:border-color .18s,background .18s
+}
+.point-card:hover{background:var(--panel-2)}
+.point-card.active{border-color:rgba(0,38,249,.28);background:rgba(0,38,249,.055)}
+.point-card strong{display:block;font-size:13px}
+.point-card address{margin-top:4px;color:var(--txt-2);font-style:normal;font-size:12px}
+.point-card div{display:flex;justify-content:space-between;gap:10px;margin-top:9px;color:var(--txt-3);font-size:11px}
+.point-card b{color:var(--txt);font-weight:700}
+.point-action{padding:16px 18px 18px;border-top:1px solid var(--line)}
+.point-action .primary-button{margin:0}
+.point-action .primary-button:disabled{cursor:not-allowed;opacity:.42}
+.pickup-map{position:relative;min-width:0;background:var(--bg-2)}
+#pickupMap{width:100%;height:100%}
+.map-brand{
+  position:absolute;left:16px;top:16px;z-index:500;display:flex;align-items:center;gap:9px;
+  padding:9px 12px;border-radius:10px;background:rgba(255,255,255,.94);border:1px solid var(--line);
+  box-shadow:0 10px 30px -20px rgba(0,0,0,.55);font-size:12px;font-weight:800
+}
+.map-brand .cdek-mark{font-size:11px}
+.map-fallback{
+  display:none;position:absolute;inset:0;z-index:450;align-items:center;justify-content:center;
+  padding:30px;background:var(--panel-2);text-align:center;color:var(--txt-2);font-size:13px
+}
+.map-fallback.show{display:flex}
+.leaflet-control-attribution{font-size:9px!important}
+.leaflet-marker-icon.komui-marker{filter:hue-rotate(210deg) saturate(1.8)}
+.notice-dialog{
+  width:min(500px,100%);padding:30px;background:#fff;border-radius:20px;border:1px solid var(--line);
+  box-shadow:0 34px 90px -35px rgba(0,0,0,.58);transform:translateY(12px) scale(.985);transition:transform .22s
+}
+.dialog-backdrop.show .notice-dialog{transform:translateY(0) scale(1)}
+.notice-icon{
+  width:52px;height:52px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;
+  border-radius:15px;background:rgba(0,38,249,.08);color:var(--blue)
+}
+.notice-icon svg{width:26px;height:26px}
+.notice-dialog h2{font-family:'Unbounded',sans-serif;font-size:22px;line-height:1.2}
+.notice-dialog p{margin-top:12px;color:var(--txt-2);font-size:14px}
+.notice-order{
+  display:flex;justify-content:space-between;gap:16px;margin-top:20px;padding:14px;
+  border-radius:12px;background:var(--panel-2);font-size:13px
+}
+.notice-order b{font-family:'Unbounded',sans-serif}
+.notice-dialog .primary-button{margin-top:22px}
+.toast{
+  position:fixed;left:50%;bottom:24px;z-index:160;max-width:calc(100vw - 32px);
+  padding:13px 17px;border-radius:12px;background:#171820;color:#fff;
+  font-size:13px;font-weight:700;box-shadow:0 18px 50px -22px rgba(0,0,0,.8);
+  opacity:0;transform:translate(-50%,18px);pointer-events:none;transition:opacity .2s,transform .2s
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media(max-width:960px){
+  .checkout-layout{grid-template-columns:1fr}
+  .summary-card{position:static;order:-1}
+  .summary-head{padding:18px 20px}
+  .summary-toggle{display:flex;align-items:center;gap:8px;color:var(--blue);font-size:12px;font-weight:800}
+  .summary-toggle svg{width:16px;height:16px;transition:transform .18s}
+  .summary-card.collapsed .summary-toggle svg{transform:rotate(180deg)}
+  .summary-card.collapsed .summary-content{display:none}
+  .checkout-main{padding-bottom:118px}
+  .desktop-pay{display:none}
+  .mobile-action{
+    position:fixed;left:0;right:0;bottom:0;z-index:35;display:block;padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    background:rgba(255,255,255,.94);border-top:1px solid var(--line);backdrop-filter:blur(14px)
+  }
+  .mobile-action .primary-button{margin:0}
+}
+@media(max-width:720px){
+  .wrap{width:min(100% - 32px,var(--maxw))}
+  .checkout-header .header-inner{height:62px}
+  .brand{font-size:20px}
+  .back-link span{display:none}
+  .checkout-main{padding-top:32px}
+  .page-head{margin-bottom:24px}
+  .page-head h1{font-size:34px}
+  .page-head p{font-size:15px}
+  .section-card{padding:21px 18px;border-radius:15px}
+  .section-head{margin-bottom:19px}
+  .section-title{gap:11px}
+  .section-title h2{font-size:17px}
+  .field-grid{grid-template-columns:1fr}
+  .field-wide{grid-column:auto}
+  .delivery-empty{align-items:flex-start;flex-direction:column}
+  .delivery-empty .secondary-button{width:100%}
+  .payment-option{align-items:flex-start}
+  .payment-badge{display:none}
+  .summary-head h2{font-size:16px}
+  .summary-content{padding:0 18px 18px}
+  .trust-list{grid-template-columns:1fr}
+  .dialog-backdrop{padding:0}
+  .pickup-dialog{width:100%;height:100dvh;grid-template-columns:1fr;border:0;border-radius:0}
+  .pickup-side{height:58dvh;border-right:0;border-bottom:1px solid var(--line);order:2}
+  .pickup-map{height:42dvh;order:1}
+  .map-brand{left:10px;top:10px}
+  .dialog-head{padding:16px 16px 13px}
+  .dialog-head h2{font-size:17px}
+  .point-search{padding:12px 14px}
+  .point-list{padding:6px}
+  .point-action{padding:11px 14px calc(11px + env(safe-area-inset-bottom))}
+  .notice-dialog{min-height:100dvh;width:100%;display:flex;flex-direction:column;justify-content:center;border-radius:0;padding:28px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;transition-duration:.001ms!important;animation-duration:.001ms!important}
+}
+</style>
+</head>
+<body>
+<header class="checkout-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="./index.html" aria-label="KOMUI, на главную">KOMUI<span class="dot">.</span></a>
+    <a class="back-link" href="./index.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+      <span>Вернуться в магазин</span>
+    </a>
+  </div>
+</header>
+
+<main class="checkout-main">
+  <div class="wrap" id="checkoutView">
+    <div class="page-head">
+      <h1>Оформление заказа</h1>
+      <p>Контактные данные, удобный пункт СДЭК и онлайн-оплата.</p>
+    </div>
+
+    <div class="checkout-layout">
+      <form class="checkout-form" id="checkoutForm" novalidate>
+        <section class="section-card" aria-labelledby="recipientTitle">
+          <div class="section-head">
+            <div class="section-title">
+              <span class="section-number">01</span>
+              <div>
+                <h2 id="recipientTitle">Получатель</h2>
+                <p>Данные нужны для выдачи и связи по заказу.</p>
+              </div>
+            </div>
+          </div>
+          <div class="field-grid">
+            <div class="field" data-field="lastName">
+              <label for="lastName">Фамилия</label>
+              <div class="input-wrap"><input id="lastName" name="lastName" type="text" autocomplete="family-name" placeholder="Кадимагомедов" required></div>
+              <div class="field-error">Укажите фамилию</div>
+            </div>
+            <div class="field" data-field="firstName">
+              <label for="firstName">Имя</label>
+              <div class="input-wrap"><input id="firstName" name="firstName" type="text" autocomplete="given-name" placeholder="Магомед" required></div>
+              <div class="field-error">Укажите имя</div>
+            </div>
+            <div class="field field-wide" data-field="phone">
+              <label for="phone">Номер телефона</label>
+              <div class="input-wrap"><input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (999) 123-45-67" required></div>
+              <div class="field-hint">Позвоним только по вопросам заказа и доставки.</div>
+              <div class="field-error">Введите российский номер телефона полностью</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section-card" id="deliverySection" aria-labelledby="deliveryTitle">
+          <div class="section-head">
+            <div class="section-title">
+              <span class="section-number">02</span>
+              <div>
+                <h2 id="deliveryTitle">Доставка</h2>
+                <p>До выбранного пункта выдачи.</p>
+              </div>
+            </div>
+            <span class="cdek-mark">СДЭК</span>
+          </div>
+          <div class="delivery-empty" id="deliveryEmpty">
+            <div>
+              <strong>Выберите удобный пункт выдачи</strong>
+              <p>Покажем адрес, график, срок и стоимость доставки.</p>
+            </div>
+            <button class="secondary-button" id="openPickup" type="button">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+              Выбрать пункт
+            </button>
+          </div>
+          <div class="selected-point" id="selectedPoint"></div>
+        </section>
+
+        <section class="section-card" aria-labelledby="paymentTitle">
+          <div class="section-head">
+            <div class="section-title">
+              <span class="section-number">03</span>
+              <div>
+                <h2 id="paymentTitle">Оплата</h2>
+                <p>Оплата произойдёт после проверки заказа.</p>
+              </div>
+            </div>
+          </div>
+          <div class="payment-option">
+            <span class="payment-radio" aria-hidden="true"></span>
+            <span class="payment-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M7 15h3"/></svg>
+            </span>
+            <div class="payment-copy">
+              <strong>Онлайн-оплата</strong>
+              <p>Банковская карта, СБП и другие способы через Т‑Банк.</p>
+            </div>
+            <span class="payment-badge">Т‑Банк</span>
+          </div>
+        </section>
+
+        <section class="section-card">
+          <div class="consents" id="consents">
+            <label class="check-row">
+              <input id="legalConsent" type="checkbox" required>
+              <span>Я принимаю условия <a href="./offer.html" target="_blank">публичной оферты</a> и даю согласие на <a href="./personal-data-consent.html" target="_blank">обработку персональных данных</a>.</span>
+            </label>
+            <label class="check-row">
+              <input id="marketingConsent" type="checkbox">
+              <span>Получать новости и специальные предложения KOMUI.</span>
+            </label>
+            <div class="consent-error">Нужно принять оферту и согласие на обработку данных</div>
+          </div>
+        </section>
+      </form>
+
+      <aside class="summary-card" id="summaryCard">
+        <div class="summary-head">
+          <h2>Ваш заказ</h2>
+          <a class="summary-edit" href="./index.html">Изменить</a>
+          <button class="summary-toggle" id="summaryToggle" type="button" aria-expanded="true">
+            <span id="summaryToggleText">Свернуть</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>
+          </button>
+        </div>
+        <div class="summary-content">
+          <div class="order-items" id="orderItems"></div>
+          <div class="promo" id="promo">
+            <button class="promo-toggle" id="promoToggle" type="button" aria-expanded="false">
+              <span>Есть промокод?</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="promo-form">
+              <input id="promoInput" type="text" autocomplete="off" placeholder="Промокод" aria-label="Промокод">
+              <button class="promo-apply" id="promoApply" type="button">Применить</button>
+            </div>
+            <div class="promo-message" id="promoMessage"></div>
+          </div>
+          <div class="totals">
+            <div class="total-row"><span>Товары</span><span id="itemsTotal">0 ₽</span></div>
+            <div class="total-row discount" id="discountRow"><span>Скидка KOMUI10</span><span id="discountTotal">−0 ₽</span></div>
+            <div class="total-row"><span>Доставка</span><span id="deliveryTotal">после выбора ПВЗ</span></div>
+            <div class="total-row grand"><span>Итого</span><span id="grandTotal">0 ₽</span></div>
+          </div>
+          <div class="desktop-pay">
+            <button class="primary-button" id="payButton" type="button">
+              <span id="payButtonText">Перейти к оплате</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+          </div>
+          <div class="trust-list">
+            <div class="trust-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+              Безопасная онлайн-оплата
+            </div>
+            <div class="trust-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+              Доставка в ПВЗ СДЭК
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="empty-checkout" id="emptyCheckout">
+    <div class="empty-visual">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 7h12l1 13H5L6 7Z"/><path d="M9 9V5a3 3 0 0 1 6 0v4"/></svg>
+    </div>
+    <h1>Корзина пуста</h1>
+    <p>Добавьте вещи из каталога, чтобы перейти к выбору доставки и оплате.</p>
+    <a class="primary-button" href="./index.html#catalog">Перейти в каталог</a>
+  </div>
+</main>
+
+<div class="mobile-action">
+  <button class="primary-button" id="mobilePayButton" type="button"><span id="mobilePayText">Перейти к оплате</span></button>
+</div>
+
+<div class="dialog-backdrop" id="pickupBackdrop" aria-hidden="true">
+  <div class="pickup-dialog" role="dialog" aria-modal="true" aria-labelledby="pickupTitle">
+    <div class="pickup-side">
+      <div class="dialog-head">
+        <div>
+          <h2 id="pickupTitle">Пункт выдачи СДЭК</h2>
+          <p>Найдите удобный адрес и подтвердите выбор.</p>
+        </div>
+        <button class="icon-button" id="closePickup" type="button" aria-label="Закрыть выбор пункта">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="point-search">
+        <div class="point-search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+          <input id="pointSearch" type="search" placeholder="Метро, улица или код пункта" autocomplete="off">
+        </div>
+        <div class="point-demo-note">Демонстрационные пункты для макета. При подключении их заменит официальный виджет СДЭК.</div>
+      </div>
+      <div class="point-list" id="pointList"></div>
+      <div class="point-action">
+        <button class="primary-button" id="confirmPoint" type="button" disabled>Выбрать этот пункт</button>
+      </div>
+    </div>
+    <div class="pickup-map">
+      <div id="pickupMap"></div>
+      <div class="map-brand"><span class="cdek-mark">СДЭК</span><span>Пункты выдачи</span></div>
+      <div class="map-fallback" id="mapFallback">Карта не загрузилась. Выберите пункт в списке — оформление останется доступным.</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="./data/storefront-products.js"></script>
+<script src="./data/supabase-config.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script>
+(function(){
+'use strict';
+const CART_KEY='komui-cart-v1';
+const CHECKOUT_KEY='komui-checkout-cart-v1';
+const FORM_KEY='komui-checkout-form-v1';
+const PROMO_KEY='komui-checkout-promo-v1';
+const PAYMENT_DRAFT_KEY='komui-payment-draft-v1';
+const $=s=>document.querySelector(s);
+const money=n=>Math.round(Number(n)||0).toLocaleString('ru-RU')+' ₽';
+const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function readJson(key,fallback){
+  try{const value=JSON.parse(localStorage.getItem(key)||'null');return value??fallback;}catch(e){return fallback;}
+}
+
+const localProducts=(window.KOMUI_PRODUCTS||[]).map(p=>({
+  id:String(p.id),name:p.name,price:Number(p.price)||0,priceOld:Number(p.priceOld)||null,
+  image:p.image,collection:p.col,type:p.type,color:p.color||''
+}));
+
+function loadItems(){
+  const snapshot=readJson(CHECKOUT_KEY,[]);
+  if(Array.isArray(snapshot)&&snapshot.length)return snapshot.filter(item=>item&&Number(item.qty)>0);
+  const cart=readJson(CART_KEY,[]);
+  if(!Array.isArray(cart))return [];
+  return cart.map(item=>{
+    const product=localProducts.find(p=>p.id===String(item.id));
+    return product?{...product,key:item.key,id:String(item.id),size:item.size,qty:Number(item.qty)||1}:null;
+  }).filter(Boolean);
+}
+
+let items=loadItems();
+const previewMode=new URLSearchParams(location.search).get('preview')==='1'||location.protocol==='file:';
+if(!items.length&&previewMode){
+  items=localProducts.slice(0,2).map((item,index)=>({
+    ...item,key:'preview-'+index,size:index===0?'M':'L',qty:1
+  }));
+}
+let selectedPoint=null;
+let pendingPoint=null;
+let promoApplied=localStorage.getItem(PROMO_KEY)==='KOMUI10';
+let map=null;
+let markers=[];
+let toastTimer=null;
+
+const points=[
+  {code:'MSK214',title:'СДЭК на Тверской',city:'Москва',address:'Тверская улица, 12с8',hours:'Пн–Вс, 10:00–21:00',days:'1–2 дня',price:390,lat:55.7637,lng:37.6084,metro:'Пушкинская'},
+  {code:'MSK1177',title:'СДЭК на Арбате',city:'Москва',address:'улица Арбат, 19',hours:'Пн–Вс, 09:00–21:00',days:'1–3 дня',price:420,lat:55.7498,lng:37.5912,metro:'Арбатская'},
+  {code:'MSK565',title:'СДЭК Павелецкая',city:'Москва',address:'Кожевническая улица, 7с1',hours:'Пн–Пт, 09:00–20:00',days:'1–2 дня',price:360,lat:55.7303,lng:37.6441,metro:'Павелецкая'},
+  {code:'MSK1924',title:'СДЭК Бауманская',city:'Москва',address:'Бакунинская улица, 14с1',hours:'Пн–Вс, 10:00–20:00',days:'2–3 дня',price:390,lat:55.7724,lng:37.6784,metro:'Бауманская'},
+  {code:'MSK130',title:'СДЭК Киевская',city:'Москва',address:'Брянская улица, 2',hours:'Пн–Вс, 09:00–21:00',days:'1–2 дня',price:410,lat:55.7438,lng:37.5661,metro:'Киевская'}
+];
+
+function saveForm(){
+  const state={
+    lastName:$('#lastName').value,firstName:$('#firstName').value,phone:$('#phone').value,
+    legal:$('#legalConsent').checked,marketing:$('#marketingConsent').checked,point:selectedPoint
+  };
+  try{sessionStorage.setItem(FORM_KEY,JSON.stringify(state));}catch(e){}
+}
+
+function restoreForm(){
+  try{
+    const saved=JSON.parse(sessionStorage.getItem(FORM_KEY)||'{}');
+    $('#lastName').value=saved.lastName||'';
+    $('#firstName').value=saved.firstName||'';
+    $('#phone').value=saved.phone||'';
+    $('#legalConsent').checked=!!saved.legal;
+    $('#marketingConsent').checked=!!saved.marketing;
+    selectedPoint=saved.point||null;
+  }catch(e){}
+}
+
+function itemsSubtotal(){return items.reduce((sum,item)=>sum+(Number(item.price)||0)*(Number(item.qty)||1),0)}
+function discount(){return promoApplied?Math.round(itemsSubtotal()*.1):0}
+function deliveryCost(){return selectedPoint?Number(selectedPoint.price)||0:0}
+function orderTotal(){return Math.max(0,itemsSubtotal()-discount()+deliveryCost())}
+
+function renderItems(){
+  $('#orderItems').innerHTML=items.map(item=>`
+    <article class="order-item">
+      <div class="item-image"><img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}"></div>
+      <div class="item-copy">
+        <h3>${escapeHtml(item.name)}</h3>
+        <p>${escapeHtml([item.collection,item.type,item.color,'размер '+item.size].filter(Boolean).join(' · '))}</p>
+      </div>
+      <div class="item-price">${money((Number(item.price)||0)*(Number(item.qty)||1))}<span>${item.qty} шт.</span></div>
+    </article>`).join('');
+}
+
+function renderTotals(){
+  $('#itemsTotal').textContent=money(itemsSubtotal());
+  $('#discountRow').classList.toggle('show',promoApplied);
+  $('#discountTotal').textContent='−'+money(discount());
+  $('#deliveryTotal').textContent=selectedPoint?money(deliveryCost()):'после выбора ПВЗ';
+  $('#grandTotal').textContent=money(orderTotal());
+  const label='Перейти к оплате · '+money(orderTotal());
+  $('#payButtonText').textContent=label;
+  $('#mobilePayText').textContent=label;
+}
+
+function renderSelectedPoint(){
+  const empty=$('#deliveryEmpty');
+  const box=$('#selectedPoint');
+  if(!selectedPoint){empty.style.display='flex';box.classList.remove('show');box.innerHTML='';renderTotals();return}
+  empty.style.display='none';
+  box.classList.add('show');
+  box.innerHTML=`
+    <div class="point-selected-card">
+      <div class="point-status">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 2.7 2.7L16.5 9"/></svg>
+        Пункт выбран · ${escapeHtml(selectedPoint.code)}
+      </div>
+      <h3>${escapeHtml(selectedPoint.title)}</h3>
+      <address>${escapeHtml(selectedPoint.city+', '+selectedPoint.address)}</address>
+      <div class="point-meta">
+        <span>${escapeHtml(selectedPoint.hours)}</span>
+        <span>${escapeHtml(selectedPoint.days)}</span>
+        <span>${money(selectedPoint.price)}</span>
+      </div>
+      <button class="secondary-button point-change" id="changePoint" type="button">Изменить пункт</button>
+    </div>`;
+  $('#changePoint').addEventListener('click',openPickup);
+  renderTotals();
+}
+
+function renderPointList(query=''){
+  const q=query.trim().toLowerCase();
+  const filtered=points.filter(p=>[p.code,p.title,p.city,p.address,p.metro].join(' ').toLowerCase().includes(q));
+  $('#pointList').innerHTML=filtered.length?filtered.map(p=>`
+    <button class="point-card${pendingPoint&&pendingPoint.code===p.code?' active':''}" type="button" data-code="${p.code}">
+      <strong>${escapeHtml(p.title)} · ${escapeHtml(p.code)}</strong>
+      <address>${escapeHtml(p.address)} · м. ${escapeHtml(p.metro)}</address>
+      <div><span>${escapeHtml(p.hours)}</span><b>${money(p.price)}</b></div>
+    </button>`).join(''):'<div style="padding:26px 14px;color:var(--txt-2);font-size:13px;text-align:center">Подходящих пунктов не найдено</div>';
+}
+
+function initMap(){
+  if(map||!window.L)return;
+  try{
+    map=L.map('pickupMap',{zoomControl:true,attributionControl:true}).setView([55.7558,37.6176],11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      maxZoom:19,attribution:'© OpenStreetMap'
+    }).addTo(map);
+    markers=points.map(point=>{
+      const marker=L.marker([point.lat,point.lng],{title:point.title}).addTo(map);
+      marker.bindTooltip(point.code+' · '+point.address,{direction:'top'});
+      marker.on('click',()=>selectPendingPoint(point.code));
+      return {code:point.code,marker};
+    });
+    setTimeout(()=>map.invalidateSize(),80);
+  }catch(e){$('#mapFallback').classList.add('show')}
+}
+
+function selectPendingPoint(code){
+  pendingPoint=points.find(p=>p.code===code)||null;
+  renderPointList($('#pointSearch').value);
+  $('#confirmPoint').disabled=!pendingPoint;
+  if(map&&pendingPoint){
+    map.flyTo([pendingPoint.lat,pendingPoint.lng],15,{duration:.6});
+    const found=markers.find(m=>m.code===code);
+    if(found)found.marker.openTooltip();
+  }
+}
+
+function openPickup(){
+  pendingPoint=selectedPoint||null;
+  renderPointList($('#pointSearch').value);
+  $('#confirmPoint').disabled=!pendingPoint;
+  $('#pickupBackdrop').classList.add('show');
+  $('#pickupBackdrop').setAttribute('aria-hidden','false');
+  document.body.classList.add('modal-open');
+  initMap();
+  setTimeout(()=>{if(map)map.invalidateSize();$('#pointSearch').focus()},120);
+}
+
+function closePickup(){
+  $('#pickupBackdrop').classList.remove('show');
+  $('#pickupBackdrop').setAttribute('aria-hidden','true');
+  document.body.classList.remove('modal-open');
+}
+
+function formatPhone(value){
+  let digits=value.replace(/\D/g,'');
+  if(digits.startsWith('8'))digits='7'+digits.slice(1);
+  if(!digits.startsWith('7'))digits='7'+digits;
+  digits=digits.slice(0,11);
+  const rest=digits.slice(1);
+  let result='+7';
+  if(rest.length)result+=' ('+rest.slice(0,3);
+  if(rest.length>=3)result+=') '+rest.slice(3,6);
+  if(rest.length>=6)result+='-'+rest.slice(6,8);
+  if(rest.length>=8)result+='-'+rest.slice(8,10);
+  return result;
+}
+
+function setFieldError(id,invalid){
+  const field=document.querySelector('[data-field="'+id+'"]');
+  const input=$('#'+id);
+  field.classList.toggle('has-error',invalid);
+  input.classList.toggle('invalid',invalid);
+  input.setAttribute('aria-invalid',invalid?'true':'false');
+}
+
+function validate(){
+  const checks={
+    lastName:$('#lastName').value.trim().length<2,
+    firstName:$('#firstName').value.trim().length<2,
+    phone:$('#phone').value.replace(/\D/g,'').length!==11
+  };
+  Object.entries(checks).forEach(([id,invalid])=>setFieldError(id,invalid));
+  const consentInvalid=!$('#legalConsent').checked;
+  $('#consents').classList.toggle('has-error',consentInvalid);
+  if(!selectedPoint){
+    $('#deliverySection').scrollIntoView({behavior:'smooth',block:'center'});
+    setTimeout(openPickup,260);
+    showToast('Выберите пункт выдачи СДЭК');
+    return false;
+  }
+  const firstInvalid=Object.keys(checks).find(id=>checks[id]);
+  if(firstInvalid){$('#'+firstInvalid).focus();$('#'+firstInvalid).scrollIntoView({behavior:'smooth',block:'center'});return false}
+  if(consentInvalid){$('#legalConsent').focus();$('#consents').scrollIntoView({behavior:'smooth',block:'center'});return false}
+  return true;
+}
+
+function randomToken(bytesLength=32){
+  const bytes=crypto.getRandomValues(new Uint8Array(bytesLength));
+  let binary='';
+  bytes.forEach(byte=>binary+=String.fromCharCode(byte));
+  return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/g,'');
+}
+
+function randomUuid(){
+  if(crypto.randomUUID)return crypto.randomUUID();
+  const bytes=crypto.getRandomValues(new Uint8Array(16));
+  bytes[6]=(bytes[6]&15)|64;bytes[8]=(bytes[8]&63)|128;
+  const hex=[...bytes].map(value=>value.toString(16).padStart(2,'0')).join('');
+  return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
+}
+
+function paymentIdentity(){
+  const fingerprint=JSON.stringify({
+    items:items.map(item=>[String(item.id),String(item.size),Number(item.qty)]),
+    point:selectedPoint?.code||'',
+    promo:promoApplied?'KOMUI10':'',
+    phone:$('#phone').value.replace(/\D/g,'')
+  });
+  try{
+    const saved=JSON.parse(sessionStorage.getItem(PAYMENT_DRAFT_KEY)||'null');
+    if(saved?.fingerprint===fingerprint&&saved?.clientRequestId&&saved?.accessToken)return saved;
+  }catch(e){}
+  const identity={fingerprint,clientRequestId:randomUuid(),accessToken:randomToken()};
+  try{sessionStorage.setItem(PAYMENT_DRAFT_KEY,JSON.stringify(identity));}catch(e){}
+  return identity;
+}
+
+function setPaymentLoading(loading){
+  const buttons=[$('#payButton'),$('#mobilePayButton')];
+  buttons.forEach(button=>{button.disabled=loading});
+  const label=loading?'Создаём безопасный платёж…':'Перейти к оплате · '+money(orderTotal());
+  $('#payButtonText').textContent=label;
+  $('#mobilePayText').textContent=label;
+}
+
+async function submitCheckout(){
+  saveForm();
+  if(!validate())return;
+  if(previewMode){
+    showToast('Оплата доступна только на опубликованном сайте');
+    return;
+  }
+  const config=window.KOMUI_SUPABASE;
+  if(!config?.url||!config?.anonKey){
+    showToast('Платёжный сервис не настроен');
+    return;
+  }
+
+  const identity=paymentIdentity();
+  setPaymentLoading(true);
+  try{
+    const response=await fetch(config.url.replace(/\/$/,'')+'/functions/v1/tbank-create-payment',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        apikey:config.anonKey,
+        Authorization:'Bearer '+config.anonKey
+      },
+      body:JSON.stringify({
+        clientRequestId:identity.clientRequestId,
+        accessToken:identity.accessToken,
+        customer:{
+          firstName:$('#firstName').value.trim(),
+          lastName:$('#lastName').value.trim(),
+          phone:$('#phone').value,
+          legalConsent:$('#legalConsent').checked,
+          marketingConsent:$('#marketingConsent').checked
+        },
+        delivery:{code:selectedPoint.code},
+        items:items.map(item=>({id:String(item.id),size:String(item.size),qty:Number(item.qty)})),
+        promoCode:promoApplied?'KOMUI10':null
+      })
+    });
+    const result=await response.json().catch(()=>({}));
+    if(!response.ok||!result.paymentUrl||!result.orderNumber){
+      if(result.retryAllowed){
+        try{sessionStorage.removeItem(PAYMENT_DRAFT_KEY)}catch(e){}
+      }
+      throw new Error(result.error||'Не удалось создать платёж');
+    }
+    try{
+      sessionStorage.setItem('komui-payment-session:'+result.orderNumber,JSON.stringify({
+        accessToken:identity.accessToken,
+        paymentId:result.paymentId||null,
+        amount:result.amount||null,
+        createdAt:new Date().toISOString()
+      }));
+    }catch(e){}
+    location.assign(result.paymentUrl);
+  }catch(error){
+    setPaymentLoading(false);
+    showToast(error?.message||'Не удалось перейти к оплате');
+  }
+}
+
+function showToast(message){
+  const toast=$('#toast');
+  toast.textContent=message;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>toast.classList.remove('show'),2600);
+}
+
+function applyPromo(){
+  const code=$('#promoInput').value.trim().toUpperCase();
+  const message=$('#promoMessage');
+  message.className='promo-message show';
+  if(code==='KOMUI10'){
+    promoApplied=true;
+    localStorage.setItem(PROMO_KEY,'KOMUI10');
+    message.classList.add('success');
+    message.textContent='Скидка 10% применена';
+    renderTotals();
+  }else{
+    message.classList.add('error');
+    message.textContent='Промокод не найден';
+  }
+}
+
+function init(){
+  if(!items.length){
+    $('#checkoutView').style.display='none';
+    $('#emptyCheckout').classList.add('show');
+    document.querySelector('.mobile-action').style.display='none';
+    return;
+  }
+  restoreForm();
+  renderItems();
+  renderSelectedPoint();
+  renderTotals();
+  if(promoApplied){
+    $('#promo').classList.add('open');
+    $('#promoInput').value='KOMUI10';
+    $('#promoMessage').className='promo-message show success';
+    $('#promoMessage').textContent='Скидка 10% применена';
+  }
+
+  ['lastName','firstName','phone'].forEach(id=>{
+    $('#'+id).addEventListener('input',()=>{
+      if(id==='phone')$('#phone').value=formatPhone($('#phone').value);
+      setFieldError(id,false);saveForm();
+    });
+  });
+  ['legalConsent','marketingConsent'].forEach(id=>$('#'+id).addEventListener('change',()=>{$('#consents').classList.remove('has-error');saveForm()}));
+  $('#openPickup').addEventListener('click',openPickup);
+  $('#closePickup').addEventListener('click',closePickup);
+  $('#pickupBackdrop').addEventListener('click',e=>{if(e.target===e.currentTarget)closePickup()});
+  $('#pointSearch').addEventListener('input',e=>renderPointList(e.target.value));
+  $('#pointList').addEventListener('click',e=>{const card=e.target.closest('[data-code]');if(card)selectPendingPoint(card.dataset.code)});
+  $('#confirmPoint').addEventListener('click',()=>{
+    if(!pendingPoint)return;
+    selectedPoint={...pendingPoint};
+    saveForm();renderSelectedPoint();closePickup();showToast('Пункт СДЭК выбран');
+  });
+  $('#promoToggle').addEventListener('click',()=>{
+    const promo=$('#promo');const open=promo.classList.toggle('open');
+    $('#promoToggle').setAttribute('aria-expanded',open?'true':'false');
+    if(open)setTimeout(()=>$('#promoInput').focus(),50);
+  });
+  $('#promoApply').addEventListener('click',applyPromo);
+  $('#promoInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();applyPromo()}});
+  $('#summaryToggle').addEventListener('click',()=>{
+    const card=$('#summaryCard');const collapsed=card.classList.toggle('collapsed');
+    $('#summaryToggle').setAttribute('aria-expanded',collapsed?'false':'true');
+    $('#summaryToggleText').textContent=collapsed?'Показать':'Свернуть';
+  });
+  $('#payButton').addEventListener('click',submitCheckout);
+  $('#mobilePayButton').addEventListener('click',submitCheckout);
+  $('#checkoutForm').addEventListener('submit',e=>{e.preventDefault();submitCheckout()});
+  document.addEventListener('keydown',e=>{
+    if(e.key!=='Escape')return;
+    if($('#pickupBackdrop').classList.contains('show'))closePickup();
+  });
+}
+
+init();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Статус оплаты — KOMUI</title>
+<meta name="description" content="Статус оплаты заказа KOMUI.">
+<link rel="icon" href="./favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Unbounded:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f6fa;--panel:#fff;--line:#e5e7ef;--txt:#14151c;--muted:#62677a;
+  --blue:#0026F9;--green:#0ea95b;--red:#d93852;--amber:#d48400;
+  --grad:linear-gradient(135deg,#0026F9,#173cff 58%,#304fff);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;background:var(--bg);color:var(--txt);font-family:'Inter',system-ui,sans-serif}
+a{text-decoration:none;color:inherit}
+.header{height:72px;display:flex;align-items:center;border-bottom:1px solid var(--line);background:rgba(255,255,255,.9)}
+.wrap{width:min(100% - 32px,1120px);margin:0 auto}
+.brand{font:900 24px 'Unbounded',sans-serif;letter-spacing:.04em}.brand span{color:var(--blue)}
+.main{min-height:calc(100vh - 72px);display:grid;place-items:center;padding:48px 0}
+.card{width:min(100%,620px);padding:42px;background:var(--panel);border:1px solid var(--line);border-radius:22px;box-shadow:0 30px 70px -38px rgba(20,22,50,.34);text-align:center}
+.icon{width:68px;height:68px;display:grid;place-items:center;margin:0 auto 24px;border-radius:20px;background:rgba(0,38,249,.08);color:var(--blue)}
+.icon svg{width:32px;height:32px}
+.icon.paid{background:rgba(14,169,91,.09);color:var(--green)}
+.icon.failed{background:rgba(217,56,82,.09);color:var(--red)}
+.icon.review{background:rgba(212,132,0,.1);color:var(--amber)}
+.spinner{width:29px;height:29px;border:3px solid rgba(0,38,249,.18);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+h1{font:800 clamp(26px,5vw,38px)/1.12 'Unbounded',sans-serif;letter-spacing:-.03em}
+.lead{max-width:48ch;margin:15px auto 0;color:var(--muted);font-size:15px;line-height:1.6}
+.order{display:flex;justify-content:space-between;gap:20px;margin-top:24px;padding:15px 17px;border-radius:13px;background:#f1f2f7;font-size:13px}
+.order b{font-family:'Unbounded',sans-serif}
+.actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:26px}
+.button{min-height:48px;display:inline-flex;align-items:center;justify-content:center;padding:0 20px;border:1px solid var(--line);border-radius:12px;background:#fff;font-size:13px;font-weight:800}
+.button.primary{border:0;background:var(--grad);color:#fff}
+.hint{margin-top:21px;color:#8a8fa3;font-size:12px;line-height:1.5}
+@media(max-width:560px){.header{height:62px}.brand{font-size:20px}.main{min-height:calc(100vh - 62px);padding:20px 0}.card{padding:30px 20px;border-radius:18px}.actions{flex-direction:column}.button{width:100%}}
+@media(prefers-reduced-motion:reduce){.spinner{animation-duration:1.8s}}
+</style>
+</head>
+<body>
+<header class="header"><div class="wrap"><a class="brand" href="./index.html">KOMUI<span>.</span></a></div></header>
+<main class="main">
+  <div class="wrap">
+    <section class="card" aria-live="polite">
+      <div class="icon" id="statusIcon"><div class="spinner"></div></div>
+      <h1 id="statusTitle">Проверяем оплату</h1>
+      <p class="lead" id="statusText">Ждём защищённое подтверждение от Т‑Банка. Обычно это занимает несколько секунд.</p>
+      <div class="order"><span>Заказ</span><b id="orderNumber">—</b></div>
+      <div class="actions" id="actions">
+        <a class="button" href="./index.html">Вернуться в магазин</a>
+      </div>
+      <p class="hint" id="statusHint">Не закрывайте страницу, пока идёт проверка.</p>
+    </section>
+  </div>
+</main>
+<script src="./data/supabase-config.js"></script>
+<script>
+(function(){
+'use strict';
+const CART_KEY='komui-cart-v1';
+const CHECKOUT_KEY='komui-checkout-cart-v1';
+const FORM_KEY='komui-checkout-form-v1';
+const PAYMENT_DRAFT_KEY='komui-payment-draft-v1';
+const $=selector=>document.querySelector(selector);
+const params=new URLSearchParams(location.search);
+const order=params.get('order')||'';
+const returnStatus=params.get('status')||'';
+let polls=0;
+let timer=null;
+
+$('#orderNumber').textContent=order||'не определён';
+
+function icon(kind){
+  if(kind==='paid')return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="12" cy="12" r="9"/><path d="m8 12 2.7 2.7L16.5 9"/></svg>';
+  if(kind==='failed')return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6m0-6-6 6"/></svg>';
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3 4 7v5c0 5 3.4 8 8 9 4.6-1 8-4 8-9V7l-8-4Z"/><path d="M12 8v5m0 3h.01"/></svg>';
+}
+
+function render(kind,title,text,hint,actions){
+  const box=$('#statusIcon');
+  box.className='icon '+kind;
+  box.innerHTML=icon(kind);
+  $('#statusTitle').textContent=title;
+  $('#statusText').textContent=text;
+  $('#statusHint').textContent=hint||'';
+  $('#actions').innerHTML=actions;
+}
+
+function paid(){
+  localStorage.removeItem(CART_KEY);
+  localStorage.removeItem(CHECKOUT_KEY);
+  sessionStorage.removeItem(FORM_KEY);
+  sessionStorage.removeItem(PAYMENT_DRAFT_KEY);
+  render('paid','Заказ оплачен','Подтверждение получено. Мы начнём готовить заказ и свяжемся, если потребуется уточнение.','Сохраните номер заказа до получения уведомления.',
+    '<a class="button primary" href="./index.html">Продолжить покупки</a><a class="button" href="./delivery.html">Доставка и оплата</a>');
+}
+
+function failed(message){
+  render('failed','Оплата не завершена',message||'Платёж отменён или банк не смог его провести. Деньги не списаны.','Корзина и введённые данные сохранены.',
+    '<a class="button primary" href="./checkout.html">Попробовать снова</a><a class="button" href="./index.html">Вернуться в магазин</a>');
+}
+
+function pending(review=false){
+  const box=$('#statusIcon');
+  box.className='icon'+(review?' review':'');
+  box.innerHTML=review?icon('review'):'<div class="spinner"></div>';
+  $('#statusTitle').textContent=review?'Платёж требует проверки':'Платёж обрабатывается';
+  $('#statusText').textContent=review
+    ?'Банк прислал подтверждение с отличающейся суммой. Заказ не отмечен оплаченным и будет проверен вручную.'
+    :'Подтверждение от Т‑Банка ещё не пришло. Можно подождать на этой странице.';
+  $('#statusHint').textContent=review?'Мы не будем исполнять заказ до проверки суммы.':'Страница обновляет статус автоматически.';
+}
+
+async function check(){
+  const config=window.KOMUI_SUPABASE;
+  let session=null;
+  try{session=JSON.parse(sessionStorage.getItem('komui-payment-session:'+order)||'null')}catch(e){}
+  if(!order||!session?.accessToken||!config?.url||!config?.anonKey){
+    if(returnStatus==='fail')failed();
+    else render('review','Не удалось проверить оплату','Защищённый идентификатор заказа не найден в этом браузере. Если деньги списались, напишите в поддержку и укажите номер заказа.','Статус оплаты не менялся без подтверждения webhook.',
+      '<a class="button primary" href="./index.html">Вернуться в магазин</a><a class="button" href="mailto:smmshit@ya.ru">Написать в поддержку</a>');
+    return;
+  }
+
+  try{
+    const response=await fetch(config.url.replace(/\/$/,'')+'/functions/v1/tbank-payment-status',{
+      method:'POST',
+      headers:{'Content-Type':'application/json',apikey:config.anonKey,Authorization:'Bearer '+config.anonKey},
+      body:JSON.stringify({orderNumber:order,accessToken:session.accessToken})
+    });
+    const result=await response.json();
+    if(!response.ok)throw new Error(result.error||'Не удалось проверить заказ');
+    if(result.status==='paid'){paid();return}
+    if(result.status==='payment_review'){pending(true);return}
+    if(['payment_failed','canceled','refunded'].includes(result.status)){failed(result.errorMessage);return}
+    pending(false);
+    polls+=1;
+    if(polls<20)timer=setTimeout(check,3000);
+    else $('#statusHint').textContent='Проверка продолжается в фоне. Обновите страницу через несколько минут.';
+  }catch(error){
+    polls+=1;
+    if(polls<5)timer=setTimeout(check,3000);
+    else pending(false);
+  }
+}
+
+addEventListener('beforeunload',()=>clearTimeout(timer));
+check();
+})();
+</script>
+</body>
+</html>

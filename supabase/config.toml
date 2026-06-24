@@ -1,0 +1,10 @@
+project_id = "bkxpzfnglihxpbnhtjjq"
+
+[functions.tbank-create-payment]
+verify_jwt = false
+
+[functions.tbank-webhook]
+verify_jwt = false
+
+[functions.tbank-payment-status]
+verify_jwt = false
