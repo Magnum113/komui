@@ -247,6 +247,7 @@ img,svg{display:block}
   transition:border-color .18s,box-shadow .18s,transform .18s
 }
 .point-card:hover,.point-card.active{border-color:rgba(0,38,249,.42);box-shadow:0 16px 34px -24px rgba(0,38,249,.55);transform:translateY(-1px)}
+.point-card:disabled{cursor:wait;opacity:.78}
 .point-card strong{display:block;font-size:13px;line-height:1.35}
 .point-card address{margin-top:5px;color:var(--txt-2);font-style:normal;font-size:12px;line-height:1.4}
 .point-card div{display:flex;justify-content:space-between;gap:12px;margin-top:10px;color:var(--txt-3);font-size:11px}
@@ -702,10 +703,10 @@ function pointEmptyMessage(){
 function renderPointList(query=''){
   const filtered=filteredPoints(query);
   $('#pointList').innerHTML=filtered.length?filtered.map(point=>`
-    <button class="point-card${pendingPoint&&pendingPoint.code===point.code?' active':''}" type="button" data-code="${escapeHtml(point.code)}">
+    <button class="point-card${pendingPoint&&pendingPoint.code===point.code?' active':''}" type="button" data-code="${escapeHtml(point.code)}"${quoteLoading?' disabled':''}>
       <strong>${escapeHtml(point.title)} · ${escapeHtml(point.code)}</strong>
       <address>${escapeHtml(point.address)}${point.metro?' · м. '+escapeHtml(point.metro):''}</address>
-      <div><span>${escapeHtml(point.hours)}</span><b>${point.price?money(point.price):'рассчитать'}</b></div>
+      <div><span>${escapeHtml(point.hours)}</span><b>${quoteLoading&&pendingPoint?.code===point.code?'считаем...':point.price?money(point.price):'выбрать'}</b></div>
     </button>`).join(''):`<div style="padding:26px 14px;color:var(--txt-2);font-size:13px;text-align:center">${escapeHtml(pointEmptyMessage())}</div>`;
 }
 
@@ -721,7 +722,7 @@ function renderMarkers(){
   markers=visible.map(point=>{
     const marker=L.marker([point.lat,point.lng],{title:point.title}).addTo(map);
     marker.bindTooltip(point.code+' · '+point.address,{direction:'top'});
-    marker.on('click',()=>selectPendingPoint(point.code));
+    marker.on('click',()=>choosePointByCode(point.code));
     return {code:point.code,marker};
   });
   if(visible.length){
@@ -806,6 +807,33 @@ function selectPendingPoint(code){
     const found=markers.find(marker=>marker.code===code);
     if(found)found.marker.openTooltip();
   }
+}
+
+async function choosePendingPoint(){
+  if(!pendingPoint||quoteLoading)return;
+  const button=$('#confirmPoint');
+  const defaultLabel='Выбрать этот пункт';
+  quoteLoading=true;
+  button.disabled=true;
+  button.textContent='Считаем доставку...';
+  renderPointList($('#pointSearch').value);
+  try{
+    selectedPoint=await quotePendingPoint();
+    selectedCity=selectedCity||{code:selectedPoint.cityCode||null,name:selectedPoint.city||''};
+    saveForm();renderSelectedPoint();closePickup();showToast('Пункт СДЭК выбран');
+  }catch(error){
+    showToast(error?.message||'Не удалось рассчитать доставку СДЭК');
+  }finally{
+    quoteLoading=false;
+    button.textContent=defaultLabel;
+    button.disabled=!pendingPoint;
+    renderPointList($('#pointSearch').value);
+  }
+}
+
+async function choosePointByCode(code){
+  selectPendingPoint(code);
+  await choosePendingPoint();
 }
 
 function openPickup(){
@@ -1067,26 +1095,8 @@ function init(){
     schedulePointLoad();
   });
   $('#pointSearch').addEventListener('input',e=>{renderPointList(e.target.value);renderMarkers()});
-  $('#pointList').addEventListener('click',e=>{const card=e.target.closest('[data-code]');if(card)selectPendingPoint(card.dataset.code)});
-  $('#confirmPoint').addEventListener('click',async()=>{
-    if(!pendingPoint||quoteLoading)return;
-    const button=$('#confirmPoint');
-    quoteLoading=true;
-    button.disabled=true;
-    const defaultLabel='Выбрать этот пункт';
-    button.textContent='Считаем доставку...';
-    try{
-      selectedPoint=await quotePendingPoint();
-      selectedCity=selectedCity||{code:selectedPoint.cityCode||null,name:selectedPoint.city||''};
-      saveForm();renderSelectedPoint();closePickup();showToast('Пункт СДЭК выбран');
-    }catch(error){
-      showToast(error?.message||'Не удалось рассчитать доставку СДЭК');
-    }finally{
-      quoteLoading=false;
-      button.textContent=defaultLabel;
-      button.disabled=!pendingPoint;
-    }
-  });
+  $('#pointList').addEventListener('click',e=>{const card=e.target.closest('[data-code]');if(card)choosePointByCode(card.dataset.code)});
+  $('#confirmPoint').addEventListener('click',choosePendingPoint);
   $('#promoToggle').addEventListener('click',()=>{
     const promo=$('#promo');const open=promo.classList.toggle('open');
     $('#promoToggle').setAttribute('aria-expanded',open?'true':'false');
