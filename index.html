@@ -141,24 +141,17 @@ html[data-theme="light"] .cursor-glow{mix-blend-mode:multiply;background:radial-
 .nav-collections.open .collection-menu{opacity:1;visibility:visible;pointer-events:auto;transform:translateX(-50%) translateY(0)}
 .collection-menu::before{content:"";position:absolute;left:0;right:0;top:-19px;height:19px}
 .collection-item{
-  display:grid;grid-template-columns:54px minmax(0,1fr) auto;align-items:center;gap:12px;
+  display:grid;grid-template-columns:76px minmax(0,1fr) auto;align-items:center;gap:12px;
   min-height:76px;padding:10px;border-radius:12px;border:1px solid var(--line);
   background:var(--panel-2);text-align:left;transition:transform .18s,border-color .18s,background .18s
 }
 .collection-item:hover{transform:translateY(-1px);border-color:rgba(0,38,249,.38);background:var(--panel)}
 .collection-logo{
-  width:54px;height:54px;border-radius:12px;border:1px solid var(--line-2);
-  display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;
-  font-family:'Unbounded',sans-serif;font-size:17px;font-weight:900;letter-spacing:.02em;color:#fff;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.22)
+  width:76px;height:54px;border-radius:12px;border:1px solid var(--line-2);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;padding:7px;
+  background:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.35)
 }
-.collection-logo::after{content:"";position:absolute;inset:auto -12px -18px -12px;height:28px;background:rgba(255,255,255,.18);transform:rotate(-8deg)}
-.collection-logo.jjk{background:linear-gradient(135deg,#13225f,#0026F9)}
-.collection-logo.naruto{background:linear-gradient(135deg,#f26a21,#12131a)}
-.collection-logo.gta{background:linear-gradient(135deg,#1d7a42,#111)}
-.collection-logo.gravity{background:linear-gradient(135deg,#6f2dbd,#0b1020)}
-.collection-logo.starwars{background:linear-gradient(135deg,#0f172a,#f5c542);color:#111}
-.collection-logo.komui{background:var(--grad-action)}
+.collection-logo img{display:block;width:100%;height:100%;object-fit:contain}
 .collection-copy{min-width:0}
 .collection-name{display:block;color:var(--txt);font-size:14px;font-weight:800;line-height:1.2;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .collection-brand{display:block;color:var(--txt-2);font-size:12px;font-weight:600;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -284,13 +277,6 @@ html[data-theme="light"] .cursor-glow{mix-blend-mode:multiply;background:radial-
 .strip .item{font-family:'Unbounded',sans-serif;font-weight:800;font-size:clamp(22px,3vw,34px);color:transparent;-webkit-text-stroke:1px var(--line-2);padding:16px 28px;display:inline-flex;align-items:center;gap:28px;text-transform:uppercase}
 .strip .item .star{color:var(--mag);-webkit-text-stroke:0;font-size:.6em}
 .strip .item:hover{color:var(--txt);-webkit-text-stroke:0}
-.strip-logo{width:42px;height:42px;border-radius:11px;border:1px solid var(--line-2);display:inline-flex;align-items:center;justify-content:center;color:#fff;-webkit-text-stroke:0;font-size:12px;font-weight:900;letter-spacing:.02em;box-shadow:inset 0 1px 0 rgba(255,255,255,.22)}
-.strip-logo.jjk{background:linear-gradient(135deg,#13225f,#0026F9)}
-.strip-logo.naruto{background:linear-gradient(135deg,#f26a21,#12131a)}
-.strip-logo.gta{background:linear-gradient(135deg,#1d7a42,#111)}
-.strip-logo.gravity{background:linear-gradient(135deg,#6f2dbd,#0b1020)}
-.strip-logo.starwars{background:linear-gradient(135deg,#0f172a,#f5c542);color:#111}
-.strip-logo.komui{background:var(--grad-action)}
 
 /* ---------- catalog ---------- */
 .catalog{padding:70px 0 90px}
@@ -417,8 +403,6 @@ html[data-theme="light"] .cursor-glow{mix-blend-mode:multiply;background:radial-
 .card .info .meta{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .card .price{font-family:'Unbounded',sans-serif;font-weight:700;font-size:18px;display:inline-flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .card .price .price-old,.modal .mprice-old{font-family:inherit;font-weight:500;color:var(--txt-3);opacity:.7;text-decoration:line-through;text-decoration-thickness:1.5px;text-decoration-color:currentColor}
-.price-badge,.mprice-badge{display:inline-flex;align-items:center;background:#ff3450;color:#fff;font-family:'Unbounded',sans-serif;font-weight:800;font-size:11px;letter-spacing:.02em;padding:3px 8px;border-radius:7px;line-height:1.2;box-shadow:0 6px 16px -8px rgba(255,52,80,.65)}
-.modal .mprice-badge{font-size:13px;padding:4px 10px;border-radius:8px}
 .card .price .price-old{font-size:13px}
 .modal .mprice-old{font-size:16px;margin-left:10px}
 .card .sizes{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
@@ -590,8 +574,8 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
 .mobile-collections.open .mobile-collection-trigger svg{transform:rotate(180deg)}
 .mobile-collection-panel{display:grid;gap:9px;max-height:0;overflow:hidden;transition:max-height .28s ease;padding:0}
 .mobile-collections.open .mobile-collection-panel{max-height:60vh;padding:2px 0 14px;overflow-y:auto}
-.mobile-collection-panel .collection-item{grid-template-columns:46px minmax(0,1fr) auto;min-height:64px;padding:9px}
-.mobile-collection-panel .collection-logo{width:46px;height:46px;border-radius:11px;font-size:14px}
+.mobile-collection-panel .collection-item{grid-template-columns:64px minmax(0,1fr) auto;min-height:64px;padding:9px}
+.mobile-collection-panel .collection-logo{width:64px;height:46px;border-radius:11px}
 .mobile-collection-panel .collection-name{font-size:13px}
 .mobile-collection-panel .collection-brand{font-size:11.5px}
 
@@ -1244,15 +1228,18 @@ function collectionMeta(name){
   const items=P.filter(p=>p.col===name);
   const collectionName=String(name||'').toLowerCase();
   const hay=[collectionName,...items.flatMap(p=>[p.name,p.titleName,p.animeTitle,p.characterName,p.designKey])].filter(Boolean).join(' ').toLowerCase();
-  if(/satoru|gojo|годжо|jujutsu|магичес|jjk|呪術/.test(collectionName)||/satoru|gojo|годжо|jujutsu|магичес|jjk|呪術/.test(hay))return {brand:'Магическая битва',mark:'JJK',cls:'jjk'};
-  if(/darth|vader|дарт|вейдер|star wars|звездн/.test(collectionName)||/darth|vader|дарт|вейдер|star wars|звездн/.test(hay))return {brand:'Star Wars',mark:'SW',cls:'starwars'};
-  if(/naruto|наруто|itachi|akatsuki|madara|итачи|акацуки|мадара/.test(collectionName)||/naruto|наруто|itachi|akatsuki|madara|итачи|акацуки|мадара/.test(hay))return {brand:'Naruto',mark:'忍',cls:'naruto'};
-  if(/gta|grand theft/.test(collectionName)||/gta|grand theft/.test(hay))return {brand:'GTA',mark:'GTA',cls:'gta'};
-  if(/gravity|гравити|falls/.test(collectionName)||/gravity|гравити|falls/.test(hay))return {brand:'Gravity Falls',mark:'GF',cls:'gravity'};
-  return {brand:'KOMUI',mark:'K',cls:'komui'};
+  if(/akatsuki|акацуки/.test(collectionName))return {brand:'Naruto',logo:'./assets/collection-logos/akatsuki-cloud.svg'};
+  if(/itachi|итачи/.test(collectionName))return {brand:'Naruto',logo:'./assets/collection-logos/itachi-sharingan.svg'};
+  if(/madara|мадара/.test(collectionName))return {brand:'Naruto',logo:'./assets/collection-logos/madara-sharingan.svg'};
+  if(/satoru|gojo|годжо|jujutsu|магичес|jjk|呪術/.test(collectionName)||/satoru|gojo|годжо|jujutsu|магичес|jjk|呪術/.test(hay))return {brand:'Магическая битва',logo:'./assets/collection-logos/jujutsu-kaisen.svg'};
+  if(/darth|vader|дарт|вейдер|star wars|звездн/.test(collectionName)||/darth|vader|дарт|вейдер|star wars|звездн/.test(hay))return {brand:'Star Wars',logo:'./assets/collection-logos/star-wars.svg'};
+  if(/naruto|наруто/.test(collectionName)||/naruto|наруто/.test(hay))return {brand:'Naruto',logo:'./assets/collection-logos/naruto.svg'};
+  if(/gta|grand theft/.test(collectionName)||/gta|grand theft/.test(hay))return {brand:'GTA',logo:'./assets/collection-logos/gta.svg'};
+  if(/gravity|гравити|falls/.test(collectionName)||/gravity|гравити|falls/.test(hay))return {brand:'Gravity Falls',logo:'./assets/collection-logos/gravity-falls.svg'};
+  return {brand:'KOMUI',logo:'./favicon.svg'};
 }
-function collectionLogo(meta,cls='collection-logo'){
-  return `<span class="${cls} ${meta.cls}" aria-hidden="true">${esc(meta.mark)}</span>`;
+function collectionLogo(meta){
+  return `<span class="collection-logo" aria-hidden="true"><img src="${esc(meta.logo)}" alt="" loading="lazy"></span>`;
 }
 function collectionItemHtml({name,count}){
   const meta=collectionMeta(name);
@@ -1330,7 +1317,7 @@ function renderGrid(){
       <div class="info">
         <div class="col">${p.col}</div>
         <h3>${p.name}</h3>
-        <div class="meta"><span class="price">${RUB(p.price)}${p.priceOld?`<s class="price-old">${RUB(p.priceOld)}</s><span class="price-badge">−${Math.round((1-p.price/p.priceOld)*100)}%</span>`:''}</span><span class="sizes">${p.sizes.map(s=>`<span>${s}</span>`).join('')}</span></div>
+        <div class="meta"><span class="price">${RUB(p.price)}${p.priceOld?`<s class="price-old">${RUB(p.priceOld)}</s>`:''}</span><span class="sizes">${p.sizes.map(s=>`<span>${s}</span>`).join('')}</span></div>
       </div>
     </article>`).join('');
   requestAnimationFrame(()=>$$('.card').forEach((c,i)=>setTimeout(()=>c.classList.add('in'),Math.min(i*45,400))));
@@ -1525,7 +1512,7 @@ function openModal(id){
     <div class="mmedia"><div class="glow" style="position:absolute;width:60%;height:60%;border-radius:50%;filter:blur(70px);opacity:.6;background:${p.accent}"></div>${productGallery(p,{eagerAll:true})}</div>
     <div class="mbody">
       <div class="col">${p.col}</div><h2>${p.name}</h2>
-      <div class="mprice">${RUB(p.price)}${p.priceOld?`<s class="mprice-old">${RUB(p.priceOld)}</s><span class="mprice-badge">−${Math.round((1-p.price/p.priceOld)*100)}%</span>`:''}</div><p class="mdesc">${p.desc}</p>
+      <div class="mprice">${RUB(p.price)}${p.priceOld?`<s class="mprice-old">${RUB(p.priceOld)}</s>`:''}</div><p class="mdesc">${p.desc}</p>
       <div class="mlabel">Размер</div>
       <div class="size-pick" id="sizePick">${p.sizes.map(s=>`<button data-size="${s}"${s===sel?' class="sel"':''}>${s}</button>`).join('')}</div>
       <button class="madd" id="madd">${addBtn}</button>
@@ -1681,7 +1668,7 @@ function initPromoBar(){
 }
 function renderCollectionStrip(){
   const list=COLS.length?COLS:['KOMUI'];
-  const stripOne=list.map(c=>{const meta=collectionMeta(c);return `<span class="item">${collectionLogo(meta,'strip-logo')}${esc(c)}<span class="star">✦</span></span>`;}).join('');
+  const stripOne=list.map(c=>`<span class="item">${esc(c)}<span class="star">✦</span></span>`).join('');
   $('#stripTrack').innerHTML=stripOne+stripOne;
 }
 
