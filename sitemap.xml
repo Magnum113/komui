@@ -49,6 +49,36 @@
     <priority>0.2</priority>
   </url>
   <url>
+    <loc>https://komui.ru/collections/naruto</loc>
+    <lastmod>2026-06-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://komui.ru/collections/jujutsu-kaisen</loc>
+    <lastmod>2026-06-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://komui.ru/collections/gravity</loc>
+    <lastmod>2026-06-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://komui.ru/collections/grand-theft-auto</loc>
+    <lastmod>2026-06-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://komui.ru/collections/star-wars</loc>
+    <lastmod>2026-06-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://komui.ru/p/var16-print-tshirt-washed-grey</loc>
     <lastmod>2026-06-25</lastmod>
     <changefreq>weekly</changefreq>

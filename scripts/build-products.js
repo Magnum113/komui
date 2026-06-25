@@ -3,6 +3,7 @@
  * Static product page generator.
  * Reads data/storefront-products.js (window.KOMUI_PRODUCTS) and writes:
  *   - p/<slug>.html for every product
+ *   - collections/<slug>.html for high-intent collection landing pages
  *   - sitemap.xml at the repo root
  *   - robots.txt at the repo root (only if missing)
  *
@@ -29,6 +30,78 @@ const STATIC_PAGES = [
   { url: '/offer', changefreq: 'yearly', priority: '0.2' },
   { url: '/privacy', changefreq: 'yearly', priority: '0.2' },
   { url: '/seller', changefreq: 'yearly', priority: '0.2' },
+];
+const COLLECTION_LANDINGS = [
+  {
+    slug: 'naruto',
+    name: 'Naruto',
+    title: 'Аниме-мерч Naruto',
+    h1: 'Аниме-мерч Naruto: футболки, худи и свитшоты',
+    metaDescription: 'Футболки, худи и свитшоты KOMUI по Naruto: Akatsuki, Itachi, Madara и Naruto Uzumaki. Принты и вышивка, доставка СДЭК по России.',
+    aliases: ['naruto', 'наруто', 'akatsuki', 'акацуки', 'itachi', 'итачи', 'madara', 'мадара', 'uchiha', 'учиха'],
+    lead: 'Подборка вещей KOMUI по Naruto: узнаваемые символы Akatsuki, образы Itachi, Madara и Naruto Uzumaki в формате футболок, худи и свитшотов.',
+    copy: [
+      'Если нужен аниме-мерч Naruto без долгого поиска по всему каталогу, эта страница собирает модели KOMUI по одной теме. Здесь есть футболки Naruto с принтом, вещи с аккуратной вышивкой Akatsuki, худи и свитшоты с акцентом на Itachi Uchiha, а также модели для тех, кто предпочитает более спокойный streetwear. Такой лендинг удобен, когда запрос уже конкретный: футболка Наруто, худи Итачи, футболка Akatsuki или подарок фанату Naruto.',
+      'Главная разница между моделями — техника нанесения и посадка. Принт лучше подходит, если хочется заметный визуальный акцент и яркий образ для фото. Вышивка выглядит тише, дольше остается нейтральной в повседневной носке и проще сочетается с базовыми джинсами, карго, куртками и кроссовками. Футболки легче носить круглый год, худи и свитшоты лучше работают как самостоятельный слой в прохладный сезон.',
+      'Перед заказом проверьте карточку товара: цвет, доступные размеры, тип нанесения и актуальную цену. Если сомневаетесь между размерами, ориентируйтесь на желаемую посадку: для свободного силуэта обычно выбирают размер больше, для более спокойной посадки — привычный размер. Доставка оформляется СДЭК по России, а рекомендации по стирке помогут сохранить принт или вышивку: вещь лучше стирать наизнанку при температуре до 30 градусов и не гладить нанесение напрямую.'
+    ],
+  },
+  {
+    slug: 'jujutsu-kaisen',
+    name: 'Jujutsu Kaisen',
+    title: 'Аниме-мерч Jujutsu Kaisen',
+    h1: 'Аниме-мерч Jujutsu Kaisen: футболки Сатору Годжо',
+    metaDescription: 'Футболки KOMUI по Jujutsu Kaisen и Сатору Годжо: белые, черные и вареные модели с принтом. Доставка СДЭК по России.',
+    aliases: ['jujutsu kaisen', 'магическая битва', 'satoru', 'gojo', 'годжо', 'сатору'],
+    lead: 'Страница для тех, кто ищет футболку Jujutsu Kaisen или мерч с Сатору Годжо: собрали принты KOMUI в разных цветах и посадках.',
+    copy: [
+      'Jujutsu Kaisen часто ищут не как абстрактный аниме-мерч, а как конкретную вещь: футболка Сатору Годжо, Gojo Satoru shirt, футболка Магическая битва или оверсайз-футболка с принтом. Поэтому на этой странице собрана отфильтрованная подборка KOMUI по Jujutsu Kaisen, чтобы сразу видеть модели с нужной темой, не смешивая их с Naruto, Gravity или другими коллекциями.',
+      'В ассортименте есть базовые белые и черные футболки, а также вареные модели с эффектом acid wash. Вареная ткань выглядит менее ровной и более streetwear, поэтому каждая вещь визуально чуть отличается. Если нужен спокойный повседневный вариант, проще начать с белой или черной футболки. Если хочется более заметный образ, смотрите вареные цвета и крупный DTF-принт.',
+      'При выборе обращайте внимание на плотность, цвет, размерную сетку и тип посадки. Для свободного силуэта лучше сравнить замеры с любимой футболкой, а не выбирать только по букве размера. DTF-принт рассчитан на регулярную носку, но требует нормального ухода: стирка наизнанку до 30 градусов, без отбеливателя, без машинной сушки и без прямого утюга по рисунку. Заказы можно оформить онлайн с доставкой СДЭК по России до удобного пункта выдачи.'
+    ],
+  },
+  {
+    slug: 'gravity',
+    name: 'Gravity',
+    title: 'Мерч Gravity',
+    h1: 'Мерч Gravity: футболки и худи в стиле ностальгичного streetwear',
+    metaDescription: 'Футболки и худи KOMUI по Gravity: принты и вышивка, базовые цвета, оверсайз-посадка и доставка СДЭК по России.',
+    aliases: ['gravity', 'гравити', 'gravity defied'],
+    lead: 'Подборка вещей Gravity для тех, кто любит ностальгичные игровые отсылки и хочет носить их в более спокойном streetwear-формате.',
+    copy: [
+      'Коллекция Gravity в KOMUI — это мерч для тех, кому важна не только узнаваемая отсылка, но и повседневная носибельность. Здесь собраны футболки и худи с принтом или вышивкой: от базовых белых и черных моделей до вареных футболок с более выраженным streetwear-настроением. Такой формат хорошо подходит тем, кто ищет футболку Gravity, худи Gravity или подарок человеку, который ценит старые мобильные игры и лаконичные фанатские детали.',
+      'Если хочется более заметный вариант, выбирайте принт: он сильнее работает как центральный элемент образа. Если нужна вещь спокойнее, лучше смотреть вышивку — она выглядит аккуратнее, не спорит с верхней одеждой и проще вписывается в ежедневный гардероб. Худи удобно носить как теплый слой, футболка подойдет для круглогодичной базы под рубашку, куртку или самостоятельный летний образ.',
+      'На странице показан только отфильтрованный ассортимент по теме Gravity, поэтому проще сравнить цвета, цены и доступные размеры. Перед покупкой проверьте карточку конкретной модели: там указаны фотографии, тип нанесения и размерный ряд. Для ухода используйте деликатную стирку до 30 градусов и сушку вдали от прямого тепла. Оформление заказа проходит онлайн, доставка доступна СДЭК по России до выбранного пункта выдачи.'
+    ],
+  },
+  {
+    slug: 'grand-theft-auto',
+    name: 'GTA',
+    title: 'Мерч GTA',
+    h1: 'Мерч GTA: футболки и худи с вышивкой',
+    metaDescription: 'Футболки и худи KOMUI по GTA и Grand Theft Auto: лаконичная вышивка, streetwear-посадка и доставка СДЭК по России.',
+    aliases: ['grand theft auto', 'gta', 'гта'],
+    lead: 'Подборка KOMUI по GTA для тех, кто хочет не кричащий игровой мерч, а вещь с лаконичной вышивкой и повседневной посадкой.',
+    copy: [
+      'Мерч GTA часто хочется носить не как сувенир, а как нормальную streetwear-вещь: футболку под джинсы, худи под куртку или спокойный верх с узнаваемой, но не слишком громкой деталью. Поэтому в KOMUI подборка GTA строится вокруг лаконичной вышивки и базовых цветов. Такой подход подходит тем, кто ищет футболку GTA, худи Grand Theft Auto или подарок фанату игры, но не хочет огромный принт на всю грудь.',
+      'Вышивка визуально тише, чем крупный DTF-принт. Она хорошо смотрится на черной базе, не перегружает образ и остается уместной в повседневной носке. Худи лучше подойдет для прохладного сезона и многослойных образов, футболка — универсальная база на каждый день. Если выбираете между ними, отталкивайтесь от сценария: футболку проще носить круглый год, худи заметнее по силуэту и теплее.',
+      'На этой странице товары отфильтрованы по теме GTA, чтобы не смешивать их с аниме-коллекциями. В карточках можно посмотреть цену, фото, доступные размеры и тип нанесения. Для правильного выбора размера сравните замеры с вещью, которая уже хорошо сидит. Заказ оформляется онлайн, доставку можно выбрать через СДЭК по России. При уходе не используйте агрессивный отбеливатель и гладьте вышивку аккуратно с изнаночной стороны.'
+    ],
+  },
+  {
+    slug: 'star-wars',
+    name: 'Star Wars',
+    title: 'Мерч Star Wars',
+    h1: 'Мерч Star Wars: футболки с Дартом Вейдером',
+    metaDescription: 'Футболки KOMUI по Star Wars и Darth Vader: вышивка, базовые цвета, фанатский streetwear и доставка СДЭК по России.',
+    aliases: ['star wars', 'darth', 'vader', 'дарт', 'вейдер'],
+    lead: 'Фанатская подборка KOMUI по Star Wars и Darth Vader: акцентная футболка с вышивкой для повседневного образа.',
+    copy: [
+      'Страница Star Wars в KOMUI создана для точечных запросов вроде футболка Дарт Вейдер, мерч Star Wars или Darth Vader футболка. Вместо перегруженного сувенирного вида здесь акцент сделан на носимую вещь: базовая футболка, узнаваемая вышивка и спокойная посадка, которую можно сочетать с джинсами, карго, худи или курткой. Такой формат подходит и для фанатов саги, и для тех, кто любит поп-культурные детали без лишней яркости.',
+      'Вышивка выглядит аккуратнее крупного принта и лучше переносит повседневные сочетания. Она не требует сложной стилизации: достаточно базового низа и нейтральной обуви. Если выбираете подарок, такой вариант обычно безопаснее, чем вещь с огромной иллюстрацией: отсылка считывается, но не превращает весь образ в костюм. Перед покупкой проверьте размер, цвет и фото в карточке товара.',
+      'Лендинг показывает только товары, связанные со Star Wars и Darth Vader, поэтому можно быстро перейти к нужной карточке и оформить заказ. Доставка доступна СДЭК по России, пункт выдачи выбирается на этапе оформления. Чтобы вещь дольше сохраняла форму, стирайте ее наизнанку при температуре до 30 градусов, не используйте отбеливатель и не прижимайте утюг напрямую к вышивке.'
+    ],
+  },
 ];
 
 function loadFromLocalFile() {
@@ -94,6 +167,58 @@ function formatPriceRange(min, max) {
   if (!a) return '';
   if (!b || a === b) return `${a.toLocaleString('ru-RU')} ₽`;
   return `${a.toLocaleString('ru-RU')}–${b.toLocaleString('ru-RU')} ₽`;
+}
+
+function normalizeSearch(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/ё/g, 'е')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function productSearchText(product) {
+  return normalizeSearch([
+    product.name,
+    product.title_name,
+    product.anime_title,
+    product.collection_name,
+    product.character_name,
+    product.design_name,
+    product.category,
+    product.product_type,
+    Array.isArray(product.tags) ? product.tags.join(' ') : '',
+  ].filter(Boolean).join(' '));
+}
+
+function productMatchesLanding(product, landing) {
+  const text = productSearchText(product);
+  return landing.aliases.some(alias => text.includes(normalizeSearch(alias)));
+}
+
+function buildCollectionLandings(products) {
+  return COLLECTION_LANDINGS
+    .map(landing => ({
+      ...landing,
+      products: products.filter(product => productMatchesLanding(product, landing)),
+    }))
+    .filter(landing => landing.products.length);
+}
+
+function renderCollectionFooterLinks() {
+  return COLLECTION_LANDINGS
+    .map(landing => `<a href="/collections/${escapeAttr(landing.slug)}">${escapeHtml(landing.name)}</a>`)
+    .join('');
+}
+
+function collectionStats(products) {
+  const categories = new Map();
+  const techniques = new Map();
+  for (const product of products) {
+    if (product.category) categories.set(product.category, (categories.get(product.category) || 0) + 1);
+    if (product.decoration_type) techniques.set(product.decoration_type, (techniques.get(product.decoration_type) || 0) + 1);
+  }
+  return { categories, techniques };
 }
 
 function shortFrom(product) {
@@ -309,6 +434,7 @@ function renderProductPage(product) {
 <footer><div class="wrap foot">
   <div><h5>KOMUI</h5><p>Аниме-мерч: футболки, худи и свитшоты с принтами и вышивкой.</p></div>
   <div><h5>Покупателю</h5><a href="/delivery">Доставка и оплата</a><a href="/returns">Возврат и обмен</a><a href="/sizes">Размерная сетка</a><a href="/care">Уход</a></div>
+  <div><h5>Коллекции</h5>${renderCollectionFooterLinks()}</div>
   <div><h5>Документы</h5><a href="/seller">Продавец</a><a href="/offer">Публичная оферта</a><a href="/privacy">Политика ПДн</a></div>
   <div><h5>Контакты</h5><a href="mailto:smmshit@ya.ru">smmshit@ya.ru</a><a href="/#catalog">Каталог</a></div>
 </div></footer>
@@ -360,7 +486,185 @@ function renderProductPage(product) {
 `;
 }
 
-function renderSitemap(products) {
+function collectionProductCard(product) {
+  const images = productImages(product);
+  const img = images[0] || '';
+  const price = formatPriceRange(product.price_min, product.price_max);
+  const details = [product.category, product.decoration_type, product.color_name].filter(Boolean).join(' · ');
+  const badges = [product.collection_name, product.character_name]
+    .filter(Boolean)
+    .filter((value, index, arr) => arr.findIndex(v => v.toLowerCase() === value.toLowerCase()) === index)
+    .slice(0, 2)
+    .map(value => `<span>${escapeHtml(value)}</span>`)
+    .join('');
+  return `<article class="c-card">
+    <a class="c-card-media" href="/p/${escapeAttr(product.slug)}" aria-label="${escapeAttr(product.name)}">
+      ${img ? `<img src="${escapeAttr(img)}" alt="${escapeAttr(product.name)}" loading="lazy" decoding="async">` : ''}
+    </a>
+    <div class="c-card-body">
+      ${badges ? `<div class="c-card-badges">${badges}</div>` : ''}
+      <h3><a href="/p/${escapeAttr(product.slug)}">${escapeHtml(product.name)}</a></h3>
+      ${details ? `<p>${escapeHtml(details)}</p>` : ''}
+      <div class="c-card-bottom">
+        ${price ? `<strong>${escapeHtml(price)}</strong>` : '<strong>Цена в карточке</strong>'}
+        <a href="/p/${escapeAttr(product.slug)}">Смотреть</a>
+      </div>
+    </div>
+  </article>`;
+}
+
+function buildCollectionPageLd(landing) {
+  return JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: landing.h1,
+    description: landing.metaDescription,
+    url: `${SITE_ORIGIN}/collections/${landing.slug}`,
+    inLanguage: 'ru-RU',
+    about: landing.name,
+    mainEntity: {
+      '@type': 'ItemList',
+      name: landing.title,
+      itemListElement: landing.products.map((product, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: product.name,
+        url: `${SITE_ORIGIN}/p/${product.slug}`,
+      })),
+    },
+  });
+}
+
+function buildCollectionBreadcrumbLd(landing) {
+  return JSON.stringify({
+    '@context': 'https://schema.org/',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'KOMUI', item: SITE_ORIGIN + '/' },
+      { '@type': 'ListItem', position: 2, name: 'Коллекции', item: SITE_ORIGIN + '/#strip' },
+      { '@type': 'ListItem', position: 3, name: landing.name, item: `${SITE_ORIGIN}/collections/${landing.slug}` },
+    ],
+  });
+}
+
+function renderCollectionPage(landing) {
+  const canonical = `${SITE_ORIGIN}/collections/${landing.slug}`;
+  const stats = collectionStats(landing.products);
+  const categories = [...stats.categories.entries()]
+    .map(([name, count]) => `<span>${escapeHtml(name)} · ${count}</span>`)
+    .join('');
+  const techniques = [...stats.techniques.entries()]
+    .map(([name, count]) => `<span>${escapeHtml(name)} · ${count}</span>`)
+    .join('');
+  const cards = landing.products.map(collectionProductCard).join('');
+  const related = COLLECTION_LANDINGS
+    .filter(item => item.slug !== landing.slug)
+    .map(item => `<a href="/collections/${escapeAttr(item.slug)}">${escapeHtml(item.name)}</a>`)
+    .join('');
+  const contentBlocks = [
+    ...landing.copy,
+    `Внутри подборки ${landing.name} каждая карточка ведет на отдельную страницу товара: там можно рассмотреть фотографии, проверить доступные размеры, цвет, цену, тип нанесения и состав. Это важнее, чем выбирать только по названию тайтла, потому что одна и та же тема может быть выполнена как яркий принт, лаконичная вышивка, базовая футболка, плотное худи или свитшот. Такой фильтр помогает быстрее сравнить ${landing.products.length} товар(ов) по одной теме и не отвлекаться на остальной каталог.`,
+    `Если вы пришли по запросу «футболка ${landing.name}», «худи ${landing.name}» или выбираете подарок фанату, начните с сценария носки. Для заметного образа смотрите принт и вареные цвета, для спокойного повседневного варианта — вышивку и базовую палитру. Перед оплатой лучше сверить размерную сетку и условия ухода. Заказ можно оформить онлайн, выбрать пункт СДЭК по России, а при необходимости воспользоваться правилами обмена или возврата, опубликованными на сайте.`
+  ];
+  const copy = contentBlocks.map(text => `<p>${escapeHtml(text)}</p>`).join('');
+  const title = `${landing.title} — KOMUI`;
+
+  return `<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>${escapeHtml(title)}</title>
+<meta name="description" content="${escapeAttr(landing.metaDescription)}" />
+<link rel="canonical" href="${canonical}" />
+<meta property="og:site_name" content="KOMUI" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="${escapeAttr(title)}" />
+<meta property="og:description" content="${escapeAttr(landing.metaDescription)}" />
+<meta property="og:url" content="${canonical}" />
+<meta property="og:image" content="${SITE_ORIGIN}/assets/og-image.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="${escapeAttr(title)}" />
+<meta name="twitter:description" content="${escapeAttr(landing.metaDescription)}" />
+<meta name="twitter:image" content="${SITE_ORIGIN}/assets/og-image.png" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://ir.ozone.ru">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/legal.css" />
+<link rel="stylesheet" href="/assets/product.css" />
+<script type="application/ld+json">${buildCollectionPageLd(landing)}</script>
+<script type="application/ld+json">${buildCollectionBreadcrumbLd(landing)}</script>
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap nav">
+    <a class="brand" href="/">KOMUI<span class="dot">.</span></a>
+    <nav class="nav-links">
+      <a href="/#catalog">Каталог</a>
+      <a href="/collections/naruto">Naruto</a>
+      <a href="/collections/jujutsu-kaisen">Jujutsu Kaisen</a>
+      <a href="/delivery">Доставка</a>
+    </nav>
+  </div>
+</header>
+<main class="c-page">
+  <section class="c-hero">
+    <div class="wrap">
+      <nav class="crumb" aria-label="Хлебные крошки"><a href="/">KOMUI</a><span>/</span><a href="/#strip">Коллекции</a><span>/</span><span>${escapeHtml(landing.name)}</span></nav>
+      <div class="eyebrow">Коллекция</div>
+      <h1>${escapeHtml(landing.h1)}</h1>
+      <p class="lead">${escapeHtml(landing.lead)}</p>
+      <div class="c-actions">
+        <a class="btn btn-primary" href="#products">Смотреть товары</a>
+        <a class="btn btn-ghost" href="/delivery">Доставка СДЭК</a>
+      </div>
+    </div>
+  </section>
+  <section class="c-main" id="products">
+    <div class="wrap">
+      <div class="c-head">
+        <div>
+          <div class="eyebrow">Фильтр по теме</div>
+          <h2>${escapeHtml(landing.name)}: товары в наличии</h2>
+          <p>На странице показаны товары KOMUI, отобранные по теме ${escapeHtml(landing.name)}. Можно сравнить принты, вышивку, цвета, категории и перейти в карточку нужной вещи.</p>
+        </div>
+        <div class="c-count">${landing.products.length}</div>
+      </div>
+      <div class="c-chips"><span class="is-active">${escapeHtml(landing.name)}</span>${categories}${techniques}</div>
+      <div class="c-grid">${cards}</div>
+    </div>
+  </section>
+  <section class="c-copy">
+    <div class="wrap c-copy-grid">
+      <div>
+        <div class="eyebrow">Как выбрать</div>
+        <h2>${escapeHtml(landing.title)} от KOMUI</h2>
+      </div>
+      <div class="c-copy-text">${copy}</div>
+    </div>
+  </section>
+  <section class="c-related">
+    <div class="wrap">
+      <h2>Другие коллекции</h2>
+      <div class="c-related-links">${related}</div>
+    </div>
+  </section>
+</main>
+<footer><div class="wrap foot">
+  <div><h5>KOMUI</h5><p>Аниме-мерч: футболки, худи и свитшоты с принтами и вышивкой.</p></div>
+  <div><h5>Покупателю</h5><a href="/delivery">Доставка и оплата</a><a href="/returns">Возврат и обмен</a><a href="/sizes">Размерная сетка</a><a href="/care">Уход</a></div>
+  <div><h5>Коллекции</h5>${renderCollectionFooterLinks()}</div>
+  <div><h5>Документы</h5><a href="/seller">Продавец</a><a href="/offer">Публичная оферта</a><a href="/privacy">Политика ПДн</a></div>
+  <div><h5>Контакты</h5><a href="mailto:smmshit@ya.ru">smmshit@ya.ru</a><a href="/#catalog">Каталог</a></div>
+</div></footer>
+</body>
+</html>
+`;
+}
+
+function renderSitemap(products, collectionLandings = []) {
   const today = new Date().toISOString().slice(0, 10);
   const urls = [
     ...STATIC_PAGES.map(p => ({
@@ -368,6 +672,12 @@ function renderSitemap(products) {
       lastmod: today,
       changefreq: p.changefreq,
       priority: p.priority,
+    })),
+    ...collectionLandings.map(landing => ({
+      loc: `${SITE_ORIGIN}/collections/${landing.slug}`,
+      lastmod: today,
+      changefreq: 'weekly',
+      priority: '0.75',
     })),
     ...products.map(p => ({
       loc: `${SITE_ORIGIN}/p/${p.slug}`,
@@ -445,6 +755,7 @@ async function main() {
     console.error('No products found in data/storefront-products.js');
     process.exit(1);
   }
+  const collectionLandings = buildCollectionLandings(products);
 
   const outDir = path.join(ROOT, 'p');
   fs.mkdirSync(outDir, { recursive: true });
@@ -461,7 +772,16 @@ async function main() {
     written += 1;
   }
 
-  fs.writeFileSync(path.join(ROOT, 'sitemap.xml'), renderSitemap(products), 'utf8');
+  const collectionDir = path.join(ROOT, 'collections');
+  fs.mkdirSync(collectionDir, { recursive: true });
+  for (const file of fs.readdirSync(collectionDir)) {
+    if (file.endsWith('.html')) fs.unlinkSync(path.join(collectionDir, file));
+  }
+  for (const landing of collectionLandings) {
+    fs.writeFileSync(path.join(collectionDir, `${landing.slug}.html`), renderCollectionPage(landing), 'utf8');
+  }
+
+  fs.writeFileSync(path.join(ROOT, 'sitemap.xml'), renderSitemap(products, collectionLandings), 'utf8');
 
   // Inject 12 prerendered catalog cards into index.html between markers
   // so crawlers see the assortment without executing JS.
@@ -480,6 +800,7 @@ async function main() {
   fs.writeFileSync(robotsPath, renderRobots(), 'utf8');
 
   console.log(`✓ Wrote ${written} product page(s) to /p`);
+  console.log(`✓ Wrote ${collectionLandings.length} collection page(s) to /collections`);
   console.log('✓ Wrote sitemap.xml');
   console.log('✓ Wrote robots.txt');
 }
