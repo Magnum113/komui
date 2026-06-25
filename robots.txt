@@ -1,0 +1,10 @@
+# https://komui.ru/robots.txt
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /checkout
+Disallow: /payment-result
+Disallow: /marketing-consent
+Disallow: /personal-data-consent
+
+Sitemap: https://komui.ru/sitemap.xml
