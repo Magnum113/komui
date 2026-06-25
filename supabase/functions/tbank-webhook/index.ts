@@ -9,6 +9,10 @@ import {
   tbankConfig,
 } from "../_shared/tbank.ts";
 import { createCdekShipmentForOrder } from "../_shared/cdek-shipments.ts";
+import {
+  markPromoRedemptionRedeemed,
+  releasePromoRedemption,
+} from "../_shared/promo.ts";
 
 function text(value: unknown, maxLength = 500): string {
   return String(value ?? "").trim().slice(0, maxLength);
@@ -170,6 +174,7 @@ Deno.serve(async (request) => {
           .eq("id", order.id);
 
         if (nextStatus === "paid") {
+          await markPromoRedemptionRedeemed(admin, order.id);
           try {
             await createCdekShipmentForOrder(admin, order.id);
           } catch (error) {
@@ -179,6 +184,10 @@ Deno.serve(async (request) => {
               error,
             });
           }
+        } else if (nextStatus === "payment_failed") {
+          await releasePromoRedemption(admin, order.id);
+        } else if (nextStatus === "refunded") {
+          await releasePromoRedemption(admin, order.id, "canceled");
         }
       }
     }

@@ -275,7 +275,7 @@ end $$;
 | `delivery_amount` | int (копейки) | стоимость доставки |
 | `subtotal_amount`, `discount_amount`, `total_amount` | int (копейки) | суммы. Инвариант: `total = subtotal − discount + delivery` |
 | `currency` | text | всегда `RUB` |
-| `promo_code` | text nullable | промокод (пока не используется) |
+| `promo_code` | text nullable | применённый промокод, если есть |
 | `source` | text | по умолчанию `storefront` |
 | `metadata` | jsonb | произвольные данные |
 | `paid_at` | timestamptz nullable | момент подтверждения оплаты |

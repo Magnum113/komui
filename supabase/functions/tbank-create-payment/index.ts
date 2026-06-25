@@ -19,6 +19,12 @@ import {
   findCdekDeliveryPoint,
   quoteCdekDelivery,
 } from "../_shared/cdek.ts";
+import {
+  promoPhoneHash,
+  releasePromoRedemption,
+  reservePromoRedemption,
+  validatePromoCode,
+} from "../_shared/promo.ts";
 
 type CartItemInput = {
   id: string;
@@ -340,8 +346,7 @@ Deno.serve(async (request) => {
       (sum, item) => sum + item.line_total_amount,
       0,
     );
-    const promoCode = text(body.promoCode, 32).toUpperCase();
-    const discount = promoCode === "KOMUI10" ? Math.round(subtotal * 0.1) : 0;
+    const promoCode = text(body.promoCode, 32);
     const number = orderNumber();
     const cdekPackages = buildCdekPackages(
       number,
@@ -371,6 +376,23 @@ Deno.serve(async (request) => {
       tariffCode,
     });
     const pointLocation = deliveryPoint.location ?? {};
+    const phoneHash = await promoPhoneHash(phone);
+    const promoValidation = promoCode
+      ? await validatePromoCode(admin, {
+        code: promoCode,
+        subtotalAmount: subtotal,
+        deliveryAmount: cdekQuote.amountKopecks,
+        customerPhoneHash: phoneHash,
+      })
+      : null;
+    if (promoCode && !promoValidation?.valid) {
+      throw new Error(promoValidation?.message || "Промокод недействителен");
+    }
+
+    const discount = promoValidation?.discountAmount ?? 0;
+    const deliveryDiscount = promoValidation?.deliveryDiscountAmount ?? 0;
+    const chargedDeliveryAmount = Math.max(0, cdekQuote.amountKopecks - deliveryDiscount);
+
     const delivery = {
       code: deliveryPoint.code,
       cityCode: deliveryCityCode,
@@ -381,7 +403,9 @@ Deno.serve(async (request) => {
       hours: text(deliveryPoint.work_time, 160) ||
         text(deliveryInput.hours, 160),
       eta: cdekQuote.eta,
-      amount: cdekQuote.amountKopecks,
+      amount: chargedDeliveryAmount,
+      originalAmount: cdekQuote.amountKopecks,
+      discountAmount: deliveryDiscount,
       tariffCode: cdekQuote.tariffCode,
       tariffName: cdekQuote.tariffName,
       deliveryMode: cdekQuote.deliveryMode,
@@ -418,10 +442,20 @@ Deno.serve(async (request) => {
           subtotal_amount: subtotal,
           discount_amount: discount,
           total_amount: total,
-          promo_code: promoCode === "KOMUI10" ? promoCode : null,
+          promo_code: promoValidation?.valid ? promoValidation.code : null,
           source: "storefront",
           metadata: {
             user_agent: text(request.headers.get("user-agent"), 300),
+            promo: promoValidation?.valid
+              ? {
+                code: promoValidation.code,
+                promo_code_id: promoValidation.promoCodeId,
+                discount_type: promoValidation.discountType,
+                discount_amount: promoValidation.discountAmount,
+                delivery_discount_amount: promoValidation.deliveryDiscountAmount,
+                original_delivery_amount: cdekQuote.amountKopecks,
+              }
+              : null,
             cdek: {
               shipment_point: cdekConfig().shipmentPoint,
               delivery_point: delivery.code,
@@ -446,6 +480,29 @@ Deno.serve(async (request) => {
     if (createOrderError) throw createOrderError;
 
     const orderId = String(createdOrderId);
+    await reservePromoRedemption(admin, {
+      validation: promoValidation ?? {
+        valid: false,
+        code: null,
+        promoCodeId: null,
+        name: null,
+        discountType: null,
+        discountAmount: 0,
+        deliveryDiscountAmount: 0,
+        totalDiscountAmount: 0,
+        chargedDeliveryAmount: delivery.amount,
+        message: "",
+        startsAt: null,
+        endsAt: null,
+        metadata: null,
+      },
+      orderId,
+      orderNumber: number,
+      clientRequestId,
+      customerPhoneHash: phoneHash,
+      subtotalAmount: subtotal,
+      deliveryAmount: cdekQuote.amountKopecks,
+    });
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const siteUrl = (Deno.env.get("SITE_URL") ?? "https://komui.ru")
       .split(",")[0]
@@ -484,7 +541,10 @@ Deno.serve(async (request) => {
       })
       .select("id")
       .single();
-    if (attemptError) throw attemptError;
+    if (attemptError) {
+      await releasePromoRedemption(admin, orderId);
+      throw attemptError;
+    }
 
     let providerResponse: Record<string, unknown>;
     try {
@@ -509,6 +569,7 @@ Deno.serve(async (request) => {
       await admin.from("merch_customer_orders").update({
         status: "payment_failed",
       }).eq("id", orderId);
+      await releasePromoRedemption(admin, orderId);
       return jsonResponse({
         error: "Т‑Банк временно не отвечает. Попробуйте ещё раз.",
         retryAllowed: true,
@@ -539,6 +600,7 @@ Deno.serve(async (request) => {
       await admin.from("merch_customer_orders").update({
         status: "payment_failed",
       }).eq("id", orderId);
+      await releasePromoRedemption(admin, orderId);
       return jsonResponse({
         error: errorText || "Т‑Банк не создал платёж",
         code: errorCode || "TBANK_INIT_FAILED",

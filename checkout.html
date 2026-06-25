@@ -475,7 +475,7 @@ img,svg{display:block}
           </div>
           <div class="totals">
             <div class="total-row"><span>Товары</span><span id="itemsTotal">0 ₽</span></div>
-            <div class="total-row discount" id="discountRow"><span>Скидка KOMUI10</span><span id="discountTotal">−0 ₽</span></div>
+            <div class="total-row discount" id="discountRow"><span id="discountLabel">Скидка</span><span id="discountTotal">−0 ₽</span></div>
             <div class="total-row"><span>Доставка</span><span id="deliveryTotal">после выбора ПВЗ</span></div>
             <div class="total-row grand"><span>Итого</span><span id="grandTotal">0 ₽</span></div>
           </div>
@@ -592,7 +592,7 @@ if(!items.length&&previewMode){
 }
 let selectedPoint=null;
 let pendingPoint=null;
-let promoApplied=localStorage.getItem(PROMO_KEY)==='KOMUI10';
+let appliedPromo=readPromoState();
 let map=null;
 let markers=[];
 let yandexMapsPromise=null;
@@ -604,6 +604,23 @@ let pointsLoading=false;
 let pointsLoaded=false;
 let quoteLoading=false;
 let pointLoadTimer=null;
+
+function readPromoState(){
+  try{
+    const raw=localStorage.getItem(PROMO_KEY);
+    if(!raw)return null;
+    if(raw==='KOMUI10')return {code:'KOMUI10'};
+    const parsed=JSON.parse(raw);
+    return parsed?.code?parsed:null;
+  }catch(e){return null}
+}
+
+function savePromoState(){
+  try{
+    if(appliedPromo?.code)localStorage.setItem(PROMO_KEY,JSON.stringify(appliedPromo));
+    else localStorage.removeItem(PROMO_KEY);
+  }catch(e){}
+}
 
 function saveForm(){
   const state={
@@ -629,9 +646,12 @@ function restoreForm(){
 }
 
 function itemsSubtotal(){return items.reduce((sum,item)=>sum+(Number(item.price)||0)*(Number(item.qty)||1),0)}
-function discount(){return promoApplied?Math.round(itemsSubtotal()*.1):0}
+function discount(){return Math.round(Number(appliedPromo?.discountAmount)||0)}
 function deliveryCost(){return selectedPoint?Number(selectedPoint.price)||0:0}
-function orderTotal(){return Math.max(0,itemsSubtotal()-discount()+deliveryCost())}
+function deliveryDiscount(){return selectedPoint?Math.min(deliveryCost(),Math.round(Number(appliedPromo?.deliveryDiscountAmount)||0)):0}
+function chargedDeliveryCost(){return Math.max(0,deliveryCost()-deliveryDiscount())}
+function totalPromoDiscount(){return discount()+deliveryDiscount()}
+function orderTotal(){return Math.max(0,itemsSubtotal()-discount()+chargedDeliveryCost())}
 
 function renderItems(){
   $('#orderItems').innerHTML=items.map(item=>`
@@ -647,9 +667,10 @@ function renderItems(){
 
 function renderTotals(){
   $('#itemsTotal').textContent=money(itemsSubtotal());
-  $('#discountRow').classList.toggle('show',promoApplied);
-  $('#discountTotal').textContent='−'+money(discount());
-  $('#deliveryTotal').textContent=selectedPoint?money(deliveryCost()):'после выбора ПВЗ';
+  $('#discountRow').classList.toggle('show',!!appliedPromo&&totalPromoDiscount()>0);
+  $('#discountLabel').textContent=appliedPromo?.code?'Промокод '+appliedPromo.code:'Скидка';
+  $('#discountTotal').textContent='−'+money(totalPromoDiscount());
+  $('#deliveryTotal').textContent=selectedPoint?money(chargedDeliveryCost()):'после выбора ПВЗ';
   $('#grandTotal').textContent=money(orderTotal());
   const label='Перейти к оплате · '+money(orderTotal());
   $('#payButtonText').textContent=label;
@@ -889,6 +910,7 @@ async function choosePendingPoint(){
   try{
     selectedPoint=await quotePendingPoint();
     selectedCity=selectedCity||{code:selectedPoint.cityCode||null,name:selectedPoint.city||''};
+    if(appliedPromo?.code)await validateAppliedPromo({silent:true});
     saveForm();renderSelectedPoint();closePickup();showToast('Пункт СДЭК выбран');
   }catch(error){
     showToast(error?.message||'Не удалось рассчитать доставку СДЭК');
@@ -1016,7 +1038,7 @@ function paymentIdentity(){
     items:items.map(item=>[String(item.id),String(item.size),Number(item.qty)]),
     point:selectedPoint?.code||'',
     delivery:selectedPoint?[Number(selectedPoint.price)||0,selectedPoint.tariffCode||'',selectedPoint.cityCode||'']:'',
-    promo:promoApplied?'KOMUI10':'',
+    promo:appliedPromo?[appliedPromo.code,discount(),deliveryDiscount()]:'',
     phone:$('#phone').value.replace(/\D/g,'')
   });
   try{
@@ -1047,6 +1069,18 @@ async function submitCheckout(){
   if(!config){
     showToast('Платёжный сервис не настроен');
     return;
+  }
+  if(appliedPromo?.code){
+    try{
+      const promoResult=await validateAppliedPromo({silent:true});
+      if(!promoResult){
+        showToast('Промокод не применён. Проверьте итог заказа');
+        return;
+      }
+    }catch(error){
+      showToast(error?.message||'Не удалось проверить промокод');
+      return;
+    }
   }
 
   const identity=paymentIdentity();
@@ -1081,7 +1115,7 @@ async function submitCheckout(){
           deliveryMode:selectedPoint.deliveryMode
         },
         items:items.map(item=>({id:String(item.id),size:String(item.size),qty:Number(item.qty)})),
-        promoCode:promoApplied?'KOMUI10':null
+        promoCode:appliedPromo?.code||null
       })
     });
     const result=await response.json().catch(()=>({}));
@@ -1114,19 +1148,99 @@ function showToast(message){
   toastTimer=setTimeout(()=>toast.classList.remove('show'),2600);
 }
 
-function applyPromo(){
+function promoPayload(code){
+  return {
+    promoCode:code,
+    items:items.map(item=>({id:String(item.id),size:String(item.size),qty:Number(item.qty)})),
+    delivery:{amount:selectedPoint?Math.round(deliveryCost()*100):0}
+  };
+}
+
+function applyPromoResult(result){
+  appliedPromo={
+    code:result.code,
+    name:result.name||result.code,
+    discountType:result.discountType,
+    discountAmount:Math.round((Number(result.discountAmount)||0)/100),
+    deliveryDiscountAmount:Math.round((Number(result.deliveryDiscountAmount)||0)/100),
+    totalDiscountAmount:Math.round((Number(result.totalDiscountAmount)||0)/100),
+    endsAt:result.endsAt||null,
+    message:result.message||'Промокод применён'
+  };
+  savePromoState();
+}
+
+function resetPromo(messageText=''){
+  appliedPromo=null;
+  savePromoState();
+  renderTotals();
+  if(messageText){
+    const message=$('#promoMessage');
+    message.className='promo-message show error';
+    message.textContent=messageText;
+  }
+}
+
+async function validateAppliedPromo({silent=false}={}){
+  if(!appliedPromo?.code)return null;
+  const config=supabaseConfig();
+  if(!config||previewMode){
+    if(!silent)resetPromo('Промокоды доступны только на опубликованном сайте');
+    return null;
+  }
+
+  const response=await fetch(config.url+'/functions/v1/promo-validate',{
+    method:'POST',
+    headers:{'Content-Type':'application/json',apikey:config.anonKey,Authorization:'Bearer '+config.anonKey},
+    body:JSON.stringify(promoPayload(appliedPromo.code))
+  });
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(result.error||'Не удалось проверить промокод');
+  if(!result.valid){
+    resetPromo(result.message||'Промокод не найден');
+    return null;
+  }
+  applyPromoResult(result);
+  renderTotals();
+  if(!silent){
+    const message=$('#promoMessage');
+    message.className='promo-message show success';
+    message.textContent=result.message||'Промокод применён';
+  }
+  return result;
+}
+
+async function applyPromo(){
   const code=$('#promoInput').value.trim().toUpperCase();
   const message=$('#promoMessage');
   message.className='promo-message show';
-  if(code==='KOMUI10'){
-    promoApplied=true;
-    localStorage.setItem(PROMO_KEY,'KOMUI10');
+  if(!code){
+    resetPromo('Введите промокод');
+    return;
+  }
+  const config=supabaseConfig();
+  if(!config||previewMode){
+    resetPromo('Промокоды доступны только на опубликованном сайте');
+    return;
+  }
+  $('#promoApply').disabled=true;
+  $('#promoApply').textContent='Проверяем...';
+  try{
+    appliedPromo={code};
+    const result=await validateAppliedPromo({silent:true});
+    if(!result)return;
     message.classList.add('success');
-    message.textContent='Скидка 10% применена';
+    message.textContent=result.message||'Промокод применён';
     renderTotals();
-  }else{
+  }catch(error){
+    appliedPromo=null;
+    savePromoState();
+    renderTotals();
     message.classList.add('error');
-    message.textContent='Промокод не найден';
+    message.textContent=error?.message||'Не удалось проверить промокод';
+  }finally{
+    $('#promoApply').disabled=false;
+    $('#promoApply').textContent='Применить';
   }
 }
 
@@ -1141,11 +1255,10 @@ function init(){
   renderItems();
   renderSelectedPoint();
   renderTotals();
-  if(promoApplied){
+  if(appliedPromo?.code){
     $('#promo').classList.add('open');
-    $('#promoInput').value='KOMUI10';
-    $('#promoMessage').className='promo-message show success';
-    $('#promoMessage').textContent='Скидка 10% применена';
+    $('#promoInput').value=appliedPromo.code;
+    validateAppliedPromo({silent:true}).catch(()=>resetPromo('Промокод больше недоступен'));
   }
 
   ['lastName','firstName','phone'].forEach(id=>{
