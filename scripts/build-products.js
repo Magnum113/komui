@@ -16,6 +16,10 @@ const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
 const SITE_ORIGIN = 'https://komui.ru';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://bkxpzfnglihxpbnhtjjq.supabase.co';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'sb_publishable_2qlwcK7zOD5_7f3YVbjZNw_3fFspwXY';
+const SUPABASE_TABLE = 'merch_storefront_products';
+const SUPABASE_TIMEOUT_MS = 10_000;
 const STATIC_PAGES = [
   { url: '/', changefreq: 'weekly', priority: '1.0' },
   { url: '/delivery', changefreq: 'monthly', priority: '0.5' },
@@ -27,13 +31,46 @@ const STATIC_PAGES = [
   { url: '/seller', changefreq: 'yearly', priority: '0.2' },
 ];
 
-function loadProducts() {
+function loadFromLocalFile() {
   const src = fs.readFileSync(path.join(ROOT, 'data/storefront-products.js'), 'utf8');
   const sandbox = { window: {} };
-  // The data file does `window.KOMUI_PRODUCTS = [...]` plus a stats object.
   const fn = new Function('window', src);
   fn(sandbox.window);
-  const products = sandbox.window.KOMUI_PRODUCTS || [];
+  return sandbox.window.KOMUI_PRODUCTS || [];
+}
+
+async function loadFromSupabase() {
+  if (typeof fetch !== 'function') throw new Error('global fetch unavailable (need Node >= 18)');
+  const url = `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=*&order=sort_order`;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), SUPABASE_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      signal: ctrl.signal,
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (!Array.isArray(data)) throw new Error('unexpected response shape');
+    return data;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function loadProducts() {
+  let products;
+  try {
+    products = await loadFromSupabase();
+    console.log(`✓ Loaded ${products.length} product(s) from Supabase`);
+  } catch (err) {
+    console.warn(`! Supabase fetch failed (${err.message}); falling back to data/storefront-products.js`);
+    products = loadFromLocalFile();
+    console.log(`✓ Loaded ${products.length} product(s) from local file`);
+  }
   return products.filter(p => p && p.slug && Array.isArray(p.sizes) && p.sizes.length);
 }
 
@@ -359,8 +396,8 @@ Sitemap: ${SITE_ORIGIN}/sitemap.xml
 `;
 }
 
-function main() {
-  const products = loadProducts();
+async function main() {
+  const products = await loadProducts();
   if (!products.length) {
     console.error('No products found in data/storefront-products.js');
     process.exit(1);
@@ -391,4 +428,7 @@ function main() {
   console.log('✓ Wrote robots.txt');
 }
 
-main();
+main().catch(err => {
+  console.error('Build failed:', err);
+  process.exit(1);
+});
