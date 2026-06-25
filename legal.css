@@ -51,6 +51,13 @@ h1{font-family:'Unbounded',sans-serif;font-size:clamp(34px,5vw,58px);line-height
 .section ul,.section ol{padding-left:22px;display:grid;gap:8px}
 .section strong{color:var(--txt)}
 .note{border-left:4px solid var(--mag);background:rgba(0,38,249,.06);padding:14px 16px;border-radius:10px;color:var(--txt-2)}
+.faq-list{border-top:1px solid var(--line)}
+.faq-item{border-bottom:1px solid var(--line)}
+.faq-item summary{position:relative;display:block;padding:17px 42px 17px 0;cursor:pointer;color:var(--txt);font-weight:800;line-height:1.35;list-style:none;overflow-wrap:anywhere}
+.faq-item summary::-webkit-details-marker{display:none}
+.faq-item summary::after{content:"+";position:absolute;right:0;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:rgba(0,38,249,.08);color:var(--mag);font-weight:900}
+.faq-item[open] summary::after{content:"−"}
+.faq-item p{padding:0 46px 18px 0;color:var(--txt-2)}
 .grid-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .kv{border:1px solid var(--line);border-radius:10px;background:var(--panel-2);padding:13px 14px}
 .kv span{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--txt-3);font-weight:900;margin-bottom:5px}
