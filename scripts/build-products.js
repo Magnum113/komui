@@ -382,6 +382,49 @@ function renderSitemap(products) {
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
 }
 
+function renderCatalogPrerender(products, limit = 12) {
+  // Lightweight card stubs injected into index.html#grid between markers.
+  // The live JS catalog overwrites #grid.innerHTML once Supabase data loads,
+  // so these stubs are visible only during the brief moment before hydration.
+  // Their primary purpose: give crawlers (Yandex/Google/GPTBot/PerplexityBot)
+  // a real HTML list of products with descriptive text and direct links.
+  const items = products.slice(0, limit).map(p => {
+    const img = (p.image_urls && p.image_urls[0]) || p.primary_image_url || '';
+    const price = formatPriceRange(p.price_min, p.price_max) || '';
+    const sizes = (p.sizes || []).map(s => `<span>${escapeHtml(s)}</span>`).join('');
+    const collection = p.collection_name || p.anime_title || '';
+    const altParts = [p.color_name, p.category, p.decoration_type ? `с ${p.decoration_type.toLowerCase()}ом` : '', p.collection_name && `«${p.collection_name}»`].filter(Boolean);
+    const alt = altParts.length ? altParts.join(' ') : p.name;
+    return `<article class="card prerender" data-id="${escapeAttr(p.id)}">` +
+      `<a class="media" href="/p/${escapeAttr(p.slug)}" aria-label="${escapeAttr(p.name)}">` +
+        (img ? `<img src="${escapeAttr(img)}" alt="${escapeAttr(alt)}" loading="lazy" decoding="async">` : '') +
+      `</a>` +
+      `<div class="info">` +
+        (collection ? `<div class="col">${escapeHtml(collection)}</div>` : '') +
+        `<h3><a href="/p/${escapeAttr(p.slug)}">${escapeHtml(p.name)}</a></h3>` +
+        `<div class="meta">` +
+          (price ? `<span class="price">${escapeHtml(price)}</span>` : '') +
+          (sizes ? `<span class="sizes">${sizes}</span>` : '') +
+        `</div>` +
+      `</div>` +
+    `</article>`;
+  }).join('');
+  return items;
+}
+
+function injectCatalogPrerender(html, prerender) {
+  const startMark = '<!--catalog:prerender:start-->';
+  const endMark = '<!--catalog:prerender:end-->';
+  const startIdx = html.indexOf(startMark);
+  const endIdx = html.indexOf(endMark);
+  if (startIdx === -1 || endIdx === -1) return null;
+  return (
+    html.slice(0, startIdx + startMark.length) +
+    prerender +
+    html.slice(endIdx)
+  );
+}
+
 function renderRobots() {
   return `# https://komui.ru/robots.txt
 User-agent: *
@@ -419,6 +462,19 @@ async function main() {
   }
 
   fs.writeFileSync(path.join(ROOT, 'sitemap.xml'), renderSitemap(products), 'utf8');
+
+  // Inject 12 prerendered catalog cards into index.html between markers
+  // so crawlers see the assortment without executing JS.
+  const indexPath = path.join(ROOT, 'index.html');
+  const indexHtml = fs.readFileSync(indexPath, 'utf8');
+  const prerender = renderCatalogPrerender(products, 12);
+  const patched = injectCatalogPrerender(indexHtml, prerender);
+  if (patched && patched !== indexHtml) {
+    fs.writeFileSync(indexPath, patched, 'utf8');
+    console.log('✓ Injected catalog prerender into index.html');
+  } else if (!patched) {
+    console.warn('! catalog:prerender markers not found in index.html — skipped');
+  }
 
   const robotsPath = path.join(ROOT, 'robots.txt');
   fs.writeFileSync(robotsPath, renderRobots(), 'utf8');
