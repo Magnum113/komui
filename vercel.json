@@ -2,5 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
   "buildCommand": "node scripts/build-products.js",
-  "outputDirectory": "."
+  "outputDirectory": ".",
+  "functions": {
+    "api/*.js": {
+      "maxDuration": 30
+    }
+  }
 }

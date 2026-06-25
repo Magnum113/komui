@@ -154,7 +154,11 @@ async function check(){
   }
 
   try{
-    const response=await fetch(config.url.replace(/\/$/,'')+'/functions/v1/tbank-payment-status',{
+    const functionBase=String(config.functionsProxyUrl||'').replace(/\/$/,'');
+    const functionUrl=functionBase
+      ? functionBase+'?name=tbank-payment-status'
+      : config.url.replace(/\/$/,'')+'/functions/v1/tbank-payment-status';
+    const response=await fetch(functionUrl,{
       method:'POST',
       headers:{'Content-Type':'application/json',apikey:config.anonKey,Authorization:'Bearer '+config.anonKey},
       body:JSON.stringify({orderNumber:order,accessToken:session.accessToken})

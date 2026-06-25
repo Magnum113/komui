@@ -715,7 +715,18 @@ function renderSelectedPoint(){
 function supabaseConfig(){
   const config=window.KOMUI_SUPABASE;
   if(!config?.url||!config?.anonKey)return null;
-  return {url:config.url.replace(/\/$/,''),anonKey:config.anonKey};
+  return {
+    url:config.url.replace(/\/$/,''),
+    functionsProxyUrl:String(config.functionsProxyUrl||'').replace(/\/$/,''),
+    anonKey:config.anonKey
+  };
+}
+
+function supabaseFunctionUrl(config,name){
+  if(config.functionsProxyUrl){
+    return config.functionsProxyUrl+'?name='+encodeURIComponent(name);
+  }
+  return config.url+'/functions/v1/'+encodeURIComponent(name);
 }
 
 function deliveryConfig(){
@@ -869,7 +880,7 @@ async function loadDeliveryPoints(){
   pointsLoading=true;
   renderPointList($('#pointSearch').value);
   try{
-    const response=await fetch(config.url+'/functions/v1/cdek-delivery-points',{
+    const response=await fetch(supabaseFunctionUrl(config,'cdek-delivery-points'),{
       method:'POST',
       headers:{'Content-Type':'application/json',apikey:config.anonKey,Authorization:'Bearer '+config.anonKey},
       body:JSON.stringify({city,query:$('#pointSearch').value})
@@ -1007,7 +1018,7 @@ async function quotePendingPoint(){
     throw new Error('Расчёт СДЭК доступен только на опубликованном сайте');
   }
 
-  const response=await fetch(config.url+'/functions/v1/cdek-delivery-quote',{
+  const response=await fetch(supabaseFunctionUrl(config,'cdek-delivery-quote'),{
     method:'POST',
     headers:{'Content-Type':'application/json',apikey:config.anonKey,Authorization:'Bearer '+config.anonKey},
     body:JSON.stringify({
@@ -1096,7 +1107,7 @@ async function submitCheckout(){
   const identity=paymentIdentity();
   setPaymentLoading(true);
   try{
-    const response=await fetch(config.url+'/functions/v1/tbank-create-payment',{
+    const response=await fetch(supabaseFunctionUrl(config,'tbank-create-payment'),{
       method:'POST',
       headers:{
         'Content-Type':'application/json',
@@ -1199,7 +1210,7 @@ async function validateAppliedPromo({silent=false}={}){
     return null;
   }
 
-  const response=await fetch(config.url+'/functions/v1/promo-validate',{
+  const response=await fetch(supabaseFunctionUrl(config,'promo-validate'),{
     method:'POST',
     headers:{'Content-Type':'application/json',apikey:config.anonKey,Authorization:'Bearer '+config.anonKey},
     body:JSON.stringify(promoPayload(appliedPromo.code))
