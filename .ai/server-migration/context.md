@@ -1,0 +1,27 @@
+# Context
+
+- Витрина статическая, без frontend framework.
+- Есть 2 Vercel Functions и 6 Supabase Edge Functions.
+- Supabase содержит PostgreSQL 17.6, 29 public-таблиц и около 20 МБ данных.
+- Auth, Storage и Realtime не используются.
+- В репозитории сохранены только 5 из 31 миграции.
+- База обслуживает каталог, склад, производство, Ozon, финансы и checkout.
+- Обнаружены опасные публичные права записи в 18 внутренних таблиц.
+- Целевая архитектура: Nginx + Node.js/TypeScript/Fastify + PostgreSQL 17 + systemd.
+- Этапы подготовки выполняются параллельно production.
+- Staging использует отдельную БД и demo/test integrations.
+- До ручной приёмки не меняются production DNS, Vercel, Supabase и webhook.
+- GetoMerchV3 и GetoMerchV4 используют тот же Supabase и прямой `anon` CRUD.
+- V3 является вероятным основным вариантом, но deployment ещё не подтверждён.
+- Сервер не содержит активных cron/jobs, пишущих в текущий Supabase.
+- DB-trigger вызывает Vercel deploy hook при изменении storefront products.
+- Сервер имеет 2 ГБ swap и около 7,3 ГБ свободного SSD.
+- PostgreSQL 17.10 слушает только localhost; staging DB — `komui_staging`.
+- Подготовлен HTTPS hostname `staging-89-111-152-112.sslip.io`.
+- Staging credentials хранятся только в root-only файле на сервере.
+- UFW разрешает только 22/80/443; внешние 3000/5432 закрыты.
+- Этап 3 завершён: в `komui_staging` восстановлены 29 таблиц и 3500 строк.
+- Снимок source зашифрован; открытая копия и source DB credential отсутствуют.
+- Схема и данные подтверждены двумя последовательными restore.
+- Supabase roles/grants/RLS и Vercel redeploy trigger в target удалены.
+- Production Supabase, Vercel, DNS и webhook остаются неизменными.

@@ -1,0 +1,46 @@
+[Unit]
+Description=KOMUI staging backend
+After=network-online.target postgresql.service
+Wants=network-online.target
+ConditionPathExists=/opt/komui/current/backend/dist/server.js
+
+[Service]
+Type=simple
+User=komui
+Group=komui
+WorkingDirectory=/opt/komui/current/backend
+EnvironmentFile=/etc/komui/backend.env
+ExecStart=/usr/bin/node /opt/komui/current/backend/dist/server.js
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=30
+TimeoutStopSec=20
+KillSignal=SIGTERM
+UMask=0027
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+ReadWritePaths=/var/lib/komui /var/log/komui
+
+MemoryHigh=900M
+MemoryMax=1200M
+TasksMax=256
+LimitNOFILE=16384
+
+StandardOutput=append:/var/log/komui/backend.log
+StandardError=append:/var/log/komui/backend-error.log
+
+[Install]
+WantedBy=multi-user.target

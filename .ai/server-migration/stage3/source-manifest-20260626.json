@@ -1,0 +1,92 @@
+{
+  "project_ref": "bkxpzfnglihxpbnhtjjq",
+  "project_name": "GetoMerchV3",
+  "region": "eu-west-1",
+  "captured_at_utc": "2026-06-25T21:30:49.491742Z",
+  "postgres": {
+    "version": "17.6",
+    "version_num": 170006,
+    "database": "postgres"
+  },
+  "schemas": [
+    "public",
+    "private"
+  ],
+  "table_count": 29,
+  "migration_count": 31,
+  "sequence_count": 5,
+  "policy_count": 39,
+  "column_count": 368,
+  "constraint_count": 133,
+  "index_count": 99,
+  "function_count": 4,
+  "trigger_count": 9,
+  "constraints": {
+    "foreign_keys": 39,
+    "primary_keys": 27,
+    "unique": 22,
+    "check": 45
+  },
+  "schema_fingerprints": {
+    "columns_md5": "0221cd508c1c1dc3022dd1705779efc5",
+    "constraints_md5": "94442271f5c9469d5a972eaa0134e47f",
+    "indexes_md5": "52ab23e61d0730af0549a05d5250c88d",
+    "functions_md5": "ef5084c0b4b80ec196c7d6dc4dd21530",
+    "triggers_md5": "acd240e90bdfdfd1548cccf01b5f4b1a"
+  },
+  "row_counts": {
+    "merch_cdek_events": 0,
+    "merch_cdek_shipments": 0,
+    "merch_colors": 5,
+    "merch_customer_order_items": 6,
+    "merch_customer_orders": 6,
+    "merch_decoration_types": 2,
+    "merch_designs": 19,
+    "merch_expense_categories": 1,
+    "merch_expenses": 0,
+    "merch_fabric_types": 2,
+    "merch_inventory": 101,
+    "merch_ozon_finance_operations": 1450,
+    "merch_ozon_order_items": 505,
+    "merch_ozon_orders": 502,
+    "merch_payment_attempts": 6,
+    "merch_payment_events": 0,
+    "merch_print_inventory": 8,
+    "merch_product_categories": 3,
+    "merch_products": 151,
+    "merch_products_backup_20260622": 152,
+    "merch_products_backup_v2": 151,
+    "merch_promo_codes": 1,
+    "merch_promo_redemptions": 1,
+    "merch_sizes": 6,
+    "merch_storefront_products": 31,
+    "merch_transactions": 353,
+    "merch_warehouses": 2,
+    "merch_workshop_order_items": 18,
+    "merch_workshop_orders": 18
+  },
+  "control_totals": {
+    "active_storefront_products": 31,
+    "inventory_quantity_total": 134,
+    "print_inventory_quantity_total": 61,
+    "ozon_orders_total": 502,
+    "ozon_items_quantity_total": 505,
+    "ozon_finance_amount_total": "426304.88",
+    "customer_orders_total": 6,
+    "customer_orders_amount_total": 3042000,
+    "payment_attempts_total": 6,
+    "promo_redemptions_total": 1
+  },
+  "extensions": {
+    "required_target": [
+      "pgcrypto",
+      "uuid-ossp"
+    ],
+    "source_only_or_not_required": [
+      "pg_net",
+      "pg_stat_statements",
+      "supabase_vault"
+    ]
+  },
+  "note": "Production remained writable. These counts are a pre-dump reference; the restored dump is the authoritative consistent snapshot."
+}

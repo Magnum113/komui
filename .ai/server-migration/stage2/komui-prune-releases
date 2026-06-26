@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+RELEASES_DIR=/opt/komui/releases
+CURRENT=$(readlink -f /opt/komui/current 2>/dev/null || true)
+
+mapfile -t RELEASES < <(
+  find "$RELEASES_DIR" -mindepth 1 -maxdepth 1 -type d \
+    -printf '%T@ %p\n' | sort -nr | cut -d' ' -f2-
+)
+
+kept=0
+for release in "${RELEASES[@]}"; do
+  if [[ "$release" == "$CURRENT" ]]; then
+    ((kept += 1))
+    continue
+  fi
+
+  if (( kept < 3 )); then
+    ((kept += 1))
+    continue
+  fi
+
+  rm -rf --one-file-system "$release"
+done
