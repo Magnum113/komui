@@ -17,10 +17,9 @@ const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
 const SITE_ORIGIN = 'https://komui.ru';
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://bkxpzfnglihxpbnhtjjq.supabase.co';
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'sb_publishable_2qlwcK7zOD5_7f3YVbjZNw_3fFspwXY';
-const SUPABASE_TABLE = 'merch_storefront_products';
-const SUPABASE_TIMEOUT_MS = 10_000;
+const API_BASE_URL = String(process.env.KOMUI_API_BASE_URL || '').replace(/\/$/, '');
+const API_PRODUCTS_PATH = process.env.KOMUI_API_PRODUCTS_PATH || '/v1/products?limit=200';
+const API_TIMEOUT_MS = 10_000;
 const STATIC_PAGES = [
   { url: '/', changefreq: 'weekly', priority: '1.0' },
   { url: '/delivery', changefreq: 'monthly', priority: '0.5' },
@@ -112,17 +111,22 @@ function loadFromLocalFile() {
   return sandbox.window.KOMUI_PRODUCTS || [];
 }
 
-async function loadFromSupabase() {
+function apiBasicAuthHeader() {
+  if (process.env.KOMUI_API_BASIC_AUTH) return process.env.KOMUI_API_BASIC_AUTH;
+  if (!process.env.KOMUI_API_BASIC_USER || !process.env.KOMUI_API_BASIC_PASSWORD) return '';
+  return `Basic ${Buffer.from(`${process.env.KOMUI_API_BASIC_USER}:${process.env.KOMUI_API_BASIC_PASSWORD}`).toString('base64')}`;
+}
+
+async function loadFromApi() {
+  if (!API_BASE_URL) throw new Error('KOMUI_API_BASE_URL is not set');
   if (typeof fetch !== 'function') throw new Error('global fetch unavailable (need Node >= 18)');
-  const url = `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=*&order=sort_order`;
+  const url = `${API_BASE_URL}${API_PRODUCTS_PATH.startsWith('/') ? API_PRODUCTS_PATH : `/${API_PRODUCTS_PATH}`}`;
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), SUPABASE_TIMEOUT_MS);
+  const timer = setTimeout(() => ctrl.abort(), API_TIMEOUT_MS);
   try {
+    const authorization = apiBasicAuthHeader();
     const res = await fetch(url, {
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      },
+      headers: authorization ? { Authorization: authorization } : {},
       signal: ctrl.signal,
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -137,10 +141,10 @@ async function loadFromSupabase() {
 async function loadProducts() {
   let products;
   try {
-    products = await loadFromSupabase();
-    console.log(`✓ Loaded ${products.length} product(s) from Supabase`);
+    products = await loadFromApi();
+    console.log(`✓ Loaded ${products.length} product(s) from KOMUI API`);
   } catch (err) {
-    console.warn(`! Supabase fetch failed (${err.message}); falling back to data/storefront-products.js`);
+    console.warn(`! KOMUI API fetch failed (${err.message}); falling back to data/storefront-products.js`);
     products = loadFromLocalFile();
     console.log(`✓ Loaded ${products.length} product(s) from local file`);
   }
@@ -694,7 +698,7 @@ function renderSitemap(products, collectionLandings = []) {
 
 function renderCatalogPrerender(products, limit = 12) {
   // Lightweight card stubs injected into index.html#grid between markers.
-  // The live JS catalog overwrites #grid.innerHTML once Supabase data loads,
+  // The live JS catalog overwrites #grid.innerHTML once KOMUI API data loads,
   // so these stubs are visible only during the brief moment before hydration.
   // Their primary purpose: give crawlers (Yandex/Google/GPTBot/PerplexityBot)
   // a real HTML list of products with descriptive text and direct links.

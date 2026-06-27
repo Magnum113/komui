@@ -16,7 +16,10 @@
   по умолчанию не пишет обратно в Supabase. Единственное допустимое исключение —
   отдельно подтверждённый владельцем admin job для dual-write импорта новых
   товаров из Ozon.
-- В staging используются demo/test credentials. Создание реального платежа или реальной отправки запрещено.
+- В staging по умолчанию используются safe-флаги. Если владелец вручную
+  передал реальные credentials интеграций, тесты не должны создавать реальные
+  отправления; создание/оплата реального платежа выполняется только вручную и
+  осознанно.
 - Production не изменяется без backup и проверенного rollback.
 - Подключение к серверу начинается с read-only аудита.
 - Секреты не передаются в чат и не сохраняются в Git.
@@ -26,8 +29,8 @@
 - После этапа 7 работа останавливается для вашей ручной тестовой приёмки.
 - Этап 8 нельзя начинать автоматически: требуется ваше отдельное явное подтверждение.
 - Основной staging-домен для тестирования: `stage.komui.ru`.
-- До DNS-записи `stage.komui.ru -> 89.111.152.112` используется технический
-  hostname `staging-89-111-152-112.sslip.io`.
+- DNS-запись `stage.komui.ru -> 89.111.152.112` активна; технический hostname
+  `staging-89-111-152-112.sslip.io` остаётся только вспомогательным.
 - В production-архитектуру закладывается безопасный fallback на текущий
   Vercel/Supabase-контур. Это не заменяет ручной DNS-rollback, если сам сервер
   недоступен.
@@ -43,10 +46,10 @@
 | 1 | [Инвентаризация и план снижения текущих рисков](docs/server-migration/01-inventory-and-risk-reduction.md) | Карта потребителей и подготовленный, но не применённый production hardening | Завершён — GO для staging; production hardening заблокирован |
 | 2 | [Подготовка серверной платформы](docs/server-migration/02-server-foundation.md) | Защищённый Ubuntu, Nginx, Node.js, PostgreSQL 17, systemd | Завершён — GO с ограничениями |
 | 3 | [Тестовый перенос PostgreSQL](docs/server-migration/03-database-rehearsal.md) | Воспроизводимый снимок и restore всех данных без Supabase | Завершён — GO |
-| 4 | [Backend и API каталога](docs/server-migration/04-backend-and-catalog.md) | Собственный API, DB-слой, каталог и health checks | Не начат |
-| 5 | [Checkout, Т-Банк, СДЭК, промокоды и admin jobs](docs/server-migration/05-checkout-integrations.md) | Полностью перенесённый платёжно-доставочный контур и управляемая синхронизация Ozon | Не начат |
-| 6 | [Frontend, SEO и статические ресурсы](docs/server-migration/06-frontend-seo-assets.md) | Отсутствие runtime-зависимости от Supabase/Vercel | Не начат |
-| 7 | [Изолированный staging, backup и тестовая приёмка](docs/server-migration/07-staging-and-verification.md) | Рабочая тестовая версия на сервере при неизменном production | Не начат |
+| 4 | [Backend и API каталога](docs/server-migration/04-backend-and-catalog.md) | Собственный API, DB-слой, каталог и health checks | Завершён — GO |
+| 5 | [Checkout, Т-Банк, СДЭК, промокоды и admin jobs](docs/server-migration/05-checkout-integrations.md) | Полностью перенесённый платёжно-доставочный контур и управляемая синхронизация Ozon | Частично завершён — checkout/CDEK/T-Bank GO в staging; Ozon dual-write заблокирован |
+| 6 | [Frontend, SEO и статические ресурсы](docs/server-migration/06-frontend-seo-assets.md) | Отсутствие runtime-зависимости от Supabase/Vercel | Завершён — GO с ограничениями |
+| 7 | [Изолированный staging, backup и тестовая приёмка](docs/server-migration/07-staging-and-verification.md) | Рабочая тестовая версия на сервере при неизменном production | Частично завершён — infra/backup/reboot/alerting GO; ручная приёмка и Ozon job ожидаются |
 | — | **Обязательная остановка и ручное решение владельца** | `ОСТАТЬСЯ НА STAGING` или явно разрешить этап 8 | — |
 | 8 | [Production cutover — только по отдельному разрешению](docs/server-migration/08-production-cutover.md) | Production работает на новом сервере | Заблокирован до подтверждения |
 | 9 | [Стабилизация и отключение старой инфраструктуры](docs/server-migration/09-stabilization-and-decommission.md) | Supabase/Vercel безопасно выведены из эксплуатации | Не начат |
@@ -87,15 +90,17 @@
 - текущая база продолжает обслуживаться Supabase;
 - `komui.ru` не направляется на новый сервер;
 - production webhook Т-Банка остаётся прежним;
-- новый сервер доступен через `stage.komui.ru` после DNS-настройки, либо временно через технический staging hostname;
+- новый сервер доступен через `stage.komui.ru`;
 - staging защищён паролем и/или allowlist по IP и закрыт от индексации;
 - staging использует отдельную БД, полученную из read-only dump;
 - staging по умолчанию не может изменить данные Supabase;
 - исключение — отдельно включённая владельцем admin-команда dual-write импорта
   товаров из Ozon, которая должна писать и в текущий Supabase, и в серверную БД
   через идемпотентный job с журналом и retry;
-- staging backend работает с demo Т-Банком;
-- реальное создание отправления СДЭК отключено или заменено mock-режимом;
+- staging backend настроен с переданными владельцем T-Bank credentials; тестовую
+  оплату запускать только вручную и осознанно;
+- реальное создание отправления СДЭК отключено через
+  `CDEK_CREATE_SHIPMENTS=false`;
 - любые тестовые записи остаются только в staging-БД.
 
 Можно полностью завершить этапы 0–7, показать реализацию на сервере и остановиться на этом состоянии на любой срок. Этапы 8–9 являются отдельным решением о миграции production.

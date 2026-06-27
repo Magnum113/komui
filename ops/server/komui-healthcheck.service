@@ -1,0 +1,13 @@
+[Unit]
+Description=KOMUI local healthcheck
+Wants=network-online.target postgresql.service nginx.service komui-backend.service
+After=network-online.target postgresql.service nginx.service komui-backend.service
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+ExecStart=/usr/local/sbin/komui-healthcheck
+PrivateTmp=true
+ProtectHome=true
+ReadWritePaths=/var/log/komui

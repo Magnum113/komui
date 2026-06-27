@@ -1,0 +1,9 @@
+[Unit]
+Description=Watch KOMUI production traffic switch requests
+
+[Path]
+PathChanged=/var/lib/komui/traffic-switch/request.json
+Unit=komui-traffic-switch.service
+
+[Install]
+WantedBy=multi-user.target

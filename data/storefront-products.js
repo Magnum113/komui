@@ -1,6 +1,5 @@
-/* Auto-generated from Supabase merch_storefront_products. */
-/* Источник: bkxpzfnglihxpbnhtjjq.supabase.co. */
-/* Используется как fallback, если Supabase не отвечает. */
+/* Auto-generated storefront product fallback. */
+/* Используется как fallback, если KOMUI API временно недоступен. */
 
 window.KOMUI_STORE_STATS = {
   "cards": 31,

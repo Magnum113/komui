@@ -69,7 +69,7 @@ h1{font:800 clamp(26px,5vw,38px)/1.12 'Unbounded',sans-serif;letter-spacing:-.03
     </section>
   </div>
 </main>
-<script src="./data/supabase-config.js"></script>
+<script src="./data/api-config.js"></script>
 <script>
 (function(){
 'use strict';
@@ -143,10 +143,12 @@ function pending(review=false){
 }
 
 async function check(){
-  const config=window.KOMUI_SUPABASE;
+  const api=window.KOMUI_API||{};
+  const baseUrl=String(api.baseUrl||'/api').replace(/\/$/,'');
+  const paymentStatusUrl=api.paymentStatusUrl||baseUrl+'/v1/payments/status';
   let session=null;
   try{session=JSON.parse(sessionStorage.getItem('komui-payment-session:'+order)||'null')}catch(e){}
-  if(!order||!session?.accessToken||!config?.url||!config?.anonKey){
+  if(!order||!session?.accessToken||!paymentStatusUrl){
     if(returnStatus==='fail')failed();
     else render('review','Не удалось проверить оплату','Защищённый идентификатор заказа не найден в этом браузере. Если деньги списались, напишите в поддержку и укажите номер заказа.','Статус оплаты не менялся без подтверждения webhook.',
       '<a class="button primary" href="/">Вернуться в магазин</a><a class="button" href="mailto:smmshit@ya.ru">Написать в поддержку</a>');
@@ -154,13 +156,9 @@ async function check(){
   }
 
   try{
-    const functionBase=String(config.functionsProxyUrl||'').replace(/\/$/,'');
-    const functionUrl=functionBase
-      ? functionBase+'?name=tbank-payment-status'
-      : config.url.replace(/\/$/,'')+'/functions/v1/tbank-payment-status';
-    const response=await fetch(functionUrl,{
+    const response=await fetch(paymentStatusUrl,{
       method:'POST',
-      headers:{'Content-Type':'application/json',apikey:config.anonKey,Authorization:'Bearer '+config.anonKey},
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({orderNumber:order,accessToken:session.accessToken})
     });
     const result=await response.json();

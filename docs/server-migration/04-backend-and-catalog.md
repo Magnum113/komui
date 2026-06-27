@@ -1,5 +1,9 @@
 # Этап 4. Backend и API каталога
 
+Статус: **завершён — GO**.
+
+Дата завершения: 26 июня 2026 года.
+
 ## Цель
 
 Создать собственный backend, который безопасно работает с PostgreSQL и заменяет Supabase REST для каталога.
@@ -124,6 +128,84 @@ API отдаёт только публичные поля. Запрещено о
 
 Собственный API каталога, готовый к staging.
 
+Фактически развернуто:
+
+- `server/` TypeScript/Fastify backend;
+- systemd service `komui-backend`;
+- DB pool через `pg`, максимум 6 соединений;
+- statement timeout 3000 ms;
+- health endpoints:
+  - `GET /health/live`;
+  - `GET /health/ready`;
+  - compatibility: `GET /healthz`, `GET /readyz`;
+- catalog endpoints:
+  - `GET /v1/products`;
+  - `GET /v1/products/:slug`;
+  - `GET /v1/catalog/stats`;
+- admin foundation:
+  - `GET /admin/runtime`;
+  - `POST /admin/runtime/fallback` возвращает `501` на этапе 4;
+  - Bearer-token auth;
+  - audit log `/var/lib/komui/admin-audit.log`.
+
+Через Nginx staging API доступен с префиксом `/api/`, например:
+
+```text
+https://staging-89-111-152-112.sslip.io/api/v1/products
+```
+
+После появления DNS-записи `stage.komui.ru -> 89.111.152.112` staging можно
+перевести на:
+
+```text
+https://stage.komui.ru/api/v1/products
+```
+
+## Фактические проверки
+
+- `npm --prefix server run build` — успешно.
+- `npm --prefix server test` — 5/5 тестов успешно.
+- `komui-backend.service` — active/running.
+- Backend слушает только `127.0.0.1:3000`.
+- Внешний порт `3000` закрыт.
+- Внешний порт `5432` закрыт.
+- `/health/live` возвращает `ok: true`.
+- `/health/ready` проверяет `komui_staging`.
+- `/v1/catalog/stats` вернул:
+  - active products: 31;
+  - products with offers: 31.
+- `/v1/products?limit=2` возвращает массив из 2 товаров.
+- `/v1/products/var16-print-tshirt-washed-grey` возвращает товар и 4 offer.
+- неизвестный slug возвращает `404`.
+- Проверена отсечка внутренних полей:
+  - `source_payload`;
+  - `ozon_attributes`;
+  - `sales_6m_*`;
+  - `ozon_product_ids`;
+  - `ozon_skus`;
+  - `ozon_offer_ids`;
+  - `created_at`;
+  - `updated_at`;
+  - offer `attributes`;
+  - offer `raw_name`;
+  - offer `product_id`;
+  - offer `min_price`;
+  - offer `old_price`.
+- Admin endpoint без token возвращает `401`.
+- Admin endpoint с server-only token возвращает runtime status.
+- Admin actions пишутся в audit log.
+- Nginx staging без Basic Auth возвращает `401`.
+- Nginx staging с Basic Auth отдаёт `/api/health/live` и `/api/v1/products`.
+- `nginx -t` успешно.
+- Production smoke checks не изменились:
+  - `https://api.komui.ru/` — 404;
+  - `https://komui.ru/` — 200;
+  - `https://www.komui.ru/` — 200.
+- Ресурсы после запуска:
+  - backend memory около 23 MB;
+  - диск `/`: 62% used, около 7.2 GB free;
+  - available RAM около 2.6 GB.
+
 ## GO
 
 Каталог и SEO build получают те же активные товары, что source Supabase, с допустимым публичным набором полей.
@@ -131,6 +213,13 @@ API отдаёт только публичные поля. Запрещено о
 Admin foundation считается готовым на этом этапе, если закрытые маршруты,
 аудит и runtime config работают в staging, но production traffic switch ещё не
 включён.
+
+GO выдан: backend и catalog API работают в staging, production-контур не
+изменён.
+
+Ограничение: `stage.komui.ru` пока не резолвится публично, поэтому тестовый
+доступ остаётся через `staging-89-111-152-112.sslip.io`. После появления DNS
+нужно добавить hostname в Nginx и выпустить TLS-сертификат.
 
 ## NO-GO
 

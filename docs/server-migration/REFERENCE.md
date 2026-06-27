@@ -626,7 +626,7 @@ Dump должен включать:
 
 Нужно изменить:
 
-- `data/supabase-config.js`;
+- `data/api-config.js`;
 - запрос каталога в `index.html`;
 - запросы checkout;
 - запрос payment status;

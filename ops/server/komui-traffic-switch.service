@@ -1,0 +1,7 @@
+[Unit]
+Description=Apply KOMUI production traffic switch request
+After=nginx.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/komui-traffic-switch-apply

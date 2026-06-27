@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+ENV_FILE="${KOMUI_TELEGRAM_ENV_FILE:-/etc/komui/telegram-alerts.env}"
+
+if [[ ! -f "$ENV_FILE" ]]; then
+  logger -t komui-alert "Telegram env file missing: $ENV_FILE"
+  exit 0
+fi
+
+# shellcheck disable=SC1090
+. "$ENV_FILE"
+
+if [[ -z "${TELEGRAM_BOT_TOKEN:-}" || -z "${TELEGRAM_CHAT_ID:-}" ]]; then
+  logger -t komui-alert "Telegram token or chat id missing"
+  exit 0
+fi
+
+subject="${1:-KOMUI alert}"
+body="${2:-}"
+host="$(hostname -f 2>/dev/null || hostname)"
+text="[$host] $subject"
+if [[ -n "$body" ]]; then
+  text="$text
+$body"
+fi
+
+curl_args=(-fsS --max-time "${TELEGRAM_TIMEOUT_SECONDS:-15}")
+if [[ -n "${TELEGRAM_PROXY_URL:-}" ]]; then
+  curl_args+=(--proxy "$TELEGRAM_PROXY_URL")
+fi
+
+curl "${curl_args[@]}" \
+  -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+  -d "chat_id=${TELEGRAM_CHAT_ID}" \
+  --data-urlencode "text=${text}" \
+  -d "disable_web_page_preview=true" \
+  >/dev/null

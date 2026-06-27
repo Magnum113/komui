@@ -1,0 +1,11 @@
+[Unit]
+Description=Run KOMUI encrypted local backup daily
+
+[Timer]
+OnCalendar=*-*-* 03:17:00
+RandomizedDelaySec=15m
+Persistent=true
+Unit=komui-backup.service
+
+[Install]
+WantedBy=timers.target

@@ -554,7 +554,7 @@ img,svg{display:block}
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="./data/storefront-products.js"></script>
-<script src="./data/supabase-config.js"></script>
+<script src="./data/api-config.js"></script>
 <script>
 (function(){
 'use strict';
@@ -712,21 +712,26 @@ function renderSelectedPoint(){
   renderTotals();
 }
 
-function supabaseConfig(){
-  const config=window.KOMUI_SUPABASE;
-  if(!config?.url||!config?.anonKey)return null;
+function apiConfig(){
+  const config=window.KOMUI_API||{};
+  const baseUrl=String(config.baseUrl||'/api').replace(/\/$/,'');
   return {
-    url:config.url.replace(/\/$/,''),
-    functionsProxyUrl:String(config.functionsProxyUrl||'').replace(/\/$/,''),
-    anonKey:config.anonKey
+    baseUrl,
+    deliveryPointsUrl:config.deliveryPointsUrl||baseUrl+'/v1/delivery/points',
+    deliveryQuoteUrl:config.deliveryQuoteUrl||baseUrl+'/v1/delivery/quote',
+    promoValidateUrl:config.promoValidateUrl||baseUrl+'/v1/promos/validate',
+    paymentCreateUrl:config.paymentCreateUrl||baseUrl+'/v1/payments'
   };
 }
 
-function supabaseFunctionUrl(config,name){
-  if(config.functionsProxyUrl){
-    return config.functionsProxyUrl+'?name='+encodeURIComponent(name);
-  }
-  return config.url+'/functions/v1/'+encodeURIComponent(name);
+function apiEndpoint(config,name){
+  const endpoints={
+    'cdek-delivery-points':config.deliveryPointsUrl,
+    'cdek-delivery-quote':config.deliveryQuoteUrl,
+    'promo-validate':config.promoValidateUrl,
+    'tbank-create-payment':config.paymentCreateUrl
+  };
+  return endpoints[name];
 }
 
 function deliveryConfig(){
@@ -870,7 +875,7 @@ async function loadDeliveryPoints(){
     return;
   }
 
-  const config=supabaseConfig();
+  const config=apiConfig();
   if(!config||previewMode){
     points=[];pointsLoaded=true;renderPointList();renderMarkers();
     showToast('Пункты СДЭК доступны только на опубликованном сайте');
@@ -880,9 +885,9 @@ async function loadDeliveryPoints(){
   pointsLoading=true;
   renderPointList($('#pointSearch').value);
   try{
-    const response=await fetch(supabaseFunctionUrl(config,'cdek-delivery-points'),{
+    const response=await fetch(apiEndpoint(config,'cdek-delivery-points'),{
       method:'POST',
-      headers:{'Content-Type':'application/json',apikey:config.anonKey,Authorization:'Bearer '+config.anonKey},
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({city,query:$('#pointSearch').value})
     });
     const result=await response.json().catch(()=>({}));
@@ -1013,14 +1018,14 @@ function validate(){
 
 async function quotePendingPoint(){
   if(!pendingPoint)return null;
-  const config=supabaseConfig();
+  const config=apiConfig();
   if(!config||previewMode){
     throw new Error('Расчёт СДЭК доступен только на опубликованном сайте');
   }
 
-  const response=await fetch(supabaseFunctionUrl(config,'cdek-delivery-quote'),{
+  const response=await fetch(apiEndpoint(config,'cdek-delivery-quote'),{
     method:'POST',
-    headers:{'Content-Type':'application/json',apikey:config.anonKey,Authorization:'Bearer '+config.anonKey},
+    headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
       delivery:{code:pendingPoint.code,cityCode:pendingPoint.cityCode},
       items:items.map(item=>({id:String(item.id),size:String(item.size),qty:Number(item.qty)}))
@@ -1086,7 +1091,7 @@ async function submitCheckout(){
     showToast('Оплата доступна только на опубликованном сайте');
     return;
   }
-  const config=supabaseConfig();
+  const config=apiConfig();
   if(!config){
     showToast('Платёжный сервис не настроен');
     return;
@@ -1107,12 +1112,10 @@ async function submitCheckout(){
   const identity=paymentIdentity();
   setPaymentLoading(true);
   try{
-    const response=await fetch(supabaseFunctionUrl(config,'tbank-create-payment'),{
+    const response=await fetch(apiEndpoint(config,'tbank-create-payment'),{
       method:'POST',
       headers:{
-        'Content-Type':'application/json',
-        apikey:config.anonKey,
-        Authorization:'Bearer '+config.anonKey
+        'Content-Type':'application/json'
       },
       body:JSON.stringify({
         clientRequestId:identity.clientRequestId,
@@ -1204,15 +1207,15 @@ function resetPromo(messageText=''){
 
 async function validateAppliedPromo({silent=false}={}){
   if(!appliedPromo?.code)return null;
-  const config=supabaseConfig();
+  const config=apiConfig();
   if(!config||previewMode){
     if(!silent)resetPromo('Промокоды доступны только на опубликованном сайте');
     return null;
   }
 
-  const response=await fetch(supabaseFunctionUrl(config,'promo-validate'),{
+  const response=await fetch(apiEndpoint(config,'promo-validate'),{
     method:'POST',
-    headers:{'Content-Type':'application/json',apikey:config.anonKey,Authorization:'Bearer '+config.anonKey},
+    headers:{'Content-Type':'application/json'},
     body:JSON.stringify(promoPayload(appliedPromo.code))
   });
   const result=await response.json().catch(()=>({}));
@@ -1239,7 +1242,7 @@ async function applyPromo(){
     resetPromo('Введите промокод');
     return;
   }
-  const config=supabaseConfig();
+  const config=apiConfig();
   if(!config||previewMode){
     resetPromo('Промокоды доступны только на опубликованном сайте');
     return;

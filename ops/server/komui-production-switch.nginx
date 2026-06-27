@@ -1,0 +1,27 @@
+server {
+    listen 80;
+    listen [::]:80;
+    server_name komui.ru www.komui.ru;
+
+    location ^~ /.well-known/acme-challenge/ {
+        root /var/lib/komui/acme;
+        default_type text/plain;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name komui.ru www.komui.ru;
+
+    ssl_certificate /etc/letsencrypt/live/komui.ru/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/komui.ru/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    include /etc/nginx/snippets/komui-production-runtime.conf;
+}

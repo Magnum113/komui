@@ -1076,7 +1076,7 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
 <div class="toast" id="toast"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg></span><span class="toast-msg" id="toastMsg">Добавлено в корзину</span><button class="toast-action" id="toastCart" type="button">Открыть</button></div>
 
 <script src="./data/storefront-products.js"></script>
-<script src="./data/supabase-config.js"></script>
+<script src="./data/api-config.js"></script>
 <script id="app">
 (function(){
 'use strict';
@@ -1211,18 +1211,20 @@ function setProducts(products,stats={}){
 }
 async function loadStorefrontProducts(){
   setProducts(window.KOMUI_PRODUCTS||[],window.KOMUI_STORE_STATS||{});
-  const cfg=window.KOMUI_SUPABASE;
-  if(!cfg?.url||!cfg?.anonKey)return;
+  const cfg=window.KOMUI_API||{};
+  const baseUrl=String(cfg.baseUrl||'/api').replace(/\/$/,'');
+  const productsUrl=cfg.productsUrl||baseUrl+'/v1/products?limit=200';
+  if(!productsUrl)return;
   const ctrl=new AbortController();
   const timer=setTimeout(()=>ctrl.abort(),3000);
   try{
-    const url=cfg.url.replace(/\/$/,'')+'/rest/v1/merch_storefront_products?select=*&is_active=eq.true&order=sort_order.asc';
-    const res=await fetch(url,{headers:{apikey:cfg.anonKey,Authorization:'Bearer '+cfg.anonKey},signal:ctrl.signal});
-    if(!res.ok)throw new Error('Supabase '+res.status);
-    const rows=await res.json();
+    const res=await fetch(productsUrl,{signal:ctrl.signal});
+    if(!res.ok)throw new Error('KOMUI API '+res.status);
+    const payload=await res.json();
+    const rows=Array.isArray(payload)?payload:(Array.isArray(payload?.products)?payload.products:[]);
     if(Array.isArray(rows)&&rows.length)setProducts(rows,{cards:rows.length});
   }catch(err){
-    console.warn('KOMUI: Supabase products fallback to local data',err);
+    console.warn('KOMUI: API products fallback to local data',err);
   }finally{
     clearTimeout(timer);
   }

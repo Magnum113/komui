@@ -10,8 +10,8 @@
 - Карточки товаров с галереей изображений.
 - Быстрый просмотр товара.
 - Демо-корзина без реальной оплаты.
-- Подключение к Supabase Storefront API, если конфиг доступен.
-- Локальный fallback-каталог, если Supabase недоступен.
+- Подключение к KOMUI API, если конфиг доступен.
+- Локальный fallback-каталог, если API недоступен.
 
 ## Технологии
 
@@ -22,7 +22,7 @@
 - vanilla JavaScript внутри `index.html`;
 - локальные JSON/JS-файлы с данными;
 - локальные JPG-изображения;
-- Supabase REST API как внешний источник каталога;
+- KOMUI backend API как внешний источник каталога;
 - Google Fonts: `Unbounded`, `Inter`, `Noto Sans JP`.
 
 В проекте нет React, Next.js, npm-скриптов, сборщика и серверной части.
@@ -38,7 +38,7 @@
 │   └── ozon-candidates/
 ├── data/
 │   ├── storefront-products.js
-│   ├── supabase-config.js
+│   ├── api-config.js
 │   ├── storefront-products.json
 │   ├── supabase-storefront-products.json
 │   ├── supabase-storefront-products.compact.json
@@ -60,7 +60,7 @@
 - все стили сайта;
 - вся браузерная логика;
 - подключение данных из `data/storefront-products.js`;
-- подключение Supabase-конфига из `data/supabase-config.js`.
+- подключение API-конфига из `data/api-config.js`.
 
 Ключевые части логики:
 
@@ -92,26 +92,26 @@ window.KOMUI_STORE_STATS = { ... };
 window.KOMUI_PRODUCTS = [ ... ];
 ```
 
-Эти данные используются, если Supabase недоступен или не настроен. Сейчас fallback содержит меньше карточек, чем live-выгрузка Supabase, поэтому при обновлении каталога важно синхронизировать оба источника.
+Эти данные используются, если KOMUI API недоступен или не настроен. При обновлении каталога важно синхронизировать API-источник и локальный fallback.
 
-### `data/supabase-config.js`
+### `data/api-config.js`
 
-Публичная конфигурация Supabase:
+Публичная конфигурация frontend API без секретов:
 
 ```js
-window.KOMUI_SUPABASE = {
-  url: "...",
-  anonKey: "..."
+window.KOMUI_API = {
+  baseUrl: "/api",
+  productsUrl: "/api/v1/products?limit=200"
 };
 ```
 
 Витрина делает GET-запрос к:
 
 ```text
-/rest/v1/merch_storefront_products?select=*&order=sort_order.asc
+/api/v1/products?limit=200
 ```
 
-Важно: в этом файле должен быть только публичный publishable/anon key. Секретные service role ключи сюда добавлять нельзя.
+Важно: в этом файле не должно быть Supabase service role, T-Bank, CDEK, Ozon или других секретов.
 
 ### Остальные файлы `data/`
 
@@ -156,19 +156,19 @@ http://localhost:8080
 
 1. Браузер открывает `index.html`.
 2. Загружается `data/storefront-products.js`.
-3. Загружается `data/supabase-config.js`.
+3. Загружается `data/api-config.js`.
 4. Скрипт витрины вызывает `loadStorefrontProducts()`.
 5. Сначала отображается локальный fallback из `window.KOMUI_PRODUCTS`.
-6. Если Supabase настроен и отвечает, товары заменяются live-данными из `merch_storefront_products`.
+6. Если KOMUI API настроен и отвечает, товары заменяются live-данными из backend.
 7. После загрузки данных строятся фильтры, карточки каталога, бегущая строка коллекций, hero-статистика и корзина.
 
-Если Supabase недоступен, сайт остаётся рабочим на локальном fallback-каталоге.
+Если API недоступен, сайт остаётся рабочим на локальном fallback-каталоге.
 
 ## Как обновлять товары
 
 Есть два источника, которые желательно держать синхронными:
 
-1. Supabase `merch_storefront_products` - основной live-источник.
+1. KOMUI API / PostgreSQL `merch_storefront_products` - основной live-источник.
 2. `data/storefront-products.js` - локальный fallback.
 
 При добавлении товара проверь:
@@ -198,10 +198,10 @@ http://localhost:8080
 
 - Корзина живёт только в памяти страницы. После перезагрузки она очищается.
 - Email-форма в футере не отправляет данные на backend.
-- Supabase anon key публичен, поэтому доступная таблица/view должна быть read-only и не должна отдавать приватные поля.
-- Тексты из Supabase вставляются в DOM через HTML-шаблоны. Если источник данных станет пользовательским, нужно добавить escaping/sanitization.
+- Frontend не должен содержать приватные ключи backend-интеграций и базы данных.
+- Тексты из API вставляются в DOM через HTML-шаблоны. Если источник данных станет пользовательским, нужно добавить escaping/sanitization.
 - `.env.local`, `.DS_Store`, `.git/`, `.claude/` и другие локальные файлы не должны попадать в репозиторий.
-- Файл `data/supabase-config.js` допустим только для публичных ключей. Секреты туда не добавлять.
+- Файл `data/api-config.js` допустим только для публичных URL/путей. Секреты туда не добавлять.
 
 ## Текущие замечания к данным
 
