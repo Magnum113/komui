@@ -889,6 +889,14 @@ Alert script:
 /usr/local/sbin/komui-alert
 ```
 
+Telegram messages are sent with HTML formatting. The common alert template
+contains:
+
+- clear bold title;
+- server hostname;
+- UTC timestamp;
+- escaped details block.
+
 Telegram config:
 
 ```text
@@ -1050,6 +1058,18 @@ Every successful `komui-release-activate` call writes to the registry and sends
 a Telegram release notification via the existing `/usr/local/sbin/komui-alert`.
 Failed activation attempts are also recorded and notified; by default the script
 tries to restore the previous symlink.
+
+Release Telegram notifications are formatted in Russian and include:
+
+- component;
+- event type;
+- status;
+- release and previous release;
+- git commit, when known;
+- summary;
+- checks;
+- active backend/frontend releases;
+- `komui-backend`, `nginx` and `postgresql` service states.
 
 Common commands:
 

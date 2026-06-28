@@ -97,30 +97,78 @@ def split_checks(values: list[str]) -> list[str]:
     return checks
 
 
-def compact_event_for_notify(event: dict[str, Any]) -> str:
-    lines = [
-        f"event={event['event']}",
-        f"component={event['component']}",
-        f"status={event['status']}",
-    ]
-    if event.get("release"):
-        lines.append(f"release={event['release']}")
-    if event.get("previousRelease"):
-        lines.append(f"previous={event['previousRelease']}")
-    if event.get("gitCommit"):
-        lines.append(f"git={event['gitCommit']}")
-    if event.get("summary"):
-        lines.append(f"summary={event['summary']}")
-    if event.get("checks"):
-        lines.append("checks=" + ", ".join(event["checks"]))
+COMPONENT_LABELS = {
+    "backend": "Backend API",
+    "frontend": "Frontend/static",
+    "ops": "Ops/infra",
+    "database": "Database",
+    "config": "Config",
+    "other": "Other",
+}
 
+EVENT_LABELS = {
+    "deploy": "деплой",
+    "rollback": "откат",
+    "config": "изменение конфигурации",
+    "bootstrap": "инициализация журнала",
+    "failure": "ошибка",
+    "note": "заметка",
+}
+
+STATUS_LABELS = {
+    "success": "✅ успешно",
+    "failure": "❌ ошибка",
+    "in_progress": "⏳ выполняется",
+    "canceled": "🚫 отменено",
+}
+
+
+def value_or_dash(value: Any) -> str:
+    text = str(value or "").strip()
+    return text if text else "—"
+
+
+def bullet_lines(values: list[str], prefix: str = "  • ") -> list[str]:
+    if not values:
+        return [f"{prefix}—"]
+    return [f"{prefix}{value}" for value in values]
+
+
+def compact_event_for_notify(event: dict[str, Any]) -> str:
     active = event.get("active") or {}
     backend = active.get("backend") or {}
     frontend = active.get("frontend") or {}
-    if backend.get("release"):
-        lines.append(f"activeBackend={backend['release']}")
-    if frontend.get("release"):
-        lines.append(f"activeFrontend={frontend['release']}")
+    services = event.get("services") or {}
+
+    lines = [
+        f"Компонент: {COMPONENT_LABELS.get(event['component'], event['component'])}",
+        f"Событие: {EVENT_LABELS.get(event['event'], event['event'])}",
+        f"Статус: {STATUS_LABELS.get(event['status'], event['status'])}",
+        f"Релиз: {value_or_dash(event.get('release'))}",
+        f"Предыдущий релиз: {value_or_dash(event.get('previousRelease'))}",
+        f"Git commit: {value_or_dash(event.get('gitCommit'))}",
+        f"Описание: {value_or_dash(event.get('summary'))}",
+        "",
+        "Проверки:",
+    ]
+    lines.extend(bullet_lines(event.get("checks") or []))
+    lines.extend(
+        [
+            "",
+            "Активно сейчас:",
+            f"  • backend: {value_or_dash(backend.get('release'))}",
+            f"  • frontend: {value_or_dash(frontend.get('release'))}",
+            "",
+            "Сервисы:",
+        ]
+    )
+    if services:
+        for name in sorted(services):
+            state = services[name]
+            icon = "✅" if state == "active" else "⚠️"
+            lines.append(f"  • {icon} {name}: {state}")
+    else:
+        lines.append("  • —")
     return "\n".join(lines)
 
 
@@ -128,7 +176,17 @@ def send_notification(event: dict[str, Any]) -> None:
     if not ALERT_BIN.exists():
         print(f"notification=skipped_missing_alert_bin path={ALERT_BIN}", file=sys.stderr)
         return
-    subject = f"KOMUI release {event['event']} {event['component']}: {event['status']}"
+    status_icon = {
+        "success": "✅",
+        "failure": "❌",
+        "in_progress": "⏳",
+        "canceled": "🚫",
+    }.get(event["status"], "ℹ️")
+    subject = (
+        f"{status_icon} KOMUI: "
+        f"{COMPONENT_LABELS.get(event['component'], event['component'])} — "
+        f"{EVENT_LABELS.get(event['event'], event['event'])}"
+    )
     subprocess.run(
         [str(ALERT_BIN), subject, compact_event_for_notify(event)],
         check=False,

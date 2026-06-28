@@ -19,11 +19,28 @@ fi
 subject="${1:-KOMUI alert}"
 body="${2:-}"
 host="$(hostname -f 2>/dev/null || hostname)"
-text="[$host] $subject"
-if [[ -n "$body" ]]; then
-  text="$text
-$body"
-fi
+timestamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+text="$(
+  python3 - "$subject" "$body" "$host" "$timestamp" <<'PY'
+import html
+import sys
+
+subject, body, host, timestamp = sys.argv[1:5]
+
+lines = [
+    f"🔔 <b>{html.escape(subject)}</b>",
+    "",
+    f"<b>Сервер:</b> <code>{html.escape(host)}</code>",
+    f"<b>Время:</b> <code>{html.escape(timestamp)}</code>",
+]
+
+if body.strip():
+    lines.extend(["", "<b>Детали:</b>", f"<pre>{html.escape(body.strip())}</pre>"])
+
+print("\n".join(lines))
+PY
+)"
 
 curl_args=(-fsS --max-time "${TELEGRAM_TIMEOUT_SECONDS:-15}")
 if [[ -n "${TELEGRAM_PROXY_URL:-}" ]]; then
@@ -34,5 +51,6 @@ curl "${curl_args[@]}" \
   -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
   -d "chat_id=${TELEGRAM_CHAT_ID}" \
   --data-urlencode "text=${text}" \
+  -d "parse_mode=HTML" \
   -d "disable_web_page_preview=true" \
   >/dev/null
