@@ -154,12 +154,12 @@ record_event() {
 }
 
 activate_backend() {
-  ln -sfn "$release_path" "$current_link"
-  systemctl restart komui-backend
+  ln -sfnT "$release_path" "$current_link" || return 1
+  systemctl restart komui-backend || return 1
 
   for _ in {1..30}; do
     if systemctl is-active --quiet komui-backend &&
-      curl -fsS --max-time 3 http://127.0.0.1:3000/health/ready >/dev/null; then
+      curl -fsS --max-time 3 http://127.0.0.1:3000/health/ready >/dev/null 2>&1; then
       checks+=(backend_active backend_ready)
       return 0
     fi
@@ -169,14 +169,14 @@ activate_backend() {
 }
 
 activate_frontend() {
-  ln -sfn "$release_path" "$current_link"
-  nginx -t
-  systemctl reload nginx
+  ln -sfnT "$release_path" "$current_link" || return 1
+  nginx -t || return 1
+  systemctl reload nginx || return 1
 
   if [[ -f /etc/komui/staging-access.env ]]; then
     # shellcheck disable=SC1091
     . /etc/komui/staging-access.env
-    curl -fsS --max-time 8 -u "$STAGING_USER:$STAGING_PASSWORD" https://stage.komui.ru/ >/dev/null
+    curl -fsS --max-time 8 -u "$STAGING_USER:$STAGING_PASSWORD" https://stage.komui.ru/ >/dev/null 2>&1 || return 1
     checks+=(nginx_config_ok nginx_reloaded stage_root_https)
   else
     checks+=(nginx_config_ok nginx_reloaded)
@@ -185,14 +185,14 @@ activate_frontend() {
 
 revert_backend() {
   if [[ -n "$previous_path" && -d "$previous_path" ]]; then
-    ln -sfn "$previous_path" "$current_link"
+    ln -sfnT "$previous_path" "$current_link"
     systemctl restart komui-backend || true
   fi
 }
 
 revert_frontend() {
   if [[ -n "$previous_path" && -d "$previous_path" ]]; then
-    ln -sfn "$previous_path" "$current_link"
+    ln -sfnT "$previous_path" "$current_link"
     nginx -t >/dev/null 2>&1 && systemctl reload nginx || true
   fi
 }
