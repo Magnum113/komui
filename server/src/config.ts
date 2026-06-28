@@ -40,6 +40,9 @@ const envSchema = z.object({
   AUDIT_LOG_PATH: z.string().min(1).default("/var/lib/komui/admin-audit.log"),
   SITE_URL: z.string().url().default("https://komui.ru"),
   PUBLIC_API_BASE_URL: z.string().url().optional(),
+  yandexMapsApiKey: z.string().min(1).optional(),
+  YANDEX_MAPS_API_KEY: z.string().min(1).optional(),
+  NEXT_PUBLIC_YANDEX_MAPS_API_KEY: z.string().min(1).optional(),
   LEGACY_FUNCTION_API_KEY_PREFIX: z.string().min(1).default("sb_publishable_"),
   TBANK_MODE: z.enum(["demo", "production"]).default("demo"),
   TBANK_DEMO_TERMINAL_KEY: z.string().min(1).optional(),
@@ -114,6 +117,7 @@ export function publicConfig(config: AppConfig) {
     trafficSwitchStateDirConfigured: Boolean(config.TRAFFIC_SWITCH_STATE_DIR),
     siteUrl: config.SITE_URL,
     publicApiBaseUrlConfigured: Boolean(config.PUBLIC_API_BASE_URL),
+    yandexMapsConfigured: Boolean(yandexMapsApiKey(config)),
     tbankMode: config.TBANK_MODE,
     tbankConfigured: Boolean(
       config.TBANK_MODE === "production"
@@ -129,4 +133,13 @@ export function publicConfig(config: AppConfig) {
     cdekCreateShipments: config.CDEK_CREATE_SHIPMENTS,
     ozonImportEnvFileConfigured: Boolean(config.OZON_IMPORT_ENV_FILE),
   };
+}
+
+export function yandexMapsApiKey(config: AppConfig) {
+  return (
+    config.yandexMapsApiKey ||
+    config.YANDEX_MAPS_API_KEY ||
+    config.NEXT_PUBLIC_YANDEX_MAPS_API_KEY ||
+    ""
+  );
 }

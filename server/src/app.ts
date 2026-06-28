@@ -5,7 +5,7 @@ import Fastify, {
 } from "fastify";
 import { randomUUID } from "node:crypto";
 import type { AppConfig } from "./config";
-import { publicConfig } from "./config";
+import { publicConfig, yandexMapsApiKey } from "./config";
 import { createDb, type Db } from "./db";
 import { auditAdminEvent } from "./audit";
 import { CatalogRepository, normalizeLimit } from "./catalog";
@@ -48,6 +48,12 @@ function jsonError(
       ...(details && Object.keys(details).length ? { details } : {}),
     },
   });
+}
+
+function deliveryConfigScript(config: AppConfig) {
+  return `window.KOMUI_DELIVERY = Object.assign({}, window.KOMUI_DELIVERY, { yandexMapsApiKey: ${JSON.stringify(
+    yandexMapsApiKey(config),
+  )} });`;
 }
 
 async function requireAdmin(
@@ -191,6 +197,17 @@ export function buildApp({ config, db = createDb(config) }: AppOptions) {
   });
 
   app.get("/v1/catalog/stats", async () => catalog.stats());
+
+  app.get("/delivery-config", async (_request, reply) => {
+    const configured = Boolean(yandexMapsApiKey(config));
+    return reply
+      .header("Content-Type", "application/javascript; charset=utf-8")
+      .header(
+        "Cache-Control",
+        configured ? "public, max-age=300, s-maxage=300" : "no-store",
+      )
+      .send(deliveryConfigScript(config));
+  });
 
   app.post("/v1/delivery/points", async (request, reply) =>
     handleCdekDeliveryPoints(request, reply, stage5Context),

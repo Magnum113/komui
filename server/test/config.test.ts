@@ -6,6 +6,7 @@ test("loadConfig parses safe defaults and hides secrets in publicConfig", () => 
   const config = loadConfig({
     DATABASE_URL: "postgresql://komui_app:secret@127.0.0.1:5432/komui_staging",
     ADMIN_API_TOKEN: "x".repeat(32),
+    yandexMapsApiKey: "public-map-key",
   });
 
   assert.equal(config.HOST, "127.0.0.1");
@@ -16,6 +17,7 @@ test("loadConfig parses safe defaults and hides secrets in publicConfig", () => 
   const exposed = publicConfig(config);
   assert.equal("DATABASE_URL" in exposed, false);
   assert.equal(exposed.adminEnabled, true);
+  assert.equal(exposed.yandexMapsConfigured, true);
 });
 
 test("loadConfig rejects non-postgres DATABASE_URL", () => {

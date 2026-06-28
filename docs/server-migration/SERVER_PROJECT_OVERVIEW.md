@@ -34,6 +34,7 @@ NODE_ENV=staging
 RUNTIME_MODE=staging
 SITE_URL=https://stage.komui.ru
 PUBLIC_API_BASE_URL=https://stage.komui.ru/api
+YANDEX_MAPS_API_KEY=SET
 
 TBANK_MODE=demo
 TBANK_MOCK_PAYMENTS=false
@@ -124,7 +125,7 @@ komui-traffic-switch.path  active
 Активный backend release на момент проверки:
 
 ```text
-/opt/komui/releases/20260627203635-runtime-switch-async
+/opt/komui/releases/20260628-yandex-maps-config
 ```
 
 Backend запускается из:
@@ -425,9 +426,28 @@ returned to the browser.
 ### Delivery / CDEK
 
 ```text
+GET  /delivery-config
 POST /v1/delivery/points
 POST /v1/delivery/quote
 ```
+
+`/delivery-config` returns the browser JavaScript config used by checkout:
+
+```js
+window.KOMUI_DELIVERY = Object.assign({}, window.KOMUI_DELIVERY, {
+  yandexMapsApiKey: "<public browser key>"
+});
+```
+
+Through staging Nginx this endpoint is available as:
+
+```text
+https://stage.komui.ru/api/delivery-config
+```
+
+The value comes from `/etc/komui/backend.env` as `YANDEX_MAPS_API_KEY`.
+The static fallback file `data/delivery-config.js` intentionally contains an
+empty key and must not be used as the primary server runtime config.
 
 Current flags:
 
@@ -720,6 +740,21 @@ window.KOMUI_API = {
   baseUrl: "/api"
 }
 ```
+
+Delivery/map runtime config is loaded by checkout from:
+
+```text
+/api/delivery-config
+```
+
+and falls back to:
+
+```text
+data/delivery-config.js
+```
+
+On the server the primary source is the backend endpoint, not the static
+fallback file.
 
 The older `data/supabase-config.js` was removed from the new frontend runtime.
 
