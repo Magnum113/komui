@@ -1,0 +1,364 @@
+#!/usr/bin/env python3
+"""
+KOMUI deployment registry.
+
+Stores append-only JSONL deployment events and sends release notifications
+through the existing /usr/local/sbin/komui-alert Telegram integration.
+"""
+
+from __future__ import annotations
+
+import argparse
+import fcntl
+import json
+import os
+import socket
+import subprocess
+import sys
+import uuid
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+
+DEFAULT_REGISTRY = Path("/var/lib/komui/deployments.jsonl")
+DEFAULT_CURRENT = Path("/var/lib/komui/deployment-current.json")
+BACKEND_CURRENT = Path("/opt/komui/current")
+FRONTEND_CURRENT = Path("/var/lib/komui/staging-root")
+BACKEND_RELEASES = Path("/opt/komui/releases")
+FRONTEND_RELEASES = Path("/opt/komui/frontend-releases")
+ALERT_BIN = Path("/usr/local/sbin/komui-alert")
+
+
+def utc_now() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def run_text(args: list[str]) -> str:
+    try:
+        return subprocess.check_output(args, stderr=subprocess.DEVNULL, text=True).strip()
+    except Exception:
+        return ""
+
+
+def active_path(path: Path) -> str:
+    return run_text(["readlink", "-f", str(path)])
+
+
+def release_name(path: str) -> str:
+    return Path(path).name if path else ""
+
+
+def systemd_state(unit: str) -> str:
+    state = run_text(["systemctl", "is-active", unit])
+    return state or "unknown"
+
+
+def service_states() -> dict[str, str]:
+    return {
+        "komui-backend": systemd_state("komui-backend"),
+        "nginx": systemd_state("nginx"),
+        "postgresql": systemd_state("postgresql"),
+    }
+
+
+def active_snapshot() -> dict[str, Any]:
+    backend_path = active_path(BACKEND_CURRENT)
+    frontend_path = active_path(FRONTEND_CURRENT)
+    return {
+        "backend": {
+            "release": release_name(backend_path),
+            "path": backend_path,
+        },
+        "frontend": {
+            "release": release_name(frontend_path),
+            "path": frontend_path,
+        },
+    }
+
+
+def release_path_for(component: str, release: str) -> str:
+    if not release:
+        return ""
+    if component == "backend":
+        return str(BACKEND_RELEASES / release)
+    if component == "frontend":
+        return str(FRONTEND_RELEASES / release)
+    return ""
+
+
+def split_checks(values: list[str]) -> list[str]:
+    checks: list[str] = []
+    for value in values:
+        for item in value.split(","):
+            item = item.strip()
+            if item:
+                checks.append(item)
+    return checks
+
+
+def compact_event_for_notify(event: dict[str, Any]) -> str:
+    lines = [
+        f"event={event['event']}",
+        f"component={event['component']}",
+        f"status={event['status']}",
+    ]
+    if event.get("release"):
+        lines.append(f"release={event['release']}")
+    if event.get("previousRelease"):
+        lines.append(f"previous={event['previousRelease']}")
+    if event.get("gitCommit"):
+        lines.append(f"git={event['gitCommit']}")
+    if event.get("summary"):
+        lines.append(f"summary={event['summary']}")
+    if event.get("checks"):
+        lines.append("checks=" + ", ".join(event["checks"]))
+
+    active = event.get("active") or {}
+    backend = active.get("backend") or {}
+    frontend = active.get("frontend") or {}
+    if backend.get("release"):
+        lines.append(f"activeBackend={backend['release']}")
+    if frontend.get("release"):
+        lines.append(f"activeFrontend={frontend['release']}")
+    return "\n".join(lines)
+
+
+def send_notification(event: dict[str, Any]) -> None:
+    if not ALERT_BIN.exists():
+        print(f"notification=skipped_missing_alert_bin path={ALERT_BIN}", file=sys.stderr)
+        return
+    subject = f"KOMUI release {event['event']} {event['component']}: {event['status']}"
+    subprocess.run(
+        [str(ALERT_BIN), subject, compact_event_for_notify(event)],
+        check=False,
+    )
+
+
+def append_event(registry: Path, current_file: Path, event: dict[str, Any]) -> None:
+    registry.parent.mkdir(parents=True, exist_ok=True)
+    current_file.parent.mkdir(parents=True, exist_ok=True)
+    lock_path = registry.with_suffix(registry.suffix + ".lock")
+    with lock_path.open("a+") as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        with registry.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(event, ensure_ascii=False, separators=(",", ":")) + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+
+        snapshot = {
+            "updatedAt": event["timestamp"],
+            "active": event["active"],
+            "lastEvent": event,
+        }
+        tmp = current_file.with_suffix(current_file.suffix + ".tmp")
+        tmp.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        os.replace(tmp, current_file)
+        try:
+            os.chmod(registry, 0o640)
+            os.chmod(current_file, 0o640)
+        except PermissionError:
+            pass
+
+
+def read_events(registry: Path) -> list[dict[str, Any]]:
+    if not registry.exists():
+        return []
+    events: list[dict[str, Any]] = []
+    for raw in registry.read_text(encoding="utf-8").splitlines():
+        raw = raw.strip()
+        if not raw:
+            continue
+        try:
+            events.append(json.loads(raw))
+        except json.JSONDecodeError:
+            events.append({"timestamp": "", "status": "invalid_json", "raw": raw})
+    return events
+
+
+def print_table(events: list[dict[str, Any]]) -> None:
+    if not events:
+        print("No deployment events found.")
+        return
+    print("timestamp              component event     status   release                              git")
+    print("-" * 100)
+    for event in events:
+        timestamp = (event.get("timestamp") or "")[:20].ljust(20)
+        component = (event.get("component") or "")[:9].ljust(9)
+        kind = (event.get("event") or "")[:8].ljust(8)
+        status = (event.get("status") or "")[:8].ljust(8)
+        release = (event.get("release") or "")[:36].ljust(36)
+        git = (event.get("gitCommit") or "")[:12]
+        print(f"{timestamp} {component} {kind} {status} {release} {git}")
+
+
+def command_record(args: argparse.Namespace) -> int:
+    release_path = args.release_path or release_path_for(args.component, args.release or "")
+    event = {
+        "id": str(uuid.uuid4()),
+        "timestamp": utc_now(),
+        "host": socket.getfqdn() or socket.gethostname(),
+        "actor": os.environ.get("SUDO_USER") or os.environ.get("USER") or "",
+        "event": args.event,
+        "component": args.component,
+        "status": args.status,
+        "release": args.release or "",
+        "releasePath": release_path,
+        "previousRelease": args.previous_release or "",
+        "gitCommit": args.git_commit or "",
+        "summary": args.summary or "",
+        "checks": split_checks(args.check or []),
+        "active": active_snapshot(),
+        "services": service_states(),
+    }
+    if args.metadata:
+        metadata: dict[str, str] = {}
+        for item in args.metadata:
+            if "=" not in item:
+                raise SystemExit(f"Invalid --metadata value, expected key=value: {item}")
+            key, value = item.split("=", 1)
+            metadata[key] = value
+        event["metadata"] = metadata
+
+    append_event(args.registry, args.current_file, event)
+    if not args.no_notify:
+        send_notification(event)
+    print(json.dumps(event, ensure_ascii=False, indent=2))
+    return 0
+
+
+def command_history(args: argparse.Namespace) -> int:
+    events = read_events(args.registry)
+    if args.component:
+        events = [event for event in events if event.get("component") == args.component]
+    events = events[-args.limit :]
+    if args.format == "json":
+        print(json.dumps(events, ensure_ascii=False, indent=2))
+    else:
+        print_table(events)
+    return 0
+
+
+def command_current(args: argparse.Namespace) -> int:
+    if args.current_file.exists():
+        print(args.current_file.read_text(encoding="utf-8").rstrip())
+    else:
+        print(
+            json.dumps(
+                {
+                    "updatedAt": utc_now(),
+                    "active": active_snapshot(),
+                    "lastEvent": None,
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
+    return 0
+
+
+def list_release_dir(path: Path, active: str, component: str) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    rows: list[dict[str, Any]] = []
+    for child in sorted(path.iterdir(), key=lambda item: item.stat().st_mtime, reverse=True):
+        if not child.is_dir():
+            continue
+        rows.append(
+            {
+                "component": component,
+                "active": str(child.resolve()) == active,
+                "release": child.name,
+                "path": str(child.resolve()),
+                "mtime": datetime.fromtimestamp(child.stat().st_mtime, timezone.utc)
+                .replace(microsecond=0)
+                .isoformat()
+                .replace("+00:00", "Z"),
+            }
+        )
+    return rows
+
+
+def command_list_releases(args: argparse.Namespace) -> int:
+    rows: list[dict[str, Any]] = []
+    if args.component in ("backend", "all"):
+        rows.extend(list_release_dir(BACKEND_RELEASES, active_path(BACKEND_CURRENT), "backend"))
+    if args.component in ("frontend", "all"):
+        rows.extend(list_release_dir(FRONTEND_RELEASES, active_path(FRONTEND_CURRENT), "frontend"))
+
+    if args.format == "json":
+        print(json.dumps(rows, ensure_ascii=False, indent=2))
+    else:
+        print("component active release                              mtime")
+        print("-" * 78)
+        for row in rows:
+            marker = "*" if row["active"] else " "
+            print(f"{row['component']:<9} {marker:<6} {row['release']:<36} {row['mtime']}")
+    return 0
+
+
+def command_rollback_command(args: argparse.Namespace) -> int:
+    release_dir = BACKEND_RELEASES if args.component == "backend" else FRONTEND_RELEASES
+    release_path = release_dir / args.release
+    if not release_path.is_dir():
+        raise SystemExit(f"Release does not exist: {release_path}")
+    print(
+        "sudo /usr/local/sbin/komui-release-activate "
+        f"{args.component} {args.release} "
+        "--event rollback "
+        f"--summary {json.dumps(args.summary or 'manual rollback')}"
+    )
+    return 0
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="KOMUI deployment registry")
+    parser.add_argument("--registry", type=Path, default=DEFAULT_REGISTRY)
+    parser.add_argument("--current-file", type=Path, default=DEFAULT_CURRENT)
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    record = sub.add_parser("record", help="append a deployment event")
+    record.add_argument("--component", required=True, choices=["backend", "frontend", "ops", "database", "config", "other"])
+    record.add_argument("--event", default="deploy", choices=["deploy", "rollback", "config", "bootstrap", "failure", "note"])
+    record.add_argument("--status", default="success", choices=["success", "failure", "in_progress", "canceled"])
+    record.add_argument("--release")
+    record.add_argument("--release-path")
+    record.add_argument("--previous-release")
+    record.add_argument("--git-commit")
+    record.add_argument("--summary")
+    record.add_argument("--check", action="append", default=[])
+    record.add_argument("--metadata", action="append", default=[])
+    record.add_argument("--no-notify", action="store_true")
+    record.set_defaults(func=command_record)
+
+    history = sub.add_parser("history", help="show deployment events")
+    history.add_argument("--limit", type=int, default=20)
+    history.add_argument("--component", choices=["backend", "frontend", "ops", "database", "config", "other"])
+    history.add_argument("--format", choices=["table", "json"], default="table")
+    history.set_defaults(func=command_history)
+
+    current = sub.add_parser("current", help="show active deployment snapshot")
+    current.set_defaults(func=command_current)
+
+    releases = sub.add_parser("list-releases", help="list available backend/frontend releases")
+    releases.add_argument("--component", choices=["backend", "frontend", "all"], default="all")
+    releases.add_argument("--format", choices=["table", "json"], default="table")
+    releases.set_defaults(func=command_list_releases)
+
+    rollback = sub.add_parser("rollback-command", help="print safe rollback command for a release")
+    rollback.add_argument("--component", required=True, choices=["backend", "frontend"])
+    rollback.add_argument("--release", required=True)
+    rollback.add_argument("--summary")
+    rollback.set_defaults(func=command_rollback_command)
+
+    return parser
+
+
+def main() -> int:
+    parser = build_parser()
+    args = parser.parse_args()
+    return args.func(args)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

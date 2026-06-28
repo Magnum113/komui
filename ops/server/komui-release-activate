@@ -1,0 +1,221 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+usage() {
+  cat <<'USAGE'
+Usage:
+  sudo /usr/local/sbin/komui-release-activate backend <release> [options]
+  sudo /usr/local/sbin/komui-release-activate frontend <release> [options]
+
+Options:
+  --event deploy|rollback|config        Event type recorded in registry. Default: deploy
+  --git-commit <sha>                    Git commit associated with this release
+  --summary <text>                      Human-readable release summary
+  --check <name>                        Extra check name to record; can be repeated
+  --no-notify                           Do not send Telegram notification
+  --no-revert-on-failure                Do not restore previous symlink on failed checks
+
+Examples:
+  sudo /usr/local/sbin/komui-release-activate backend 20260628-yandex-maps-config \
+    --git-commit fb40d57 --summary "Serve Yandex Maps config from backend"
+
+  sudo /usr/local/sbin/komui-release-activate backend 20260627203635-runtime-switch-async \
+    --event rollback --summary "Rollback backend"
+USAGE
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+if [[ "${EUID}" -ne 0 ]]; then
+  echo "Run with sudo." >&2
+  usage >&2
+  exit 1
+fi
+
+if [[ $# -lt 2 ]]; then
+  usage >&2
+  exit 1
+fi
+
+component="$1"
+release="$2"
+shift 2
+
+event="deploy"
+git_commit=""
+summary=""
+notify=1
+revert_on_failure=1
+checks=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --event)
+      event="${2:-}"
+      shift 2
+      ;;
+    --git-commit)
+      git_commit="${2:-}"
+      shift 2
+      ;;
+    --summary)
+      summary="${2:-}"
+      shift 2
+      ;;
+    --check)
+      checks+=("${2:-}")
+      shift 2
+      ;;
+    --no-notify)
+      notify=0
+      shift
+      ;;
+    --no-revert-on-failure)
+      revert_on_failure=0
+      shift
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+  esac
+done
+
+case "$component" in
+  backend)
+    releases_dir="/opt/komui/releases"
+    current_link="/opt/komui/current"
+    ;;
+  frontend)
+    releases_dir="/opt/komui/frontend-releases"
+    current_link="/var/lib/komui/staging-root"
+    ;;
+  *)
+    echo "Invalid component: $component" >&2
+    exit 1
+    ;;
+esac
+
+case "$event" in
+  deploy|rollback|config) ;;
+  *)
+    echo "Invalid event: $event" >&2
+    exit 1
+    ;;
+esac
+
+release_path="${releases_dir}/${release}"
+if [[ ! -d "$release_path" ]]; then
+  echo "Release does not exist: $release_path" >&2
+  exit 1
+fi
+
+registry="/usr/local/sbin/komui-deployment-registry"
+if [[ ! -x "$registry" ]]; then
+  echo "Deployment registry is missing or not executable: $registry" >&2
+  exit 1
+fi
+
+previous_path="$(readlink -f "$current_link" 2>/dev/null || true)"
+previous_release="$(basename "$previous_path" 2>/dev/null || true)"
+summary="${summary:-Activate ${component} release ${release}}"
+
+record_event() {
+  local status="$1"
+  local event_to_record="$2"
+  shift 2
+  local args=(
+    record
+    --component "$component"
+    --event "$event_to_record"
+    --status "$status"
+    --release "$release"
+    --release-path "$release_path"
+    --previous-release "$previous_release"
+    --summary "$summary"
+  )
+  if [[ -n "$git_commit" ]]; then
+    args+=(--git-commit "$git_commit")
+  fi
+  for check in "${checks[@]}"; do
+    args+=(--check "$check")
+  done
+  for check in "$@"; do
+    args+=(--check "$check")
+  done
+  if [[ "$notify" -eq 0 ]]; then
+    args+=(--no-notify)
+  fi
+  "$registry" "${args[@]}" >/dev/null || true
+}
+
+activate_backend() {
+  ln -sfn "$release_path" "$current_link"
+  systemctl restart komui-backend
+
+  for _ in {1..30}; do
+    if systemctl is-active --quiet komui-backend &&
+      curl -fsS --max-time 3 http://127.0.0.1:3000/health/ready >/dev/null; then
+      checks+=(backend_active backend_ready)
+      return 0
+    fi
+    sleep 1
+  done
+  return 1
+}
+
+activate_frontend() {
+  ln -sfn "$release_path" "$current_link"
+  nginx -t
+  systemctl reload nginx
+
+  if [[ -f /etc/komui/staging-access.env ]]; then
+    # shellcheck disable=SC1091
+    . /etc/komui/staging-access.env
+    curl -fsS --max-time 8 -u "$STAGING_USER:$STAGING_PASSWORD" https://stage.komui.ru/ >/dev/null
+    checks+=(nginx_config_ok nginx_reloaded stage_root_https)
+  else
+    checks+=(nginx_config_ok nginx_reloaded)
+  fi
+}
+
+revert_backend() {
+  if [[ -n "$previous_path" && -d "$previous_path" ]]; then
+    ln -sfn "$previous_path" "$current_link"
+    systemctl restart komui-backend || true
+  fi
+}
+
+revert_frontend() {
+  if [[ -n "$previous_path" && -d "$previous_path" ]]; then
+    ln -sfn "$previous_path" "$current_link"
+    nginx -t >/dev/null 2>&1 && systemctl reload nginx || true
+  fi
+}
+
+if [[ "$component" == "backend" ]]; then
+  if ! activate_backend; then
+    if [[ "$revert_on_failure" -eq 1 ]]; then
+      revert_backend
+    fi
+    record_event failure failure activation_failed
+    echo "Backend activation failed. Previous release restored when possible: $previous_release" >&2
+    exit 1
+  fi
+else
+  if ! activate_frontend; then
+    if [[ "$revert_on_failure" -eq 1 ]]; then
+      revert_frontend
+    fi
+    record_event failure failure activation_failed
+    echo "Frontend activation failed. Previous release restored when possible: $previous_release" >&2
+    exit 1
+  fi
+fi
+
+record_event success "$event"
+echo "Activated ${component} release: ${release}"

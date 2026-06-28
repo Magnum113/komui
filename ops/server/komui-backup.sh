@@ -60,6 +60,8 @@ LOG_FILE="$LOG_DIR/komui-backup-${RUN_ID}.log"
     etc/komui \
     opt/komui/releases \
     opt/komui/frontend-releases \
+    var/lib/komui/deployments.jsonl \
+    var/lib/komui/deployment-current.json \
     var/lib/komui/staging-root 2>/dev/null || true
 
   cat > "$TMP_DIR/manifest.json" <<MANIFEST

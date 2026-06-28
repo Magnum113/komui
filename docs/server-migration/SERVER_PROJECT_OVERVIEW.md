@@ -1015,6 +1015,52 @@ Do not commit:
 
 ## 17. Deployment model
 
+### Deployment registry
+
+Deployments and rollbacks are tracked in an append-only JSONL registry:
+
+```text
+/var/lib/komui/deployments.jsonl
+/var/lib/komui/deployment-current.json
+```
+
+Management scripts:
+
+```text
+/usr/local/sbin/komui-deployment-registry
+/usr/local/sbin/komui-release-activate
+```
+
+`komui-deployment-registry` records:
+
+- UTC timestamp;
+- host;
+- actor;
+- component: `backend`, `frontend`, `ops`, `database`, `config`, `other`;
+- event: `deploy`, `rollback`, `config`, `bootstrap`, `failure`, `note`;
+- status;
+- release name and path;
+- previous release;
+- git commit, when known;
+- checks;
+- active backend/frontend symlink snapshot;
+- service states.
+
+Every successful `komui-release-activate` call writes to the registry and sends
+a Telegram release notification via the existing `/usr/local/sbin/komui-alert`.
+Failed activation attempts are also recorded and notified; by default the script
+tries to restore the previous symlink.
+
+Common commands:
+
+```bash
+sudo /usr/local/sbin/komui-deployment-registry history --limit 20
+sudo /usr/local/sbin/komui-deployment-registry current
+sudo /usr/local/sbin/komui-deployment-registry list-releases
+```
+
+The registry is included in encrypted backups.
+
 ### Backend release pattern
 
 Backend is deployed as immutable release:
@@ -1032,15 +1078,17 @@ The active release is selected by:
 After symlink switch:
 
 ```bash
-sudo systemctl restart komui-backend
-curl -fsS http://127.0.0.1:3000/health/ready
+sudo /usr/local/sbin/komui-release-activate backend <release> \
+  --git-commit <sha> \
+  --summary "Backend release summary"
 ```
 
 Rollback:
 
 ```bash
-sudo ln -sfn /opt/komui/releases/<previous-release> /opt/komui/current
-sudo systemctl restart komui-backend
+sudo /usr/local/sbin/komui-release-activate backend <previous-release> \
+  --event rollback \
+  --summary "Rollback backend"
 ```
 
 ### Frontend release pattern
@@ -1060,9 +1108,9 @@ The active static root is:
 Rollback:
 
 ```bash
-sudo ln -sfn /opt/komui/frontend-releases/<previous-release> /var/lib/komui/staging-root
-sudo nginx -t
-sudo systemctl reload nginx
+sudo /usr/local/sbin/komui-release-activate frontend <previous-release> \
+  --event rollback \
+  --summary "Rollback frontend"
 ```
 
 ## 18. Local development and verification
