@@ -166,6 +166,19 @@ production server mode.
 
 Эти файлы не должны попадать в Git.
 
+Important runtime permissions:
+
+```text
+/etc/komui                  root:komui 0710
+/etc/komui/backend.env      root:root  0600
+/etc/komui/ozon-sync.env    root:komui 0640
+```
+
+`backend.env` is loaded by systemd before the process starts, so the `komui`
+runtime user does not need to read it directly. `ozon-sync.env` is read by the
+backend process at request time, so user `komui` needs execute permission on
+`/etc/komui` and read permission on `ozon-sync.env`.
+
 ### Nginx
 
 ```text
@@ -1007,6 +1020,8 @@ Current safety properties:
 - staging sets `noindex`;
 - root-owned env files hold secrets;
 - backend runs as `komui` user;
+- `/etc/komui` allows `komui` directory traversal only, and only
+  `ozon-sync.env` is group-readable because Ozon import loads it at runtime;
 - systemd hardening is enabled;
 - admin routes require server-only token;
 - admin audit events are appended to `/var/lib/komui/admin-audit.log`;
