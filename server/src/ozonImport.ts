@@ -111,9 +111,30 @@ export type OzonPreviewItem = {
   };
   plannedActions: Array<{
     target: "serverPostgres" | "supabase";
-    action: "update_storefront_offer" | "update_merch_product_price" | "skip";
+    action:
+      | "create_storefront_offer"
+      | "update_storefront_offer"
+      | "update_merch_product_price"
+      | "skip";
     reason?: string;
   }>;
+  diff?: {
+    target: "serverPostgres";
+    table: "merch_storefront_products" | "merch_products";
+    operation:
+      | "create_storefront_offer"
+      | "update_storefront_offer"
+      | "update_merch_product_price"
+      | "noop";
+    changed: boolean;
+    changedFields: string[];
+    fields: Array<{
+      field: string;
+      current: unknown;
+      next: unknown;
+      changed: boolean;
+    }>;
+  };
 };
 
 type PreviewBuildResult = {
@@ -430,9 +451,18 @@ function addUniqueNumber(values: number[], value: unknown) {
   return values;
 }
 
-function addUniqueString(values: string[], value: unknown) {
+function addUniqueOfferId(values: string[], value: unknown) {
   const text = toStringId(value);
-  if (text && !values.includes(text)) values.push(text);
+  const normalized = normalizeOfferId(text);
+  if (
+    text &&
+    !values.some((existingValue) => {
+      const existing = normalizeOfferId(existingValue);
+      return existing && normalized && existing === normalized;
+    })
+  ) {
+    values.push(text);
+  }
   return values;
 }
 
@@ -450,6 +480,222 @@ function merchProductKey(product: MerchProductRow) {
     id: product.id,
     sku: product.sku || undefined,
   };
+}
+
+type PreviewOzonFields = Pick<
+  OzonPreviewItem,
+  | "offerId"
+  | "normalizedOfferId"
+  | "productId"
+  | "sku"
+  | "name"
+  | "price"
+  | "oldPrice"
+  | "minPrice"
+  | "visible"
+  | "archived"
+>;
+
+type PreviewDiff = NonNullable<OzonPreviewItem["diff"]>;
+type PreviewDiffField = PreviewDiff["fields"][number];
+
+function jsonValue(value: unknown) {
+  return value === undefined ? null : value;
+}
+
+function sameNumberValue(current: unknown, next: unknown) {
+  const currentNumber = toNumber(current);
+  const nextNumber = toNumber(next);
+  if (currentNumber !== undefined || nextNumber !== undefined) {
+    return currentNumber === nextNumber;
+  }
+  return current === next;
+}
+
+function sameDiffValue(field: string, current: unknown, next: unknown) {
+  const baseField = field.includes(".") ? field.split(".").at(-1) || field : field;
+  if (baseField === "offer_id") {
+    return normalizeOfferId(current) === normalizeOfferId(next);
+  }
+  if (baseField === "product_id" || baseField === "sku") {
+    return toStringId(current) === toStringId(next);
+  }
+  if (
+    baseField === "price" ||
+    baseField === "old_price" ||
+    baseField === "min_price" ||
+    baseField === "price_min" ||
+    baseField === "price_max" ||
+    baseField === "sale_price"
+  ) {
+    return sameNumberValue(current, next);
+  }
+  return current === next;
+}
+
+function diffField(field: string, current: unknown, next: unknown): PreviewDiffField {
+  const changed = !sameDiffValue(field, current, next);
+  return {
+    field,
+    current: jsonValue(current),
+    next: jsonValue(next),
+    changed,
+  };
+}
+
+function sameArray(left: unknown[], right: unknown[]) {
+  if (left.length !== right.length) return false;
+  return left.every((item, index) => item === right[index]);
+}
+
+function diffArrayField(
+  field: string,
+  current: unknown[],
+  next: unknown[],
+): PreviewDiffField {
+  return {
+    field,
+    current,
+    next,
+    changed: !sameArray(current, next),
+  };
+}
+
+function offerPatchFromPreviewItem(
+  item: PreviewOzonFields,
+  syncedAt?: string,
+): Record<string, unknown> {
+  const patch: Record<string, unknown> = {
+    offer_id: item.offerId,
+    product_id: toNumericId(item.productId) ?? item.productId,
+    sku: toNumericId(item.sku) ?? item.sku,
+    name: item.name,
+    price: item.price,
+    old_price: item.oldPrice,
+    min_price: item.minPrice,
+    visible: item.visible,
+    archived: item.archived,
+  };
+
+  if (syncedAt !== undefined) {
+    patch.last_ozon_sync_at = syncedAt;
+  }
+
+  for (const [key, value] of Object.entries(patch)) {
+    if (value === undefined) delete patch[key];
+  }
+
+  return patch;
+}
+
+function findMatchingOfferIndex(
+  currentOffers: Array<Record<string, unknown>>,
+  item: PreviewOzonFields,
+) {
+  return currentOffers.findIndex((offer) => {
+    const offerId = normalizeOfferId(offer.offer_id);
+    if (offerId && item.normalizedOfferId && offerId === item.normalizedOfferId) {
+      return true;
+    }
+    const sku = toStringId(offer.sku);
+    if (sku && item.sku && sku === item.sku) return true;
+    const productId = toStringId(offer.product_id);
+    return Boolean(productId && item.productId && productId === item.productId);
+  });
+}
+
+function changedFields(fields: PreviewDiffField[]) {
+  return fields.filter((field) => field.changed).map((field) => field.field);
+}
+
+function buildStorefrontDiff(
+  row: StorefrontRow,
+  item: PreviewOzonFields,
+): PreviewDiff {
+  const currentProductIds = numberArray(row.ozon_product_ids);
+  const currentSkus = numberArray(row.ozon_skus);
+  const currentOfferIds = stringArray(row.ozon_offer_ids);
+  const nextProductIds = addUniqueNumber([...currentProductIds], item.productId);
+  const nextSkus = addUniqueNumber([...currentSkus], item.sku);
+  const nextOfferIds = addUniqueOfferId([...currentOfferIds], item.offerId);
+  const currentOffers = getOfferArray(row);
+  const offerIndex = findMatchingOfferIndex(currentOffers, item);
+  const offerPatch = offerPatchFromPreviewItem(item);
+  const nextOffers = mergeOffer(currentOffers, item);
+  const priceRange = priceRangeFromOffers(nextOffers, row.price_min, row.price_max);
+  const fields: PreviewDiffField[] = [
+    diffArrayField("ozon_product_ids", currentProductIds, nextProductIds),
+    diffArrayField("ozon_skus", currentSkus, nextSkus),
+    diffArrayField("ozon_offer_ids", currentOfferIds, nextOfferIds),
+    diffField("price_min", row.price_min, priceRange.min),
+    diffField("price_max", row.price_max, priceRange.max),
+  ];
+
+  if (offerIndex >= 0) {
+    const currentOffer = currentOffers[offerIndex];
+    for (const [field, nextValue] of Object.entries(offerPatch)) {
+      fields.push(diffField(`offers.${field}`, currentOffer[field], nextValue));
+    }
+  } else {
+    for (const [field, nextValue] of Object.entries(offerPatch)) {
+      fields.push({
+        field: `offers.${field}`,
+        current: null,
+        next: jsonValue(nextValue),
+        changed: true,
+      });
+    }
+  }
+
+  const changed = changedFields(fields);
+  return {
+    target: "serverPostgres",
+    table: "merch_storefront_products",
+    operation:
+      changed.length === 0
+        ? "noop"
+        : offerIndex >= 0
+          ? "update_storefront_offer"
+          : "create_storefront_offer",
+    changed: changed.length > 0,
+    changedFields: changed,
+    fields,
+  };
+}
+
+function buildMerchProductDiff(
+  row: MerchProductRow,
+  item: PreviewOzonFields,
+): PreviewDiff {
+  const fields =
+    item.price === undefined
+      ? [
+          {
+            field: "sale_price",
+            current: jsonValue(row.sale_price),
+            next: null,
+            changed: false,
+          },
+        ]
+      : [diffField("sale_price", row.sale_price, item.price)];
+  const changed = changedFields(fields);
+  return {
+    target: "serverPostgres",
+    table: "merch_products",
+    operation: changed.length > 0 ? "update_merch_product_price" : "noop",
+    changed: changed.length > 0,
+    changedFields: changed,
+    fields,
+  };
+}
+
+function diffActionReason(diff: PreviewDiff) {
+  if (!diff.changed) return "no_changes";
+  if (diff.operation === "create_storefront_offer") return "offer_missing";
+  if (diff.changedFields.length > 0) {
+    return `changed:${diff.changedFields.join(",")}`;
+  }
+  return undefined;
 }
 
 function buildIndexes(
@@ -584,21 +830,58 @@ export function buildOzonPreview(
     const storefrontMatch = findStorefrontMatch(ozonItem, indexes);
     const merchMatch = findMerchProductMatch(ozonItem, indexes);
     const plannedActions: OzonPreviewItem["plannedActions"] = [];
+    const source: PreviewOzonFields = {
+      offerId: offerIdForDisplay(ozonItem.offer_id),
+      normalizedOfferId,
+      productId: toStringId(ozonItem.product_id),
+      sku: toStringId(ozonItem.sku),
+      name: toStringId(ozonItem.name),
+      price,
+      oldPrice,
+      minPrice,
+      visible:
+        typeof ozonItem.visible === "boolean" || ozonItem.visible === null
+          ? ozonItem.visible
+          : undefined,
+      archived:
+        typeof ozonItem.archived === "boolean" ? ozonItem.archived : undefined,
+    };
+    const diff = storefrontMatch
+      ? buildStorefrontDiff(storefrontMatch.row, source)
+      : merchMatch
+        ? buildMerchProductDiff(merchMatch.row, source)
+        : undefined;
 
     if (storefrontMatch) {
       matchedStorefront += 1;
       if (targets.serverPostgres) {
-        plannedActions.push({
-          target: "serverPostgres",
-          action: "update_storefront_offer",
-        });
-        actionableServerPostgres += 1;
+        if (diff?.changed && diff.operation !== "noop") {
+          plannedActions.push({
+            target: "serverPostgres",
+            action: diff.operation,
+            reason: diffActionReason(diff),
+          });
+          actionableServerPostgres += 1;
+        } else {
+          plannedActions.push({
+            target: "serverPostgres",
+            action: "skip",
+            reason: "no_changes",
+          });
+        }
       }
       if (targets.supabase) {
-        if (settings.supabaseWriteEnabled) {
+        if (!diff?.changed || diff.operation === "noop") {
           plannedActions.push({
             target: "supabase",
-            action: "update_storefront_offer",
+            action: "skip",
+            reason: "no_changes",
+          });
+        } else if (settings.supabaseWriteEnabled) {
+          plannedActions.push({
+            target: "supabase",
+            action: diff.operation,
+            reason: diffActionReason(diff),
           });
           actionableSupabase += 1;
         } else {
@@ -612,17 +895,33 @@ export function buildOzonPreview(
     } else if (merchMatch) {
       matchedMerchProducts += 1;
       if (targets.serverPostgres) {
-        plannedActions.push({
-          target: "serverPostgres",
-          action: "update_merch_product_price",
-        });
-        actionableServerPostgres += 1;
+        if (diff?.changed && diff.operation !== "noop") {
+          plannedActions.push({
+            target: "serverPostgres",
+            action: diff.operation,
+            reason: diffActionReason(diff),
+          });
+          actionableServerPostgres += 1;
+        } else {
+          plannedActions.push({
+            target: "serverPostgres",
+            action: "skip",
+            reason: price === undefined ? "missing_price" : "no_changes",
+          });
+        }
       }
       if (targets.supabase) {
-        if (settings.supabaseWriteEnabled) {
+        if (!diff?.changed || diff.operation === "noop") {
           plannedActions.push({
             target: "supabase",
-            action: "update_merch_product_price",
+            action: "skip",
+            reason: price === undefined ? "missing_price" : "no_changes",
+          });
+        } else if (settings.supabaseWriteEnabled) {
+          plannedActions.push({
+            target: "supabase",
+            action: diff.operation,
+            reason: diffActionReason(diff),
           });
           actionableSupabase += 1;
         } else {
@@ -651,32 +950,21 @@ export function buildOzonPreview(
       }
     }
 
-    if (!plannedActions.some((action) => action.action !== "skip")) {
+    const hasImportAction = plannedActions.some((action) => action.action !== "skip");
+    if ((storefrontMatch || merchMatch) && !hasImportAction) {
       noop += 1;
     }
 
     items.push({
       itemId,
-      status: storefrontMatch || merchMatch ? "matched" : "unmatched",
+      status: storefrontMatch || merchMatch ? (hasImportAction ? "matched" : "noop") : "unmatched",
       severity: storefrontMatch || merchMatch ? "info" : "warning",
-      offerId: offerIdForDisplay(ozonItem.offer_id),
-      normalizedOfferId,
-      productId: toStringId(ozonItem.product_id),
-      sku: toStringId(ozonItem.sku),
-      name: toStringId(ozonItem.name),
-      price,
-      oldPrice,
-      minPrice,
-      visible:
-        typeof ozonItem.visible === "boolean" || ozonItem.visible === null
-          ? ozonItem.visible
-          : undefined,
-      archived:
-        typeof ozonItem.archived === "boolean" ? ozonItem.archived : undefined,
+      ...source,
       matchReason: storefrontMatch?.reason || merchMatch?.reason,
       targetProduct: storefrontMatch ? productKey(storefrontMatch.row) : undefined,
       targetMerchProduct: merchMatch ? merchProductKey(merchMatch.row) : undefined,
       plannedActions,
+      diff,
     });
   }
 
@@ -872,37 +1160,12 @@ async function loadPreview(db: Db, previewId: string) {
 
 function mergeOffer(
   currentOffers: Array<Record<string, unknown>>,
-  item: OzonPreviewItem,
-  syncedAt: string,
+  item: PreviewOzonFields,
+  syncedAt?: string,
 ) {
   const nextOffers = currentOffers.map((offer) => ({ ...offer }));
-  const index = nextOffers.findIndex((offer) => {
-    const offerId = normalizeOfferId(offer.offer_id);
-    if (offerId && item.normalizedOfferId && offerId === item.normalizedOfferId) {
-      return true;
-    }
-    const sku = toStringId(offer.sku);
-    if (sku && item.sku && sku === item.sku) return true;
-    const productId = toStringId(offer.product_id);
-    return Boolean(productId && item.productId && productId === item.productId);
-  });
-
-  const patch: Record<string, unknown> = {
-    offer_id: item.offerId,
-    product_id: toNumericId(item.productId) ?? item.productId,
-    sku: toNumericId(item.sku) ?? item.sku,
-    name: item.name,
-    price: item.price,
-    old_price: item.oldPrice,
-    min_price: item.minPrice,
-    visible: item.visible,
-    archived: item.archived,
-    last_ozon_sync_at: syncedAt,
-  };
-
-  for (const [key, value] of Object.entries(patch)) {
-    if (value === undefined) delete patch[key];
-  }
+  const index = findMatchingOfferIndex(nextOffers, item);
+  const patch = offerPatchFromPreviewItem(item, syncedAt);
 
   if (index >= 0) {
     nextOffers[index] = {
@@ -968,7 +1231,7 @@ async function applyStorefrontUpdate(
 
   const productIds = addUniqueNumber(numberArray(row.ozon_product_ids), item.productId);
   const skus = addUniqueNumber(numberArray(row.ozon_skus), item.sku);
-  const offerIds = addUniqueString(stringArray(row.ozon_offer_ids), item.offerId);
+  const offerIds = addUniqueOfferId(stringArray(row.ozon_offer_ids), item.offerId);
   const offers = mergeOffer(getOfferArray(row), item, syncedAt);
   const priceRange = priceRangeFromOffers(offers, row.price_min, row.price_max);
   const patch = {
