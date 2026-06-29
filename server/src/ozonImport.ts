@@ -9,6 +9,7 @@ import type { Db } from "./db";
 import { HttpError } from "./errors";
 
 const OZON_PRICE_PATH = "/v5/product/info/prices";
+const OZON_PRODUCT_INFO_LIST_PATH = "/v3/product/info/list";
 const OZON_DEFAULT_BASE_URL = "https://api-seller.ozon.ru";
 
 const targetSchema = z
@@ -51,6 +52,7 @@ type OzonImportEnv = {
 export type OzonPriceItem = {
   offer_id?: string;
   product_id?: string | number;
+  id?: string | number;
   sku?: string | number;
   name?: string;
   price?: {
@@ -61,6 +63,11 @@ export type OzonPriceItem = {
   };
   visible?: boolean | null;
   archived?: boolean;
+  primary_image?: unknown;
+  images?: unknown;
+  images360?: unknown;
+  color_image?: unknown;
+  media_loaded?: boolean;
 };
 
 type StorefrontRow = {
@@ -70,6 +77,9 @@ type StorefrontRow = {
   slug: string;
   price_min: string | number | null;
   price_max: string | number | null;
+  primary_image_url: string | null;
+  main_image_path: string | null;
+  image_urls: unknown;
   ozon_product_ids: unknown;
   ozon_skus: unknown;
   ozon_offer_ids: unknown;
@@ -98,6 +108,12 @@ export type OzonPreviewItem = {
   minPrice?: number;
   visible?: boolean | null;
   archived?: boolean;
+  media?: {
+    primaryImage?: string | null;
+    images?: string[];
+    images360?: string[];
+    colorImage?: string | null;
+  };
   matchReason?: string;
   targetProduct?: {
     id: string;
@@ -134,6 +150,44 @@ export type OzonPreviewItem = {
       next: unknown;
       changed: boolean;
     }>;
+  };
+  mediaDiff?: {
+    offer: {
+      primaryImage: {
+        current: string | null;
+        next: string | null;
+        changed: boolean;
+      };
+      images: {
+        current: string[];
+        next: string[];
+        added: string[];
+        removed: string[];
+        orderChanged: boolean;
+        changed: boolean;
+      };
+    };
+    product: {
+      primaryImageUrl: {
+        current: string | null;
+        next: string | null;
+        changed: boolean;
+      };
+      mainImagePath: {
+        current: string | null;
+        next: string | null;
+        changed: boolean;
+        preservedManualOverride: boolean;
+      };
+      imageUrls: {
+        current: string[];
+        next: string[];
+        added: string[];
+        removed: string[];
+        orderChanged: boolean;
+        changed: boolean;
+      };
+    };
   };
 };
 
@@ -305,6 +359,92 @@ function stringArray(value: unknown): string[] {
   return unknownArray(value)
     .map(toStringId)
     .filter((item): item is string => item !== undefined);
+}
+
+function collectStrings(value: unknown): string[] {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed ? [trimmed] : [];
+  }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return [String(value)];
+  }
+  if (!Array.isArray(value)) return [];
+  return value.flatMap(collectStrings);
+}
+
+function uniqueStrings(values: unknown[]) {
+  const result: string[] = [];
+  const seen = new Set<string>();
+  for (const value of values.flatMap(collectStrings)) {
+    if (!seen.has(value)) {
+      seen.add(value);
+      result.push(value);
+    }
+  }
+  return result;
+}
+
+function blankToNull(value: unknown): string | null {
+  return toStringId(value) ?? null;
+}
+
+function arrayDiff(current: string[], next: string[]) {
+  const currentSet = new Set(current);
+  const nextSet = new Set(next);
+  const added = next.filter((item) => !currentSet.has(item));
+  const removed = current.filter((item) => !nextSet.has(item));
+  const orderChanged =
+    added.length === 0 && removed.length === 0 && !sameArray(current, next);
+  return {
+    added,
+    removed,
+    orderChanged,
+    changed: added.length > 0 || removed.length > 0 || orderChanged,
+  };
+}
+
+function mediaFromOzonItem(item: Pick<
+  OzonPriceItem,
+  "primary_image" | "images" | "images360" | "color_image"
+>) {
+  const primaryImage = collectStrings(item.primary_image)[0];
+  const images = uniqueStrings([primaryImage, item.images]);
+  const images360 = uniqueStrings([item.images360]);
+  const colorImage = collectStrings(item.color_image)[0];
+  return {
+    primaryImage,
+    images,
+    images360,
+    colorImage,
+  };
+}
+
+function mediaFromOffer(offer: Record<string, unknown> | undefined) {
+  const primaryImage = blankToNull(offer?.primary_image);
+  return {
+    primaryImage,
+    images: uniqueStrings([primaryImage, offer?.images]),
+  };
+}
+
+function imageUrlsFromOffers(
+  offers: Array<Record<string, unknown>>,
+  fallback: unknown,
+) {
+  const activeOffers = offers.filter((offer) => offer.archived !== true);
+  const sourceOffers = activeOffers.length > 0 ? activeOffers : offers;
+  const images = uniqueStrings(
+    sourceOffers.flatMap((offer) => [
+      offer.primary_image,
+      offer.images,
+    ]),
+  );
+  return images.length > 0 ? images : stringArray(fallback);
+}
+
+function nextMainImagePath(current: unknown, nextPrimaryImage: string | null) {
+  return blankToNull(current) ?? nextPrimaryImage;
 }
 
 function normalizeKey(value: unknown): string | undefined {
@@ -494,6 +634,7 @@ type PreviewOzonFields = Pick<
   | "minPrice"
   | "visible"
   | "archived"
+  | "media"
 >;
 
 type PreviewDiff = NonNullable<OzonPreviewItem["diff"]>;
@@ -521,6 +662,14 @@ function sameDiffValue(field: string, current: unknown, next: unknown) {
     return toStringId(current) === toStringId(next);
   }
   if (
+    baseField === "primary_image" ||
+    baseField === "primary_image_url" ||
+    baseField === "main_image_path" ||
+    baseField === "color_image"
+  ) {
+    return blankToNull(current) === blankToNull(next);
+  }
+  if (
     baseField === "price" ||
     baseField === "old_price" ||
     baseField === "min_price" ||
@@ -529,6 +678,13 @@ function sameDiffValue(field: string, current: unknown, next: unknown) {
     baseField === "sale_price"
   ) {
     return sameNumberValue(current, next);
+  }
+  if (
+    baseField === "images" ||
+    baseField === "image_urls" ||
+    baseField === "images360"
+  ) {
+    return sameArray(uniqueStrings([current]), uniqueStrings([next]));
   }
   return current === next;
 }
@@ -575,6 +731,8 @@ function offerPatchFromPreviewItem(
     min_price: item.minPrice,
     visible: item.visible,
     archived: item.archived,
+    primary_image: item.media?.primaryImage,
+    images: item.media?.images,
   };
 
   if (syncedAt !== undefined) {
@@ -608,10 +766,71 @@ function changedFields(fields: PreviewDiffField[]) {
   return fields.filter((field) => field.changed).map((field) => field.field);
 }
 
+function buildMediaDiff(
+  row: StorefrontRow,
+  currentOffer: Record<string, unknown> | undefined,
+  item: PreviewOzonFields,
+  nextOffers: Array<Record<string, unknown>>,
+): NonNullable<OzonPreviewItem["mediaDiff"]> {
+  const currentOfferMedia = mediaFromOffer(currentOffer);
+  const nextOfferPrimaryImage = item.media
+    ? item.media.primaryImage ?? null
+    : currentOfferMedia.primaryImage;
+  const nextOfferImages = item.media ? item.media.images ?? [] : currentOfferMedia.images;
+  const offerImagesDiff = arrayDiff(currentOfferMedia.images, nextOfferImages);
+
+  const currentProductPrimaryImage = blankToNull(row.primary_image_url);
+  const currentProductImageUrls = stringArray(row.image_urls);
+  const nextProductImageUrls = imageUrlsFromOffers(nextOffers, row.image_urls);
+  const nextProductPrimaryImage = nextProductImageUrls[0] ?? null;
+  const currentMainImagePath = blankToNull(row.main_image_path);
+  const nextProductMainImagePath = nextMainImagePath(
+    row.main_image_path,
+    nextProductPrimaryImage,
+  );
+  const productImageUrlsDiff = arrayDiff(
+    currentProductImageUrls,
+    nextProductImageUrls,
+  );
+
+  return {
+    offer: {
+      primaryImage: {
+        current: currentOfferMedia.primaryImage,
+        next: nextOfferPrimaryImage,
+        changed: currentOfferMedia.primaryImage !== nextOfferPrimaryImage,
+      },
+      images: {
+        current: currentOfferMedia.images,
+        next: nextOfferImages,
+        ...offerImagesDiff,
+      },
+    },
+    product: {
+      primaryImageUrl: {
+        current: currentProductPrimaryImage,
+        next: nextProductPrimaryImage,
+        changed: currentProductPrimaryImage !== nextProductPrimaryImage,
+      },
+      mainImagePath: {
+        current: currentMainImagePath,
+        next: nextProductMainImagePath,
+        changed: currentMainImagePath !== nextProductMainImagePath,
+        preservedManualOverride: Boolean(currentMainImagePath),
+      },
+      imageUrls: {
+        current: currentProductImageUrls,
+        next: nextProductImageUrls,
+        ...productImageUrlsDiff,
+      },
+    },
+  };
+}
+
 function buildStorefrontDiff(
   row: StorefrontRow,
   item: PreviewOzonFields,
-): PreviewDiff {
+): { diff: PreviewDiff; mediaDiff: NonNullable<OzonPreviewItem["mediaDiff"]> } {
   const currentProductIds = numberArray(row.ozon_product_ids);
   const currentSkus = numberArray(row.ozon_skus);
   const currentOfferIds = stringArray(row.ozon_offer_ids);
@@ -623,12 +842,27 @@ function buildStorefrontDiff(
   const offerPatch = offerPatchFromPreviewItem(item);
   const nextOffers = mergeOffer(currentOffers, item);
   const priceRange = priceRangeFromOffers(nextOffers, row.price_min, row.price_max);
+  const nextImageUrls = imageUrlsFromOffers(nextOffers, row.image_urls);
+  const nextPrimaryImageUrl = nextImageUrls[0] ?? null;
+  const nextProductMainImagePath = nextMainImagePath(
+    row.main_image_path,
+    nextPrimaryImageUrl,
+  );
+  const mediaDiff = buildMediaDiff(
+    row,
+    offerIndex >= 0 ? currentOffers[offerIndex] : undefined,
+    item,
+    nextOffers,
+  );
   const fields: PreviewDiffField[] = [
     diffArrayField("ozon_product_ids", currentProductIds, nextProductIds),
     diffArrayField("ozon_skus", currentSkus, nextSkus),
     diffArrayField("ozon_offer_ids", currentOfferIds, nextOfferIds),
     diffField("price_min", row.price_min, priceRange.min),
     diffField("price_max", row.price_max, priceRange.max),
+    diffField("primary_image_url", row.primary_image_url, nextPrimaryImageUrl),
+    diffField("main_image_path", row.main_image_path, nextProductMainImagePath),
+    diffArrayField("image_urls", stringArray(row.image_urls), nextImageUrls),
   ];
 
   if (offerIndex >= 0) {
@@ -649,17 +883,20 @@ function buildStorefrontDiff(
 
   const changed = changedFields(fields);
   return {
-    target: "serverPostgres",
-    table: "merch_storefront_products",
-    operation:
-      changed.length === 0
-        ? "noop"
-        : offerIndex >= 0
-          ? "update_storefront_offer"
-          : "create_storefront_offer",
-    changed: changed.length > 0,
-    changedFields: changed,
-    fields,
+    diff: {
+      target: "serverPostgres",
+      table: "merch_storefront_products",
+      operation:
+        changed.length === 0
+          ? "noop"
+          : offerIndex >= 0
+            ? "update_storefront_offer"
+            : "create_storefront_offer",
+      changed: changed.length > 0,
+      changedFields: changed,
+      fields,
+    },
+    mediaDiff,
   };
 }
 
@@ -830,6 +1067,7 @@ export function buildOzonPreview(
     const storefrontMatch = findStorefrontMatch(ozonItem, indexes);
     const merchMatch = findMerchProductMatch(ozonItem, indexes);
     const plannedActions: OzonPreviewItem["plannedActions"] = [];
+    const media = ozonItem.media_loaded ? mediaFromOzonItem(ozonItem) : undefined;
     const source: PreviewOzonFields = {
       offerId: offerIdForDisplay(ozonItem.offer_id),
       normalizedOfferId,
@@ -845,12 +1083,21 @@ export function buildOzonPreview(
           : undefined,
       archived:
         typeof ozonItem.archived === "boolean" ? ozonItem.archived : undefined,
+      media: media
+        ? {
+            primaryImage: media.primaryImage ?? null,
+            images: media.images,
+            images360: media.images360,
+            colorImage: media.colorImage ?? null,
+          }
+        : undefined,
     };
-    const diff = storefrontMatch
+    const storefrontPreview = storefrontMatch
       ? buildStorefrontDiff(storefrontMatch.row, source)
-      : merchMatch
-        ? buildMerchProductDiff(merchMatch.row, source)
-        : undefined;
+      : undefined;
+    const diff = storefrontPreview?.diff ??
+      (merchMatch ? buildMerchProductDiff(merchMatch.row, source) : undefined);
+    const mediaDiff = storefrontPreview?.mediaDiff;
 
     if (storefrontMatch) {
       matchedStorefront += 1;
@@ -965,6 +1212,7 @@ export function buildOzonPreview(
       targetMerchProduct: merchMatch ? merchProductKey(merchMatch.row) : undefined,
       plannedActions,
       diff,
+      mediaDiff,
     });
   }
 
@@ -1070,6 +1318,108 @@ async function fetchOzonPriceItems(
   return items.slice(0, limit);
 }
 
+function chunkArray<T>(values: T[], size: number) {
+  const chunks: T[][] = [];
+  for (let index = 0; index < values.length; index += size) {
+    chunks.push(values.slice(index, index + size));
+  }
+  return chunks;
+}
+
+async function fetchOzonProductInfoItems(
+  settings: OzonImportEnv,
+  priceItems: OzonPriceItem[],
+  fetchImpl: typeof fetch,
+) {
+  const productIds = [
+    ...new Set(
+      priceItems
+        .map((item) => toNumericId(item.product_id ?? item.id))
+        .filter((item): item is number => item !== undefined),
+    ),
+  ];
+  const byProductId = new Map<string, OzonPriceItem>();
+  if (!productIds.length) return byProductId;
+
+  const endpoint = new URL(
+    OZON_PRODUCT_INFO_LIST_PATH,
+    settings.apiBaseUrl,
+  ).toString();
+
+  for (const batch of chunkArray(productIds, 100)) {
+    const response = await fetchImpl(endpoint, {
+      method: "POST",
+      headers: {
+        "Client-Id": settings.clientId || "",
+        "Api-Key": settings.apiKey || "",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        product_id: batch,
+      }),
+    });
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => "");
+      throw new HttpError(
+        502,
+        "ozon_product_info_request_failed",
+        "Ozon product info request failed",
+        {
+          status: response.status,
+          body: body.slice(0, 500),
+        },
+      );
+    }
+
+    const payload = (await response.json()) as {
+      items?: OzonPriceItem[];
+      result?: {
+        items?: OzonPriceItem[];
+      };
+    };
+    const pageItems = Array.isArray(payload.items)
+      ? payload.items
+      : Array.isArray(payload.result?.items)
+        ? payload.result.items
+        : [];
+    for (const item of pageItems) {
+      const productId = toStringId(item.id ?? item.product_id);
+      if (productId) byProductId.set(productId, item);
+    }
+  }
+
+  return byProductId;
+}
+
+async function enrichOzonItemsWithProductInfo(
+  settings: OzonImportEnv,
+  priceItems: OzonPriceItem[],
+  fetchImpl: typeof fetch,
+) {
+  const detailsByProductId = await fetchOzonProductInfoItems(
+    settings,
+    priceItems,
+    fetchImpl,
+  );
+
+  return priceItems.map((priceItem) => {
+    const productId = toStringId(priceItem.product_id ?? priceItem.id);
+    const details = productId ? detailsByProductId.get(productId) : undefined;
+    if (!details) return priceItem;
+    return {
+      ...priceItem,
+      sku: priceItem.sku ?? details.sku,
+      name: priceItem.name ?? details.name,
+      primary_image: details.primary_image,
+      images: details.images,
+      images360: details.images360,
+      color_image: details.color_image,
+      media_loaded: true,
+    };
+  });
+}
+
 async function loadStorefrontRows(db: Db) {
   const result = await db.query<StorefrontRow>(
     `
@@ -1080,6 +1430,9 @@ async function loadStorefrontRows(db: Db) {
         slug,
         price_min,
         price_max,
+        primary_image_url,
+        main_image_path,
+        image_urls,
         ozon_product_ids,
         ozon_skus,
         ozon_offer_ids,
@@ -1216,6 +1569,9 @@ async function applyStorefrontUpdate(
         slug,
         price_min,
         price_max,
+        primary_image_url,
+        main_image_path,
+        image_urls,
         ozon_product_ids,
         ozon_skus,
         ozon_offer_ids,
@@ -1234,6 +1590,9 @@ async function applyStorefrontUpdate(
   const offerIds = addUniqueOfferId(stringArray(row.ozon_offer_ids), item.offerId);
   const offers = mergeOffer(getOfferArray(row), item, syncedAt);
   const priceRange = priceRangeFromOffers(offers, row.price_min, row.price_max);
+  const imageUrls = imageUrlsFromOffers(offers, row.image_urls);
+  const primaryImageUrl = imageUrls[0] ?? null;
+  const mainImagePath = nextMainImagePath(row.main_image_path, primaryImageUrl);
   const patch = {
     ozon_product_ids: productIds,
     ozon_skus: skus,
@@ -1241,6 +1600,9 @@ async function applyStorefrontUpdate(
     offers,
     price_min: priceRange.min,
     price_max: priceRange.max,
+    primary_image_url: primaryImageUrl,
+    main_image_path: mainImagePath,
+    image_urls: imageUrls,
     updated_at: syncedAt,
   };
 
@@ -1254,7 +1616,10 @@ async function applyStorefrontUpdate(
         offers = $5::jsonb,
         price_min = $6,
         price_max = $7,
-        updated_at = $8::timestamptz
+        primary_image_url = $8,
+        main_image_path = $9,
+        image_urls = $10::text[],
+        updated_at = $11::timestamptz
       where id = $1
     `,
     [
@@ -1265,6 +1630,9 @@ async function applyStorefrontUpdate(
       JSON.stringify(offers),
       priceRange.min,
       priceRange.max,
+      primaryImageUrl,
+      mainImagePath,
+      imageUrls,
       syncedAt,
     ],
   );
@@ -1476,11 +1844,16 @@ export async function handleOzonProductsImportPreview(
   );
   const fetchImpl = context.fetchImpl || fetch;
 
-  const [ozonItems, storefrontRows, merchRows] = await Promise.all([
+  const [ozonPriceItems, storefrontRows, merchRows] = await Promise.all([
     fetchOzonPriceItems(settings, limit, parsed.includeArchived === true, fetchImpl),
     loadStorefrontRows(context.db),
     loadMerchProductRows(context.db),
   ]);
+  const ozonItems = await enrichOzonItemsWithProductInfo(
+    settings,
+    ozonPriceItems,
+    fetchImpl,
+  );
   const preview = buildOzonPreview(
     ozonItems,
     storefrontRows,

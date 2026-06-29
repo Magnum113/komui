@@ -96,6 +96,9 @@ test("buildOzonPreview marks unchanged storefront offer as noop", () => {
         },
         visible: true,
         archived: false,
+        primary_image: ["https://img.test/main.jpg"],
+        images: ["https://img.test/extra.jpg"],
+        media_loaded: true,
       },
     ],
     [
@@ -106,6 +109,12 @@ test("buildOzonPreview marks unchanged storefront offer as noop", () => {
         slug: "existing-product",
         price_min: "2990",
         price_max: "2990",
+        primary_image_url: "https://img.test/main.jpg",
+        main_image_path: "./assets/manual-main.jpg",
+        image_urls: [
+          "https://img.test/main.jpg",
+          "https://img.test/extra.jpg",
+        ],
         ozon_product_ids: [456],
         ozon_skus: [123],
         ozon_offer_ids: ["D005-TSH-PRT-WHT-S"],
@@ -120,6 +129,11 @@ test("buildOzonPreview marks unchanged storefront offer as noop", () => {
             min_price: 2490,
             visible: true,
             archived: false,
+            primary_image: "https://img.test/main.jpg",
+            images: [
+              "https://img.test/main.jpg",
+              "https://img.test/extra.jpg",
+            ],
             last_ozon_sync_at: "2026-01-01T00:00:00.000Z",
           },
         ],
@@ -189,6 +203,78 @@ test("buildOzonPreview reports changed storefront offer diff", () => {
   assert.equal(preview.items[0].diff?.changedFields.includes("offers.price"), true);
   assert.equal(preview.items[0].diff?.changedFields.includes("price_min"), true);
   assert.equal(preview.items[0].diff?.changedFields.includes("price_max"), true);
+});
+
+test("buildOzonPreview reports media diff without overwriting manual main image", () => {
+  const preview = buildOzonPreview(
+    [
+      {
+        offer_id: "D005-TSH-PRT-WHT-S",
+        sku: 123,
+        product_id: 456,
+        name: "Matched",
+        price: { marketing_seller_price: "2990" },
+        primary_image: ["https://img.test/new-main.jpg"],
+        images: [
+          "https://img.test/kept.jpg",
+          "https://img.test/new-extra.jpg",
+        ],
+        media_loaded: true,
+      },
+    ],
+    [
+      {
+        id: "11111111-1111-1111-1111-111111111111",
+        design_key: "var5|print|tshirt|white",
+        name: "Existing product",
+        slug: "existing-product",
+        price_min: 2990,
+        price_max: 2990,
+        primary_image_url: "https://img.test/old-main.jpg",
+        main_image_path: "./assets/manual-main.jpg",
+        image_urls: [
+          "https://img.test/old-main.jpg",
+          "https://img.test/kept.jpg",
+        ],
+        ozon_product_ids: [456],
+        ozon_skus: [123],
+        ozon_offer_ids: ["D005-TSH-PRT-WHT-S"],
+        offers: [
+          {
+            offer_id: "D005-TSH-PRT-WHT-S",
+            product_id: 456,
+            sku: 123,
+            name: "Matched",
+            price: 2990,
+            primary_image: "https://img.test/old-main.jpg",
+            images: [
+              "https://img.test/old-main.jpg",
+              "https://img.test/kept.jpg",
+            ],
+          },
+        ],
+      },
+    ],
+    [],
+    { serverPostgres: true, supabase: false },
+    { supabaseWriteEnabled: false },
+  );
+
+  assert.equal(preview.summary.actionableServerPostgres, 1);
+  assert.equal(preview.items[0].plannedActions[0]?.action, "update_storefront_offer");
+  assert.equal(preview.items[0].diff?.changedFields.includes("offers.primary_image"), true);
+  assert.equal(preview.items[0].diff?.changedFields.includes("offers.images"), true);
+  assert.equal(preview.items[0].diff?.changedFields.includes("primary_image_url"), true);
+  assert.equal(preview.items[0].diff?.changedFields.includes("image_urls"), true);
+  assert.equal(preview.items[0].diff?.changedFields.includes("main_image_path"), false);
+  assert.deepEqual(preview.items[0].mediaDiff?.offer.images.added, [
+    "https://img.test/new-main.jpg",
+    "https://img.test/new-extra.jpg",
+  ]);
+  assert.deepEqual(preview.items[0].mediaDiff?.offer.images.removed, [
+    "https://img.test/old-main.jpg",
+  ]);
+  assert.equal(preview.items[0].mediaDiff?.product.mainImagePath.preservedManualOverride, true);
 });
 
 test("buildOzonPreview marks unchanged merch product as noop", () => {
