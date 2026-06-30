@@ -1411,7 +1411,7 @@ Telegram controls:
 - `Deploy prod` pulls `origin/main`, builds the project and switches production
   backend/frontend releases;
 - `Status` shows current Git revision, active releases, core services and
-  public smoke checks.
+  public smoke checks in a human-readable Russian summary.
 
 The bot uses a persistent Telegram reply keyboard, so the deploy controls are
 shown above the text input field. Callback handling for old inline-keyboard

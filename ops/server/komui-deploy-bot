@@ -106,6 +106,144 @@ def run_command(args: list[str], timeout: int) -> tuple[int, str]:
     return proc.returncode, proc.stdout
 
 
+def parse_status_output(output: str) -> dict[str, dict[str, str]]:
+    sections: dict[str, dict[str, str]] = {"root": {}}
+    section = "root"
+    known_sections = {
+        "active releases": "releases",
+        "services": "services",
+        "smoke": "smoke",
+    }
+    for raw_line in output.splitlines():
+        line = raw_line.strip()
+        if not line or line == "KOMUI deploy status":
+            continue
+        lower = line.rstrip(":").lower()
+        if lower in known_sections and line.endswith(":"):
+            section = known_sections[lower]
+            sections.setdefault(section, {})
+            continue
+        if ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        sections.setdefault(section, {})[key.strip()] = value.strip()
+    return sections
+
+
+def ok_icon(value: str, *, expected: str = "active") -> str:
+    return "✅" if value == expected else "❌"
+
+
+def http_icon(value: str) -> str:
+    return "✅" if value == "200" else "❌"
+
+
+def format_service_status(name: str, value: str) -> str:
+    labels = {
+        "postgresql": "PostgreSQL / база",
+        "nginx": "Nginx / сайт",
+        "komui-backend": "Stage backend",
+        "komui-production-backend": "Prod backend",
+        "komui-backup.timer": "Автобэкапы",
+        "komui-healthcheck.timer": "Healthcheck",
+        "komui-deploy-bot": "Telegram deploy bot",
+    }
+    label = labels.get(name, name)
+    return f"{ok_icon(value)} {label}: {value}"
+
+
+def format_status_message(output: str, code: int) -> str:
+    try:
+        data = parse_status_output(output)
+        root = data.get("root", {})
+        releases = data.get("releases", {})
+        services = data.get("services", {})
+        smoke = data.get("smoke", {})
+
+        local = root.get("local", "unknown")
+        origin = root.get("origin/main", "unknown")
+        branch = root.get("branch", "unknown")
+
+        critical_services = [
+            "postgresql",
+            "nginx",
+            "komui-backend",
+            "komui-production-backend",
+            "komui-deploy-bot",
+        ]
+        services_ok = all(services.get(unit) == "active" for unit in critical_services)
+        smoke_ok = smoke.get("stage products") == "200" and smoke.get("prod products") == "200"
+        git_known = local not in ("", "unknown") and origin not in ("", "unknown")
+        git_synced = git_known and local == origin
+
+        if code != 0:
+            verdict = f"⚠️ Status-команда завершилась с ошибкой exit={code}."
+        elif services_ok and smoke_ok and git_synced:
+            verdict = "✅ Всё штатно. Stage и prod отвечают, основные сервисы активны."
+        elif services_ok and smoke_ok and git_known and not git_synced:
+            verdict = "⚠️ Сайт работает, но в GitHub есть версия, которую сервер ещё не развернул."
+        elif services_ok and smoke_ok:
+            verdict = "✅ Сайт отвечает, основные сервисы активны. Git-состояние нужно проверить отдельно."
+        else:
+            verdict = "❌ Есть проблема в сервисах или smoke-check’ах. Перед релизом лучше проверить логи."
+
+        if git_synced:
+            git_line = "✅ Серверная deploy-копия совпадает с origin/main."
+        elif git_known:
+            git_line = "⚠️ origin/main отличается от серверной deploy-копии. Нажатие Deploy подтянет origin/main."
+        else:
+            git_line = "⚠️ Git-состояние не удалось определить полностью."
+
+        service_lines = [
+            format_service_status("postgresql", services.get("postgresql", "unknown")),
+            format_service_status("nginx", services.get("nginx", "unknown")),
+            format_service_status("komui-backend", services.get("komui-backend", "unknown")),
+            format_service_status("komui-production-backend", services.get("komui-production-backend", "unknown")),
+            format_service_status("komui-backup.timer", services.get("komui-backup.timer", "unknown")),
+            format_service_status("komui-healthcheck.timer", services.get("komui-healthcheck.timer", "unknown")),
+            format_service_status("komui-deploy-bot", services.get("komui-deploy-bot", "unknown")),
+        ]
+
+        if git_known and not git_synced and services_ok and smoke_ok:
+            next_step = "Что делать: сначала нажми Deploy stage, проверь stage. Потом, если всё нормально, нажми Deploy prod."
+        elif services_ok and smoke_ok:
+            next_step = "Что делать: можно деплоить новые изменения, когда они будут запушены в GitHub."
+        else:
+            next_step = "Что делать: не запускай prod deploy, пока не будет понятно, почему есть красные статусы."
+
+        return "\n".join(
+            [
+                "📦 Статус KOMUI",
+                "",
+                verdict,
+                "",
+                "Git:",
+                f"• ветка: {branch}",
+                f"• серверная deploy-копия: {local}",
+                f"• GitHub origin/main: {origin}",
+                f"• {git_line}",
+                "",
+                "🧪 Stage:",
+                f"• backend release: {releases.get('stage backend', 'unknown')}",
+                f"• frontend release: {releases.get('stage frontend', 'unknown')}",
+                f"• API товаров: {http_icon(smoke.get('stage products', ''))} {smoke.get('stage products', 'unknown')}",
+                "",
+                "🚀 Prod:",
+                f"• backend release: {releases.get('prod backend', 'unknown')}",
+                f"• frontend release: {releases.get('prod frontend', 'unknown')}",
+                f"• API товаров: {http_icon(smoke.get('prod products', ''))} {smoke.get('prod products', 'unknown')}",
+                "",
+                "Сервисы:",
+                *service_lines,
+                "",
+                next_step,
+            ]
+        )
+    except Exception:
+        prefix = "📦 Status" if code == 0 else f"⚠️ Status failed exit={code}"
+        return f"{prefix}\n\n{output}"
+
+
 def handle_deploy(target: str) -> None:
     label = "stage" if target == "stage" else "prod"
     send_message(f"⏳ Начинаю deploy `{label}` из `origin/main`.")
@@ -121,8 +259,7 @@ def handle_deploy(target: str) -> None:
 
 def handle_status() -> None:
     code, output = run_command([str(STATUS_BIN)], timeout=60)
-    prefix = "📦 Status" if code == 0 else f"⚠️ Status failed exit={code}"
-    send_message(f"{prefix}\n\n{output}", keyboard())
+    send_message(format_status_message(output, code), keyboard())
 
 
 def handle_update(update: dict[str, Any]) -> None:
