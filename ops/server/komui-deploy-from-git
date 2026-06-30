@@ -37,12 +37,18 @@ repo_url="${KOMUI_DEPLOY_REPO_URL:-https://github.com/Magnum113/komui.git}"
 source_dir="${KOMUI_DEPLOY_SOURCE_DIR:-/opt/komui/deploy-source}"
 log_dir="${KOMUI_DEPLOY_LOG_DIR:-/var/log/komui/deploy}"
 lock_path="${KOMUI_DEPLOY_LOCK_PATH:-/run/komui-deploy.lock}"
+npm_cache_dir="${KOMUI_NPM_CACHE_DIR:-/var/cache/komui/npm}"
+deploy_home="${KOMUI_DEPLOY_HOME:-/var/lib/komui/deploy-home}"
 run_id="$(date -u +%Y%m%dT%H%M%SZ)"
 
-install -d -m 0755 "$log_dir" /opt/komui /var/lib/komui
+install -d -m 0755 "$log_dir" /opt/komui /var/lib/komui "$npm_cache_dir" "$deploy_home"
 log_file="$log_dir/${run_id}-${target}.log"
 
 exec > >(tee -a "$log_file") 2>&1
+
+export HOME="$deploy_home"
+export npm_config_cache="$npm_cache_dir"
+export NPM_CONFIG_CACHE="$npm_cache_dir"
 
 log() {
   printf '[%s] %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*"
