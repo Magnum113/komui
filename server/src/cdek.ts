@@ -101,7 +101,7 @@ export type CdekOrderRequestPayload = {
 };
 
 export type CdekOrderResponse = {
-  entity?: { uuid?: string };
+  entity?: { uuid?: string; cdek_number?: string };
   requests?: Array<{
     request_uuid?: string;
     type?: string;
@@ -684,12 +684,46 @@ export async function createCdekOrder(
   });
 }
 
+export async function getCdekOrder(
+  config: AppConfig,
+  uuid: string,
+): Promise<CdekOrderResponse> {
+  const normalized = text(uuid, 80);
+  if (!normalized) {
+    throw new HttpError(400, "cdek_order_uuid_required", "CDEK order uuid is required");
+  }
+
+  if (config.CDEK_MOCK) {
+    return {
+      entity: {
+        uuid: normalized,
+      },
+      requests: [
+        {
+          request_uuid: `mock-cdek-sync-${normalized}`,
+          type: "GET",
+          state: "SUCCESSFUL",
+        },
+      ],
+      related_entities: [],
+    };
+  }
+
+  return cdekRequest<CdekOrderResponse>(
+    config,
+    `/v2/orders/${encodeURIComponent(normalized)}`,
+    { method: "GET" },
+  );
+}
+
 export function cdekNumberFromResponse(
   response: { related_entities?: CdekRelatedEntity | CdekRelatedEntity[] },
 ): string | null {
   const related = response.related_entities;
   const entities = Array.isArray(related) ? related : related ? [related] : [];
-  const value = entities.find((entity) => entity.cdek_number)?.cdek_number;
+  const entityNumber = (response as { entity?: { cdek_number?: string } }).entity
+    ?.cdek_number;
+  const value = entityNumber || entities.find((entity) => entity.cdek_number)?.cdek_number;
   return value ? text(value, 80) : null;
 }
 

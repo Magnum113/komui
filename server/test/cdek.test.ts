@@ -117,6 +117,14 @@ test("CDEK order response helpers normalize states and errors", () => {
     code: "ERR",
     message: "Bad payload",
   });
+
+  assert.equal(
+    cdekNumberFromResponse({
+      entity: { uuid: "order-uuid", cdek_number: "10288069122" },
+      requests: [{ state: "SUCCESSFUL" }],
+    }),
+    "10288069122",
+  );
 });
 
 test("createCdekOrder returns deterministic mock order without network calls", async () => {

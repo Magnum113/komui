@@ -41,7 +41,7 @@ TBANK_MOCK_PAYMENTS=false
 
 CDEK_API_BASE_URL=https://api.cdek.ru
 CDEK_MOCK=false
-CDEK_CREATE_SHIPMENTS=false
+CDEK_CREATE_SHIPMENTS=true
 
 OZON_IMPORT_MODE=dry_run
 OZON_IMPORT_WRITE_SUPABASE=false
@@ -68,8 +68,8 @@ Backend release `20260630-cdek-shipments-server` добавил создание
   request/response/error payload и ручной admin endpoint;
 - T-Bank webhook в `server/src/stage5.ts` после перехода заказа в `paid`
   вызывает CDEK shipment creation только если `CDEK_CREATE_SHIPMENTS=true`;
-- на staging флаг пока оставлен `CDEK_CREATE_SHIPMENTS=false`, поэтому реальные
-  отправления автоматически не создаются;
+- на staging флаг `CDEK_CREATE_SHIPMENTS=true`, поэтому paid-заказы теперь
+  создают реальные CDEK shipment;
 - ручной endpoint доступен как
   `POST https://stage.komui.ru/api/admin/cdek/shipments/create` и требует
   admin token плюс явное тело `{"orderNumber":"KOM-...","confirm":true}`;
@@ -107,9 +107,24 @@ Backend release `20260630-cdek-shipments-server` добавил создание
   и `finished/failed`;
 - в логах намеренно нет ФИО, телефона, полного CDEK payload или секретов.
 
-Текущий важный факт по staging: `CDEK_CREATE_SHIPMENTS=false`, поэтому paid
-orders не создают реальные заказы в CDEK автоматически до явного включения
-этого флага.
+Текущий важный факт по staging: `CDEK_CREATE_SHIPMENTS=true`, поэтому paid
+orders создают реальные заказы в CDEK автоматически.
+
+#### 30 июня 2026 — CDEK async number sync
+
+Для заказа `KOM-879480584` CDEK вернул первичный ответ `/v2/orders` как
+`ACCEPTED` без `cdek_number`, но по follow-up запросу `/v2/orders/{uuid}` уже
+отдал номер `10288069122` и state `SUCCESSFUL`.
+
+Backend обновлён:
+
+- `server/src/cdek.ts` получил `getCdekOrder(config, uuid)`;
+- `cdekNumberFromResponse` теперь берёт номер как из `related_entities`, так и
+  из `entity.cdek_number`;
+- `createCdekShipmentForOrder` после `ACCEPTED` без номера делает короткий
+  follow-up sync по CDEK UUID и сохраняет номер, если CDEK уже его выдал;
+- DB для `KOM-879480584` обновлена: `status=created`,
+  `cdek_number=10288069122`.
 
 ## 2. Высокоуровневая архитектура
 
@@ -526,15 +541,15 @@ Current flags:
 
 ```text
 CDEK_MOCK=false
-CDEK_CREATE_SHIPMENTS=false
+CDEK_CREATE_SHIPMENTS=true
 ```
 
 Meaning:
 
 - delivery points/quote use real CDEK API credentials;
 - real shipment creation code is deployed;
-- automatic real shipment creation is still disabled by
-  `CDEK_CREATE_SHIPMENTS=false`;
+- automatic real shipment creation is enabled by
+  `CDEK_CREATE_SHIPMENTS=true`;
 - manual admin creation requires `confirm: true`.
 
 Manual shipment creation/retry:

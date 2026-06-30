@@ -8,6 +8,7 @@ import {
   cdekNumberFromResponse,
   cdekRequestState,
   createCdekOrder,
+  getCdekOrder,
   quoteCdekDelivery,
 } from "./cdek";
 import { text } from "./checkout";
@@ -104,6 +105,63 @@ function isUniqueViolation(error: unknown): boolean {
     "code" in error &&
     (error as { code?: unknown }).code === "23505"
   );
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function syncCdekOrderNumberAfterAccepted(
+  context: HandlerContext,
+  order: OrderRow,
+  shipmentId: number,
+  response: Awaited<ReturnType<typeof createCdekOrder>>,
+) {
+  const uuid = text(response.entity?.uuid, 80);
+  if (!uuid || cdekNumberFromResponse(response)) return response;
+
+  let latest = response;
+  for (const delayMs of [500, 1_500]) {
+    await sleep(delayMs);
+    context.logger?.info(
+      {
+        orderId: order.id,
+        orderNumber: order.order_number,
+        shipmentId,
+        cdekUuid: uuid,
+        delayMs,
+      },
+      "CDEK order follow-up sync started",
+    );
+    try {
+      latest = await getCdekOrder(context.config, uuid);
+      const cdekNumber = cdekNumberFromResponse(latest);
+      context.logger?.info(
+        {
+          orderId: order.id,
+          orderNumber: order.order_number,
+          shipmentId,
+          cdekUuid: uuid,
+          cdekNumber,
+          requestState: latest.requests?.[0]?.state ?? null,
+        },
+        "CDEK order follow-up sync finished",
+      );
+      if (cdekNumber || cdekRequestState(latest) === "created") return latest;
+    } catch (error) {
+      context.logger?.warn(
+        {
+          err: error,
+          orderId: order.id,
+          orderNumber: order.order_number,
+          shipmentId,
+          cdekUuid: uuid,
+        },
+        "CDEK order follow-up sync failed",
+      );
+    }
+  }
+  return latest;
 }
 
 async function existingShipment(
@@ -590,7 +648,13 @@ export async function createCdekShipmentForOrder(
       "CDEK order API request started",
     );
     const response = await createCdekOrder(context.config, payload);
-    const updated = await markShipmentResult(context, shipment.id, response);
+    const syncedResponse = await syncCdekOrderNumberAfterAccepted(
+      context,
+      order,
+      shipment.id,
+      response,
+    );
+    const updated = await markShipmentResult(context, shipment.id, syncedResponse);
     context.logger?.info(
       {
         orderId: order.id,
@@ -599,9 +663,9 @@ export async function createCdekShipmentForOrder(
         shipmentStatus: updated.status,
         cdekNumber: updated.cdek_number,
         cdekUuid: updated.cdek_uuid,
-        requestState: response.requests?.[0]?.state ?? null,
-        requestUuid: response.requests?.[0]?.request_uuid ?? null,
-        cdekError: cdekFirstError(response)?.message ?? null,
+        requestState: syncedResponse.requests?.[0]?.state ?? null,
+        requestUuid: syncedResponse.requests?.[0]?.request_uuid ?? null,
+        cdekError: cdekFirstError(syncedResponse)?.message ?? null,
       },
       "CDEK order API request finished",
     );

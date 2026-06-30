@@ -13,5 +13,7 @@ shipment, admin retry endpoint, ожидание трек-номера и кно
 на странице результата оплаты. Также исправлен повтор оплаты после failed
 payment: stale payment draft очищается, а checkout создаёт новый платёж вместо
 переиспользования старой отклонённой ссылки Т-Банка. Для диагностики добавлены
-structured logs всего CDEK shipment flow; на staging автосоздание по-прежнему
-контролируется флагом `CDEK_CREATE_SHIPMENTS`.
+structured logs всего CDEK shipment flow. На staging включено
+`CDEK_CREATE_SHIPMENTS=true`; заказ `KOM-879480584` создан в CDEK с номером
+`10288069122`. Backend также подтягивает `cdek_number` follow-up запросом, если
+первичный ответ CDEK пришёл как `ACCEPTED` без номера.
