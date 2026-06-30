@@ -279,9 +279,13 @@ end $$;
 | `source` | text | по умолчанию `storefront` |
 | `metadata` | jsonb | произвольные данные |
 | `paid_at` | timestamptz nullable | момент подтверждения оплаты |
+| `fulfillment_status` | text | ручной статус обработки в админке: `new` / `processing` / `shipped` / `delivered` / `canceled` / `returned` |
+| `fulfillment_note` | text nullable | внутренняя заметка админа |
+| `shipped_at`, `delivered_at` | timestamptz nullable | когда админ отметил отправку/доставку |
 | `created_at`, `updated_at` | timestamptz | |
 
 > Все денежные поля **в копейках** (`integer`). Для UI делить на 100.
+> `status` — это статус оплаты/денег. Для кнопки «отправил» использовать `fulfillment_status`, не менять `status`.
 
 #### `merch_customer_order_items` — позиции заказа
 
@@ -369,6 +373,7 @@ end $$;
 - Список `merch_customer_orders` с фильтрами по `status`, дате, поиску по `order_number` / `customer_phone`.
 - Карточка заказа: позиции (`merch_customer_order_items`), история платежей (`merch_payment_attempts` + `merch_payment_events`), статус СДЭК (`merch_cdek_shipments`, последние `merch_cdek_events`).
 - Действия: пометить `canceled`, инициировать возврат (отдельная Edge Function — не реализована, нужно делать), скачать ярлык СДЭК (по `cdek_uuid` через CDEK API).
+- Для отдельной админки использовать защищённый Komui backend API заказов: см. `docs/admin-storefront-orders-api.md`. Кнопка «отправил» вызывает `POST /admin/storefront/orders/:orderId/mark-shipped` и меняет `fulfillment_status`, а не payment `status`.
 
 ### 6.3 Ozon заказы
 - Список `merch_ozon_orders` с фильтрами. Привязка к складу отгрузки и workshop-заказу.
@@ -386,6 +391,7 @@ end $$;
 ### 6.6 Каталог
 - `merch_products` (внутренние SKU): редактирование `cost_price`, `sale_price`, `legacy_skus`, привязка `ozon_sku`.
 - `merch_storefront_products` (витрина): цены, `is_active`, `sort_order`, `badges`, `compare_at_price`, медиа.
+- Для редактирования товаров витрины из отдельной админки использовать защищённый Komui backend API, а не прямую запись из браузера: см. `docs/admin-storefront-products-api.md`.
 
 ---
 

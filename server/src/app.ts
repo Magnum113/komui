@@ -20,6 +20,17 @@ import {
   handleTbankWebhook,
 } from "./stage5";
 import {
+  handleAdminGetStorefrontProduct,
+  handleAdminListStorefrontProducts,
+  handleAdminUpdateStorefrontProduct,
+} from "./adminStorefront";
+import {
+  handleAdminGetOrder,
+  handleAdminListOrders,
+  handleAdminMarkOrderShipped,
+  handleAdminUpdateOrderFulfillment,
+} from "./adminOrders";
+import {
   handleOzonImportJobStatus,
   handleOzonProductsImport,
   handleOzonProductsImportPreview,
@@ -254,6 +265,65 @@ export function buildApp({ config, db = createDb(config) }: AppOptions) {
     if (reply.sent) return authResult;
 
     return handleRuntimeFallbackSwitch(request, reply, config);
+  });
+
+  app.get("/admin/storefront/products", async (request, reply) => {
+    const authResult = await requireAdmin(config, request, reply);
+    if (reply.sent) return authResult;
+
+    return handleAdminListStorefrontProducts(request, reply, { config, db });
+  });
+
+  app.get<{
+    Params: { productId: string };
+  }>("/admin/storefront/products/:productId", async (request, reply) => {
+    const authResult = await requireAdmin(config, request, reply);
+    if (reply.sent) return authResult;
+
+    return handleAdminGetStorefrontProduct(request, reply, { config, db });
+  });
+
+  app.patch<{
+    Params: { productId: string };
+  }>("/admin/storefront/products/:productId", async (request, reply) => {
+    const authResult = await requireAdmin(config, request, reply);
+    if (reply.sent) return authResult;
+
+    return handleAdminUpdateStorefrontProduct(request, reply, { config, db });
+  });
+
+  app.get("/admin/storefront/orders", async (request, reply) => {
+    const authResult = await requireAdmin(config, request, reply);
+    if (reply.sent) return authResult;
+
+    return handleAdminListOrders(request, reply, { config, db });
+  });
+
+  app.get<{
+    Params: { orderId: string };
+  }>("/admin/storefront/orders/:orderId", async (request, reply) => {
+    const authResult = await requireAdmin(config, request, reply);
+    if (reply.sent) return authResult;
+
+    return handleAdminGetOrder(request, reply, { config, db });
+  });
+
+  app.patch<{
+    Params: { orderId: string };
+  }>("/admin/storefront/orders/:orderId/fulfillment", async (request, reply) => {
+    const authResult = await requireAdmin(config, request, reply);
+    if (reply.sent) return authResult;
+
+    return handleAdminUpdateOrderFulfillment(request, reply, { config, db });
+  });
+
+  app.post<{
+    Params: { orderId: string };
+  }>("/admin/storefront/orders/:orderId/mark-shipped", async (request, reply) => {
+    const authResult = await requireAdmin(config, request, reply);
+    if (reply.sent) return authResult;
+
+    return handleAdminMarkOrderShipped(request, reply, { config, db });
   });
 
   app.post("/admin/ozon/products/import-preview", async (request, reply) => {
