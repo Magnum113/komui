@@ -2,9 +2,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   normalizePhone,
+  orderNumber,
   validateClientIdentity,
   validatedCart,
 } from "../src/checkout";
+
+test("orderNumber uses compact numeric format", () => {
+  assert.match(orderNumber(), /^KOM-\d{9}$/);
+});
 
 test("validatedCart accepts UUID product ids and safe quantities", () => {
   assert.deepEqual(

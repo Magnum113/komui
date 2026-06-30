@@ -73,22 +73,9 @@ function normalizePhone(value: unknown): string {
   return `+${normalized}`;
 }
 
-function randomBase64Url(bytesLength = 18): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(bytesLength));
-  return btoa(String.fromCharCode(...bytes))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/g, "");
-}
-
 function orderNumber(): string {
-  const date = new Date();
-  const stamp = [
-    String(date.getUTCFullYear()).slice(-2),
-    String(date.getUTCMonth() + 1).padStart(2, "0"),
-    String(date.getUTCDate()).padStart(2, "0"),
-  ].join("");
-  return `KOM-${stamp}-${randomBase64Url(5).toUpperCase()}`;
+  const randomValue = crypto.getRandomValues(new Uint32Array(1))[0];
+  return `KOM-${100_000_000 + (randomValue % 900_000_000)}`;
 }
 
 function validatedCart(value: unknown): CartItemInput[] {

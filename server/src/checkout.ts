@@ -1,4 +1,4 @@
-import { randomBytes, randomUUID } from "node:crypto";
+import { randomBytes, randomInt, randomUUID } from "node:crypto";
 import type { Db } from "./db";
 import { HttpError } from "./errors";
 import { cdekProfileForProduct, type CdekPackageInput } from "./cdek";
@@ -60,13 +60,8 @@ export function randomBase64Url(bytesLength = 18): string {
     .replace(/=+$/g, "");
 }
 
-export function orderNumber(now = new Date()): string {
-  const stamp = [
-    String(now.getUTCFullYear()).slice(-2),
-    String(now.getUTCMonth() + 1).padStart(2, "0"),
-    String(now.getUTCDate()).padStart(2, "0"),
-  ].join("");
-  return `KOM-${stamp}-${randomBase64Url(5).toUpperCase()}`;
+export function orderNumber(): string {
+  return `KOM-${randomInt(100_000_000, 1_000_000_000)}`;
 }
 
 export function validatedCart(value: unknown): CartItemInput[] {
