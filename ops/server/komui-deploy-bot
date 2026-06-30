@@ -32,6 +32,9 @@ ALLOWED_CHAT_ID = str(ENV["TELEGRAM_CHAT_ID"])
 PROXY_URL = ENV.get("TELEGRAM_PROXY_URL", "")
 TIMEOUT_SECONDS = str(int(ENV.get("TELEGRAM_TIMEOUT_SECONDS", "15")))
 API_BASE = f"https://api.telegram.org/bot{TOKEN}"
+STAGE_BUTTON = "🚀 Deploy stage"
+PROD_BUTTON = "🚀 Deploy prod"
+STATUS_BUTTON = "📦 Status"
 
 
 def curl_api(method: str, fields: dict[str, Any], max_time: int | None = None) -> dict[str, Any]:
@@ -67,12 +70,25 @@ def answer_callback(callback_id: str, text: str) -> None:
 
 def keyboard() -> dict[str, Any]:
     return {
+        "keyboard": [
+            [{"text": STAGE_BUTTON}, {"text": PROD_BUTTON}],
+            [{"text": STATUS_BUTTON}],
+        ],
+        "resize_keyboard": True,
+        "one_time_keyboard": False,
+        "is_persistent": True,
+        "input_field_placeholder": "Выбери deploy-действие",
+    }
+
+
+def inline_keyboard() -> dict[str, Any]:
+    return {
         "inline_keyboard": [
             [
-                {"text": "🚀 Deploy stage", "callback_data": "deploy:stage"},
-                {"text": "🚀 Deploy prod", "callback_data": "deploy:prod"},
+                {"text": STAGE_BUTTON, "callback_data": "deploy:stage"},
+                {"text": PROD_BUTTON, "callback_data": "deploy:prod"},
             ],
-            [{"text": "📦 Status", "callback_data": "status"}],
+            [{"text": STATUS_BUTTON, "callback_data": "status"}],
         ]
     }
 
@@ -120,8 +136,12 @@ def handle_update(update: dict[str, Any]) -> None:
         text = str(update["message"].get("text") or "").strip()
         if text in ("/start", "/deploy", "/menu"):
             send_message("KOMUI deploy bot. Выбери действие:", keyboard())
-        elif text == "/status":
+        elif text in ("/status", STATUS_BUTTON):
             handle_status()
+        elif text == STAGE_BUTTON:
+            handle_deploy("stage")
+        elif text == PROD_BUTTON:
+            handle_deploy("prod")
         return
 
     callback = update.get("callback_query") or {}

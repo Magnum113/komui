@@ -1413,6 +1413,10 @@ Telegram controls:
 - `Status` shows current Git revision, active releases, core services and
   public smoke checks.
 
+The bot uses a persistent Telegram reply keyboard, so the deploy controls are
+shown above the text input field. Callback handling for old inline-keyboard
+messages is kept for backwards compatibility.
+
 The bot reads Telegram token, allowed chat id and proxy from:
 
 ```text
