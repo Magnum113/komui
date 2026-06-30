@@ -1059,7 +1059,22 @@ function randomUuid(){
   return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
 }
 
-function paymentIdentity(){
+function apiErrorMessage(result,fallback){
+  if(typeof result?.error==='string')return result.error;
+  if(result?.error?.message)return result.error.message;
+  if(result?.message)return result.message;
+  return fallback;
+}
+
+function apiRetryAllowed(result){
+  return result?.retryAllowed===true||result?.error?.details?.retryAllowed===true;
+}
+
+function clearPaymentDraft(){
+  try{sessionStorage.removeItem(PAYMENT_DRAFT_KEY)}catch(e){}
+}
+
+function paymentIdentity(forceNew=false){
   const fingerprint=JSON.stringify({
     items:items.map(item=>[String(item.id),String(item.size),Number(item.qty)]),
     point:selectedPoint?.code||'',
@@ -1067,10 +1082,12 @@ function paymentIdentity(){
     promo:appliedPromo?[appliedPromo.code,discount(),deliveryDiscount()]:'',
     phone:$('#phone').value.replace(/\D/g,'')
   });
-  try{
-    const saved=JSON.parse(sessionStorage.getItem(PAYMENT_DRAFT_KEY)||'null');
-    if(saved?.fingerprint===fingerprint&&saved?.clientRequestId&&saved?.accessToken)return saved;
-  }catch(e){}
+  if(!forceNew){
+    try{
+      const saved=JSON.parse(sessionStorage.getItem(PAYMENT_DRAFT_KEY)||'null');
+      if(saved?.fingerprint===fingerprint&&saved?.clientRequestId&&saved?.accessToken)return saved;
+    }catch(e){}
+  }
   const identity={fingerprint,clientRequestId:randomUuid(),accessToken:randomToken()};
   try{sessionStorage.setItem(PAYMENT_DRAFT_KEY,JSON.stringify(identity));}catch(e){}
   return identity;
@@ -1109,55 +1126,64 @@ async function submitCheckout(){
     }
   }
 
-  const identity=paymentIdentity();
+  let identity=paymentIdentity();
+  let refreshedPaymentDraft=false;
   setPaymentLoading(true);
   try{
-    const response=await fetch(apiEndpoint(config,'tbank-create-payment'),{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json'
-      },
-      body:JSON.stringify({
-        clientRequestId:identity.clientRequestId,
-        accessToken:identity.accessToken,
-        customer:{
-          firstName:$('#firstName').value.trim(),
-          lastName:$('#lastName').value.trim(),
-          phone:$('#phone').value,
-          legalConsent:$('#legalConsent').checked,
-          marketingConsent:$('#marketingConsent').checked
+    while(true){
+      const response=await fetch(apiEndpoint(config,'tbank-create-payment'),{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json'
         },
-        delivery:{
-          code:selectedPoint.code,
-          cityCode:selectedPoint.cityCode,
-          city:selectedPoint.city,
-          address:selectedPoint.addressFull||selectedPoint.address,
-          title:selectedPoint.title,
-          hours:selectedPoint.hours,
-          tariffCode:selectedPoint.tariffCode,
-          tariffName:selectedPoint.tariffName,
-          deliveryMode:selectedPoint.deliveryMode
-        },
-        items:items.map(item=>({id:String(item.id),size:String(item.size),qty:Number(item.qty)})),
-        promoCode:appliedPromo?.code||null
-      })
-    });
-    const result=await response.json().catch(()=>({}));
-    if(!response.ok||!result.paymentUrl||!result.orderNumber){
-      if(result.retryAllowed){
-        try{sessionStorage.removeItem(PAYMENT_DRAFT_KEY)}catch(e){}
+        body:JSON.stringify({
+          clientRequestId:identity.clientRequestId,
+          accessToken:identity.accessToken,
+          customer:{
+            firstName:$('#firstName').value.trim(),
+            lastName:$('#lastName').value.trim(),
+            phone:$('#phone').value,
+            legalConsent:$('#legalConsent').checked,
+            marketingConsent:$('#marketingConsent').checked
+          },
+          delivery:{
+            code:selectedPoint.code,
+            cityCode:selectedPoint.cityCode,
+            city:selectedPoint.city,
+            address:selectedPoint.addressFull||selectedPoint.address,
+            title:selectedPoint.title,
+            hours:selectedPoint.hours,
+            tariffCode:selectedPoint.tariffCode,
+            tariffName:selectedPoint.tariffName,
+            deliveryMode:selectedPoint.deliveryMode
+          },
+          items:items.map(item=>({id:String(item.id),size:String(item.size),qty:Number(item.qty)})),
+          promoCode:appliedPromo?.code||null
+        })
+      });
+      const result=await response.json().catch(()=>({}));
+      if(!response.ok||!result.paymentUrl||!result.orderNumber){
+        if(apiRetryAllowed(result)){
+          clearPaymentDraft();
+          if(!refreshedPaymentDraft){
+            identity=paymentIdentity(true);
+            refreshedPaymentDraft=true;
+            continue;
+          }
+        }
+        throw new Error(apiErrorMessage(result,'Не удалось создать платёж'));
       }
-      throw new Error(result.error||'Не удалось создать платёж');
+      try{
+        sessionStorage.setItem('komui-payment-session:'+result.orderNumber,JSON.stringify({
+          accessToken:identity.accessToken,
+          paymentId:result.paymentId||null,
+          amount:result.amount||null,
+          createdAt:new Date().toISOString()
+        }));
+      }catch(e){}
+      location.assign(result.paymentUrl);
+      return;
     }
-    try{
-      sessionStorage.setItem('komui-payment-session:'+result.orderNumber,JSON.stringify({
-        accessToken:identity.accessToken,
-        paymentId:result.paymentId||null,
-        amount:result.amount||null,
-        createdAt:new Date().toISOString()
-      }));
-    }catch(e){}
-    location.assign(result.paymentUrl);
   }catch(error){
     setPaymentLoading(false);
     showToast(error?.message||'Не удалось перейти к оплате');

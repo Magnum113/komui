@@ -116,7 +116,7 @@ function cdekTrackingUrl(cdek){
 
 function cdekAction(cdek){
   const url=cdekTrackingUrl(cdek);
-  return url?'<a class="button primary" href="'+url+'" target="_blank" rel="noopener">Отслеживать в СДЭК</a>':'';
+  return url?'<a class="button primary" href="'+url+'">Отслеживать в СДЭК</a>':'';
 }
 
 function cdekLabel(cdek){
@@ -141,6 +141,13 @@ function scheduleCdekRefresh(cdek){
   else $('#statusHint').textContent='Трек-номер появится в уведомлении после создания отправления.';
 }
 
+function clearFailedPaymentState(){
+  try{sessionStorage.removeItem(PAYMENT_DRAFT_KEY)}catch(e){}
+  if(order){
+    try{sessionStorage.removeItem('komui-payment-session:'+order)}catch(e){}
+  }
+}
+
 function paid(result){
   paidConfirmed=true;
   localStorage.removeItem(CART_KEY);
@@ -154,6 +161,7 @@ function paid(result){
 }
 
 function failed(message){
+  clearFailedPaymentState();
   render('failed','Оплата не завершена',message||'Платёж отменён или банк не смог его провести. Деньги не списаны.','Корзина и введённые данные сохранены.',
     '<a class="button primary" href="/checkout">Попробовать снова</a><a class="button" href="/">Вернуться в магазин</a>');
 }

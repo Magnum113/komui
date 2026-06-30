@@ -460,7 +460,28 @@ export async function handleTbankCreatePayment(
     if (existing.access_token_hash !== accessTokenHash) {
       throw new HttpError(409, "request_conflict", "Request conflict");
     }
+    if (["payment_failed", "canceled", "refunded"].includes(existing.status)) {
+      throw new HttpError(
+        409,
+        "payment_retry_required",
+        "Предыдущую попытку оплаты завершить не удалось. Создайте новый платёж.",
+        { retryAllowed: true },
+      );
+    }
     const attempt = await latestPaymentAttempt(db, existing.id);
+    if (
+      attempt &&
+      ["REJECTED", "CANCELED", "DEADLINE_EXPIRED", "AUTH_FAIL"].includes(
+        attempt.provider_status,
+      )
+    ) {
+      throw new HttpError(
+        409,
+        "payment_retry_required",
+        "Предыдущую попытку оплаты завершить не удалось. Создайте новый платёж.",
+        { retryAllowed: true },
+      );
+    }
     if (attempt?.payment_url) {
       return {
         orderNumber: existing.order_number,
@@ -469,14 +490,6 @@ export async function handleTbankCreatePayment(
         paymentUrl: attempt.payment_url,
         amount: existing.total_amount,
       };
-    }
-    if (existing.status === "payment_failed") {
-      throw new HttpError(
-        409,
-        "payment_retry_required",
-        "Предыдущую попытку оплаты завершить не удалось. Создайте новый платёж.",
-        { retryAllowed: true },
-      );
     }
     throw new HttpError(
       409,

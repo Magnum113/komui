@@ -78,6 +78,22 @@ Backend release `20260630-cdek-shipments-server` добавил создание
   номер ещё не появился, и показывает кнопку отслеживания на сайте СДЭК, когда
   номер уже доступен.
 
+#### 30 июня 2026 — повтор оплаты после failed payment
+
+Исправлен сценарий, когда после отклонённого Т-Банком платежа повторная попытка
+оформления сразу возвращала пользователя на старый failed-result:
+
+- backend больше не возвращает старый `payment_url` для order со статусом
+  `payment_failed`, `canceled`, `refunded` или последней попыткой оплаты в
+  терминальном failed-статусе (`REJECTED`, `CANCELED`, `DEADLINE_EXPIRED`,
+  `AUTH_FAIL`);
+- вместо этого `/v1/payments` возвращает `payment_retry_required` с
+  `retryAllowed=true`;
+- `checkout.html` очищает stale `komui-payment-draft-v1`, создаёт новый
+  `clientRequestId` и один раз автоматически повторяет создание платежа;
+- `payment-result.html` при failed-экране очищает только payment draft/session,
+  сохраняя корзину и введённые данные.
+
 ## 2. Высокоуровневая архитектура
 
 ```text
