@@ -103,7 +103,7 @@ restore drill: OK
 
 ## DNS cutover
 
-Не выполнять в staging.
+Выполнено 30 июня 2026 года.
 
 Планируемые действия:
 
@@ -122,6 +122,15 @@ sudo /usr/local/sbin/komui-production-issue-cert-and-enable
 
 Скрипт выпуска TLS откажется работать, если `komui.ru` и `www.komui.ru` ещё не
 резолвятся в `89.111.152.112`.
+
+Фактический результат 30 июня 2026:
+
+```text
+komui.ru / www.komui.ru -> 89.111.152.112
+certificate: /etc/letsencrypt/live/komui.ru/fullchain.pem
+traffic switch: state=applied, mode=server, productionVhostEnabled=true
+public smoke: root/checkout/payment-result/products/delivery-config/robots/sitemap HTTP 200
+```
 
 ## Webhook cutover
 

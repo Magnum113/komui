@@ -69,6 +69,20 @@ Supabase live-контур не изменялись.
 test orders/payments/CDEK rows. Cleanup этих строк перед DNS cutover выполнять
 только по отдельному явному разрешению.
 
+30 июня 2026 года после ручного DNS switch владельцем:
+
+- `komui.ru` и `www.komui.ru` резолвятся в `89.111.152.112`;
+- Let's Encrypt certificate для `komui.ru` / `www.komui.ru` выпущен;
+- HTTPS vhost `komui-production-switch` включён;
+- traffic switch status: `state=applied`, `mode=server`,
+  `productionVhostEnabled=true`;
+- публичные smoke checks `https://komui.ru`, `/checkout`, `/payment-result`,
+  `/api/v1/products?limit=1`, `/api/delivery-config`, `robots.txt`,
+  `sitemap.xml` вернули HTTP `200`.
+
+Production DNS/TLS часть cutover выполнена. Остаётся T-Bank webhook/test
+payment и наблюдение.
+
 ## До окна
 
 - Объявить maintenance window.

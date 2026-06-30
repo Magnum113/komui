@@ -25,5 +25,5 @@ rm -f "$http_site"
 ln -sfn /etc/nginx/sites-available/komui-production-switch "$tls_site"
 nginx -t
 systemctl reload nginx
-curl -fsS --resolve komui.ru:443:127.0.0.1 https://komui.ru/api/v1/products?limit=1 >/dev/null
+curl --noproxy "*" -fsS --resolve komui.ru:443:127.0.0.1 https://komui.ru/api/v1/products?limit=1 >/dev/null
 printf 'KOMUI production TLS enabled for komui.ru/www.komui.ru\n'

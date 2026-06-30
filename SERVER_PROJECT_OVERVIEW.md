@@ -28,4 +28,7 @@ static root `/var/lib/komui/production-root` и HTTP pre-cutover vhost для
 `komui_production`; production backup
 `/var/backups/komui/daily/komui-backup-20260630T164013Z.tar.gz.gpg` загружен во
 внешнее хранилище и проверен restore drill. T-Bank оставлен в demo mode,
-`CDEK_CREATE_SHIPMENTS=true` включён для production candidate.
+`CDEK_CREATE_SHIPMENTS=true` включён для production candidate. После ручного
+DNS switch владельцем выпущен TLS certificate для `komui.ru/www.komui.ru`,
+включён production HTTPS vhost и `https://komui.ru` обслуживается self-hosted
+сервером.

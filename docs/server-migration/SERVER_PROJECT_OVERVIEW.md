@@ -229,6 +229,37 @@ Important: `komui_production` сейчас создана из staging и сод
 тестовые transactional rows. Если перед настоящим DNS cutover нужна чистая
 история заказов, эти строки нужно удалить отдельным явно разрешённым cleanup.
 
+#### 30 июня 2026 — DNS and TLS production cutover started
+
+Владелец переключил DNS:
+
+```text
+komui.ru      A 89.111.152.112
+www.komui.ru  A 89.111.152.112
+```
+
+После propagation выполнено:
+
+- выпущен Let's Encrypt certificate для `komui.ru` и `www.komui.ru`;
+- certificate path: `/etc/letsencrypt/live/komui.ru/fullchain.pem`;
+- expiry: 2026-09-28;
+- HTTPS production vhost `/etc/nginx/sites-enabled/komui-production-switch`
+  включён;
+- traffic switch переведён в applied server mode:
+  `state=applied`, `mode=server`, `productionVhostEnabled=true`;
+- `https://komui.ru`, `https://www.komui.ru`,
+  `https://komui.ru/checkout`, `https://komui.ru/payment-result`,
+  `https://komui.ru/api/v1/products?limit=1`,
+  `https://komui.ru/api/delivery-config`, `robots.txt` и `sitemap.xml`
+  вернули HTTP `200`.
+
+Production теперь обслуживается self-hosted сервером. `stage.komui.ru`
+продолжает работать отдельным Basic Auth/noindex контуром.
+
+Оставшиеся обязательные cutover-действия: переключить/подтвердить T-Bank
+webhook на `https://komui.ru/api/v1/webhooks/tbank`, выполнить тестовый платёж
+в demo mode и наблюдать логи/алерты.
+
 ## 2. Высокоуровневая архитектура
 
 ```text
@@ -1461,7 +1492,7 @@ sudo bash -c '
 Production cutover is stage 8 and must not be started without explicit owner
 approval.
 
-Before cutover:
+Before/after cutover:
 
 1. Complete remaining Ozon import/dual-write acceptance.
 2. Accept current `komui_production` snapshot or explicitly clean staging test
@@ -1475,10 +1506,11 @@ Before cutover:
 6. Confirm production T-Bank credentials/webhook settings.
 7. Production CDEK auto-create is currently enabled in candidate:
    `CDEK_CREATE_SHIPMENTS=true`.
-8. Confirm DNS TTL and rollback procedure.
-9. After DNS points to this server, issue/check production TLS certificate for
-   `komui.ru` and enable TLS vhost.
-10. Switch T-Bank webhook only after DNS/HTTPS readiness.
+8. DNS now points to the server and TLS vhost is enabled.
+9. Switch/confirm T-Bank webhook:
+   `https://komui.ru/api/v1/webhooks/tbank`.
+10. Run one demo payment on `https://komui.ru` and confirm order/payment/CDEK
+    behavior.
 
 Cutover runbook:
 
