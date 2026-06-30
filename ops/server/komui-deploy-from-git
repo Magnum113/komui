@@ -72,7 +72,8 @@ fail() {
   git fetch --prune origin "$branch"
   git checkout -B "$branch" "origin/$branch"
   git reset --hard "origin/$branch"
-  git clean -ffd
+  log "cleaning disposable deploy source"
+  git clean -ffdx
 
   commit="$(git rev-parse HEAD)"
   short_commit="${commit:0:12}"
@@ -88,6 +89,9 @@ fail() {
       fi
     done
   fi
+
+  log "removing stale backend dependency/build artifacts"
+  rm -rf server/node_modules server/dist
 
   log "installing backend dependencies"
   npm --prefix server ci
