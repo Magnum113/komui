@@ -1,0 +1,216 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+usage() {
+  cat <<'USAGE'
+Usage:
+  sudo /usr/local/sbin/komui-deploy-from-git stage [branch]
+  sudo /usr/local/sbin/komui-deploy-from-git prod [branch]
+
+Builds the requested target from origin/<branch>, creates immutable backend and
+frontend releases, activates them, and runs smoke checks.
+USAGE
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+if [[ "${EUID}" -ne 0 ]]; then
+  echo "Run with sudo." >&2
+  exit 1
+fi
+
+target="${1:-}"
+branch="${2:-main}"
+
+case "$target" in
+  stage|prod) ;;
+  *)
+    usage >&2
+    exit 1
+    ;;
+esac
+
+repo_url="${KOMUI_DEPLOY_REPO_URL:-https://github.com/Magnum113/komui.git}"
+source_dir="${KOMUI_DEPLOY_SOURCE_DIR:-/opt/komui/deploy-source}"
+log_dir="${KOMUI_DEPLOY_LOG_DIR:-/var/log/komui/deploy}"
+lock_path="${KOMUI_DEPLOY_LOCK_PATH:-/run/komui-deploy.lock}"
+run_id="$(date -u +%Y%m%dT%H%M%SZ)"
+
+install -d -m 0755 "$log_dir" /opt/komui /var/lib/komui
+log_file="$log_dir/${run_id}-${target}.log"
+
+exec > >(tee -a "$log_file") 2>&1
+
+log() {
+  printf '[%s] %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*"
+}
+
+fail() {
+  log "ERROR: $*"
+  exit 1
+}
+
+(
+  flock -n 9 || fail "another deploy is already running"
+
+  log "deploy_target=$target"
+  log "branch=$branch"
+  log "repo=$repo_url"
+  log "log=$log_file"
+
+  if [[ ! -d "$source_dir/.git" ]]; then
+    log "cloning source into $source_dir"
+    rm -rf "$source_dir"
+    git clone --branch "$branch" "$repo_url" "$source_dir"
+  fi
+
+  cd "$source_dir"
+  git remote set-url origin "$repo_url"
+  git fetch --prune origin "$branch"
+  git checkout -B "$branch" "origin/$branch"
+  git reset --hard "origin/$branch"
+  git clean -ffd
+
+  commit="$(git rev-parse HEAD)"
+  short_commit="${commit:0:12}"
+  release="${run_id}-${target}-${short_commit}"
+  log "git_commit=$commit"
+  log "release=$release"
+
+  current_backend="/opt/komui/current/backend"
+  if [[ -f "$current_backend/src/adminStorefront.ts" || -f "$current_backend/src/adminOrders.ts" ]]; then
+    for required in server/src/adminStorefront.ts server/src/adminOrders.ts; do
+      if [[ ! -f "$source_dir/$required" ]]; then
+        fail "origin/$branch does not contain $required, but current server release has admin storefront/order code. Commit and push the admin changes before deploying from Git."
+      fi
+    done
+  fi
+
+  log "installing backend dependencies"
+  npm --prefix server ci
+
+  log "running backend tests"
+  npm --prefix server test
+
+  log "building backend"
+  npm --prefix server run build
+
+  case "$target" in
+    stage)
+      api_base="http://127.0.0.1:3000"
+      backend_current="/opt/komui/current"
+      backend_unit="komui-backend"
+      backend_ready_url="http://127.0.0.1:3000/health/ready"
+      frontend_releases="/opt/komui/frontend-releases"
+      frontend_current="/var/lib/komui/staging-root"
+      public_smoke_url="https://stage.komui.ru/api/v1/products?limit=1"
+      ;;
+    prod)
+      api_base="http://127.0.0.1:3001"
+      backend_current="/opt/komui/production-current"
+      backend_unit="komui-production-backend"
+      backend_ready_url="http://127.0.0.1:3001/health/ready"
+      frontend_releases="/opt/komui/production-frontend-releases"
+      frontend_current="/var/lib/komui/production-root"
+      public_smoke_url="https://komui.ru/api/v1/products?limit=1"
+      ;;
+  esac
+
+  log "building static frontend from $api_base"
+  KOMUI_API_BASE_URL="$api_base" node scripts/build-products.js
+
+  backend_release_dir="/opt/komui/releases/$release"
+  frontend_release_dir="$frontend_releases/$release"
+  previous_backend="$(readlink -f "$backend_current" 2>/dev/null || true)"
+  previous_frontend="$(readlink -f "$frontend_current" 2>/dev/null || true)"
+
+  log "creating backend release $backend_release_dir"
+  rm -rf "$backend_release_dir"
+  install -d -m 0755 "$backend_release_dir/backend"
+  rsync -a --delete --exclude node_modules "$source_dir/server/" "$backend_release_dir/backend/"
+  npm --prefix "$backend_release_dir/backend" ci --omit=dev
+
+  log "creating frontend release $frontend_release_dir"
+  rm -rf "$frontend_release_dir"
+  install -d -m 0755 "$frontend_release_dir"
+  rsync -a --delete \
+    --include '/assets/***' \
+    --include '/collections/***' \
+    --include '/data/***' \
+    --include '/p/***' \
+    --include '/*.html' \
+    --include '/favicon.svg' \
+    --include '/legal.css' \
+    --include '/robots.txt' \
+    --include '/sitemap.xml' \
+    --exclude '*' \
+    "$source_dir/" "$frontend_release_dir/"
+  chown -R root:root "$backend_release_dir" "$frontend_release_dir"
+
+  log "activating backend"
+  ln -sfnT "$backend_release_dir" "$backend_current"
+  systemctl restart "$backend_unit"
+  for _ in $(seq 1 30); do
+    if systemctl is-active --quiet "$backend_unit" && curl -fsS --max-time 3 "$backend_ready_url" >/dev/null; then
+      break
+    fi
+    sleep 1
+  done
+  curl -fsS --max-time 5 "$backend_ready_url" >/dev/null || {
+    log "backend smoke failed, restoring previous backend"
+    if [[ -n "$previous_backend" && -d "$previous_backend" ]]; then
+      ln -sfnT "$previous_backend" "$backend_current"
+      systemctl restart "$backend_unit" || true
+    fi
+    fail "backend activation failed"
+  }
+
+  log "activating frontend"
+  ln -sfnT "$frontend_release_dir" "$frontend_current"
+  nginx -t
+  systemctl reload nginx
+  smoke_ok=0
+  if curl -fsS --max-time 10 "$public_smoke_url" >/dev/null; then
+    smoke_ok=1
+  elif [[ "$target" == "stage" && -f /etc/komui/staging-access.env ]]; then
+    # shellcheck disable=SC1091
+    . /etc/komui/staging-access.env
+    if curl -fsS --max-time 10 -u "$STAGING_USER:$STAGING_PASSWORD" "$public_smoke_url" >/dev/null; then
+      smoke_ok=1
+    fi
+  fi
+  if [[ "$smoke_ok" -ne 1 ]]; then
+    log "frontend/public smoke failed, restoring previous frontend"
+    if [[ -n "$previous_frontend" && -d "$previous_frontend" ]]; then
+      ln -sfnT "$previous_frontend" "$frontend_current"
+      nginx -t && systemctl reload nginx || true
+    fi
+    fail "frontend activation failed"
+  fi
+
+  if [[ "$target" == "stage" && -x /usr/local/sbin/komui-healthcheck ]]; then
+    /usr/local/sbin/komui-healthcheck
+  fi
+
+  registry="/usr/local/sbin/komui-deployment-registry"
+  if [[ -x "$registry" ]]; then
+    "$registry" record \
+      --component backend \
+      --event deploy \
+      --status success \
+      --release "$release" \
+      --release-path "$backend_release_dir" \
+      --previous-release "$(basename "$previous_backend" 2>/dev/null || true)" \
+      --git-commit "$commit" \
+      --summary "Deploy ${target} from Git via Telegram bot" \
+      --check "git_fetch,backend_tests,backend_build,backend_ready,frontend_build,nginx_reload,public_smoke" \
+      --metadata "target=$target" \
+      --metadata "frontendRelease=$frontend_release_dir" \
+      --no-notify >/dev/null || true
+  fi
+
+  log "DEPLOY_OK target=$target release=$release commit=$commit"
+) 9>"$lock_path"

@@ -1381,6 +1381,63 @@ sudo /usr/local/sbin/komui-deployment-registry list-releases
 
 The registry is included in encrypted backups.
 
+### Telegram deploy bot
+
+Manual releases from GitHub are available through the same Telegram bot that is
+used for alerts.
+
+Server-side files:
+
+```text
+/usr/local/sbin/komui-deploy-bot
+/usr/local/sbin/komui-deploy-from-git
+/usr/local/sbin/komui-deploy-status
+/etc/systemd/system/komui-deploy-bot.service
+/opt/komui/deploy-source
+/var/log/komui/deploy/
+```
+
+Service:
+
+```bash
+sudo systemctl status komui-deploy-bot
+sudo journalctl -u komui-deploy-bot -n 100 --no-pager
+```
+
+Telegram controls:
+
+- `Deploy stage` pulls `origin/main`, builds the project and switches staging
+  backend/frontend releases;
+- `Deploy prod` pulls `origin/main`, builds the project and switches production
+  backend/frontend releases;
+- `Status` shows current Git revision, active releases, core services and
+  public smoke checks.
+
+The bot reads Telegram token, allowed chat id and proxy from:
+
+```text
+/etc/komui/telegram-alerts.env
+```
+
+Telegram access from the Russian server goes through the local Xray SOCKS proxy
+configured as `TELEGRAM_PROXY_URL=socks5h://127.0.0.1:10808`.
+
+The release flow is intentionally manual:
+
+1. changes are committed and pushed from the Mac to `origin/main`;
+2. the owner presses `Deploy stage` or `Deploy prod` in Telegram;
+3. the server fetches `origin/main`, runs tests/build, creates immutable
+   backend and frontend releases, switches symlinks, restarts the service and
+   runs smoke checks;
+4. the bot sends the final deploy result and the tail of the deploy log back to
+   Telegram.
+
+`komui-deploy-from-git` has a safety guard for the admin API migration: if the
+currently active server release contains the admin storefront/order backend and
+`origin/main` does not contain the corresponding source files, deploy is
+blocked. This prevents an accidental release from deleting the admin backend
+routes that are already active on the server.
+
 ### Backend release pattern
 
 Backend is deployed as immutable release:

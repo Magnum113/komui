@@ -1,0 +1,31 @@
+[Unit]
+Description=KOMUI Telegram deploy bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+ExecStart=/usr/local/sbin/komui-deploy-bot
+Restart=always
+RestartSec=5
+TimeoutStopSec=20
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+ReadWritePaths=/opt/komui /var/lib/komui /var/log/komui /run /etc/nginx/sites-enabled /etc/nginx/snippets
+
+StandardOutput=append:/var/log/komui/deploy-bot.log
+StandardError=append:/var/log/komui/deploy-bot-error.log
+
+[Install]
+WantedBy=multi-user.target

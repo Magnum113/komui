@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+source_dir="${KOMUI_DEPLOY_SOURCE_DIR:-/opt/komui/deploy-source}"
+
+echo "KOMUI deploy status"
+echo
+if [[ -d "$source_dir/.git" ]]; then
+  cd "$source_dir"
+  echo "deploy-source: $source_dir"
+  echo "branch: $(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+  echo "local:  $(git rev-parse --short=12 HEAD 2>/dev/null || true)"
+  remote="$(git ls-remote origin refs/heads/main 2>/dev/null | awk '{print substr($1,1,12)}')"
+  echo "origin/main: ${remote:-unknown}"
+else
+  echo "deploy-source: not cloned yet"
+fi
+
+echo
+echo "active releases:"
+echo "stage backend: $(basename "$(readlink -f /opt/komui/current 2>/dev/null || echo none)")"
+echo "stage frontend: $(basename "$(readlink -f /var/lib/komui/staging-root 2>/dev/null || echo none)")"
+echo "prod backend: $(basename "$(readlink -f /opt/komui/production-current 2>/dev/null || echo none)")"
+echo "prod frontend: $(basename "$(readlink -f /var/lib/komui/production-root 2>/dev/null || echo none)")"
+
+echo
+echo "services:"
+for unit in postgresql nginx komui-backend komui-production-backend komui-backup.timer komui-healthcheck.timer komui-deploy-bot; do
+  printf "%s: %s\n" "$unit" "$(systemctl is-active "$unit" 2>/dev/null || echo unknown)"
+done
+
+echo
+echo "smoke:"
+curl -fsS -o /dev/null -w "stage products: %{http_code}\n" -u "$(awk -F= '$1=="STAGING_USER"{u=$2} $1=="STAGING_PASSWORD"{p=$2} END{print u":"p}' /etc/komui/staging-access.env)" "https://stage.komui.ru/api/v1/products?limit=1" || true
+curl -fsS -o /dev/null -w "prod products: %{http_code}\n" "https://komui.ru/api/v1/products?limit=1" || true

@@ -1,0 +1,169 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+import sys
+import time
+from pathlib import Path
+from typing import Any
+
+
+ENV_PATH = Path(os.environ.get("KOMUI_TELEGRAM_ENV", "/etc/komui/telegram-alerts.env"))
+DEPLOY_BIN = Path(os.environ.get("KOMUI_DEPLOY_BIN", "/usr/local/sbin/komui-deploy-from-git"))
+STATUS_BIN = Path(os.environ.get("KOMUI_DEPLOY_STATUS_BIN", "/usr/local/sbin/komui-deploy-status"))
+
+
+def load_env(path: Path) -> dict[str, str]:
+    env: dict[str, str] = {}
+    for raw in path.read_text().splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        env[key.strip()] = value.strip().strip('"').strip("'")
+    return env
+
+
+ENV = load_env(ENV_PATH)
+TOKEN = ENV["TELEGRAM_BOT_TOKEN"]
+ALLOWED_CHAT_ID = str(ENV["TELEGRAM_CHAT_ID"])
+PROXY_URL = ENV.get("TELEGRAM_PROXY_URL", "")
+TIMEOUT_SECONDS = str(int(ENV.get("TELEGRAM_TIMEOUT_SECONDS", "15")))
+API_BASE = f"https://api.telegram.org/bot{TOKEN}"
+
+
+def curl_api(method: str, fields: dict[str, Any], max_time: int | None = None) -> dict[str, Any]:
+    args = ["curl", "-fsS", "--max-time", str(max_time or int(TIMEOUT_SECONDS))]
+    if PROXY_URL:
+        args += ["--proxy", PROXY_URL]
+    args += [f"{API_BASE}/{method}"]
+    for key, value in fields.items():
+        if isinstance(value, (dict, list)):
+            value = json.dumps(value, ensure_ascii=False)
+        args += ["-d", f"{key}={value}"]
+    raw = subprocess.check_output(args, text=True)
+    return json.loads(raw)
+
+
+def send_message(text: str, reply_markup: dict[str, Any] | None = None) -> None:
+    max_len = 3900
+    chunks = [text[i : i + max_len] for i in range(0, len(text), max_len)] or [text]
+    for index, chunk in enumerate(chunks):
+        fields: dict[str, Any] = {
+            "chat_id": ALLOWED_CHAT_ID,
+            "text": chunk,
+            "disable_web_page_preview": "true",
+        }
+        if index == len(chunks) - 1 and reply_markup:
+            fields["reply_markup"] = reply_markup
+        curl_api("sendMessage", fields)
+
+
+def answer_callback(callback_id: str, text: str) -> None:
+    curl_api("answerCallbackQuery", {"callback_query_id": callback_id, "text": text, "show_alert": "false"})
+
+
+def keyboard() -> dict[str, Any]:
+    return {
+        "inline_keyboard": [
+            [
+                {"text": "🚀 Deploy stage", "callback_data": "deploy:stage"},
+                {"text": "🚀 Deploy prod", "callback_data": "deploy:prod"},
+            ],
+            [{"text": "📦 Status", "callback_data": "status"}],
+        ]
+    }
+
+
+def is_allowed_chat(update: dict[str, Any]) -> bool:
+    message = update.get("message") or {}
+    callback = update.get("callback_query") or {}
+    callback_message = callback.get("message") or {}
+    chat = message.get("chat") or callback_message.get("chat") or {}
+    return str(chat.get("id", "")) == ALLOWED_CHAT_ID
+
+
+def run_command(args: list[str], timeout: int) -> tuple[int, str]:
+    proc = subprocess.run(args, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout)
+    return proc.returncode, proc.stdout
+
+
+def handle_deploy(target: str) -> None:
+    label = "stage" if target == "stage" else "prod"
+    send_message(f"⏳ Начинаю deploy `{label}` из `origin/main`.")
+    started = time.time()
+    code, output = run_command([str(DEPLOY_BIN), target, "main"], timeout=1800)
+    elapsed = int(time.time() - started)
+    tail = "\n".join(output.splitlines()[-80:])
+    if code == 0:
+        send_message(f"✅ Deploy `{label}` завершён за {elapsed}s.\n\nПоследние строки:\n{tail}", keyboard())
+    else:
+        send_message(f"❌ Deploy `{label}` упал за {elapsed}s, exit={code}.\n\nПоследние строки:\n{tail}", keyboard())
+
+
+def handle_status() -> None:
+    code, output = run_command([str(STATUS_BIN)], timeout=60)
+    prefix = "📦 Status" if code == 0 else f"⚠️ Status failed exit={code}"
+    send_message(f"{prefix}\n\n{output}", keyboard())
+
+
+def handle_update(update: dict[str, Any]) -> None:
+    if not is_allowed_chat(update):
+        callback = update.get("callback_query") or {}
+        if callback.get("id"):
+            answer_callback(callback["id"], "Not allowed")
+        return
+
+    if "message" in update:
+        text = str(update["message"].get("text") or "").strip()
+        if text in ("/start", "/deploy", "/menu"):
+            send_message("KOMUI deploy bot. Выбери действие:", keyboard())
+        elif text == "/status":
+            handle_status()
+        return
+
+    callback = update.get("callback_query") or {}
+    data = str(callback.get("data") or "")
+    callback_id = str(callback.get("id") or "")
+    if data == "status":
+        answer_callback(callback_id, "Checking status")
+        handle_status()
+    elif data == "deploy:stage":
+        answer_callback(callback_id, "Stage deploy started")
+        handle_deploy("stage")
+    elif data == "deploy:prod":
+        answer_callback(callback_id, "Prod deploy started")
+        handle_deploy("prod")
+
+
+def get_updates(offset: int) -> list[dict[str, Any]]:
+    poll_timeout = 50
+    fields = {
+        "timeout": str(poll_timeout),
+        "offset": str(offset),
+        "allowed_updates": json.dumps(["message", "callback_query"]),
+    }
+    return curl_api("getUpdates", fields, max_time=poll_timeout + 15).get("result", [])
+
+
+def main() -> int:
+    send_message("✅ KOMUI deploy bot запущен.", keyboard())
+    offset = 0
+    while True:
+        try:
+            updates = get_updates(offset)
+            for update in updates:
+                offset = max(offset, int(update["update_id"]) + 1)
+                handle_update(update)
+        except subprocess.CalledProcessError as exc:
+            print(f"telegram_api_error exit={exc.returncode} output={exc.output}", file=sys.stderr, flush=True)
+            time.sleep(5)
+        except Exception as exc:
+            print(f"bot_error {type(exc).__name__}: {exc}", file=sys.stderr, flush=True)
+            time.sleep(5)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
