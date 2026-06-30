@@ -115,7 +115,7 @@ legacy_origin_reachable() {
 
 write_server_snippet() {
   install -o root -g root -m 0644 /dev/stdin "$RUNTIME_SNIPPET" <<'NGINX'
-root /var/lib/komui/staging-root;
+root /var/lib/komui/production-root;
 index index.html;
 
 auth_basic off;
@@ -131,8 +131,20 @@ location ^~ /.well-known/acme-challenge/ {
     default_type text/plain;
 }
 
+location = /api/v1/webhooks/tbank {
+    proxy_pass http://127.0.0.1:3001/v1/webhooks/tbank;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_connect_timeout 3s;
+    proxy_read_timeout 30s;
+    proxy_send_timeout 30s;
+}
+
 location /api/ {
-    proxy_pass http://127.0.0.1:3000/;
+    proxy_pass http://127.0.0.1:3001/;
     proxy_http_version 1.1;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;

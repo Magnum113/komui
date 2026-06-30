@@ -23,10 +23,41 @@
 Успешное завершение этапа 7, наличие рабочего staging или отсутствие замечаний
 не дают автоматического разрешения на этот этап.
 
+## Подготовка, выполненная до cutover
+
+30 июня 2026 года выполнена безопасная подготовка production candidate без
+переключения live `komui.ru`:
+
+- `stage.komui.ru` оставлен отдельным тестовым контуром;
+- создана отдельная БД `komui_production`;
+- создан env `/etc/komui/backend-production.env`;
+- поднят systemd service `komui-production-backend` на `127.0.0.1:3001`;
+- создан separate static root `/var/lib/komui/production-root`;
+- Nginx runtime snippet для production указывает на production root/backend;
+- включён HTTP-only pre-cutover vhost для Host `komui.ru` / `www.komui.ru`;
+- HTTPS vhost подготовлен, но не включён, потому что cert для `komui.ru` можно
+  выпустить только после DNS switch или DNS-01 validation;
+- helper для TLS/cert включения:
+  `/usr/local/sbin/komui-production-issue-cert-and-enable`.
+
+Проверено на loopback:
+
+```text
+http://127.0.0.1:3001/health/ready                      HTTP 200
+Host komui.ru http://127.0.0.1/                         HTTP 200
+Host komui.ru http://127.0.0.1/checkout                 HTTP 200
+Host komui.ru http://127.0.0.1/api/v1/products?limit=1  HTTP 200
+```
+
+Это не является production cutover. DNS, production webhook Т-Банка и Vercel /
+Supabase live-контур не изменялись.
+
 ## До окна
 
 - Объявить maintenance window.
 - Проверить demo/test в последний раз.
+- Обновить или явно принять `komui_production`; текущая БД является clone
+  текущего staging и содержит staging transactional rows.
 - Зафиксировать source row counts.
 - Проверить свободный диск и backup destination.
 - Подготовить maintenance page.

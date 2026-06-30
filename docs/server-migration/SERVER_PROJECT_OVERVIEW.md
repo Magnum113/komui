@@ -146,6 +146,51 @@ Backend обновлён:
   `/v1/products?limit=1` HTTP `200`;
 - временная БД удалена; активных `komui_restore_drill_*` БД не осталось.
 
+#### 30 июня 2026 — production candidate prepared without cutover
+
+Подготовлен отдельный production candidate-контур на том же сервере, не
+затрагивающий `stage.komui.ru` и текущий live `komui.ru` на Vercel:
+
+- создана отдельная БД `komui_production` из текущего `komui_staging`;
+- production backend env: `/etc/komui/backend-production.env`;
+- production backend service: `komui-production-backend`;
+- production backend bind: `127.0.0.1:3001`;
+- production backend release symlink:
+  `/opt/komui/production-current -> /opt/komui/releases/20260630185629-admin-storefront-orders-fix`;
+- production static root:
+  `/var/lib/komui/production-root -> /opt/komui/production-frontend-releases/20260630T160446Z-production-candidate`;
+- Nginx pre-cutover HTTP vhost enabled for Host `komui.ru` / `www.komui.ru`;
+- Nginx production runtime snippet points to
+  `/var/lib/komui/production-root` and backend `127.0.0.1:3001`;
+- TLS vhost `/etc/nginx/sites-available/komui-production-switch` is prepared
+  but not enabled, because the real `komui.ru` certificate cannot be issued
+  until DNS points to this server or DNS-01 TXT validation is performed.
+
+Verified locally on the server through loopback Host header:
+
+```text
+Host komui.ru http://127.0.0.1/                         HTTP 200
+Host komui.ru http://127.0.0.1/checkout                 HTTP 200
+Host komui.ru http://127.0.0.1/api/v1/products?limit=1  HTTP 200
+http://127.0.0.1:3001/health/ready                      HTTP 200
+```
+
+Current production candidate safety defaults:
+
+```text
+NODE_ENV=production
+RUNTIME_MODE=server
+SITE_URL=https://komui.ru
+PUBLIC_API_BASE_URL=https://komui.ru/api
+TBANK_MODE=demo
+TBANK_MOCK_PAYMENTS=false
+CDEK_MOCK=false
+CDEK_CREATE_SHIPMENTS=false
+```
+
+Before real cutover, production T-Bank credentials/webhook and production CDEK
+auto-create policy must be confirmed separately.
+
 ## 2. Высокоуровневая архитектура
 
 ```text
@@ -232,10 +277,12 @@ Backend запускается из:
 ```text
 /opt/komui/frontend-releases/
 /var/lib/komui/staging-root -> /opt/komui/frontend-releases/20260627114138-stage6-frontend
+/opt/komui/production-frontend-releases/
+/var/lib/komui/production-root -> /opt/komui/production-frontend-releases/20260630T160446Z-production-candidate
 ```
 
-`/var/lib/komui/staging-root` — это static root для Nginx staging и будущего
-production server mode.
+`/var/lib/komui/staging-root` — static root для Nginx staging.
+`/var/lib/komui/production-root` — static root для production candidate.
 
 ### Runtime state
 
@@ -249,6 +296,7 @@ production server mode.
 
 ```text
 /etc/komui/backend.env
+/etc/komui/backend-production.env
 /etc/komui/ozon-sync.env
 /etc/komui/staging-access.env
 /etc/komui/yandex-backup.env
@@ -263,7 +311,8 @@ Important runtime permissions:
 
 ```text
 /etc/komui                  root:komui 0710
-/etc/komui/backend.env      root:root  0600
+/etc/komui/backend.env      root:komui 0640
+/etc/komui/backend-production.env root:komui 0640
 /etc/komui/ozon-sync.env    root:komui 0640
 ```
 
@@ -279,14 +328,20 @@ backend process at request time, so user `komui` needs execute permission on
 /etc/nginx/sites-enabled/komui-staging
 
 /etc/nginx/sites-available/komui-production-switch
+/etc/nginx/sites-available/komui-production-http-precutover
+/etc/nginx/sites-enabled/komui-production-http-precutover
 /etc/nginx/snippets/komui-production-runtime.conf
 
 /etc/nginx/sites-available/api.komui.ru
 /etc/nginx/sites-enabled/api.komui.ru
 ```
 
-`komui-production-switch` сейчас не включён в `sites-enabled`, поэтому live
-`komui.ru` не обслуживается этим сервером.
+`komui-production-http-precutover` включён только для HTTP loopback/pre-cutover
+проверок и ACME webroot. Live `komui.ru` всё ещё не обслуживается этим сервером,
+пока DNS указывает на Vercel.
+
+`komui-production-switch` — будущий HTTPS vhost. Он сейчас не включён в
+`sites-enabled`, потому что на сервере ещё нет certificate для `komui.ru`.
 
 ## 5. Git repository layout
 
@@ -384,6 +439,13 @@ Prepared but not enabled:
 /etc/nginx/sites-available/komui-production-switch
 ```
 
+Enabled pre-cutover HTTP candidate:
+
+```text
+/etc/nginx/sites-available/komui-production-http-precutover
+/etc/nginx/sites-enabled/komui-production-http-precutover
+```
+
 It is designed for the future stage 8 production cutover. It serves:
 
 ```text
@@ -405,7 +467,8 @@ The runtime snippet can be changed by `komui-traffic-switch` to either:
 Currently:
 
 ```text
-productionVhostEnabled=false
+productionHttpPrecutoverEnabled=true
+productionTlsVhostEnabled=false
 mode=server
 state=prepared
 ```
@@ -414,10 +477,22 @@ So live `komui.ru` is unaffected.
 
 ## 7. Backend service
 
-Systemd unit:
+Staging systemd unit:
 
 ```text
 /etc/systemd/system/komui-backend.service
+bind: 127.0.0.1:3000
+env: /etc/komui/backend.env
+database: komui_staging
+```
+
+Production candidate systemd unit:
+
+```text
+/etc/systemd/system/komui-production-backend.service
+bind: 127.0.0.1:3001
+env: /etc/komui/backend-production.env
+database: komui_production
 ```
 
 Runs as:
@@ -1064,6 +1139,7 @@ Files:
 ```text
 /usr/local/sbin/komui-traffic-switch
 /usr/local/sbin/komui-traffic-switch-apply
+/usr/local/sbin/komui-production-issue-cert-and-enable
 /etc/systemd/system/komui-traffic-switch.service
 /etc/systemd/system/komui-traffic-switch.path
 /var/lib/komui/traffic-switch/request.json
@@ -1077,7 +1153,8 @@ Current state:
 ```text
 mode=server
 state=prepared
-productionVhostEnabled=false
+productionHttpPrecutoverEnabled=true
+productionTlsVhostEnabled=false
 legacyOriginConfigured=true
 nginxTest=passed
 LEGACY_ORIGIN=https://komui.vercel.app
@@ -1090,6 +1167,16 @@ sudo /usr/local/sbin/komui-traffic-switch server "reason"
 sudo /usr/local/sbin/komui-traffic-switch legacy "reason"
 sudo python3 -m json.tool /var/lib/komui/traffic-switch/status.json
 ```
+
+TLS enable command after DNS points `komui.ru` and `www.komui.ru` to
+`89.111.152.112`:
+
+```bash
+sudo /usr/local/sbin/komui-production-issue-cert-and-enable
+```
+
+The script refuses to issue a certificate if DNS does not resolve both names to
+the server IP.
 
 Important limitation:
 
@@ -1337,15 +1424,18 @@ approval.
 Before cutover:
 
 1. Complete remaining Ozon import/dual-write acceptance.
-2. Run one more fresh encrypted backup immediately before cutover.
-3. Run or reference the latest restore drill; last successful drill:
+2. Refresh or explicitly accept `komui_production`; current DB was cloned from
+   staging on 2026-06-30 and contains staging test transactional rows.
+3. Run one more fresh encrypted backup immediately before cutover.
+4. Run or reference the latest restore drill; last successful drill:
    2026-06-30 from `komui-backup-20260630T145422Z.tar.gz.gpg`.
-4. Decide final Ozon dual-write policy.
-5. Confirm production T-Bank credentials/webhook settings.
-6. Decide production CDEK shipment policy separately from staging.
-7. Confirm DNS TTL and rollback procedure.
-8. Enable production vhost only during cutover.
-9. Issue/check production TLS certificate for `komui.ru`.
+5. Decide final Ozon dual-write policy.
+6. Confirm production T-Bank credentials/webhook settings.
+7. Decide production CDEK shipment policy separately from staging; candidate
+   currently has `CDEK_CREATE_SHIPMENTS=false`.
+8. Confirm DNS TTL and rollback procedure.
+9. After DNS points to this server, issue/check production TLS certificate for
+   `komui.ru` and enable TLS vhost.
 10. Switch T-Bank webhook only after DNS/HTTPS readiness.
 
 Cutover runbook:
@@ -1364,13 +1454,17 @@ Current known limitations:
    is disabled.
 3. Fully new Ozon products without mapping are not auto-published.
 4. T-Bank production mode/webhook is not switched; staging uses demo mode.
-5. CDEK real shipment creation is enabled on staging, but production policy must
-   be confirmed separately before cutover.
-6. External product images still use Ozon CDN.
-7. Google Fonts are not fully localized.
-8. `api/supabase-function.js` remains for legacy Vercel production compatibility.
-9. Production vhost for `komui.ru` is prepared but not enabled.
-10. If the self-hosted server is down after cutover, rollback requires DNS
+5. Production candidate uses T-Bank demo mode until real production credentials
+   are provided/confirmed.
+6. CDEK real shipment creation is enabled on staging, but production candidate
+   has `CDEK_CREATE_SHIPMENTS=false`; production policy must be confirmed
+   separately before cutover.
+7. External product images still use Ozon CDN.
+8. Google Fonts are not fully localized.
+9. `api/supabase-function.js` remains for legacy Vercel production compatibility.
+10. Production HTTPS vhost for `komui.ru` is prepared but not enabled until DNS
+    and certificate issuance.
+11. If the self-hosted server is down after cutover, rollback requires DNS
     change at the DNS provider.
 
 ## 21. Quick orientation for a new developer

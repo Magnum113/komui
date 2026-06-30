@@ -1,0 +1,10 @@
+server {
+    listen 80;
+    listen [::]:80;
+    server_name komui.ru www.komui.ru;
+
+    access_log /var/log/nginx/komui.production.precutover.access.log;
+    error_log /var/log/nginx/komui.production.precutover.error.log warn;
+
+    include /etc/nginx/snippets/komui-production-runtime.conf;
+}

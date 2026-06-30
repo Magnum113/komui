@@ -12,7 +12,13 @@ Production cutover относится к этапу 8 и не входит в st
 - [ ] External backup target работает.
 - [ ] Monitoring/alerting работает.
 - [ ] T-Bank demo payment/webhook E2E пройден.
-- [ ] CDEK quote и shipment policy подтверждены.
+- [ ] Production candidate backend `komui-production-backend` active.
+- [ ] Production candidate отвечает на `127.0.0.1:3001/health/ready`.
+- [ ] Production candidate отвечает через Nginx по Host header `komui.ru`.
+- [ ] Production DB `komui_production` обновлена свежим snapshot или явно
+  принята как есть.
+- [ ] Production T-Bank mode/credentials/webhook подтверждены.
+- [ ] CDEK quote и production shipment policy подтверждены.
 - [ ] Ozon import dry-run/job готов или явно исключён из cutover.
 - [ ] Подготовлен rollback window.
 - [ ] Подтверждены текущие DNS TTL.
@@ -51,6 +57,34 @@ https://stage.komui.ru/checkout
 https://stage.komui.ru/api/v1/products?limit=1
 ```
 
+## Финальные проверки production candidate
+
+Эти проверки не переключают live `komui.ru`; они используют loopback и Host
+header на сервере.
+
+```bash
+curl -fsS http://127.0.0.1:3001/health/ready
+curl -fsS -H 'Host: komui.ru' http://127.0.0.1/ >/dev/null
+curl -fsS -H 'Host: komui.ru' http://127.0.0.1/checkout >/dev/null
+curl -fsS -H 'Host: komui.ru' 'http://127.0.0.1/api/v1/products?limit=1' >/dev/null
+sudo systemctl is-active komui-production-backend
+```
+
+Проверить non-secret env:
+
+```bash
+sudo awk -F= '$1 ~ /^(NODE_ENV|RUNTIME_MODE|HOST|PORT|SITE_URL|PUBLIC_API_BASE_URL|TBANK_MODE|TBANK_MOCK_PAYMENTS|CDEK_MOCK|CDEK_CREATE_SHIPMENTS)$/ {print $1"="$2}' /etc/komui/backend-production.env
+```
+
+Текущие safe defaults production candidate:
+
+```text
+TBANK_MODE=demo
+CDEK_CREATE_SHIPMENTS=false
+```
+
+Перед реальным cutover эти значения нужно подтвердить или заменить.
+
 ## DNS cutover
 
 Не выполнять в staging.
@@ -62,14 +96,27 @@ https://stage.komui.ru/api/v1/products?limit=1
 3. Если используется `www.komui.ru`, переключить его согласно текущей DNS
    модели: A/AAAA/CNAME.
 4. Дождаться propagation.
-5. Выпустить/проверить production TLS certificate на новом сервере.
+5. Выпустить/проверить production TLS certificate на новом сервере:
+
+```bash
+sudo /usr/local/sbin/komui-production-issue-cert-and-enable
+```
+
 6. Проверить `https://komui.ru`.
+
+Скрипт выпуска TLS откажется работать, если `komui.ru` и `www.komui.ru` ещё не
+резолвятся в `89.111.152.112`.
 
 ## Webhook cutover
 
 Не выполнять до DNS/HTTPS готовности.
 
-1. В T-Bank dashboard заменить webhook URL на новый production endpoint.
+1. В T-Bank dashboard заменить webhook URL на новый production endpoint:
+
+```text
+https://komui.ru/api/v1/webhooks/tbank
+```
+
 2. Отправить test webhook.
 3. Проверить backend logs и DB status.
 4. Зафиксировать timestamp.

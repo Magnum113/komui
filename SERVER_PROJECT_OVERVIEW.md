@@ -20,3 +20,7 @@ structured logs всего CDEK shipment flow. На staging включено
 создан свежий encrypted backup
 `/var/backups/komui/daily/komui-backup-20260630T145422Z.tar.gz.gpg`,
 загружен в Yandex Object Storage и успешно восстановлен в restore drill.
+Также подготовлен отдельный production candidate без cutover: БД
+`komui_production`, service `komui-production-backend` на `127.0.0.1:3001`,
+static root `/var/lib/komui/production-root` и HTTP pre-cutover vhost для
+`komui.ru/www.komui.ru`. TLS vhost подготовлен, но не включён до DNS/cert.

@@ -23,5 +23,8 @@ server {
     include /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
+    access_log /var/log/nginx/komui.production.access.log;
+    error_log /var/log/nginx/komui.production.error.log warn;
+
     include /etc/nginx/snippets/komui-production-runtime.conf;
 }
