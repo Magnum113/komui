@@ -16,4 +16,7 @@ payment: stale payment draft очищается, а checkout создаёт но
 structured logs всего CDEK shipment flow. На staging включено
 `CDEK_CREATE_SHIPMENTS=true`; заказ `KOM-879480584` создан в CDEK с номером
 `10288069122`. Backend также подтягивает `cdek_number` follow-up запросом, если
-первичный ответ CDEK пришёл как `ACCEPTED` без номера.
+первичный ответ CDEK пришёл как `ACCEPTED` без номера. После этих изменений
+создан свежий encrypted backup
+`/var/backups/komui/daily/komui-backup-20260630T145422Z.tar.gz.gpg`,
+загружен в Yandex Object Storage и успешно восстановлен в restore drill.

@@ -126,6 +126,26 @@ Backend обновлён:
 - DB для `KOM-879480584` обновлена: `status=created`,
   `cdek_number=10288069122`.
 
+#### 30 июня 2026 — fresh backup and restore drill
+
+После последних backend/CDEK изменений выполнена свежая проверка backup/restore:
+
+- создан encrypted backup
+  `/var/backups/komui/daily/komui-backup-20260630T145422Z.tar.gz.gpg`;
+- размер архива: `40 267 466 bytes`;
+- локальный `.sha256` проверен;
+- archive и `.sha256` загружены в Yandex Object Storage:
+  `s3://komui-backups/komui/stage/`;
+- restore drill выполнен во временную БД
+  `komui_restore_drill_20260630145919`;
+- восстановлено `31` public tables;
+- контрольные row counts: `merch_storefront_products=31`,
+  `merch_customer_orders=13`, `merch_payment_attempts=13`,
+  `merch_cdek_shipments=3`;
+- временный backend на restored DB вернул `/health/ready` HTTP `200` и
+  `/v1/products?limit=1` HTTP `200`;
+- временная БД удалена; активных `komui_restore_drill_*` БД не осталось.
+
 ## 2. Высокоуровневая архитектура
 
 ```text
@@ -911,6 +931,7 @@ Daily examples:
 ```text
 /var/backups/komui/daily/komui-backup-20260627T120725Z.tar.gz.gpg
 /var/backups/komui/daily/komui-backup-20260627T143747Z.tar.gz.gpg
+/var/backups/komui/daily/komui-backup-20260630T145422Z.tar.gz.gpg
 ```
 
 Backup includes:
@@ -941,6 +962,14 @@ Credentials:
 
 ```text
 /etc/komui/yandex-backup.env
+```
+
+Latest verified backup/restore:
+
+```text
+archive: /var/backups/komui/daily/komui-backup-20260630T145422Z.tar.gz.gpg
+external: s3://komui-backups/komui/stage/komui-backup-20260630T145422Z.tar.gz.gpg
+restore drill: OK, 2026-06-30, 31 public tables, temp backend HTTP 200
 ```
 
 Useful commands:
@@ -1307,12 +1336,13 @@ approval.
 
 Before cutover:
 
-1. Complete manual staging acceptance.
-2. Run fresh encrypted backup.
-3. Run restore drill after the latest backend/ops changes.
-4. Decide Ozon dual-write policy.
-5. Run T-Bank demo payment/webhook E2E.
-6. Decide CDEK shipment creation policy.
+1. Complete remaining Ozon import/dual-write acceptance.
+2. Run one more fresh encrypted backup immediately before cutover.
+3. Run or reference the latest restore drill; last successful drill:
+   2026-06-30 from `komui-backup-20260630T145422Z.tar.gz.gpg`.
+4. Decide final Ozon dual-write policy.
+5. Confirm production T-Bank credentials/webhook settings.
+6. Decide production CDEK shipment policy separately from staging.
 7. Confirm DNS TTL and rollback procedure.
 8. Enable production vhost only during cutover.
 9. Issue/check production TLS certificate for `komui.ru`.
@@ -1328,12 +1358,14 @@ docs/server-migration/CUTOVER_RUNBOOK.md
 
 Current known limitations:
 
-1. Manual staging acceptance is not formally completed.
+1. Checkout/payment/CDEK staging acceptance is completed; Ozon import/dual-write
+   final acceptance is still open.
 2. Ozon import writes only local server PostgreSQL by default; Supabase dual-write
    is disabled.
 3. Fully new Ozon products without mapping are not auto-published.
-4. T-Bank demo payment/webhook E2E still needs manual acceptance.
-5. CDEK real shipment creation is disabled.
+4. T-Bank production mode/webhook is not switched; staging uses demo mode.
+5. CDEK real shipment creation is enabled on staging, but production policy must
+   be confirmed separately before cutover.
 6. External product images still use Ozon CDN.
 7. Google Fonts are not fully localized.
 8. `api/supabase-function.js` remains for legacy Vercel production compatibility.

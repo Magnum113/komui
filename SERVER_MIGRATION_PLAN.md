@@ -16,10 +16,10 @@
   по умолчанию не пишет обратно в Supabase. Единственное допустимое исключение —
   отдельно подтверждённый владельцем admin job для dual-write импорта новых
   товаров из Ozon.
-- В staging по умолчанию используются safe-флаги. Если владелец вручную
-  передал реальные credentials интеграций, тесты не должны создавать реальные
-  отправления; создание/оплата реального платежа выполняется только вручную и
-  осознанно.
+- В staging по умолчанию используются safe-флаги. Реальные внешние side effects
+  включаются только после явного подтверждения владельца. На 30 июня 2026 года
+  владелец разрешил T-Bank demo payments и реальные CDEK shipments на
+  `stage.komui.ru`.
 - Production не изменяется без backup и проверенного rollback.
 - Подключение к серверу начинается с read-only аудита.
 - Секреты не передаются в чат и не сохраняются в Git.
@@ -47,9 +47,9 @@
 | 2 | [Подготовка серверной платформы](docs/server-migration/02-server-foundation.md) | Защищённый Ubuntu, Nginx, Node.js, PostgreSQL 17, systemd | Завершён — GO с ограничениями |
 | 3 | [Тестовый перенос PostgreSQL](docs/server-migration/03-database-rehearsal.md) | Воспроизводимый снимок и restore всех данных без Supabase | Завершён — GO |
 | 4 | [Backend и API каталога](docs/server-migration/04-backend-and-catalog.md) | Собственный API, DB-слой, каталог и health checks | Завершён — GO |
-| 5 | [Checkout, Т-Банк, СДЭК, промокоды и admin jobs](docs/server-migration/05-checkout-integrations.md) | Полностью перенесённый платёжно-доставочный контур и управляемая синхронизация Ozon | Частично завершён — checkout/CDEK/T-Bank GO в staging; Ozon dual-write заблокирован |
+| 5 | [Checkout, Т-Банк, СДЭК, промокоды и admin jobs](docs/server-migration/05-checkout-integrations.md) | Полностью перенесённый платёжно-доставочный контур и управляемая синхронизация Ozon | Частично завершён — checkout/T-Bank/CDEK GO в staging; Ozon dual-write/final import acceptance ожидаются |
 | 6 | [Frontend, SEO и статические ресурсы](docs/server-migration/06-frontend-seo-assets.md) | Отсутствие runtime-зависимости от Supabase/Vercel | Завершён — GO с ограничениями |
-| 7 | [Изолированный staging, backup и тестовая приёмка](docs/server-migration/07-staging-and-verification.md) | Рабочая тестовая версия на сервере при неизменном production | Частично завершён — infra/backup/reboot/alerting GO; ручная приёмка и Ozon job ожидаются |
+| 7 | [Изолированный staging, backup и тестовая приёмка](docs/server-migration/07-staging-and-verification.md) | Рабочая тестовая версия на сервере при неизменном production | Частично завершён — infra/backup/restore/alerting и checkout/payment/CDEK GO; Ozon acceptance и cutover decision ожидаются |
 | — | **Обязательная остановка и ручное решение владельца** | `ОСТАТЬСЯ НА STAGING` или явно разрешить этап 8 | — |
 | 8 | [Production cutover — только по отдельному разрешению](docs/server-migration/08-production-cutover.md) | Production работает на новом сервере | Заблокирован до подтверждения |
 | 9 | [Стабилизация и отключение старой инфраструктуры](docs/server-migration/09-stabilization-and-decommission.md) | Supabase/Vercel безопасно выведены из эксплуатации | Не начат |
@@ -97,10 +97,11 @@
 - исключение — отдельно включённая владельцем admin-команда dual-write импорта
   товаров из Ozon, которая должна писать и в текущий Supabase, и в серверную БД
   через идемпотентный job с журналом и retry;
-- staging backend настроен с переданными владельцем T-Bank credentials; тестовую
-  оплату запускать только вручную и осознанно;
-- реальное создание отправления СДЭК отключено через
-  `CDEK_CREATE_SHIPMENTS=false`;
+- staging backend настроен с переданными владельцем T-Bank demo credentials;
+  тестовую оплату запускать только вручную и осознанно;
+- реальное создание отправления СДЭК включено на staging по явному разрешению
+  владельца: `CDEK_CREATE_SHIPMENTS=true`; любой оплаченный staging-заказ может
+  создать реальное отправление в CDEK;
 - любые тестовые записи остаются только в staging-БД.
 
 Можно полностью завершить этапы 0–7, показать реализацию на сервере и остановиться на этом состоянии на любой срок. Этапы 8–9 являются отдельным решением о миграции production.
