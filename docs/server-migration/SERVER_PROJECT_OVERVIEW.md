@@ -94,6 +94,23 @@ Backend release `20260630-cdek-shipments-server` добавил создание
 - `payment-result.html` при failed-экране очищает только payment draft/session,
   сохраняя корзину и введённые данные.
 
+#### 30 июня 2026 — structured logs для CDEK shipment flow
+
+Добавлены подробные structured logs в T-Bank webhook и CDEK shipment service:
+
+- webhook пишет `orderNumber`, `paymentId`, `providerStatus`, рассчитанный
+  `nextStatus`, текущий статус заказа и `CDEK_CREATE_SHIPMENTS`;
+- если создание CDEK shipment пропущено, лог содержит явный reason
+  `cdek_create_shipments_disabled`;
+- CDEK service пишет этапы `loaded order`, `package snapshot built`,
+  `request prepared`, `DB row inserted/reset`, `CDEK order API request started`
+  и `finished/failed`;
+- в логах намеренно нет ФИО, телефона, полного CDEK payload или секретов.
+
+Текущий важный факт по staging: `CDEK_CREATE_SHIPMENTS=false`, поэтому paid
+orders не создают реальные заказы в CDEK автоматически до явного включения
+этого флага.
+
 ## 2. Высокоуровневая архитектура
 
 ```text

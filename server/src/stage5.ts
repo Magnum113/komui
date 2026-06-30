@@ -1061,11 +1061,38 @@ export async function handleTbankWebhook(
   }
 
   const nextStatus = orderStatus(providerStatus);
+  request.log.info(
+    {
+      paymentId,
+      orderId: order.id,
+      orderNumber: order.order_number,
+      providerStatus,
+      nextStatus,
+      currentOrderStatus: order.status,
+      amount,
+      expectedAmount: order.total_amount,
+      cdekCreateShipments: config.CDEK_CREATE_SHIPMENTS,
+      cdekMock: config.CDEK_MOCK,
+    },
+    "T-Bank webhook payment status resolved",
+  );
   if (nextStatus) {
     if (
       providerStatus === "CONFIRMED" &&
       (amount === null || amount !== order.total_amount)
     ) {
+      request.log.warn(
+        {
+          paymentId,
+          orderId: order.id,
+          orderNumber: order.order_number,
+          providerStatus,
+          amount,
+          expectedAmount: order.total_amount,
+          currentOrderStatus: order.status,
+        },
+        "T-Bank webhook amount mismatch; payment moved to review",
+      );
       if (!["paid", "partially_refunded", "refunded"].includes(order.status)) {
         await db.query(
           `
@@ -1085,6 +1112,16 @@ export async function handleTbankWebhook(
         );
       }
     } else if (canApplyStatus(order.status, nextStatus)) {
+      request.log.info(
+        {
+          paymentId,
+          orderId: order.id,
+          orderNumber: order.order_number,
+          currentOrderStatus: order.status,
+          nextStatus,
+        },
+        "T-Bank webhook applying order status",
+      );
       await db.query(
         `
           update public.merch_customer_orders
@@ -1098,15 +1135,36 @@ export async function handleTbankWebhook(
       if (nextStatus === "paid") {
         await markPromoRedemptionRedeemed(db, order.id);
         if (!config.CDEK_CREATE_SHIPMENTS) {
-          request.log.info({ orderId: order.id }, "CDEK shipment creation disabled");
+          request.log.warn(
+            {
+              orderId: order.id,
+              orderNumber: order.order_number,
+              paymentId,
+              providerStatus,
+              reason: "cdek_create_shipments_disabled",
+              cdekCreateShipments: config.CDEK_CREATE_SHIPMENTS,
+              cdekMock: config.CDEK_MOCK,
+            },
+            "CDEK shipment creation skipped after paid webhook",
+          );
         } else {
           try {
-            const shipment = await createCdekShipmentForOrder({ config, db }, {
+            request.log.info(
+              {
+                orderId: order.id,
+                orderNumber: order.order_number,
+                paymentId,
+                providerStatus,
+              },
+              "CDEK shipment creation requested after paid webhook",
+            );
+            const shipment = await createCdekShipmentForOrder({ config, db, logger: request.log }, {
               orderId: order.id,
             });
             request.log.info(
               {
                 orderId: order.id,
+                orderNumber: order.order_number,
                 cdekShipmentId: shipment?.id ?? null,
                 cdekShipmentStatus: shipment?.status ?? null,
                 cdekNumber: shipment?.cdek_number ?? null,
@@ -1115,7 +1173,7 @@ export async function handleTbankWebhook(
             );
           } catch (error) {
             request.log.error(
-              { err: error, orderId: order.id },
+              { err: error, orderId: order.id, orderNumber: order.order_number },
               "CDEK shipment creation failed",
             );
           }
@@ -1125,6 +1183,18 @@ export async function handleTbankWebhook(
       } else if (nextStatus === "refunded") {
         await releasePromoRedemption(db, order.id, "canceled");
       }
+    } else {
+      request.log.info(
+        {
+          paymentId,
+          orderId: order.id,
+          orderNumber: order.order_number,
+          currentOrderStatus: order.status,
+          nextStatus,
+          reason: "status_transition_not_allowed",
+        },
+        "T-Bank webhook order status transition skipped",
+      );
     }
   }
 

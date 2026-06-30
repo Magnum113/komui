@@ -65,6 +65,7 @@ type CreateShipmentInput = {
 type HandlerContext = {
   config: AppConfig;
   db: Db;
+  logger?: Pick<FastifyRequest["log"], "info" | "warn" | "error">;
 };
 
 const retryableShipmentStatuses = new Set<ShipmentStatus>([
@@ -382,10 +383,47 @@ export async function createCdekShipmentForOrder(
   input: CreateShipmentInput,
 ): Promise<ShipmentRow | null> {
   const order = await loadOrder(context.db, input);
-  const found = await existingShipment(context.db, order.id);
-  if (found && !retryableShipmentStatuses.has(found.status)) return found;
+  context.logger?.info(
+    {
+      orderId: order.id,
+      orderNumber: order.order_number,
+      orderStatus: order.status,
+      inputOrderId: input.orderId ?? null,
+      inputOrderNumber: input.orderNumber ?? null,
+      cdekCreateShipments: context.config.CDEK_CREATE_SHIPMENTS,
+      cdekMock: context.config.CDEK_MOCK,
+    },
+    "CDEK shipment flow loaded order",
+  );
 
-  if (!["paid", "authorized"].includes(order.status)) return null;
+  const found = await existingShipment(context.db, order.id);
+  if (found && !retryableShipmentStatuses.has(found.status)) {
+    context.logger?.info(
+      {
+        orderId: order.id,
+        orderNumber: order.order_number,
+        shipmentId: found.id,
+        shipmentStatus: found.status,
+        cdekNumber: found.cdek_number,
+        reason: "existing_non_retryable_shipment",
+      },
+      "CDEK shipment flow returning existing shipment",
+    );
+    return found;
+  }
+
+  if (!["paid", "authorized"].includes(order.status)) {
+    context.logger?.warn(
+      {
+        orderId: order.id,
+        orderNumber: order.order_number,
+        orderStatus: order.status,
+        reason: "order_not_paid_or_authorized",
+      },
+      "CDEK shipment flow skipped",
+    );
+    return null;
+  }
 
   const items = await loadOrderItems(context.db, order.id);
   const packages = buildCdekPackages(
@@ -407,6 +445,16 @@ export async function createCdekShipmentForOrder(
     }),
     context.config.CDEK_PACKING_HEIGHT_EXTRA_CM,
   );
+  context.logger?.info(
+    {
+      orderId: order.id,
+      orderNumber: order.order_number,
+      itemCount: items.length,
+      packageCount: packages.length,
+      totalPackageWeight: packages.reduce((sum, pack) => sum + pack.weight, 0),
+    },
+    "CDEK shipment package snapshot built",
+  );
 
   const cdekMetadata = nestedMetadata(metadataObject(order.metadata), "cdek");
   let tariffCode =
@@ -417,6 +465,14 @@ export async function createCdekShipmentForOrder(
   if (!tariffCode) {
     const deliveryCityCode = numberValue(cdekMetadata.delivery_city_code);
     if (!deliveryCityCode) {
+      context.logger?.error(
+        {
+          orderId: order.id,
+          orderNumber: order.order_number,
+          reason: "delivery_city_code_missing",
+        },
+        "CDEK shipment flow cannot resolve tariff",
+      );
       throw new HttpError(
         400,
         "cdek_delivery_city_code_missing",
@@ -441,10 +497,32 @@ export async function createCdekShipmentForOrder(
     comment: `KOMUI ${order.order_number}`,
   };
   const requestPayload = buildCdekOrderRequest(context.config, payload);
+  context.logger?.info(
+    {
+      orderId: order.id,
+      orderNumber: order.order_number,
+      tariffCode,
+      tariffName,
+      shipmentPoint: requestPayload.shipment_point,
+      deliveryPoint: requestPayload.delivery_point,
+      packageCount: packages.length,
+      retryingShipmentId: found?.id ?? null,
+    },
+    "CDEK shipment request prepared",
+  );
 
   let shipment = found;
   if (!shipment) {
     try {
+      context.logger?.info(
+        {
+          orderId: order.id,
+          orderNumber: order.order_number,
+          tariffCode,
+          deliveryPoint: requestPayload.delivery_point,
+        },
+        "CDEK shipment DB row insert started",
+      );
       shipment = await insertCreatingShipment(context, {
         order,
         tariffCode,
@@ -452,10 +530,29 @@ export async function createCdekShipmentForOrder(
         packages,
         requestPayload,
       });
+      context.logger?.info(
+        {
+          orderId: order.id,
+          orderNumber: order.order_number,
+          shipmentId: shipment.id,
+          shipmentStatus: shipment.status,
+        },
+        "CDEK shipment DB row inserted",
+      );
     } catch (error) {
       if (!isUniqueViolation(error)) throw error;
       shipment = await existingShipment(context.db, order.id);
       if (shipment && !retryableShipmentStatuses.has(shipment.status)) {
+        context.logger?.info(
+          {
+            orderId: order.id,
+            orderNumber: order.order_number,
+            shipmentId: shipment.id,
+            shipmentStatus: shipment.status,
+            reason: "unique_violation_existing_non_retryable_shipment",
+          },
+          "CDEK shipment flow returning existing shipment after unique violation",
+        );
         return shipment;
       }
       if (!shipment) throw error;
@@ -468,13 +565,58 @@ export async function createCdekShipmentForOrder(
       packages,
       requestPayload,
     });
+    context.logger?.info(
+      {
+        orderId: order.id,
+        orderNumber: order.order_number,
+        shipmentId: shipment.id,
+        previousShipmentStatus: found?.status ?? null,
+      },
+      "CDEK failed shipment DB row reset for retry",
+    );
   }
 
   try {
+    context.logger?.info(
+      {
+        orderId: order.id,
+        orderNumber: order.order_number,
+        shipmentId: shipment.id,
+        tariffCode,
+        shipmentPoint: requestPayload.shipment_point,
+        deliveryPoint: requestPayload.delivery_point,
+        cdekMock: context.config.CDEK_MOCK,
+      },
+      "CDEK order API request started",
+    );
     const response = await createCdekOrder(context.config, payload);
-    return await markShipmentResult(context, shipment.id, response);
+    const updated = await markShipmentResult(context, shipment.id, response);
+    context.logger?.info(
+      {
+        orderId: order.id,
+        orderNumber: order.order_number,
+        shipmentId: updated.id,
+        shipmentStatus: updated.status,
+        cdekNumber: updated.cdek_number,
+        cdekUuid: updated.cdek_uuid,
+        requestState: response.requests?.[0]?.state ?? null,
+        requestUuid: response.requests?.[0]?.request_uuid ?? null,
+        cdekError: cdekFirstError(response)?.message ?? null,
+      },
+      "CDEK order API request finished",
+    );
+    return updated;
   } catch (error) {
     await markShipmentFailed(context, shipment.id, error).catch(() => undefined);
+    context.logger?.error(
+      {
+        err: error,
+        orderId: order.id,
+        orderNumber: order.order_number,
+        shipmentId: shipment.id,
+      },
+      "CDEK order API request failed",
+    );
     throw error;
   }
 }
@@ -497,10 +639,23 @@ export async function handleAdminCreateCdekShipment(
     );
   }
 
-  const shipment = await createCdekShipmentForOrder(context, {
+  request.log.info(
+    {
+      orderId: orderId || null,
+      orderNumber: orderNumber || null,
+      cdekCreateShipments: context.config.CDEK_CREATE_SHIPMENTS,
+      cdekMock: context.config.CDEK_MOCK,
+    },
+    "Admin CDEK shipment create requested",
+  );
+
+  const shipment = await createCdekShipmentForOrder(
+    { ...context, logger: request.log },
+    {
     orderId: orderId || undefined,
     orderNumber: orderNumber || undefined,
-  });
+    },
+  );
 
   if (!shipment) {
     throw new HttpError(
