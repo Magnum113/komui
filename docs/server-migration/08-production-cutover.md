@@ -52,6 +52,23 @@ Host komui.ru http://127.0.0.1/api/v1/products?limit=1  HTTP 200
 Это не является production cutover. DNS, production webhook Т-Банка и Vercel /
 Supabase live-контур не изменялись.
 
+30 июня 2026 года выполнен final production snapshot candidate:
+
+- `komui_production` обновлена из `komui_staging`;
+- предыдущая candidate DB сохранена как
+  `komui_production_prev_20260630163957`;
+- encrypted backup production DB:
+  `/var/backups/komui/daily/komui-backup-20260630T164013Z.tar.gz.gpg`;
+- external object:
+  `s3://komui-backups/komui/stage/komui-backup-20260630T164013Z.tar.gz.gpg`;
+- restore drill production snapshot: OK;
+- T-Bank в candidate оставлен в demo/test mode;
+- CDEK auto-create включён: `CDEK_CREATE_SHIPMENTS=true`.
+
+Ограничение: `komui_production` создана из staging и содержит staging
+test orders/payments/CDEK rows. Cleanup этих строк перед DNS cutover выполнять
+только по отдельному явному разрешению.
+
 ## До окна
 
 - Объявить maintenance window.

@@ -24,3 +24,8 @@ structured logs всего CDEK shipment flow. На staging включено
 `komui_production`, service `komui-production-backend` на `127.0.0.1:3001`,
 static root `/var/lib/komui/production-root` и HTTP pre-cutover vhost для
 `komui.ru/www.komui.ru`. TLS vhost подготовлен, но не включён до DNS/cert.
+Финальный production snapshot candidate создан из `komui_staging` в
+`komui_production`; production backup
+`/var/backups/komui/daily/komui-backup-20260630T164013Z.tar.gz.gpg` загружен во
+внешнее хранилище и проверен restore drill. T-Bank оставлен в demo mode,
+`CDEK_CREATE_SHIPMENTS=true` включён для production candidate.

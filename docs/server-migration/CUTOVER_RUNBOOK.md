@@ -76,14 +76,30 @@ sudo systemctl is-active komui-production-backend
 sudo awk -F= '$1 ~ /^(NODE_ENV|RUNTIME_MODE|HOST|PORT|SITE_URL|PUBLIC_API_BASE_URL|TBANK_MODE|TBANK_MOCK_PAYMENTS|CDEK_MOCK|CDEK_CREATE_SHIPMENTS)$/ {print $1"="$2}' /etc/komui/backend-production.env
 ```
 
-Текущие safe defaults production candidate:
+Текущие настройки production candidate:
 
 ```text
 TBANK_MODE=demo
-CDEK_CREATE_SHIPMENTS=false
+CDEK_CREATE_SHIPMENTS=true
 ```
 
-Перед реальным cutover эти значения нужно подтвердить или заменить.
+T-Bank оставлен на demo/test ключах по решению владельца. CDEK auto-create
+включён; оплаченные заказы после cutover могут создавать реальные CDEK
+отправления.
+
+Последний production snapshot:
+
+```text
+database: komui_production
+source: komui_staging
+backup: /var/backups/komui/daily/komui-backup-20260630T164013Z.tar.gz.gpg
+external: s3://komui-backups/komui/stage/komui-backup-20260630T164013Z.tar.gz.gpg
+restore drill: OK
+```
+
+Важно: snapshot содержит staging test orders/payments/CDEK rows. Если нужна
+чистая история заказов, выполнить cleanup только по отдельному явному
+разрешению.
 
 ## DNS cutover
 

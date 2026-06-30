@@ -175,7 +175,7 @@ Host komui.ru http://127.0.0.1/api/v1/products?limit=1  HTTP 200
 http://127.0.0.1:3001/health/ready                      HTTP 200
 ```
 
-Current production candidate safety defaults:
+Current production candidate settings:
 
 ```text
 NODE_ENV=production
@@ -185,11 +185,49 @@ PUBLIC_API_BASE_URL=https://komui.ru/api
 TBANK_MODE=demo
 TBANK_MOCK_PAYMENTS=false
 CDEK_MOCK=false
-CDEK_CREATE_SHIPMENTS=false
+CDEK_CREATE_SHIPMENTS=true
 ```
 
-Before real cutover, production T-Bank credentials/webhook and production CDEK
-auto-create policy must be confirmed separately.
+Before real cutover, production DNS/TLS and T-Bank webhook still must be
+completed separately.
+
+#### 30 июня 2026 — final production snapshot candidate
+
+По решению владельца перед cutover:
+
+- T-Bank в production candidate оставлен на demo/test ключах;
+- CDEK в production candidate должен создавать реальные отправления;
+- `CDEK_CREATE_SHIPMENTS=true` включён в
+  `/etc/komui/backend-production.env`.
+
+Выполнен свежий snapshot:
+
+- сначала создан encrypted backup текущего staging/config:
+  `/var/backups/komui/daily/komui-backup-20260630T163903Z.tar.gz.gpg`;
+- `komui_production` обновлена из текущей `komui_staging`;
+- предыдущая production candidate DB сохранена как
+  `komui_production_prev_20260630163957`;
+- после snapshot создан encrypted backup именно production DB:
+  `/var/backups/komui/daily/komui-backup-20260630T164013Z.tar.gz.gpg`;
+- backup загружен в Yandex Object Storage:
+  `s3://komui-backups/komui/stage/komui-backup-20260630T164013Z.tar.gz.gpg`;
+- restore drill production snapshot прошёл успешно:
+  `komui_production_snapshot_drill_20260630164055`;
+- временная drill DB удалена.
+
+Production snapshot row counts:
+
+```text
+public tables: 31
+merch_storefront_products: 31
+merch_customer_orders: 13
+merch_payment_attempts: 13
+merch_cdek_shipments: 3
+```
+
+Important: `komui_production` сейчас создана из staging и содержит staging
+тестовые transactional rows. Если перед настоящим DNS cutover нужна чистая
+история заказов, эти строки нужно удалить отдельным явно разрешённым cleanup.
 
 ## 2. Высокоуровневая архитектура
 
@@ -1045,6 +1083,8 @@ Latest verified backup/restore:
 archive: /var/backups/komui/daily/komui-backup-20260630T145422Z.tar.gz.gpg
 external: s3://komui-backups/komui/stage/komui-backup-20260630T145422Z.tar.gz.gpg
 restore drill: OK, 2026-06-30, 31 public tables, temp backend HTTP 200
+production snapshot archive: /var/backups/komui/daily/komui-backup-20260630T164013Z.tar.gz.gpg
+production snapshot restore drill: OK, 2026-06-30, 31 public tables
 ```
 
 Useful commands:
@@ -1424,15 +1464,17 @@ approval.
 Before cutover:
 
 1. Complete remaining Ozon import/dual-write acceptance.
-2. Refresh or explicitly accept `komui_production`; current DB was cloned from
-   staging on 2026-06-30 and contains staging test transactional rows.
-3. Run one more fresh encrypted backup immediately before cutover.
+2. Accept current `komui_production` snapshot or explicitly clean staging test
+   transactional rows before DNS cutover.
+3. Run one more fresh encrypted backup immediately before cutover if cleanup or
+   any data change is made; latest production snapshot backup is
+   `komui-backup-20260630T164013Z.tar.gz.gpg`.
 4. Run or reference the latest restore drill; last successful drill:
    2026-06-30 from `komui-backup-20260630T145422Z.tar.gz.gpg`.
 5. Decide final Ozon dual-write policy.
 6. Confirm production T-Bank credentials/webhook settings.
-7. Decide production CDEK shipment policy separately from staging; candidate
-   currently has `CDEK_CREATE_SHIPMENTS=false`.
+7. Production CDEK auto-create is currently enabled in candidate:
+   `CDEK_CREATE_SHIPMENTS=true`.
 8. Confirm DNS TTL and rollback procedure.
 9. After DNS points to this server, issue/check production TLS certificate for
    `komui.ru` and enable TLS vhost.
@@ -1456,9 +1498,8 @@ Current known limitations:
 4. T-Bank production mode/webhook is not switched; staging uses demo mode.
 5. Production candidate uses T-Bank demo mode until real production credentials
    are provided/confirmed.
-6. CDEK real shipment creation is enabled on staging, but production candidate
-   has `CDEK_CREATE_SHIPMENTS=false`; production policy must be confirmed
-   separately before cutover.
+6. CDEK real shipment creation is enabled on staging and production candidate:
+   `CDEK_CREATE_SHIPMENTS=true`.
 7. External product images still use Ozon CDN.
 8. Google Fonts are not fully localized.
 9. `api/supabase-function.js` remains for legacy Vercel production compatibility.
