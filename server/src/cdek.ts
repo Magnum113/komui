@@ -7,7 +7,7 @@ type CdekAuthResponse = {
   expires_in: number;
 };
 
-type CdekResponseError = {
+export type CdekResponseError = {
   code?: string;
   message?: string;
 };
@@ -62,6 +62,54 @@ export type CdekPackage = {
   width: number;
   height: number;
   items?: CdekPackageItem[];
+};
+
+export type CdekRelatedEntity = {
+  type?: string;
+  uuid?: string;
+  cdek_number?: string;
+};
+
+export type CdekOrderPayload = {
+  number: string;
+  tariffCode: number;
+  deliveryPoint: string;
+  recipientName: string;
+  recipientPhone: string;
+  packages: CdekPackage[];
+  comment?: string;
+};
+
+export type CdekOrderRequestPayload = {
+  type: number;
+  number: string;
+  tariff_code: number;
+  shipment_point: string;
+  delivery_point: string;
+  comment?: string;
+  sender: {
+    company: string;
+    name: string;
+    phones: Array<{ number: string }>;
+  };
+  recipient: {
+    name: string;
+    phones: Array<{ number: string }>;
+  };
+  delivery_recipient_cost: { value: number };
+  packages: CdekPackage[];
+};
+
+export type CdekOrderResponse = {
+  entity?: { uuid?: string };
+  requests?: Array<{
+    request_uuid?: string;
+    type?: string;
+    state?: string;
+    errors?: CdekResponseError[];
+    warnings?: CdekResponseError[];
+  }>;
+  related_entities?: CdekRelatedEntity | CdekRelatedEntity[];
 };
 
 export type CdekTariff = {
@@ -577,6 +625,100 @@ export async function quoteCdekDelivery(
     periodMax: tariff.period_max ?? tariff.calendar_max ?? null,
     raw: tariff,
   };
+}
+
+export function buildCdekOrderRequest(
+  config: AppConfig,
+  payload: CdekOrderPayload,
+): CdekOrderRequestPayload {
+  const runtime = cdekRuntimeConfig(config);
+  const body: CdekOrderRequestPayload = {
+    type: 1,
+    number: text(payload.number, 36),
+    tariff_code: payload.tariffCode,
+    shipment_point: runtime.shipmentPoint,
+    delivery_point: text(payload.deliveryPoint, 40),
+    comment: text(payload.comment, 255),
+    sender: {
+      company: text(runtime.senderName, 255),
+      name: text(runtime.senderName, 255),
+      phones: [{ number: text(runtime.senderPhone, 32) }],
+    },
+    recipient: {
+      name: text(payload.recipientName, 255),
+      phones: [{ number: text(payload.recipientPhone, 32) }],
+    },
+    delivery_recipient_cost: { value: 0 },
+    packages: payload.packages,
+  };
+  if (!body.comment) delete body.comment;
+  return body;
+}
+
+export async function createCdekOrder(
+  config: AppConfig,
+  payload: CdekOrderPayload,
+): Promise<CdekOrderResponse> {
+  const number = text(payload.number, 36);
+  if (config.CDEK_MOCK) {
+    return {
+      entity: { uuid: `mock-cdek-order-${number}` },
+      requests: [
+        {
+          request_uuid: `mock-cdek-request-${number}`,
+          type: "CREATE",
+          state: "ACCEPTED",
+        },
+      ],
+      related_entities: {
+        type: "waybill",
+        uuid: `mock-cdek-waybill-${number}`,
+        cdek_number: `MOCK-${number}`,
+      },
+    };
+  }
+
+  return cdekRequest<CdekOrderResponse>(config, "/v2/orders", {
+    method: "POST",
+    body: JSON.stringify(buildCdekOrderRequest(config, payload)),
+  });
+}
+
+export function cdekNumberFromResponse(
+  response: { related_entities?: CdekRelatedEntity | CdekRelatedEntity[] },
+): string | null {
+  const related = response.related_entities;
+  const entities = Array.isArray(related) ? related : related ? [related] : [];
+  const value = entities.find((entity) => entity.cdek_number)?.cdek_number;
+  return value ? text(value, 80) : null;
+}
+
+export function cdekRequestState(
+  response: {
+    requests?: Array<{ state?: string; errors?: CdekResponseError[] }>;
+  },
+): string {
+  const state = response.requests?.[0]?.state ?? "UNKNOWN";
+  switch (state) {
+    case "ACCEPTED":
+    case "WAITING":
+      return "accepted";
+    case "SUCCESSFUL":
+      return "created";
+    case "INVALID":
+      return "invalid";
+    default:
+      return "unknown";
+  }
+}
+
+export function cdekFirstError(response: {
+  requests?: Array<{ errors?: CdekResponseError[] }>;
+}): CdekResponseError | null {
+  return (
+    response.requests?.find((request) => request.errors?.length)?.errors?.[0] ??
+    null
+  );
 }
 
 export function normalizePoint(point: CdekDeliveryPoint) {

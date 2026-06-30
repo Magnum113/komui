@@ -28,6 +28,7 @@ import {
   handleRuntimeFallbackSwitch,
   handleRuntimeRead,
 } from "./runtimeSwitch";
+import { handleAdminCreateCdekShipment } from "./cdekShipments";
 
 type AppOptions = {
   config: AppConfig;
@@ -276,6 +277,13 @@ export function buildApp({ config, db = createDb(config) }: AppOptions) {
     if (reply.sent) return authResult;
 
     return handleOzonImportJobStatus(request, reply, { config, db });
+  });
+
+  app.post("/admin/cdek/shipments/create", async (request, reply) => {
+    const authResult = await requireAdmin(config, request, reply);
+    if (reply.sent) return authResult;
+
+    return handleAdminCreateCdekShipment(request, reply, { config, db });
   });
 
   return app;

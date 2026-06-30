@@ -31,6 +31,7 @@ import {
   validatePromoCode,
   type PromoValidation,
 } from "./promo";
+import { createCdekShipmentForOrder } from "./cdekShipments";
 
 type HandlerContext = {
   config: AppConfig;
@@ -1085,6 +1086,26 @@ export async function handleTbankWebhook(
         await markPromoRedemptionRedeemed(db, order.id);
         if (!config.CDEK_CREATE_SHIPMENTS) {
           request.log.info({ orderId: order.id }, "CDEK shipment creation disabled");
+        } else {
+          try {
+            const shipment = await createCdekShipmentForOrder({ config, db }, {
+              orderId: order.id,
+            });
+            request.log.info(
+              {
+                orderId: order.id,
+                cdekShipmentId: shipment?.id ?? null,
+                cdekShipmentStatus: shipment?.status ?? null,
+                cdekNumber: shipment?.cdek_number ?? null,
+              },
+              "CDEK shipment creation finished",
+            );
+          } catch (error) {
+            request.log.error(
+              { err: error, orderId: order.id },
+              "CDEK shipment creation failed",
+            );
+          }
         }
       } else if (nextStatus === "payment_failed") {
         await releasePromoRedemption(db, order.id);
