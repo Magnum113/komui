@@ -32,7 +32,7 @@ a{text-decoration:none;color:inherit}
 .wrap{width:min(100% - 32px,1120px);margin:0 auto}
 .brand{font:900 24px 'Unbounded',sans-serif;letter-spacing:.04em}.brand span{color:var(--blue)}
 .main{min-height:calc(100vh - 72px);display:grid;place-items:center;padding:48px 0}
-.card{width:min(100%,620px);padding:42px;background:var(--panel);border:1px solid var(--line);border-radius:22px;box-shadow:0 30px 70px -38px rgba(20,22,50,.34);text-align:center}
+.card{width:min(100%,620px);margin:0 auto;padding:42px;background:var(--panel);border:1px solid var(--line);border-radius:22px;box-shadow:0 30px 70px -38px rgba(20,22,50,.34);text-align:center}
 .icon{width:68px;height:68px;display:grid;place-items:center;margin:0 auto 24px;border-radius:20px;background:rgba(0,38,249,.08);color:var(--blue)}
 .icon svg{width:32px;height:32px}
 .icon.paid{background:rgba(14,169,91,.09);color:var(--green)}
@@ -83,6 +83,7 @@ const order=params.get('order')||'';
 const returnStatus=params.get('status')||'';
 let polls=0;
 let timer=null;
+let paidConfirmed=false;
 
 $('#orderNumber').textContent=order||'не определён';
 
@@ -103,9 +104,9 @@ function render(kind,title,text,hint,actions){
 }
 
 function cdekLabel(cdek){
-  if(!cdek)return 'накладная создаётся';
-  if(cdek.number)return 'накладная '+cdek.number;
-  if(cdek.status==='created')return 'накладная создана';
+  if(!cdek)return 'трек-номер создаётся';
+  if(cdek.number)return 'трек-номер '+cdek.number;
+  if(cdek.status==='created')return 'трек-номер создаётся';
   if(cdek.status==='accepted')return 'заявка принята';
   if(cdek.status==='invalid'||cdek.status==='failed')return 'проверим вручную';
   return 'создаётся';
@@ -116,14 +117,23 @@ function showCdek(cdek){
   $('#cdekStatus').textContent=cdekLabel(cdek);
 }
 
+function scheduleCdekRefresh(cdek){
+  if(cdek?.number)return;
+  polls+=1;
+  if(polls<20)timer=setTimeout(check,3000);
+  else $('#statusHint').textContent='Трек-номер появится в уведомлении после создания отправления.';
+}
+
 function paid(result){
+  paidConfirmed=true;
   localStorage.removeItem(CART_KEY);
   localStorage.removeItem(CHECKOUT_KEY);
   sessionStorage.removeItem(FORM_KEY);
   sessionStorage.removeItem(PAYMENT_DRAFT_KEY);
   showCdek(result?.cdek||null);
   render('paid','Заказ оплачен','Подтверждение получено. Мы начнём готовить заказ и свяжемся, если потребуется уточнение.','Сохраните номер заказа до получения уведомления.',
-    '<a class="button primary" href="/">Продолжить покупки</a><a class="button" href="/delivery">Доставка и оплата</a>');
+    '<a class="button primary" href="/">Продолжить покупки</a>');
+  scheduleCdekRefresh(result?.cdek||null);
 }
 
 function failed(message){
@@ -171,6 +181,10 @@ async function check(){
     if(polls<20)timer=setTimeout(check,3000);
     else $('#statusHint').textContent='Проверка продолжается в фоне. Обновите страницу через несколько минут.';
   }catch(error){
+    if(paidConfirmed){
+      scheduleCdekRefresh(null);
+      return;
+    }
     polls+=1;
     if(polls<5)timer=setTimeout(check,3000);
     else pending(false);

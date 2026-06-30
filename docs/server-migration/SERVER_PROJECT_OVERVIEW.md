@@ -1,6 +1,6 @@
 # KOMUI self-hosted server project overview
 
-Дата актуализации: 27 июня 2026 года.
+Дата актуализации: 30 июня 2026 года.
 
 Этот документ описывает, как устроена текущая серверная реализация KOMUI на
 `89.111.152.112`, какие компоненты уже перенесены с Supabase/Vercel, где лежит
@@ -52,6 +52,30 @@ LEGACY_ORIGIN=https://komui.vercel.app
 
 Важно: `OZON_IMPORT_WRITE_SUPABASE=false` означает, что Ozon import сейчас не
 пишет в текущую production Supabase-базу. Это сделано намеренно.
+
+### 1.1. Последние существенные обновления
+
+#### 30 июня 2026 — server-side CDEK shipment creation
+
+Backend release `20260630-cdek-shipments-server` добавил создание отправлений
+СДЭК на сервере без участия Supabase Edge Functions:
+
+- `server/src/cdek.ts` теперь умеет собирать payload `/v2/orders`, создавать
+  CDEK order и нормализовать ответ CDEK в статусы `accepted`, `created`,
+  `invalid`, `unknown`;
+- `server/src/cdekShipments.ts` отвечает за idempotent-запись в
+  `public.merch_cdek_shipments`, повтор failed/invalid shipment, сохранение
+  request/response/error payload и ручной admin endpoint;
+- T-Bank webhook в `server/src/stage5.ts` после перехода заказа в `paid`
+  вызывает CDEK shipment creation только если `CDEK_CREATE_SHIPMENTS=true`;
+- на staging флаг пока оставлен `CDEK_CREATE_SHIPMENTS=false`, поэтому реальные
+  отправления автоматически не создаются;
+- ручной endpoint доступен как
+  `POST https://stage.komui.ru/api/admin/cdek/shipments/create` и требует
+  admin token плюс явное тело `{"orderNumber":"KOM-...","confirm":true}`;
+- `payment-result.html` обновлён: после paid-статуса страница показывает
+  человекочитаемый статус трек-номера СДЭК и продолжает короткий polling, если
+  номер ещё не появился.
 
 ## 2. Высокоуровневая архитектура
 
@@ -381,6 +405,7 @@ server/src/catalog.ts        storefront product read API
 server/src/checkout.ts       order/cart validation and repository
 server/src/stage5.ts         CDEK, promo, T-Bank handlers, compatibility route
 server/src/cdek.ts           CDEK client and package calculations
+server/src/cdekShipments.ts  CDEK shipment DB workflow and admin retry endpoint
 server/src/promo.ts          promo code logic
 server/src/crypto.ts         T-Bank token/signature helpers
 server/src/ozonImport.ts     Ozon preview/import/job status
@@ -398,7 +423,7 @@ server/test/*.test.ts
 Current test count:
 
 ```text
-19 tests passing
+28 tests passing
 ```
 
 ## 9. Backend API routes
@@ -442,6 +467,7 @@ returned to the browser.
 GET  /delivery-config
 POST /v1/delivery/points
 POST /v1/delivery/quote
+POST /admin/cdek/shipments/create
 ```
 
 `/delivery-config` returns the browser JavaScript config used by checkout:
@@ -472,7 +498,30 @@ CDEK_CREATE_SHIPMENTS=false
 Meaning:
 
 - delivery points/quote use real CDEK API credentials;
-- real shipment creation is still disabled.
+- real shipment creation code is deployed;
+- automatic real shipment creation is still disabled by
+  `CDEK_CREATE_SHIPMENTS=false`;
+- manual admin creation requires `confirm: true`.
+
+Manual shipment creation/retry:
+
+```http
+POST /admin/cdek/shipments/create
+Authorization: Bearer <ADMIN_API_TOKEN>
+Content-Type: application/json
+
+{
+  "orderNumber": "KOM-123456789",
+  "confirm": true
+}
+```
+
+The endpoint:
+
+- only works for paid/authorized orders;
+- returns an existing non-failed shipment instead of creating duplicates;
+- retries only `failed`/`invalid` shipments;
+- stores CDEK request/response/error payload in `public.merch_cdek_shipments`.
 
 ### Promo
 
