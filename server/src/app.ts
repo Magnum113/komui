@@ -31,6 +31,8 @@ import {
   handleAdminUpdateOrderFulfillment,
 } from "./adminOrders";
 import {
+  handleAdminCreateOzonStorefrontProduct,
+  handleAdminLinkOzonStorefrontOffers,
   handleOzonImportJobStatus,
   handleOzonProductsImport,
   handleOzonProductsImportPreview,
@@ -338,6 +340,20 @@ export function buildApp({ config, db = createDb(config) }: AppOptions) {
     if (reply.sent) return authResult;
 
     return handleOzonProductsImport(request, reply, { config, db });
+  });
+
+  app.post("/admin/ozon/products/storefront-products", async (request, reply) => {
+    const authResult = await requireAdmin(config, request, reply);
+    if (reply.sent) return authResult;
+
+    return handleAdminCreateOzonStorefrontProduct(request, reply, { config, db });
+  });
+
+  app.post("/admin/ozon/products/link-storefront-offers", async (request, reply) => {
+    const authResult = await requireAdmin(config, request, reply);
+    if (reply.sent) return authResult;
+
+    return handleAdminLinkOzonStorefrontOffers(request, reply, { config, db });
   });
 
   app.get<{

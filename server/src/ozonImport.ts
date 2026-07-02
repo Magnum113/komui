@@ -23,6 +23,13 @@ const previewRequestSchema = z
   .object({
     limit: z.coerce.number().int().min(1).max(10_000).optional(),
     includeArchived: z.boolean().optional(),
+    // When false, existing offers/products keep their current prices:
+    // price/old_price/min_price and merch sale_price are excluded from the
+    // import plan. Ozon prices are still returned in preview for admin UI.
+    updatePrices: z.boolean().optional(),
+    // "add" only adds newly detected Ozon sizes to storefront products.
+    // It does not remove sizes when Ozon items disappear or are archived.
+    syncSizes: z.enum(["add", "off"]).optional(),
     targets: targetSchema.optional(),
   })
   .default({});
@@ -31,6 +38,75 @@ const importRequestSchema = z.object({
   previewId: z.string().uuid(),
   confirm: z.literal(true),
   targets: targetSchema.optional(),
+  itemIds: z.array(z.string().trim().min(1).max(64)).max(10_000).optional(),
+  offerIds: z.array(z.string().trim().min(1).max(160)).max(10_000).optional(),
+});
+
+const priceSchema = z.coerce.number().positive().max(1_000_000);
+
+const createStorefrontProductRequestSchema = z.object({
+  previewId: z.string().uuid(),
+  offerItemIds: z.array(z.string().trim().min(1).max(64)).max(500).optional(),
+  offerIds: z.array(z.string().trim().min(1).max(160)).max(500).optional(),
+  product: z
+    .object({
+      designKey: z.string().trim().min(1).max(160).optional(),
+      ozonVariant: z.string().trim().min(1).max(80).optional(),
+      slug: z
+        .string()
+        .trim()
+        .min(1)
+        .max(200)
+        .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+        .optional(),
+      name: z.string().trim().min(1).max(200),
+      description: z.string().max(20_000).nullable().optional(),
+      ozonDescription: z.string().max(20_000).nullable().optional(),
+      shortDescription: z.string().max(1_000).nullable().optional(),
+      category: z.string().trim().min(1).max(120).optional(),
+      categorySlug: z.string().trim().min(1).max(120).optional(),
+      productType: z.string().trim().min(1).max(120).optional(),
+      productTypeSlug: z.string().trim().min(1).max(120).optional(),
+      decorationType: z.string().trim().min(1).max(120).optional(),
+      decorationSlug: z.string().trim().min(1).max(120).optional(),
+      colorName: z.string().trim().min(1).max(120).nullable().optional(),
+      colorSlug: z.string().trim().min(1).max(120).nullable().optional(),
+      colorHex: z.string().trim().min(1).max(32).nullable().optional(),
+      franchiseType: z.string().trim().min(1).max(80).optional(),
+      titleName: z.string().trim().min(1).max(160).nullable().optional(),
+      titleSlug: z.string().trim().min(1).max(160).nullable().optional(),
+      animeTitle: z.string().trim().min(1).max(160).nullable().optional(),
+      animeSlug: z.string().trim().min(1).max(160).nullable().optional(),
+      characterName: z.string().trim().min(1).max(160).nullable().optional(),
+      characterSlug: z.string().trim().min(1).max(160).nullable().optional(),
+      collectionName: z.string().trim().min(1).max(160).nullable().optional(),
+      collectionSlug: z.string().trim().min(1).max(160).nullable().optional(),
+      designName: z.string().trim().min(1).max(160).nullable().optional(),
+      designSlug: z.string().trim().min(1).max(160).nullable().optional(),
+      tags: z.array(z.string().trim().min(1).max(80)).max(80).optional(),
+      badges: z.array(z.string().trim().min(1).max(40)).max(20).optional(),
+      sizes: z.array(z.string().trim().min(1).max(32)).max(30).optional(),
+      salePrice: priceSchema,
+      regularPrice: priceSchema.nullable().optional(),
+      imageUrls: z
+        .array(z.string().trim().min(1).max(2_048))
+        .min(1)
+        .max(80)
+        .optional(),
+      mainImagePath: z.string().trim().min(1).max(2_048).nullable().optional(),
+      isActive: z.boolean().optional(),
+      sortOrder: z.coerce.number().int().min(0).max(1_000_000).optional(),
+    })
+    .strict(),
+});
+
+const linkStorefrontOffersRequestSchema = z.object({
+  previewId: z.string().uuid(),
+  productId: z.string().uuid(),
+  offerItemIds: z.array(z.string().trim().min(1).max(64)).max(500).optional(),
+  offerIds: z.array(z.string().trim().min(1).max(160)).max(500).optional(),
+  updatePrices: z.boolean().optional(),
+  syncSizes: z.enum(["add", "off"]).optional(),
 });
 
 type Targets = {
@@ -75,6 +151,7 @@ type StorefrontRow = {
   design_key: string;
   name: string;
   slug: string;
+  sizes: unknown;
   price_min: string | number | null;
   price_max: string | number | null;
   primary_image_url: string | null;
@@ -103,6 +180,7 @@ export type OzonPreviewItem = {
   productId?: string;
   sku?: string;
   name?: string;
+  size?: string;
   price?: number;
   oldPrice?: number;
   minPrice?: number;
@@ -115,6 +193,11 @@ export type OzonPreviewItem = {
     colorImage?: string | null;
   };
   matchReason?: string;
+  inferredProduct?: OzonInferredProduct;
+  importOptions?: {
+    updatePrices: boolean;
+    syncSizes: "add" | "off";
+  };
   targetProduct?: {
     id: string;
     designKey: string;
@@ -131,6 +214,7 @@ export type OzonPreviewItem = {
       | "create_storefront_offer"
       | "update_storefront_offer"
       | "update_merch_product_price"
+      | "create_storefront_product"
       | "skip";
     reason?: string;
   }>;
@@ -141,6 +225,7 @@ export type OzonPreviewItem = {
       | "create_storefront_offer"
       | "update_storefront_offer"
       | "update_merch_product_price"
+      | "create_storefront_product"
       | "noop";
     changed: boolean;
     changedFields: string[];
@@ -197,6 +282,7 @@ type PreviewBuildResult = {
     matchedStorefront: number;
     matchedMerchProducts: number;
     unmatched: number;
+    newProductGroups: number;
     actionableServerPostgres: number;
     actionableSupabase: number;
     noop: number;
@@ -204,6 +290,36 @@ type PreviewBuildResult = {
   canImport: boolean;
   warnings: Array<{ code: string; message: string; count?: number }>;
   items: OzonPreviewItem[];
+  newProductGroups: OzonProductGroup[];
+};
+
+type OzonInferredProduct = {
+  designKey: string;
+  slug: string;
+  ozonVariant: string;
+  productType: string;
+  productTypeSlug: string;
+  category: string;
+  categorySlug: string;
+  decorationType: string;
+  decorationSlug: string;
+  colorName: string;
+  colorSlug: string;
+  colorHex: string;
+  tags: string[];
+};
+
+type OzonProductGroup = OzonInferredProduct & {
+  itemIds: string[];
+  offerIds: string[];
+  skus: string[];
+  productIds: string[];
+  sizes: string[];
+  suggestedName: string;
+  primaryImageUrl: string | null;
+  imageUrls: string[];
+  minOzonPrice: number | null;
+  maxOzonPrice: number | null;
 };
 
 type StoredPreview = {
@@ -523,6 +639,166 @@ const COLOR_CODE_TO_SLUG: Record<string, string> = {
   BLUE: "blue",
 };
 
+const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL"];
+
+const PRODUCT_META: Record<
+  string,
+  { productType: string; category: string; categorySlug: string }
+> = {
+  tshirt: {
+    productType: "Футболка",
+    category: "Футболки",
+    categorySlug: "tshirts",
+  },
+  hoodie: {
+    productType: "Худи",
+    category: "Худи",
+    categorySlug: "hoodies",
+  },
+  sweatshirt: {
+    productType: "Свитшот",
+    category: "Свитшоты",
+    categorySlug: "sweatshirts",
+  },
+};
+
+const DECORATION_META: Record<string, string> = {
+  print: "Принт",
+  embroidery: "Вышивка",
+};
+
+const COLOR_META: Record<string, { name: string; hex: string }> = {
+  white: { name: "Белый", hex: "#ffffff" },
+  black: { name: "Черный", hex: "#111111" },
+  grey: { name: "Серый", hex: "#9ca3af" },
+  "washed-grey": { name: "Вареный серый", hex: "#9ca3af" },
+  beige: { name: "Бежевый", hex: "#d8c4a8" },
+  "washed-beige": { name: "Вареный бежевый", hex: "#c8b6a6" },
+  blue: { name: "Синий", hex: "#2563eb" },
+};
+
+function normalizeSize(value: unknown): string | undefined {
+  const text = toStringId(value)?.toUpperCase();
+  if (!text) return undefined;
+  const compact = text.replace(/\s+/g, "").replace(/_/g, "-");
+  if (compact === "2XL" || compact === "XXL" || compact === "2-XL") {
+    return "XXL";
+  }
+  if (compact === "3XL" || compact === "XXXL" || compact === "3-XL") {
+    return "3XL";
+  }
+  if (compact === "4XL" || compact === "XXXXL" || compact === "4-XL") {
+    return "4XL";
+  }
+  if (["XS", "S", "M", "L", "XL"].includes(compact)) return compact;
+  return undefined;
+}
+
+function sortSizes(values: string[]) {
+  return uniqueStrings(values)
+    .map(normalizeSize)
+    .filter((item): item is string => item !== undefined)
+    .sort((left, right) => {
+      const leftIndex = SIZE_ORDER.indexOf(left);
+      const rightIndex = SIZE_ORDER.indexOf(right);
+      if (leftIndex !== -1 || rightIndex !== -1) {
+        return (leftIndex === -1 ? 999 : leftIndex) -
+          (rightIndex === -1 ? 999 : rightIndex);
+      }
+      return left.localeCompare(right);
+    });
+}
+
+function normalizeSlugSegment(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function inferSizeFromName(value: unknown) {
+  const text = toStringId(value);
+  if (!text) return undefined;
+  const match = /(?:^|\s|\()((?:[234]\s?XL)|XXXL|XXL|XL|XS|S|M|L)(?:\)|\s|$)/i.exec(
+    text,
+  );
+  return normalizeSize(match?.[1]);
+}
+
+function offerPartsFromOfferId(value: unknown) {
+  const normalized = normalizeOfferId(value);
+  if (!normalized) return undefined;
+  const parts = normalized.split("-").filter(Boolean);
+  if (parts.length < 4) return undefined;
+
+  const modern = /^D(\d+)$/.exec(parts[0]);
+  if (!modern) return undefined;
+  const productTypeSlug = PRODUCT_CODE_TO_SLUG[parts[1]];
+  const decorationSlug = DECORATION_CODE_TO_SLUG[parts[2]];
+  const colorSlug = COLOR_CODE_TO_SLUG[parts[3]];
+  if (!productTypeSlug || !decorationSlug || !colorSlug) return undefined;
+
+  const size = [...parts]
+    .reverse()
+    .map(normalizeSize)
+    .find((item): item is string => item !== undefined);
+
+  return {
+    designNumber: Number(modern[1]),
+    productTypeSlug,
+    decorationSlug,
+    colorSlug,
+    size,
+  };
+}
+
+function inferSizeFromOzonItem(item: Pick<OzonPriceItem, "offer_id" | "name">) {
+  return offerPartsFromOfferId(item.offer_id)?.size ?? inferSizeFromName(item.name);
+}
+
+function inferredProductFromOfferId(value: unknown): OzonInferredProduct | undefined {
+  const parts = offerPartsFromOfferId(value);
+  if (!parts) return undefined;
+  const product = PRODUCT_META[parts.productTypeSlug];
+  const decorationType = DECORATION_META[parts.decorationSlug];
+  const color = COLOR_META[parts.colorSlug];
+  if (!product || !decorationType || !color) return undefined;
+
+  const ozonVariant = `var${parts.designNumber}`;
+  const designKey = `${ozonVariant}|${parts.decorationSlug}|${parts.productTypeSlug}|${parts.colorSlug}`;
+  const slug = [
+    ozonVariant,
+    parts.decorationSlug,
+    parts.productTypeSlug,
+    parts.colorSlug,
+  ]
+    .map(normalizeSlugSegment)
+    .filter(Boolean)
+    .join("-");
+
+  return {
+    designKey,
+    slug,
+    ozonVariant,
+    productType: product.productType,
+    productTypeSlug: parts.productTypeSlug,
+    category: product.category,
+    categorySlug: product.categorySlug,
+    decorationType,
+    decorationSlug: parts.decorationSlug,
+    colorName: color.name,
+    colorSlug: parts.colorSlug,
+    colorHex: color.hex,
+    tags: [
+      parts.productTypeSlug,
+      parts.decorationSlug,
+      parts.colorSlug,
+      "anime",
+    ],
+  };
+}
+
 export function designKeyCandidatesFromOfferId(value: unknown): string[] {
   const normalized = normalizeOfferId(value);
   if (!normalized) return [];
@@ -629,6 +905,7 @@ type PreviewOzonFields = Pick<
   | "productId"
   | "sku"
   | "name"
+  | "size"
   | "price"
   | "oldPrice"
   | "minPrice"
@@ -720,15 +997,24 @@ function diffArrayField(
 function offerPatchFromPreviewItem(
   item: PreviewOzonFields,
   syncedAt?: string,
+  options: {
+    includePrices?: boolean;
+    priceOverride?: number;
+  } = {},
 ): Record<string, unknown> {
+  const includePrices = options.includePrices !== false;
   const patch: Record<string, unknown> = {
     offer_id: item.offerId,
     product_id: toNumericId(item.productId) ?? item.productId,
     sku: toNumericId(item.sku) ?? item.sku,
     name: item.name,
-    price: item.price,
-    old_price: item.oldPrice,
-    min_price: item.minPrice,
+    size: item.size,
+    price: options.priceOverride ?? (includePrices ? item.price : undefined),
+    old_price: includePrices ? item.oldPrice : undefined,
+    min_price: includePrices ? item.minPrice : undefined,
+    ozon_price: includePrices ? undefined : item.price,
+    ozon_old_price: includePrices ? undefined : item.oldPrice,
+    ozon_min_price: includePrices ? undefined : item.minPrice,
     visible: item.visible,
     archived: item.archived,
     primary_image: item.media?.primaryImage,
@@ -764,6 +1050,16 @@ function findMatchingOfferIndex(
 
 function changedFields(fields: PreviewDiffField[]) {
   return fields.filter((field) => field.changed).map((field) => field.field);
+}
+
+function shouldExposeOfferOnStorefront(item: PreviewOzonFields) {
+  return item.archived !== true && item.visible !== false;
+}
+
+function nextSizesFromOzonItem(current: unknown, item: PreviewOzonFields) {
+  const currentSizes = sortSizes(stringArray(current));
+  if (!item.size || !shouldExposeOfferOnStorefront(item)) return currentSizes;
+  return sortSizes([...currentSizes, item.size]);
 }
 
 function buildMediaDiff(
@@ -830,6 +1126,10 @@ function buildMediaDiff(
 function buildStorefrontDiff(
   row: StorefrontRow,
   item: PreviewOzonFields,
+  options: {
+    updatePrices: boolean;
+    syncSizes: "add" | "off";
+  },
 ): { diff: PreviewDiff; mediaDiff: NonNullable<OzonPreviewItem["mediaDiff"]> } {
   const currentProductIds = numberArray(row.ozon_product_ids);
   const currentSkus = numberArray(row.ozon_skus);
@@ -839,15 +1139,24 @@ function buildStorefrontDiff(
   const nextOfferIds = addUniqueOfferId([...currentOfferIds], item.offerId);
   const currentOffers = getOfferArray(row);
   const offerIndex = findMatchingOfferIndex(currentOffers, item);
-  const offerPatch = offerPatchFromPreviewItem(item);
-  const nextOffers = mergeOffer(currentOffers, item);
-  const priceRange = priceRangeFromOffers(nextOffers, row.price_min, row.price_max);
+  const offerPatch = offerPatchFromPreviewItem(item, undefined, {
+    includePrices: options.updatePrices,
+  });
+  const nextOffers = mergeOffer(currentOffers, item, undefined, {
+    includePrices: options.updatePrices,
+  });
+  const priceRange = options.updatePrices
+    ? priceRangeFromOffers(nextOffers, row.price_min, row.price_max)
+    : { min: row.price_min, max: row.price_max };
   const nextImageUrls = imageUrlsFromOffers(nextOffers, row.image_urls);
   const nextPrimaryImageUrl = nextImageUrls[0] ?? null;
   const nextProductMainImagePath = nextMainImagePath(
     row.main_image_path,
     nextPrimaryImageUrl,
   );
+  const nextSizes = options.syncSizes === "add"
+    ? nextSizesFromOzonItem(row.sizes, item)
+    : sortSizes(stringArray(row.sizes));
   const mediaDiff = buildMediaDiff(
     row,
     offerIndex >= 0 ? currentOffers[offerIndex] : undefined,
@@ -860,6 +1169,7 @@ function buildStorefrontDiff(
     diffArrayField("ozon_offer_ids", currentOfferIds, nextOfferIds),
     diffField("price_min", row.price_min, priceRange.min),
     diffField("price_max", row.price_max, priceRange.max),
+    diffArrayField("sizes", sortSizes(stringArray(row.sizes)), nextSizes),
     diffField("primary_image_url", row.primary_image_url, nextPrimaryImageUrl),
     diffField("main_image_path", row.main_image_path, nextProductMainImagePath),
     diffArrayField("image_urls", stringArray(row.image_urls), nextImageUrls),
@@ -1030,6 +1340,68 @@ function findMerchProductMatch(
   return undefined;
 }
 
+function stripTrailingSizeFromName(value: string | undefined) {
+  if (!value) return "";
+  return value
+    .replace(/\s+(?:[234]\s?XL|XXXL|XXL|XL|XS|S|M|L)\s*$/i, "")
+    .trim();
+}
+
+function buildNewProductGroups(items: OzonPreviewItem[]): OzonProductGroup[] {
+  const groups = new Map<string, OzonPreviewItem[]>();
+  for (const item of items) {
+    if (item.status !== "unmatched" || !item.inferredProduct) continue;
+    const existing = groups.get(item.inferredProduct.designKey) ?? [];
+    existing.push(item);
+    groups.set(item.inferredProduct.designKey, existing);
+  }
+
+  const productGroups: OzonProductGroup[] = [];
+  for (const [, groupItems] of groups) {
+    const first = groupItems[0];
+    const inferred = first?.inferredProduct;
+    if (!first || !inferred) continue;
+
+    const imageUrls = uniqueStrings(
+      groupItems.flatMap((item) => [
+        item.media?.primaryImage,
+        item.media?.images,
+      ]),
+    );
+    const prices = groupItems
+      .map((item) => item.price)
+      .filter((price): price is number => price !== undefined);
+    const suggestedName = stripTrailingSizeFromName(first.name) ||
+      `${inferred.productType} ${inferred.ozonVariant}`;
+
+    productGroups.push({
+      ...inferred,
+      itemIds: groupItems.map((item) => item.itemId),
+      offerIds: groupItems
+        .map((item) => item.offerId)
+        .filter((item): item is string => item !== undefined),
+      skus: groupItems
+        .map((item) => item.sku)
+        .filter((item): item is string => item !== undefined),
+      productIds: groupItems
+        .map((item) => item.productId)
+        .filter((item): item is string => item !== undefined),
+      sizes: sortSizes(
+        groupItems
+          .map((item) => item.size)
+          .filter((item): item is string => item !== undefined),
+      ),
+      suggestedName,
+      primaryImageUrl: imageUrls[0] ?? null,
+      imageUrls,
+      minOzonPrice: prices.length ? Math.min(...prices) : null,
+      maxOzonPrice: prices.length ? Math.max(...prices) : null,
+    });
+  }
+
+  return productGroups.sort((left, right) => left.slug.localeCompare(right.slug));
+}
+
 export function buildOzonPreview(
   ozonItems: OzonPriceItem[],
   storefrontRows: StorefrontRow[],
@@ -1038,7 +1410,10 @@ export function buildOzonPreview(
   settings: Pick<OzonImportEnv, "supabaseWriteEnabled"> = {
     supabaseWriteEnabled: false,
   },
+  options: { updatePrices?: boolean; syncSizes?: "add" | "off" } = {},
 ): PreviewBuildResult {
+  const updatePrices = options.updatePrices === true;
+  const syncSizes = options.syncSizes ?? "add";
   const indexes = buildIndexes(storefrontRows, merchRows);
   const items: OzonPreviewItem[] = [];
   let matchedStorefront = 0;
@@ -1053,6 +1428,8 @@ export function buildOzonPreview(
     const oldPrice = oldPriceFromOzonItem(ozonItem);
     const minPrice = minPriceFromOzonItem(ozonItem);
     const normalizedOfferId = normalizeOfferId(ozonItem.offer_id);
+    const size = inferSizeFromOzonItem(ozonItem);
+    const inferredProduct = inferredProductFromOfferId(ozonItem.offer_id);
     const itemId = createHash("sha256")
       .update(
         JSON.stringify({
@@ -1074,6 +1451,7 @@ export function buildOzonPreview(
       productId: toStringId(ozonItem.product_id),
       sku: toStringId(ozonItem.sku),
       name: toStringId(ozonItem.name),
+      size,
       price,
       oldPrice,
       minPrice,
@@ -1093,10 +1471,15 @@ export function buildOzonPreview(
         : undefined,
     };
     const storefrontPreview = storefrontMatch
-      ? buildStorefrontDiff(storefrontMatch.row, source)
+      ? buildStorefrontDiff(storefrontMatch.row, source, {
+          updatePrices,
+          syncSizes,
+        })
       : undefined;
     const diff = storefrontPreview?.diff ??
-      (merchMatch ? buildMerchProductDiff(merchMatch.row, source) : undefined);
+      (merchMatch && updatePrices
+        ? buildMerchProductDiff(merchMatch.row, source)
+        : undefined);
     const mediaDiff = storefrontPreview?.mediaDiff;
 
     if (storefrontMatch) {
@@ -1153,7 +1536,11 @@ export function buildOzonPreview(
           plannedActions.push({
             target: "serverPostgres",
             action: "skip",
-            reason: price === undefined ? "missing_price" : "no_changes",
+            reason: updatePrices
+              ? price === undefined
+                ? "missing_price"
+                : "no_changes"
+              : "price_updates_disabled",
           });
         }
       }
@@ -1162,7 +1549,11 @@ export function buildOzonPreview(
           plannedActions.push({
             target: "supabase",
             action: "skip",
-            reason: price === undefined ? "missing_price" : "no_changes",
+            reason: updatePrices
+              ? price === undefined
+                ? "missing_price"
+                : "no_changes"
+              : "price_updates_disabled",
           });
         } else if (settings.supabaseWriteEnabled) {
           plannedActions.push({
@@ -1184,7 +1575,9 @@ export function buildOzonPreview(
       plannedActions.push({
         target: "serverPostgres",
         action: "skip",
-        reason: "unmatched_requires_mapping",
+        reason: inferredProduct
+          ? "new_product_requires_creation"
+          : "unmatched_requires_mapping",
       });
       if (targets.supabase) {
         plannedActions.push({
@@ -1208,6 +1601,11 @@ export function buildOzonPreview(
       severity: storefrontMatch || merchMatch ? "info" : "warning",
       ...source,
       matchReason: storefrontMatch?.reason || merchMatch?.reason,
+      inferredProduct: storefrontMatch || merchMatch ? undefined : inferredProduct,
+      importOptions: {
+        updatePrices,
+        syncSizes,
+      },
       targetProduct: storefrontMatch ? productKey(storefrontMatch.row) : undefined,
       targetMerchProduct: merchMatch ? merchProductKey(merchMatch.row) : undefined,
       plannedActions,
@@ -1216,6 +1614,7 @@ export function buildOzonPreview(
     });
   }
 
+  const productGroups = buildNewProductGroups(items);
   const warnings: PreviewBuildResult["warnings"] = [];
   if (unmatched > 0) {
     warnings.push({
@@ -1225,11 +1624,26 @@ export function buildOzonPreview(
       count: unmatched,
     });
   }
+  if (productGroups.length > 0) {
+    warnings.push({
+      code: "new_products_require_creation",
+      message:
+        "Найдены новые Ozon-дизайны без карточек витрины. Создайте карточки через admin API, затем повторите preview/import для оставшихся изменений.",
+      count: productGroups.length,
+    });
+  }
   if (targets.supabase && !settings.supabaseWriteEnabled) {
     warnings.push({
       code: "supabase_write_disabled",
       message:
         "Запись в Supabase отключена на сервере флагом OZON_IMPORT_WRITE_SUPABASE=false.",
+    });
+  }
+  if (!updatePrices) {
+    warnings.push({
+      code: "price_updates_disabled",
+      message:
+        "Обновление цен отключено: цены сайта и offers.price не изменятся. Ozon-цены вернутся в preview и сохранятся как ozon_price-поля при импорте.",
     });
   }
 
@@ -1238,6 +1652,7 @@ export function buildOzonPreview(
     matchedStorefront,
     matchedMerchProducts,
     unmatched,
+    newProductGroups: productGroups.length,
     actionableServerPostgres,
     actionableSupabase,
     noop,
@@ -1248,6 +1663,7 @@ export function buildOzonPreview(
     canImport: actionableServerPostgres > 0 || actionableSupabase > 0,
     warnings,
     items,
+    newProductGroups: productGroups,
   };
 }
 
@@ -1315,7 +1731,10 @@ async function fetchOzonPriceItems(
     cursor = nextCursor;
   }
 
-  return items.slice(0, limit);
+  const filteredItems = includeArchived
+    ? items
+    : items.filter((item) => item.archived !== true);
+  return filteredItems.slice(0, limit);
 }
 
 function chunkArray<T>(values: T[], size: number) {
@@ -1428,6 +1847,7 @@ async function loadStorefrontRows(db: Db) {
         design_key,
         name,
         slug,
+        sizes,
         price_min,
         price_max,
         primary_image_url,
@@ -1491,6 +1911,25 @@ function safeJsonArray(value: unknown): OzonPreviewItem[] {
   return Array.isArray(value) ? (value as OzonPreviewItem[]) : [];
 }
 
+function selectPreviewItems(
+  items: OzonPreviewItem[],
+  filters: { itemIds?: string[]; offerIds?: string[] },
+) {
+  const itemIds = new Set(filters.itemIds ?? []);
+  const offerIds = new Set(
+    (filters.offerIds ?? [])
+      .map(normalizeOfferId)
+      .filter((item): item is string => item !== undefined),
+  );
+  if (!itemIds.size && !offerIds.size) return items;
+
+  return items.filter((item) => {
+    if (itemIds.has(item.itemId)) return true;
+    const offerId = normalizeOfferId(item.offerId);
+    return Boolean(offerId && offerIds.has(offerId));
+  });
+}
+
 async function loadPreview(db: Db, previewId: string) {
   const result = await db.query<StoredPreview>(
     `
@@ -1515,10 +1954,14 @@ function mergeOffer(
   currentOffers: Array<Record<string, unknown>>,
   item: PreviewOzonFields,
   syncedAt?: string,
+  options: {
+    includePrices?: boolean;
+    priceOverride?: number;
+  } = {},
 ) {
   const nextOffers = currentOffers.map((offer) => ({ ...offer }));
   const index = findMatchingOfferIndex(nextOffers, item);
-  const patch = offerPatchFromPreviewItem(item, syncedAt);
+  const patch = offerPatchFromPreviewItem(item, syncedAt, options);
 
   if (index >= 0) {
     nextOffers[index] = {
@@ -1567,6 +2010,7 @@ async function applyStorefrontUpdate(
         design_key,
         name,
         slug,
+        sizes,
         price_min,
         price_max,
         primary_image_url,
@@ -1588,8 +2032,17 @@ async function applyStorefrontUpdate(
   const productIds = addUniqueNumber(numberArray(row.ozon_product_ids), item.productId);
   const skus = addUniqueNumber(numberArray(row.ozon_skus), item.sku);
   const offerIds = addUniqueOfferId(stringArray(row.ozon_offer_ids), item.offerId);
-  const offers = mergeOffer(getOfferArray(row), item, syncedAt);
-  const priceRange = priceRangeFromOffers(offers, row.price_min, row.price_max);
+  const updatePrices = item.importOptions?.updatePrices !== false;
+  const syncSizes = item.importOptions?.syncSizes ?? "add";
+  const offers = mergeOffer(getOfferArray(row), item, syncedAt, {
+    includePrices: updatePrices,
+  });
+  const priceRange = updatePrices
+    ? priceRangeFromOffers(offers, row.price_min, row.price_max)
+    : { min: row.price_min, max: row.price_max };
+  const sizes = syncSizes === "add"
+    ? nextSizesFromOzonItem(row.sizes, item)
+    : sortSizes(stringArray(row.sizes));
   const imageUrls = imageUrlsFromOffers(offers, row.image_urls);
   const primaryImageUrl = imageUrls[0] ?? null;
   const mainImagePath = nextMainImagePath(row.main_image_path, primaryImageUrl);
@@ -1598,6 +2051,7 @@ async function applyStorefrontUpdate(
     ozon_skus: skus,
     ozon_offer_ids: offerIds,
     offers,
+    sizes,
     price_min: priceRange.min,
     price_max: priceRange.max,
     primary_image_url: primaryImageUrl,
@@ -1614,12 +2068,13 @@ async function applyStorefrontUpdate(
         ozon_skus = $3::bigint[],
         ozon_offer_ids = $4::text[],
         offers = $5::jsonb,
-        price_min = $6,
-        price_max = $7,
-        primary_image_url = $8,
-        main_image_path = $9,
-        image_urls = $10::text[],
-        updated_at = $11::timestamptz
+        sizes = $6::text[],
+        price_min = $7,
+        price_max = $8,
+        primary_image_url = $9,
+        main_image_path = $10,
+        image_urls = $11::text[],
+        updated_at = $12::timestamptz
       where id = $1
     `,
     [
@@ -1628,6 +2083,7 @@ async function applyStorefrontUpdate(
       skus,
       offerIds,
       JSON.stringify(offers),
+      sizes,
       priceRange.min,
       priceRange.max,
       primaryImageUrl,
@@ -1667,6 +2123,404 @@ async function applyMerchProductUpdate(
       sale_price: item.price,
       updated_at: syncedAt,
     },
+  };
+}
+
+function nullableText(value: string | null | undefined): string | null {
+  if (value === undefined || value === null) return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+}
+
+function requiredText(value: string | undefined, fallback: string | undefined, field: string) {
+  const text = nullableText(value) ?? nullableText(fallback);
+  if (!text) {
+    throw new HttpError(400, "missing_product_field", `${field} is required`);
+  }
+  return text;
+}
+
+function selectedItemsForNewProduct(
+  previewItems: OzonPreviewItem[],
+  filters: { offerItemIds?: string[]; offerIds?: string[] },
+) {
+  const selected = selectPreviewItems(previewItems, {
+    itemIds: filters.offerItemIds,
+    offerIds: filters.offerIds,
+  });
+  if (!selected.length) {
+    throw new HttpError(
+      400,
+      "empty_offer_selection",
+      "No Ozon preview items selected for product creation",
+    );
+  }
+  if (selected.some((item) => item.targetProduct || item.targetMerchProduct)) {
+    throw new HttpError(
+      400,
+      "selection_contains_matched_items",
+      "Product creation accepts only unmatched Ozon preview items",
+    );
+  }
+
+  const designKeys = new Set(
+    selected
+      .map((item) => item.inferredProduct?.designKey)
+      .filter((item): item is string => item !== undefined),
+  );
+  if (!designKeys.size) {
+    throw new HttpError(
+      400,
+      "selection_without_inferred_product",
+      "Selected Ozon items do not contain an inferred product group",
+    );
+  }
+  if (designKeys.size > 1) {
+    throw new HttpError(
+      400,
+      "mixed_product_selection",
+      "Selected Ozon items belong to different inferred product groups",
+    );
+  }
+
+  return selected;
+}
+
+function productGroupFromSelectedItems(items: OzonPreviewItem[]) {
+  const groups = buildNewProductGroups(items.map((item) => ({
+    ...item,
+    status: "unmatched",
+  })));
+  return groups[0];
+}
+
+function validateRegularPrice(salePrice: number, regularPrice: number | null | undefined) {
+  if (regularPrice !== undefined && regularPrice !== null && regularPrice <= salePrice) {
+    throw new HttpError(
+      400,
+      "invalid_regular_price",
+      "regularPrice must be greater than salePrice or null",
+    );
+  }
+}
+
+function offerForCreatedProduct(
+  item: OzonPreviewItem,
+  salePrice: number,
+  syncedAt: string,
+) {
+  return offerPatchFromPreviewItem(item, syncedAt, {
+    includePrices: false,
+    priceOverride: salePrice,
+  });
+}
+
+export async function handleAdminCreateOzonStorefrontProduct(
+  request: FastifyRequest,
+  _reply: FastifyReply,
+  context: OzonImportContext,
+) {
+  const parsed = createStorefrontProductRequestSchema.parse(request.body || {});
+  const preview = await loadPreview(context.db, parsed.previewId);
+  const previewItems = safeJsonArray(preview.items);
+  const selected = selectedItemsForNewProduct(previewItems, parsed);
+  const group = productGroupFromSelectedItems(selected);
+  const product = parsed.product;
+  validateRegularPrice(product.salePrice, product.regularPrice);
+
+  const designKey = requiredText(product.designKey, group?.designKey, "designKey");
+  const slug = requiredText(product.slug, group?.slug, "slug");
+  const ozonVariant = requiredText(
+    product.ozonVariant,
+    group?.ozonVariant ?? designKey.split("|")[0],
+    "ozonVariant",
+  );
+  const sizes = product.sizes !== undefined
+    ? sortSizes(product.sizes)
+    : sortSizes(group?.sizes ?? []);
+  if (!sizes.length) {
+    throw new HttpError(400, "missing_sizes", "At least one storefront size is required");
+  }
+
+  const imageUrls = product.imageUrls !== undefined
+    ? uniqueStrings(product.imageUrls)
+    : uniqueStrings(group?.imageUrls ?? []);
+  if (!imageUrls.length) {
+    throw new HttpError(400, "missing_images", "At least one product image is required");
+  }
+
+  const syncedAt = new Date().toISOString();
+  const offers = selected.map((item) =>
+    offerForCreatedProduct(item, product.salePrice, syncedAt),
+  );
+  const productIds = numberArray(selected.map((item) => item.productId));
+  const skus = numberArray(selected.map((item) => item.sku));
+  const offerIds = selected
+    .map((item) => item.offerId)
+    .filter((item): item is string => item !== undefined);
+  const tags = uniqueStrings([group?.tags, product.tags]);
+  const badges = uniqueStrings([product.badges]);
+  const sourcePayload = {
+    source: "ozon_admin_import",
+    previewId: parsed.previewId,
+    itemIds: selected.map((item) => item.itemId),
+    offerIds,
+    createdAt: syncedAt,
+  };
+
+  const result = await context.db.query<{
+    id: string;
+    design_key: string;
+    slug: string;
+    name: string;
+    sizes: string[];
+    price_min: string | number | null;
+    price_max: string | number | null;
+    primary_image_url: string | null;
+    image_urls: string[];
+    offers: unknown;
+    is_active: boolean;
+    sort_order: number;
+    updated_at: Date | string;
+  }>(
+    `
+      insert into public.merch_storefront_products (
+        design_key,
+        ozon_variant,
+        name,
+        slug,
+        description,
+        ozon_description,
+        category,
+        category_slug,
+        product_type,
+        product_type_slug,
+        decoration_type,
+        decoration_slug,
+        color_name,
+        color_slug,
+        color_hex,
+        franchise_type,
+        title_name,
+        title_slug,
+        anime_title,
+        anime_slug,
+        character_name,
+        character_slug,
+        collection_name,
+        collection_slug,
+        design_name,
+        design_slug,
+        tags,
+        sizes,
+        price_min,
+        price_max,
+        currency,
+        primary_image_url,
+        main_image_path,
+        image_urls,
+        ozon_product_ids,
+        ozon_skus,
+        ozon_offer_ids,
+        offers,
+        source_payload,
+        is_active,
+        sort_order,
+        short_description,
+        badges,
+        compare_at_price,
+        updated_at
+      ) values (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+        $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
+        $21, $22, $23, $24, $25, $26, $27::text[], $28::text[],
+        $29, $30, 'RUB', $31, $32, $33::text[], $34::bigint[],
+        $35::bigint[], $36::text[], $37::jsonb, $38::jsonb, $39,
+        $40, $41, $42::text[], $43, $44::timestamptz
+      )
+      returning
+        id,
+        design_key,
+        slug,
+        name,
+        sizes,
+        price_min,
+        price_max,
+        primary_image_url,
+        image_urls,
+        offers,
+        is_active,
+        sort_order,
+        updated_at
+    `,
+    [
+      designKey,
+      ozonVariant,
+      product.name.trim(),
+      slug,
+      nullableText(product.description),
+      nullableText(product.ozonDescription ?? product.description),
+      requiredText(product.category, group?.category, "category"),
+      requiredText(product.categorySlug, group?.categorySlug, "categorySlug"),
+      requiredText(product.productType, group?.productType, "productType"),
+      requiredText(product.productTypeSlug, group?.productTypeSlug, "productTypeSlug"),
+      requiredText(product.decorationType, group?.decorationType, "decorationType"),
+      requiredText(product.decorationSlug, group?.decorationSlug, "decorationSlug"),
+      nullableText(product.colorName) ?? group?.colorName ?? null,
+      nullableText(product.colorSlug) ?? group?.colorSlug ?? null,
+      nullableText(product.colorHex) ?? group?.colorHex ?? null,
+      product.franchiseType?.trim() || "anime",
+      nullableText(product.titleName),
+      nullableText(product.titleSlug),
+      nullableText(product.animeTitle ?? product.titleName),
+      nullableText(product.animeSlug ?? product.titleSlug),
+      nullableText(product.characterName),
+      nullableText(product.characterSlug),
+      nullableText(product.collectionName),
+      nullableText(product.collectionSlug),
+      nullableText(product.designName ?? product.collectionName),
+      nullableText(product.designSlug ?? product.collectionSlug),
+      tags,
+      sizes,
+      product.salePrice,
+      product.salePrice,
+      imageUrls[0],
+      nullableText(product.mainImagePath) ?? imageUrls[0],
+      imageUrls,
+      productIds,
+      skus,
+      offerIds,
+      JSON.stringify(offers),
+      JSON.stringify(sourcePayload),
+      product.isActive ?? true,
+      product.sortOrder ?? 0,
+      nullableText(product.shortDescription),
+      badges,
+      product.regularPrice ?? null,
+      syncedAt,
+    ],
+  );
+
+  const row = result.rows[0];
+  await auditAdminEvent(
+    context.config,
+    request,
+    "admin.ozon.create_storefront_product",
+    "allowed",
+    {
+      previewId: parsed.previewId,
+      productId: row.id,
+      slug: row.slug,
+      offerCount: offers.length,
+    },
+  );
+
+  return {
+    product: {
+      id: row.id,
+      designKey: row.design_key,
+      slug: row.slug,
+      name: row.name,
+      sizes: stringArray(row.sizes),
+      salePrice: toNumber(row.price_min) ?? null,
+      priceMax: toNumber(row.price_max) ?? null,
+      primaryImageUrl: row.primary_image_url,
+      imageUrls: stringArray(row.image_urls),
+      offers: unknownArray(row.offers).filter(
+        (item): item is Record<string, unknown> =>
+          Boolean(item) && typeof item === "object" && !Array.isArray(item),
+      ),
+      isActive: row.is_active,
+      sortOrder: row.sort_order,
+      updatedAt: row.updated_at,
+    },
+    linkedOzon: {
+      itemIds: selected.map((item) => item.itemId),
+      offerIds,
+      skus,
+      productIds,
+    },
+  };
+}
+
+export async function handleAdminLinkOzonStorefrontOffers(
+  request: FastifyRequest,
+  _reply: FastifyReply,
+  context: OzonImportContext,
+) {
+  const parsed = linkStorefrontOffersRequestSchema.parse(request.body || {});
+  const preview = await loadPreview(context.db, parsed.previewId);
+  const selected = selectPreviewItems(safeJsonArray(preview.items), {
+    itemIds: parsed.offerItemIds,
+    offerIds: parsed.offerIds,
+  });
+  if (!selected.length) {
+    throw new HttpError(
+      400,
+      "empty_offer_selection",
+      "No Ozon preview items selected for offer linking",
+    );
+  }
+
+  const syncedAt = new Date().toISOString();
+  const updatePrices = parsed.updatePrices === true;
+  const syncSizes = parsed.syncSizes ?? "add";
+  const updates = await context.db.withTransaction(async (client) => {
+    const applied: StorefrontUpdateResult[] = [];
+    for (const item of selected) {
+      const update = await applyStorefrontUpdate(
+        client,
+        {
+          ...item,
+          targetProduct: {
+            id: parsed.productId,
+            designKey: item.targetProduct?.designKey ?? "",
+            slug: item.targetProduct?.slug ?? "",
+            name: item.targetProduct?.name ?? "",
+          },
+          importOptions: {
+            updatePrices,
+            syncSizes,
+          },
+        },
+        syncedAt,
+      );
+      if (update) applied.push(update);
+    }
+    return applied;
+  });
+
+  await auditAdminEvent(
+    context.config,
+    request,
+    "admin.ozon.link_storefront_offers",
+    "allowed",
+    {
+      previewId: parsed.previewId,
+      productId: parsed.productId,
+      offerCount: selected.length,
+      applied: updates.length,
+    },
+  );
+
+  return {
+    productId: parsed.productId,
+    linkedOzon: {
+      itemIds: selected.map((item) => item.itemId),
+      offerIds: selected
+        .map((item) => item.offerId)
+        .filter((item): item is string => item !== undefined),
+      skus: selected
+        .map((item) => item.sku)
+        .filter((item): item is string => item !== undefined),
+      productIds: selected
+        .map((item) => item.productId)
+        .filter((item): item is string => item !== undefined),
+    },
+    updatePrices,
+    syncSizes,
+    applied: updates.length,
+    syncedAt,
   };
 }
 
@@ -1854,12 +2708,15 @@ export async function handleOzonProductsImportPreview(
     ozonPriceItems,
     fetchImpl,
   );
+  const updatePrices = parsed.updatePrices === true;
+  const syncSizes = parsed.syncSizes ?? "add";
   const preview = buildOzonPreview(
     ozonItems,
     storefrontRows,
     merchRows,
     targets,
     settings,
+    { updatePrices, syncSizes },
   );
   const saved = await savePreview(
     context.db,
@@ -1867,6 +2724,8 @@ export async function handleOzonProductsImportPreview(
       ...parsed,
       targets,
       limit,
+      updatePrices,
+      syncSizes,
     },
     preview,
   );
@@ -1893,11 +2752,14 @@ export async function handleOzonProductsImportPreview(
       supabaseRequested: targets.supabase,
       supabaseWriteEnabled: settings.supabaseWriteEnabled,
       ozonImportMode: settings.mode,
+      updatePrices,
+      syncSizes,
     },
     summary: preview.summary,
     canImport: preview.canImport,
     warnings: preview.warnings,
     items: preview.items,
+    newProductGroups: preview.newProductGroups,
   };
 }
 
@@ -1909,7 +2771,14 @@ export async function handleOzonProductsImport(
   const parsed = importRequestSchema.parse(request.body || {});
   const targets = normalizeTargets(parsed.targets);
   const preview = await loadPreview(context.db, parsed.previewId);
-  const items = safeJsonArray(preview.items);
+  const items = selectPreviewItems(safeJsonArray(preview.items), parsed);
+  if (!items.length) {
+    throw new HttpError(
+      400,
+      "empty_import_selection",
+      "No preview items match import selection",
+    );
+  }
   if (!preview.can_import) {
     throw new HttpError(
       400,

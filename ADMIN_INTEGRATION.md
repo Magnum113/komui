@@ -392,6 +392,7 @@ end $$;
 - `merch_products` (внутренние SKU): редактирование `cost_price`, `sale_price`, `legacy_skus`, привязка `ozon_sku`.
 - `merch_storefront_products` (витрина): цены, `is_active`, `sort_order`, `badges`, `compare_at_price`, медиа.
 - Для редактирования товаров витрины из отдельной админки использовать защищённый Komui backend API, а не прямую запись из браузера: см. `docs/admin-storefront-products-api.md`.
+- Для импорта новых Ozon SKU, новых размеров, фото и новых карточек витрины через отдельный Komui backend API: см. `docs/admin-ozon-import-api.md`.
 
 ---
 

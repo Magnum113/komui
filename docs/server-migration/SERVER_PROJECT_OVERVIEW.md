@@ -849,6 +849,8 @@ enabled and DNS points to this server.
 ```text
 POST /admin/ozon/products/import-preview
 POST /admin/ozon/products/import
+POST /admin/ozon/products/link-storefront-offers
+POST /admin/ozon/products/storefront-products
 GET  /admin/ozon/jobs/:jobId
 ```
 
@@ -876,16 +878,31 @@ Flow:
    - normalized design key derived from offer id, where possible.
 4. Preview is saved in `public.merch_admin_import_previews`.
 5. Admin UI shows summary/diff.
-6. `import` applies matched updates to local server PostgreSQL.
-7. Job status/result is saved in `public.merch_admin_jobs`.
+6. `import` applies selected matched updates to local server PostgreSQL.
+7. Unmatched Ozon offers can be manually linked to an existing storefront
+   product through `link-storefront-offers`.
+8. New Ozon designs/products can be reviewed by the admin UI and created as
+   storefront cards through `storefront-products`.
+9. Job status/result is saved in `public.merch_admin_jobs`.
 
 Safety behavior:
 
-- matched existing storefront products can be updated;
-- unmatched/new Ozon products are not auto-published as active storefront
-  cards;
+- matched existing storefront products can be updated selectively by
+  `itemIds` or `offerIds`;
+- prices on the site are not changed unless `updatePrices=true` is explicitly
+  sent; Ozon prices are stored separately in technical offer fields;
+- new Ozon sizes are added when `syncSizes="add"`, but existing storefront
+  sizes are not removed automatically;
+- unmatched/new Ozon products are grouped as candidates and are not
+  auto-published as storefront cards;
 - Supabase writes are skipped while `OZON_IMPORT_WRITE_SUPABASE=false`;
 - every import job supports idempotency key.
+
+Integration guide for the separate admin UI:
+
+```text
+docs/admin-ozon-import-api.md
+```
 
 Current smoke result:
 
