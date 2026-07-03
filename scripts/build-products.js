@@ -111,6 +111,17 @@ function loadFromLocalFile() {
   return sandbox.window.KOMUI_PRODUCTS || [];
 }
 
+function writeStorefrontProductsFallback(products) {
+  const fallbackPath = path.join(ROOT, 'data/storefront-products.js');
+  const payload = [
+    '/* Auto-generated storefront product fallback. */',
+    '/* Используется как fallback, если KOMUI API временно недоступен. */',
+    `window.KOMUI_PRODUCTS = ${JSON.stringify(products, null, 2)};`,
+    '',
+  ].join('\n');
+  fs.writeFileSync(fallbackPath, payload, 'utf8');
+}
+
 function apiBasicAuthHeader() {
   if (process.env.KOMUI_API_BASIC_AUTH) return process.env.KOMUI_API_BASIC_AUTH;
   if (!process.env.KOMUI_API_BASIC_USER || !process.env.KOMUI_API_BASIC_PASSWORD) return '';
@@ -1161,6 +1172,7 @@ async function main() {
     console.error('No products found in data/storefront-products.js');
     process.exit(1);
   }
+  writeStorefrontProductsFallback(products);
   const collectionLandings = buildCollectionLandings(products);
 
   const outDir = path.join(ROOT, 'p');
