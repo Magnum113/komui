@@ -407,11 +407,19 @@ function buildSizeChartTable(product) {
   return tableFromOzonSizeChart(chart) || tableFromSimpleSizeChart(chart);
 }
 
+function sizeChartHeaderHtml(column) {
+  const label = cleanChartCell(column);
+  if (label.toLowerCase() === 'российский размер') {
+    return '<th class="is-ru-size">Российский<br>размер</th>';
+  }
+  return `<th>${escapeHtml(label)}</th>`;
+}
+
 function renderSizeChart(product) {
   const chart = buildSizeChartTable(product);
   if (!chart) return '';
   const title = chart.title || 'Таблица размеров';
-  const columns = chart.columns.map(column => `<th>${escapeHtml(column)}</th>`).join('');
+  const columns = chart.columns.map(sizeChartHeaderHtml).join('');
   const rows = chart.rows
     .map(row => `<tr>${chart.columns.map((_, index) => `<td>${escapeHtml(row[index] || '')}</td>`).join('')}</tr>`)
     .join('');

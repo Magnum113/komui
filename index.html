@@ -523,6 +523,7 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
 .modal .msize-chart-table{width:100%;min-width:460px;border-collapse:collapse}
 .modal .msize-chart-table th,.modal .msize-chart-table td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--line);font-size:12px;white-space:nowrap}
 .modal .msize-chart-table th{color:var(--txt-3);font-weight:900;letter-spacing:.06em;text-transform:uppercase;background:var(--panel-2)}
+.modal .msize-chart-table th.is-ru-size{line-height:1.12;white-space:normal}
 .modal .msize-chart-table tbody tr:last-child td{border-bottom:none}
 .modal .msize-chart-table td:first-child{font-family:'Unbounded',sans-serif;font-weight:800;color:var(--txt)}
 .modal .msize-chart-note{margin:10px 2px 0;color:var(--txt-3);font-size:12px;line-height:1.45}
@@ -1281,10 +1282,15 @@ function buildSizeChart(product){
   }
   return rows.length?{columns,rows}:null;
 }
+function sizeChartHeadCell(column){
+  const label=cleanChartCell(column);
+  if(label.toLowerCase()==='российский размер')return '<th class="is-ru-size">Российский<br>размер</th>';
+  return `<th>${esc(label)}</th>`;
+}
 function modalSizeChartHtml(product){
   const chart=buildSizeChart(product);
   if(!chart)return '';
-  const head=chart.columns.map(column=>`<th>${esc(column)}</th>`).join('');
+  const head=chart.columns.map(sizeChartHeadCell).join('');
   const rows=chart.rows.map(row=>`<tr>${chart.columns.map((_,i)=>`<td>${esc(row[i]||'')}</td>`).join('')}</tr>`).join('');
   return `<div class="msize-chart-panel" id="mSizeChartPanel" hidden>
     <div class="msize-chart-head">
