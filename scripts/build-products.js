@@ -525,10 +525,64 @@ function buildTitle(product) {
   return base;
 }
 
-function renderProductPage(product) {
+function productRecommendationCard(product) {
+  const images = productImages(product);
+  const img = images[0] || '';
+  const price = formatPriceRange(product.price_min, product.price_max);
+  const oldPrice = Number(product.compare_at_price);
+  const oldPriceHtml = oldPrice && oldPrice > Number(product.price_min)
+    ? `<s class="p-reco-old">${oldPrice.toLocaleString('ru-RU')} ₽</s>`
+    : '';
+  const collection = product.collection_name || product.anime_title || '';
+  const sizes = catalogSizesHtml(product.sizes || []);
+  return `<article class="p-reco-card">
+    <a class="p-reco-media" href="/p/${escapeAttr(product.slug)}" aria-label="${escapeAttr(product.name)}">
+      ${img ? `<img src="${escapeAttr(img)}" alt="${escapeAttr(product.name)}" loading="lazy" decoding="async">` : ''}
+    </a>
+    <div class="p-reco-body">
+      ${collection ? `<div class="p-reco-col">${escapeHtml(collection)}</div>` : ''}
+      <h3><a href="/p/${escapeAttr(product.slug)}">${escapeHtml(product.name)}</a></h3>
+      <div class="p-reco-meta">
+        ${price ? `<span class="p-reco-price">${escapeHtml(price)}${oldPriceHtml}</span>` : ''}
+        ${sizes}
+      </div>
+    </div>
+  </article>`;
+}
+
+function productRecommendations(product, products) {
+  const candidates = (products || [])
+    .filter(p => p && p.slug && p.slug !== product.slug)
+    .map(p => {
+      let score = 0;
+      if (p.collection_name && p.collection_name === product.collection_name) score += 8;
+      if (p.anime_title && p.anime_title === product.anime_title) score += 6;
+      if (p.category && p.category === product.category) score += 3;
+      if (p.decoration_type && p.decoration_type === product.decoration_type) score += 1;
+      return { product: p, score };
+    })
+    .sort((a, b) => b.score - a.score || String(a.product.name).localeCompare(String(b.product.name), 'ru'))
+    .slice(0, 10)
+    .map(item => item.product);
+  if (!candidates.length) return '';
+  return `<section class="p-reco" aria-labelledby="pRecoTitle">
+    <div class="p-reco-head">
+      <div>
+        <div class="p-reco-kicker">Еще можно посмотреть</div>
+        <h2 id="pRecoTitle">Рекомендации</h2>
+      </div>
+      <a href="/#catalog">В каталог</a>
+    </div>
+    <div class="p-reco-strip" aria-label="Рекомендованные товары">
+      ${candidates.map(productRecommendationCard).join('')}
+    </div>
+  </section>`;
+}
+
+function renderProductPage(product, products = []) {
   const images = productImages(product);
   const heroImage = images[0] || '';
-  const galleryThumbs = images.slice(1, 8);
+  const galleryThumbs = images.slice(0, 8);
   const priceText = formatPriceRange(product.price_min, product.price_max);
   const oldPrice = Number(product.compare_at_price);
   const oldPriceHtml = oldPrice && oldPrice > Number(product.price_min)
@@ -547,11 +601,21 @@ function renderProductPage(product) {
     : '';
   const sizeChartModalHtml = sizeChartHtml ? `\n  ${sizeChartHtml}` : '';
   const galleryHtml = images.length
-    ? `<div class="p-gallery">
-        <div class="p-hero"><img id="pHero" src="${escapeAttr(heroImage)}" alt="${escapeAttr(product.name)}" loading="eager"></div>
-        ${galleryThumbs.length ? `<div class="p-thumbs">${galleryThumbs.map(u => `<button type="button" class="p-thumb" data-src="${escapeAttr(u)}"><img src="${escapeAttr(u)}" alt="${escapeAttr(product.name)}" loading="lazy"></button>`).join('')}</div>` : ''}
+    ? `<div class="p-gallery" data-p-gallery>
+        <div class="p-hero">
+          <div class="p-track" id="pTrack">
+            ${images.map((u, i) => `<img class="p-slide" src="${escapeAttr(u)}" alt="${escapeAttr(product.name)} — фото ${i + 1}" loading="${i === 0 ? 'eager' : 'lazy'}" decoding="async" draggable="false">`).join('')}
+          </div>
+          ${images.length > 1 ? `<button type="button" class="p-garr p-prev" id="pPrev" aria-label="Предыдущее фото"><span aria-hidden="true">‹</span></button>
+          <button type="button" class="p-garr p-next" id="pNext" aria-label="Следующее фото"><span aria-hidden="true">›</span></button>
+          <div class="p-gdots" aria-label="Фотографии товара">
+            ${images.map((_, i) => `<button type="button" class="p-gdot${i === 0 ? ' is-active' : ''}" data-go="${i}" aria-label="Фото ${i + 1}"></button>`).join('')}
+          </div>` : ''}
+        </div>
+        ${galleryThumbs.length > 1 ? `<div class="p-thumbs">${galleryThumbs.map((u, i) => `<button type="button" class="p-thumb${i === 0 ? ' is-active' : ''}" data-go="${i}" aria-label="Показать фото ${i + 1}"><img src="${escapeAttr(u)}" alt="${escapeAttr(product.name)} — миниатюра ${i + 1}" loading="lazy" decoding="async"></button>`).join('')}</div>` : ''}
        </div>`
     : '';
+  const recommendationsHtml = productRecommendations(product, products);
   const badgeSeen = new Set();
   const badgePool = [product.collection_name, product.anime_title, product.character_name]
     .filter(Boolean)
@@ -640,6 +704,7 @@ function renderProductPage(product) {
           </div>
         </div>
       </div>
+      ${recommendationsHtml}
       ${product.description ? `<section class="p-desc"><h2>Описание</h2>${descriptionHtml(product)}</section>` : ''}
     </div>
   </section>
@@ -692,16 +757,50 @@ ${sizeChartModalHtml}
       btn.classList.add('is-active');
     });
   }
-  var hero = document.getElementById('pHero');
-  var thumbs = document.querySelectorAll('.p-thumb');
-  thumbs.forEach(function(t){
-    t.addEventListener('click', function(){
-      var src = t.getAttribute('data-src');
-      if (src && hero) hero.src = src;
-      thumbs.forEach(function(x){ x.classList.remove('is-active'); });
-      t.classList.add('is-active');
+  var gallery = document.querySelector('[data-p-gallery]');
+  var autoplay = null;
+  function initGallery(){
+    if (!gallery) return;
+    var track = document.getElementById('pTrack');
+    if (!track || track.children.length < 2) return;
+    var dots = Array.prototype.slice.call(gallery.querySelectorAll('.p-gdot'));
+    var thumbs = Array.prototype.slice.call(gallery.querySelectorAll('.p-thumb'));
+    var prev = document.getElementById('pPrev');
+    var next = document.getElementById('pNext');
+    var count = track.children.length;
+    var index = 0;
+    var prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function go(nextIndex){
+      index = (nextIndex % count + count) % count;
+      track.style.transform = 'translateX(' + (-index * 100) + '%)';
+      dots.forEach(function(dot, i){ dot.classList.toggle('is-active', i === index); });
+      thumbs.forEach(function(thumb, i){ thumb.classList.toggle('is-active', i === index); });
+    }
+    function step(dir){ go(index + dir); }
+    function stop(){
+      if (autoplay) {
+        clearInterval(autoplay);
+        autoplay = null;
+      }
+    }
+    function start(){
+      if (prefersReduced || autoplay) return;
+      autoplay = setInterval(function(){ step(1); }, 3800);
+    }
+    if (prev) prev.addEventListener('click', function(){ stop(); step(-1); });
+    if (next) next.addEventListener('click', function(){ stop(); step(1); });
+    dots.forEach(function(dot){
+      dot.addEventListener('click', function(){ stop(); go(Number(dot.getAttribute('data-go')) || 0); });
     });
-  });
+    thumbs.forEach(function(thumb){
+      thumb.addEventListener('click', function(){ stop(); go(Number(thumb.getAttribute('data-go')) || 0); });
+    });
+    gallery.addEventListener('pointerdown', stop, { once: true });
+    gallery.addEventListener('mouseenter', stop, { once: true });
+    go(0);
+    start();
+  }
+  initGallery();
   if (add) {
     add.addEventListener('click', function(){
       var id = add.getAttribute('data-id');
@@ -1012,7 +1111,7 @@ async function main() {
 
   let written = 0;
   for (const product of products) {
-    const html = renderProductPage(product);
+    const html = renderProductPage(product, products);
     fs.writeFileSync(path.join(outDir, `${product.slug}.html`), html, 'utf8');
     written += 1;
   }
