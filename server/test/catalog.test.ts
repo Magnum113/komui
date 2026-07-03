@@ -44,6 +44,7 @@ test("sanitizeProduct does not leak raw offer fields", () => {
     sizes: ["M"],
     currency: "RUB",
     image_urls: [],
+    size_chart_json: { rows: [["M", "75"]] },
     offers: [{ offer_id: "x", attributes: { weight: 250 }, price: 1 }],
     is_active: true,
     sort_order: 1,
@@ -52,6 +53,7 @@ test("sanitizeProduct does not leak raw offer fields", () => {
 
   assert.equal(product.offers[0]?.offer_id, "x");
   assert.equal("attributes" in product.offers[0]!, false);
+  assert.deepEqual(product.size_chart_json, { rows: [["M", "75"]] });
 });
 
 test("normalizeLimit clamps unsafe values", () => {

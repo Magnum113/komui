@@ -36,6 +36,7 @@ const PUBLIC_PRODUCT_COLUMNS = `
   primary_image_url,
   main_image_path,
   image_urls,
+  size_chart_json,
   offers,
   is_active,
   sort_order,
@@ -92,6 +93,7 @@ export type PublicProduct = {
   primary_image_url?: string | null;
   main_image_path?: string | null;
   image_urls: string[];
+  size_chart_json?: unknown;
   offers: PublicOffer[];
   is_active: boolean;
   sort_order: number;

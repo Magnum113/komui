@@ -44,6 +44,9 @@ x-komui-admin-token: <ADMIN_API_TOKEN>
 - не меняет `offers.price`;
 - сохраняет Ozon-цены в технические поля `offers[].ozon_price`, `offers[].ozon_old_price`, `offers[].ozon_min_price`;
 - добавляет новые `offers`, новые `sizes`, SKU, offer_id и фото.
+- подтягивает JSON таблицы размеров из Ozon `attribute_id = 13164`
+  через `/v4/product/info/attributes` и сохраняет в
+  `merch_storefront_products.size_chart_json`.
 
 `updatePrices: true` использовать только если ты сознательно хочешь заменить цены сайта Ozon-ценами.
 
@@ -199,6 +202,7 @@ Payload:
 - `primary_image_url`
 - `main_image_path`, только если раньше не было ручного override
 - `image_urls`
+- `size_chart_json`, если Ozon вернул таблицу размеров
 - `updated_at`
 
 При `updatePrices:false` не меняются:
@@ -318,6 +322,7 @@ Authorization: Bearer <ADMIN_API_TOKEN>
 - ставит `price_min = salePrice`, `price_max = salePrice`;
 - ставит `compare_at_price = regularPrice`;
 - заполняет `sizes`, `image_urls`, `primary_image_url`;
+- заполняет `size_chart_json`, если выбранные Ozon offer-ы содержат таблицу размеров;
 - связывает выбранные Ozon SKU в `offers`, `ozon_skus`, `ozon_product_ids`, `ozon_offer_ids`;
 - записывает `offers[].price = salePrice`;
 - Ozon-цены сохраняет отдельно в `offers[].ozon_price`.

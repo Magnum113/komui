@@ -10,7 +10,9 @@ import { HttpError } from "./errors";
 
 const OZON_PRICE_PATH = "/v5/product/info/prices";
 const OZON_PRODUCT_INFO_LIST_PATH = "/v3/product/info/list";
+const OZON_PRODUCT_INFO_ATTRIBUTES_PATH = "/v4/product/info/attributes";
 const OZON_DEFAULT_BASE_URL = "https://api-seller.ozon.ru";
+const OZON_SIZE_CHART_ATTRIBUTE_ID = 13164;
 
 const targetSchema = z
   .object({
@@ -93,6 +95,7 @@ const createStorefrontProductRequestSchema = z.object({
         .min(1)
         .max(80)
         .optional(),
+      sizeChartJson: z.unknown().nullable().optional(),
       mainImagePath: z.string().trim().min(1).max(2_048).nullable().optional(),
       isActive: z.boolean().optional(),
       sortOrder: z.coerce.number().int().min(0).max(1_000_000).optional(),
@@ -144,6 +147,7 @@ export type OzonPriceItem = {
   images360?: unknown;
   color_image?: unknown;
   media_loaded?: boolean;
+  size_chart_json?: unknown;
 };
 
 type StorefrontRow = {
@@ -157,6 +161,7 @@ type StorefrontRow = {
   primary_image_url: string | null;
   main_image_path: string | null;
   image_urls: unknown;
+  size_chart_json?: unknown;
   ozon_product_ids: unknown;
   ozon_skus: unknown;
   ozon_offer_ids: unknown;
@@ -186,6 +191,7 @@ export type OzonPreviewItem = {
   minPrice?: number;
   visible?: boolean | null;
   archived?: boolean;
+  sizeChartJson?: unknown;
   media?: {
     primaryImage?: string | null;
     images?: string[];
@@ -318,6 +324,7 @@ type OzonProductGroup = OzonInferredProduct & {
   suggestedName: string;
   primaryImageUrl: string | null;
   imageUrls: string[];
+  sizeChartJson?: unknown;
   minOzonPrice: number | null;
   maxOzonPrice: number | null;
 };
@@ -534,6 +541,54 @@ function mediaFromOzonItem(item: Pick<
     images360,
     colorImage,
   };
+}
+
+function normalizeSizeChartJson(value: unknown): unknown | undefined {
+  if (value === null || value === undefined) return undefined;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return undefined;
+    try {
+      return JSON.parse(trimmed);
+    } catch {
+      return trimmed;
+    }
+  }
+  if (typeof value === "object") return value;
+  return undefined;
+}
+
+function extractOzonSizeChartJson(value: unknown): unknown | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const item = value as {
+    attributes?: Array<{
+      attribute_id?: unknown;
+      id?: unknown;
+      values?: unknown[];
+    }>;
+  };
+  for (const attribute of unknownArray(item.attributes)) {
+    if (!attribute || typeof attribute !== "object" || Array.isArray(attribute)) {
+      continue;
+    }
+    const attr = attribute as {
+      attribute_id?: unknown;
+      id?: unknown;
+      values?: unknown[];
+    };
+    const attributeId = toNumericId(attr.attribute_id ?? attr.id);
+    if (attributeId !== OZON_SIZE_CHART_ATTRIBUTE_ID) continue;
+
+    for (const rawValue of unknownArray(attr.values)) {
+      const valueObject =
+        rawValue && typeof rawValue === "object" && !Array.isArray(rawValue)
+          ? (rawValue as { value?: unknown })
+          : undefined;
+      const parsed = normalizeSizeChartJson(valueObject ? valueObject.value : rawValue);
+      if (parsed !== undefined) return parsed;
+    }
+  }
+  return undefined;
 }
 
 function mediaFromOffer(offer: Record<string, unknown> | undefined) {
@@ -911,6 +966,7 @@ type PreviewOzonFields = Pick<
   | "minPrice"
   | "visible"
   | "archived"
+  | "sizeChartJson"
   | "media"
 >;
 
@@ -930,8 +986,15 @@ function sameNumberValue(current: unknown, next: unknown) {
   return current === next;
 }
 
+function sameJsonValue(current: unknown, next: unknown) {
+  return JSON.stringify(current ?? null) === JSON.stringify(next ?? null);
+}
+
 function sameDiffValue(field: string, current: unknown, next: unknown) {
   const baseField = field.includes(".") ? field.split(".").at(-1) || field : field;
+  if (baseField === "size_chart_json") {
+    return sameJsonValue(current, next);
+  }
   if (baseField === "offer_id") {
     return normalizeOfferId(current) === normalizeOfferId(next);
   }
@@ -1148,6 +1211,8 @@ function buildStorefrontDiff(
   const priceRange = options.updatePrices
     ? priceRangeFromOffers(nextOffers, row.price_min, row.price_max)
     : { min: row.price_min, max: row.price_max };
+  const nextSizeChartJson =
+    item.sizeChartJson !== undefined ? item.sizeChartJson : row.size_chart_json ?? null;
   const nextImageUrls = imageUrlsFromOffers(nextOffers, row.image_urls);
   const nextPrimaryImageUrl = nextImageUrls[0] ?? null;
   const nextProductMainImagePath = nextMainImagePath(
@@ -1170,6 +1235,7 @@ function buildStorefrontDiff(
     diffField("price_min", row.price_min, priceRange.min),
     diffField("price_max", row.price_max, priceRange.max),
     diffArrayField("sizes", sortSizes(stringArray(row.sizes)), nextSizes),
+    diffField("size_chart_json", row.size_chart_json ?? null, nextSizeChartJson),
     diffField("primary_image_url", row.primary_image_url, nextPrimaryImageUrl),
     diffField("main_image_path", row.main_image_path, nextProductMainImagePath),
     diffArrayField("image_urls", stringArray(row.image_urls), nextImageUrls),
@@ -1373,6 +1439,8 @@ function buildNewProductGroups(items: OzonPreviewItem[]): OzonProductGroup[] {
       .filter((price): price is number => price !== undefined);
     const suggestedName = stripTrailingSizeFromName(first.name) ||
       `${inferred.productType} ${inferred.ozonVariant}`;
+    const sizeChartJson = groupItems.find((item) => item.sizeChartJson !== undefined)
+      ?.sizeChartJson;
 
     productGroups.push({
       ...inferred,
@@ -1394,6 +1462,7 @@ function buildNewProductGroups(items: OzonPreviewItem[]): OzonProductGroup[] {
       suggestedName,
       primaryImageUrl: imageUrls[0] ?? null,
       imageUrls,
+      sizeChartJson,
       minOzonPrice: prices.length ? Math.min(...prices) : null,
       maxOzonPrice: prices.length ? Math.max(...prices) : null,
     });
@@ -1461,6 +1530,7 @@ export function buildOzonPreview(
           : undefined,
       archived:
         typeof ozonItem.archived === "boolean" ? ozonItem.archived : undefined,
+      sizeChartJson: ozonItem.size_chart_json,
       media: media
         ? {
             primaryImage: media.primaryImage ?? null,
@@ -1811,21 +1881,116 @@ async function fetchOzonProductInfoItems(
   return byProductId;
 }
 
+async function fetchOzonSizeChartItems(
+  settings: OzonImportEnv,
+  priceItems: OzonPriceItem[],
+  fetchImpl: typeof fetch,
+) {
+  const offerIds = uniqueStrings(
+    priceItems
+      .map((item) => item.offer_id)
+      .filter((item): item is string => typeof item === "string" && Boolean(item.trim())),
+  );
+  const byOfferId = new Map<string, unknown>();
+  const byProductId = new Map<string, unknown>();
+  if (!offerIds.length) return { byOfferId, byProductId };
+
+  const endpoint = new URL(
+    OZON_PRODUCT_INFO_ATTRIBUTES_PATH,
+    settings.apiBaseUrl,
+  ).toString();
+
+  for (const batch of chunkArray(offerIds, 100)) {
+    const response = await fetchImpl(endpoint, {
+      method: "POST",
+      headers: {
+        "Client-Id": settings.clientId || "",
+        "Api-Key": settings.apiKey || "",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        filter: {
+          offer_id: batch,
+          visibility: "ALL",
+        },
+        limit: batch.length,
+        sort_dir: "ASC",
+      }),
+    });
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => "");
+      throw new HttpError(
+        502,
+        "ozon_product_attributes_request_failed",
+        "Ozon product attributes request failed",
+        {
+          status: response.status,
+          body: body.slice(0, 500),
+        },
+      );
+    }
+
+    const payload = (await response.json()) as {
+      result?: unknown[];
+      items?: unknown[];
+    };
+    const pageItems = Array.isArray(payload.result)
+      ? payload.result
+      : Array.isArray(payload.items)
+        ? payload.items
+        : [];
+
+    for (const item of pageItems) {
+      if (!item || typeof item !== "object" || Array.isArray(item)) continue;
+      const row = item as {
+        offer_id?: unknown;
+        product_id?: unknown;
+        id?: unknown;
+      };
+      const chartJson = extractOzonSizeChartJson(item);
+      if (chartJson === undefined) continue;
+
+      const offerId = normalizeOfferId(row.offer_id);
+      if (offerId) byOfferId.set(offerId, chartJson);
+
+      const productId = toStringId(row.product_id ?? row.id);
+      if (productId) byProductId.set(productId, chartJson);
+    }
+  }
+
+  return { byOfferId, byProductId };
+}
+
 async function enrichOzonItemsWithProductInfo(
   settings: OzonImportEnv,
   priceItems: OzonPriceItem[],
   fetchImpl: typeof fetch,
 ) {
-  const detailsByProductId = await fetchOzonProductInfoItems(
-    settings,
-    priceItems,
-    fetchImpl,
-  );
+  const [detailsByProductId, sizeCharts] = await Promise.all([
+    fetchOzonProductInfoItems(settings, priceItems, fetchImpl),
+    fetchOzonSizeChartItems(settings, priceItems, fetchImpl),
+  ]);
 
   return priceItems.map((priceItem) => {
     const productId = toStringId(priceItem.product_id ?? priceItem.id);
     const details = productId ? detailsByProductId.get(productId) : undefined;
-    if (!details) return priceItem;
+    const normalizedOfferId = normalizeOfferId(priceItem.offer_id);
+    const chartJson = normalizedOfferId
+      ? sizeCharts.byOfferId.get(normalizedOfferId)
+      : undefined;
+    const productChartJson = productId
+      ? sizeCharts.byProductId.get(productId)
+      : undefined;
+    const sizeChartJson = chartJson ?? productChartJson;
+    if (!details) {
+      return sizeChartJson === undefined
+        ? priceItem
+        : {
+            ...priceItem,
+            size_chart_json: sizeChartJson,
+          };
+    }
     return {
       ...priceItem,
       sku: priceItem.sku ?? details.sku,
@@ -1835,6 +2000,7 @@ async function enrichOzonItemsWithProductInfo(
       images360: details.images360,
       color_image: details.color_image,
       media_loaded: true,
+      size_chart_json: sizeChartJson,
     };
   });
 }
@@ -1853,6 +2019,7 @@ async function loadStorefrontRows(db: Db) {
         primary_image_url,
         main_image_path,
         image_urls,
+        size_chart_json,
         ozon_product_ids,
         ozon_skus,
         ozon_offer_ids,
@@ -2016,6 +2183,7 @@ async function applyStorefrontUpdate(
         primary_image_url,
         main_image_path,
         image_urls,
+        size_chart_json,
         ozon_product_ids,
         ozon_skus,
         ozon_offer_ids,
@@ -2046,12 +2214,15 @@ async function applyStorefrontUpdate(
   const imageUrls = imageUrlsFromOffers(offers, row.image_urls);
   const primaryImageUrl = imageUrls[0] ?? null;
   const mainImagePath = nextMainImagePath(row.main_image_path, primaryImageUrl);
+  const sizeChartJson =
+    item.sizeChartJson !== undefined ? item.sizeChartJson : row.size_chart_json ?? null;
   const patch = {
     ozon_product_ids: productIds,
     ozon_skus: skus,
     ozon_offer_ids: offerIds,
     offers,
     sizes,
+    size_chart_json: sizeChartJson,
     price_min: priceRange.min,
     price_max: priceRange.max,
     primary_image_url: primaryImageUrl,
@@ -2074,7 +2245,8 @@ async function applyStorefrontUpdate(
         primary_image_url = $9,
         main_image_path = $10,
         image_urls = $11::text[],
-        updated_at = $12::timestamptz
+        size_chart_json = $12::jsonb,
+        updated_at = $13::timestamptz
       where id = $1
     `,
     [
@@ -2089,6 +2261,7 @@ async function applyStorefrontUpdate(
       primaryImageUrl,
       mainImagePath,
       imageUrls,
+      JSON.stringify(sizeChartJson),
       syncedAt,
     ],
   );
@@ -2253,6 +2426,9 @@ export async function handleAdminCreateOzonStorefrontProduct(
   const offers = selected.map((item) =>
     offerForCreatedProduct(item, product.salePrice, syncedAt),
   );
+  const sizeChartJson = product.sizeChartJson !== undefined
+    ? product.sizeChartJson
+    : selected.find((item) => item.sizeChartJson !== undefined)?.sizeChartJson ?? null;
   const productIds = numberArray(selected.map((item) => item.productId));
   const skus = numberArray(selected.map((item) => item.sku));
   const offerIds = selected
@@ -2278,6 +2454,7 @@ export async function handleAdminCreateOzonStorefrontProduct(
     price_max: string | number | null;
     primary_image_url: string | null;
     image_urls: string[];
+    size_chart_json: unknown;
     offers: unknown;
     is_active: boolean;
     sort_order: number;
@@ -2319,6 +2496,7 @@ export async function handleAdminCreateOzonStorefrontProduct(
         primary_image_url,
         main_image_path,
         image_urls,
+        size_chart_json,
         ozon_product_ids,
         ozon_skus,
         ozon_offer_ids,
@@ -2334,9 +2512,10 @@ export async function handleAdminCreateOzonStorefrontProduct(
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
         $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
         $21, $22, $23, $24, $25, $26, $27::text[], $28::text[],
-        $29, $30, 'RUB', $31, $32, $33::text[], $34::bigint[],
-        $35::bigint[], $36::text[], $37::jsonb, $38::jsonb, $39,
-        $40, $41, $42::text[], $43, $44::timestamptz
+        $29, $30, 'RUB', $31, $32, $33::text[], $34::jsonb,
+        $35::bigint[], $36::bigint[], $37::text[], $38::jsonb,
+        $39::jsonb, $40, $41, $42, $43::text[], $44,
+        $45::timestamptz
       )
       returning
         id,
@@ -2348,6 +2527,7 @@ export async function handleAdminCreateOzonStorefrontProduct(
         price_max,
         primary_image_url,
         image_urls,
+        size_chart_json,
         offers,
         is_active,
         sort_order,
@@ -2387,6 +2567,7 @@ export async function handleAdminCreateOzonStorefrontProduct(
       imageUrls[0],
       nullableText(product.mainImagePath) ?? imageUrls[0],
       imageUrls,
+      JSON.stringify(sizeChartJson),
       productIds,
       skus,
       offerIds,
@@ -2426,6 +2607,7 @@ export async function handleAdminCreateOzonStorefrontProduct(
       priceMax: toNumber(row.price_max) ?? null,
       primaryImageUrl: row.primary_image_url,
       imageUrls: stringArray(row.image_urls),
+      sizeChartJson: row.size_chart_json ?? null,
       offers: unknownArray(row.offers).filter(
         (item): item is Record<string, unknown> =>
           Boolean(item) && typeof item === "object" && !Array.isArray(item),

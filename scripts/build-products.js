@@ -173,6 +173,38 @@ function formatPriceRange(min, max) {
   return `${a.toLocaleString('ru-RU')}–${b.toLocaleString('ru-RU')} ₽`;
 }
 
+const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+
+function sizeIndex(size) {
+  const index = SIZE_ORDER.indexOf(String(size || '').toUpperCase());
+  return index === -1 ? 999 : index;
+}
+
+function sortDisplaySizes(sizes) {
+  return [...new Set(sizes || [])]
+    .sort((a, b) => sizeIndex(a) - sizeIndex(b) || String(a).localeCompare(String(b), 'ru'));
+}
+
+function sizeSummary(sizes) {
+  const list = sortDisplaySizes(sizes);
+  if (!list.length) return null;
+  const known = list.map(sizeIndex);
+  const contiguous = known.every(index => index !== 999) &&
+    known.every((value, index) => !index || value === known[index - 1] + 1);
+  const label = contiguous && list.length > 1 ? `${list[0]}-${list[list.length - 1]}` : list.join('/');
+  const full = list.join(', ');
+  return {
+    label,
+    aria: `Размеры в наличии: ${full}`,
+  };
+}
+
+function catalogSizesHtml(sizes) {
+  const summary = sizeSummary(sizes);
+  if (!summary) return '';
+  return `<span class="sizes" aria-label="${escapeAttr(summary.aria)}" title="${escapeAttr(summary.aria)}"><span class="sizes-value">${escapeHtml(summary.label)}</span></span>`;
+}
+
 function normalizeSearch(value) {
   return String(value || '')
     .toLowerCase()
@@ -250,6 +282,164 @@ function productImages(product) {
     .filter(Boolean);
   // De-dupe while preserving order.
   return [...new Set(list)];
+}
+
+function cleanChartCell(value) {
+  if (value == null) return '';
+  return String(value)
+    .replace(/\u00a0/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function parseSizeChartJson(value) {
+  if (!value) return null;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    try {
+      return JSON.parse(trimmed);
+    } catch {
+      return trimmed;
+    }
+  }
+  return value;
+}
+
+function firstProductSizeChart(product) {
+  const direct = parseSizeChartJson(product.size_chart_json || product.sizeChartJson);
+  if (direct) return direct;
+  for (const offer of product.offers || []) {
+    const chart = parseSizeChartJson(offer.size_chart_json || offer.sizeChartJson);
+    if (chart) return chart;
+  }
+  return null;
+}
+
+function chartLabel(cell) {
+  if (Array.isArray(cell)) {
+    const [label, hint] = cell.map(cleanChartCell);
+    if (label === 'RU') return hint || 'Российский';
+    if (label === 'INT') return hint || 'Размер';
+    return label || hint || '';
+  }
+  const label = cleanChartCell(cell);
+  if (label === 'RU') return 'Российский';
+  if (label === 'INT') return 'Размер';
+  return label;
+}
+
+function isApparelSizeValue(value) {
+  return /^(?:XS|S|M|L|XL|XXL|XXXL|2XL|3XL)$/i.test(cleanChartCell(value));
+}
+
+function findOzonTcTable(chart) {
+  const content = Array.isArray(chart && chart.content) ? chart.content : [];
+  const widget = content.find(item => item && item.widgetName === 'tcTable' && item.table);
+  return widget ? widget.table : null;
+}
+
+function tableFromOzonSizeChart(chart) {
+  const table = findOzonTcTable(chart);
+  const body = Array.isArray(table && table.body) ? table.body : [];
+  const series = body
+    .map(row => {
+      const data = Array.isArray(row && row.data) ? row.data : [];
+      if (data.length < 2) return null;
+      return {
+        label: chartLabel(data[0]),
+        values: data.slice(1).map(cleanChartCell),
+      };
+    })
+    .filter(Boolean);
+  if (!series.length) return null;
+
+  const sizeSeries = series.find(item =>
+    item.values.some(isApparelSizeValue) && !/россий/i.test(item.label)
+  ) || series.find(item =>
+    /международ|^int$/i.test(item.label)
+  ) || series[0];
+  const maxRows = Math.max(...series.map(item => item.values.length));
+  const columns = [
+    'Размер',
+    ...series
+      .filter(item => item !== sizeSeries)
+      .map(item => item.label || 'Параметр'),
+  ];
+  const rows = [];
+  for (let index = 0; index < maxRows; index += 1) {
+    const size = sizeSeries.values[index] || '';
+    if (!size) continue;
+    rows.push([
+      size,
+      ...series
+        .filter(item => item !== sizeSeries)
+        .map(item => item.values[index] || ''),
+    ]);
+  }
+  if (!rows.length) return null;
+  return {
+    title: cleanChartCell(table.title) || 'Таблица размеров',
+    columns,
+    rows,
+  };
+}
+
+function tableFromSimpleSizeChart(chart) {
+  const table = chart && (chart.table || chart);
+  const columns = Array.isArray(table && table.columns)
+    ? table.columns.map(cleanChartCell).filter(Boolean)
+    : [];
+  const rows = Array.isArray(table && table.rows)
+    ? table.rows.map(row => Array.isArray(row) ? row.map(cleanChartCell) : [])
+    : [];
+  if (!columns.length || !rows.length) return null;
+  return {
+    title: cleanChartCell(table.title) || 'Таблица размеров',
+    columns,
+    rows,
+  };
+}
+
+function buildSizeChartTable(product) {
+  const chart = firstProductSizeChart(product);
+  if (!chart || typeof chart !== 'object') return null;
+  return tableFromOzonSizeChart(chart) || tableFromSimpleSizeChart(chart);
+}
+
+function renderSizeChart(product) {
+  const chart = buildSizeChartTable(product);
+  if (!chart) return '';
+  const title = chart.title || 'Таблица размеров';
+  const columns = chart.columns.map(column => `<th>${escapeHtml(column)}</th>`).join('');
+  const rows = chart.rows
+    .map(row => `<tr>${chart.columns.map((_, index) => `<td>${escapeHtml(row[index] || '')}</td>`).join('')}</tr>`)
+    .join('');
+  const itemType = product.product_type || product.category || 'изделия';
+  return `<div class="p-size-chart-modal" id="pSizeChartModal" hidden>
+    <div class="p-size-chart-dialog" role="dialog" aria-modal="true" aria-labelledby="pSizeChartTitle">
+      <div class="p-size-chart-head">
+        <div>
+          <div class="p-size-chart-kicker">Размерная сетка</div>
+          <h2 class="p-size-chart-title" id="pSizeChartTitle">${escapeHtml(title)}</h2>
+          <p class="p-size-chart-sub">${escapeHtml(itemType)}: замеры изделия в сантиметрах из Ozon.</p>
+        </div>
+        <button type="button" class="p-size-chart-close" id="pSizeChartClose" aria-label="Закрыть таблицу размеров">×</button>
+      </div>
+      <div class="p-size-chart-body">
+        <div class="p-size-chart-scroll">
+          <table class="p-size-chart-table">
+            <thead><tr>${columns}</tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+        <div class="p-size-chart-note">
+          <p><strong>Как сверять:</strong> сравните замеры с вещью, которая уже хорошо сидит. Для оверсайз-посадки берите привычный размер или на один больше.</p>
+          <p>Допустимое расхождение замеров: 1-2 см.</p>
+        </div>
+      </div>
+    </div>
+  </div>`;
 }
 
 function visibleOffers(product) {
@@ -351,6 +541,11 @@ function renderProductPage(product) {
   const sizeButtons = product.sizes
     .map((s, i) => `<button type="button" class="p-size${i === 0 ? ' is-active' : ''}" data-size="${escapeAttr(s)}">${escapeHtml(s)}</button>`)
     .join('');
+  const sizeChartHtml = renderSizeChart(product);
+  const sizeChartButtonHtml = sizeChartHtml
+    ? '\n              <button type="button" class="p-size-chart-btn" id="pSizeChartOpen">Таблица размеров</button>'
+    : '';
+  const sizeChartModalHtml = sizeChartHtml ? `\n  ${sizeChartHtml}` : '';
   const galleryHtml = images.length
     ? `<div class="p-gallery">
         <div class="p-hero"><img id="pHero" src="${escapeAttr(heroImage)}" alt="${escapeAttr(product.name)}" loading="eager"></div>
@@ -429,7 +624,9 @@ function renderProductPage(product) {
             <div><span>Состав</span><strong>100% хлопок</strong></div>
           </div>
           <div class="p-sizes-wrap">
-            <div class="p-label">Размер</div>
+            <div class="p-size-head">
+              <div class="p-label">Размер</div>${sizeChartButtonHtml}
+            </div>
             <div class="p-sizes" id="pSizes">${sizeButtons}</div>
           </div>
           <div class="p-actions">
@@ -446,6 +643,7 @@ function renderProductPage(product) {
       ${product.description ? `<section class="p-desc"><h2>Описание</h2>${descriptionHtml(product)}</section>` : ''}
     </div>
   </section>
+${sizeChartModalHtml}
 </main>
 <footer><div class="wrap foot">
   <div><h5>KOMUI</h5><p>Аниме-мерч: футболки, худи и свитшоты с принтами и вышивкой.</p></div>
@@ -459,6 +657,33 @@ function renderProductPage(product) {
   var CART_KEY = 'komui-cart-v1';
   var sizes = document.getElementById('pSizes');
   var add = document.getElementById('pAdd');
+  var chartOpen = document.getElementById('pSizeChartOpen');
+  var chartModal = document.getElementById('pSizeChartModal');
+  var chartClose = document.getElementById('pSizeChartClose');
+  var lastChartFocus = null;
+  function openSizeChart(){
+    if (!chartModal) return;
+    lastChartFocus = document.activeElement;
+    chartModal.hidden = false;
+    document.body.classList.add('has-size-chart');
+    if (chartClose) chartClose.focus();
+  }
+  function closeSizeChart(){
+    if (!chartModal) return;
+    chartModal.hidden = true;
+    document.body.classList.remove('has-size-chart');
+    if (lastChartFocus && lastChartFocus.focus) lastChartFocus.focus();
+  }
+  if (chartOpen) chartOpen.addEventListener('click', openSizeChart);
+  if (chartClose) chartClose.addEventListener('click', closeSizeChart);
+  if (chartModal) {
+    chartModal.addEventListener('click', function(e){
+      if (e.target === chartModal) closeSizeChart();
+    });
+  }
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && chartModal && !chartModal.hidden) closeSizeChart();
+  });
   if (sizes) {
     sizes.addEventListener('click', function(e){
       var btn = e.target.closest('.p-size');
@@ -717,7 +942,11 @@ function renderCatalogPrerender(products, limit = 12) {
   const items = products.slice(0, limit).map(p => {
     const img = (p.image_urls && p.image_urls[0]) || p.primary_image_url || '';
     const price = formatPriceRange(p.price_min, p.price_max) || '';
-    const sizes = (p.sizes || []).map(s => `<span>${escapeHtml(s)}</span>`).join('');
+    const oldPrice = Number(p.compare_at_price);
+    const oldPriceHtml = oldPrice && oldPrice > Number(p.price_min)
+      ? `<s class="price-old">${oldPrice.toLocaleString('ru-RU')} ₽</s>`
+      : '';
+    const sizes = catalogSizesHtml(p.sizes || []);
     const collection = p.collection_name || p.anime_title || '';
     const altParts = [p.color_name, p.category, p.decoration_type ? `с ${p.decoration_type.toLowerCase()}ом` : '', p.collection_name && `«${p.collection_name}»`].filter(Boolean);
     const alt = altParts.length ? altParts.join(' ') : p.name;
@@ -729,8 +958,8 @@ function renderCatalogPrerender(products, limit = 12) {
         (collection ? `<div class="col">${escapeHtml(collection)}</div>` : '') +
         `<h3><a href="/p/${escapeAttr(p.slug)}">${escapeHtml(p.name)}</a></h3>` +
         `<div class="meta">` +
-          (price ? `<span class="price">${escapeHtml(price)}</span>` : '') +
-          (sizes ? `<span class="sizes">${sizes}</span>` : '') +
+          (price ? `<span class="price">${escapeHtml(price)}${oldPriceHtml}</span>` : '') +
+          sizes +
         `</div>` +
       `</div>` +
     `</article>`;

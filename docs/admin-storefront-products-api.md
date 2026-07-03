@@ -81,6 +81,9 @@ Query:
       "primaryImageUrl": "https://ir.ozone.ru/s3/example.jpg",
       "mainImagePath": "https://ir.ozone.ru/s3/example.jpg",
       "imageUrls": ["https://ir.ozone.ru/s3/example.jpg"],
+      "sizeChartJson": {
+        "content": []
+      },
       "offers": [],
       "isActive": true,
       "sortOrder": 10,
@@ -114,7 +117,10 @@ GET /admin/storefront/products/:productId
     "sizes": ["S", "M", "L", "XL"],
     "salePrice": 2900,
     "regularPrice": 4500,
-    "imageUrls": ["https://ir.ozone.ru/s3/example.jpg"]
+    "imageUrls": ["https://ir.ozone.ru/s3/example.jpg"],
+    "sizeChartJson": {
+      "content": []
+    }
   }
 }
 ```
@@ -146,6 +152,7 @@ Payload:
 | `isActive` | boolean | показать/скрыть товар на сайте |
 | `sortOrder` | number | порядок сортировки |
 | `syncOfferPrices` | boolean | default `true`; при `salePrice` обновляет цены внутри `offers` для JSON-LD |
+| `sizeChartJson` | object/null | JSON таблицы размеров из Ozon, хранится в `size_chart_json` |
 
 Пример полного сохранения формы:
 

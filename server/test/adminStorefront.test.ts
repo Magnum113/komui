@@ -54,6 +54,12 @@ function productRow(): AdminStorefrontProductRow {
       "https://img.test/old-main.jpg",
       "https://img.test/old-extra.jpg",
     ],
+    size_chart_json: {
+      table: {
+        columns: ["Размер", "Длина"],
+        rows: [["M", "75"]],
+      },
+    },
     offers: [
       {
         offer_id: "offer-m",
@@ -108,6 +114,12 @@ test("planStorefrontProductUpdate maps editable admin fields to storefront colum
       "https://img.test/new-extra.jpg",
       "https://img.test/new-main.jpg",
     ],
+    sizeChartJson: {
+      table: {
+        columns: ["Размер", "Длина"],
+        rows: [["L", "76"]],
+      },
+    },
   });
 
   const updates = updateByField(plan);
@@ -131,6 +143,8 @@ test("planStorefrontProductUpdate maps editable admin fields to storefront colum
     updates.get("mainImagePath")?.value,
     "https://img.test/new-main.jpg",
   );
+  assert.equal(updates.get("sizeChartJson")?.column, "size_chart_json");
+  assert.equal(updates.get("sizeChartJson")?.cast, "::jsonb");
 
   const offers = updates.get("offers")?.value as Array<Record<string, unknown>>;
   assert.equal(offers[0]?.price, 2900);
@@ -163,6 +177,12 @@ test("toAdminStorefrontProduct returns camelCase product editor shape", () => {
   ]);
   assert.equal(product.offers[0]?.offerId, "offer-m");
   assert.equal(product.offers[0]?.primaryImage, "https://img.test/old-main.jpg");
+  assert.deepEqual(product.sizeChartJson, {
+    table: {
+      columns: ["Размер", "Длина"],
+      rows: [["M", "75"]],
+    },
+  });
 });
 
 test("admin storefront routes require admin token", async () => {

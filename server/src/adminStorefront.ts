@@ -42,6 +42,7 @@ const ADMIN_PRODUCT_COLUMNS = `
   primary_image_url,
   main_image_path,
   image_urls,
+  size_chart_json,
   offers,
   is_active,
   sort_order,
@@ -75,6 +76,7 @@ const updateProductSchema = z
       .min(1)
       .max(60)
       .optional(),
+    sizeChartJson: z.unknown().nullable().optional(),
     mainImagePath: z.string().trim().min(1).max(2_048).nullable().optional(),
     isActive: z.boolean().optional(),
     sortOrder: z.coerce.number().int().min(0).max(1_000_000).optional(),
@@ -139,6 +141,7 @@ export type AdminStorefrontProductRow = QueryResultRow & {
   primary_image_url: string | null;
   main_image_path: string | null;
   image_urls: unknown;
+  size_chart_json: unknown;
   offers: unknown;
   is_active: boolean;
   sort_order: number;
@@ -186,6 +189,7 @@ export type AdminStorefrontProduct = {
   primaryImageUrl: string | null;
   mainImagePath: string | null;
   imageUrls: string[];
+  sizeChartJson: unknown;
   offers: AdminOffer[];
   isActive: boolean;
   sortOrder: number;
@@ -415,6 +419,7 @@ export function toAdminStorefrontProduct(
     primaryImageUrl: row.primary_image_url,
     mainImagePath: row.main_image_path,
     imageUrls: stringArray(row.image_urls),
+    sizeChartJson: row.size_chart_json ?? null,
     offers: offerArray(row.offers).map(sanitizedOffer),
     isActive: row.is_active,
     sortOrder: row.sort_order,
@@ -543,6 +548,17 @@ export function planStorefrontProductUpdate(
       row.main_image_path,
       nullableText(payload.mainImagePath),
     );
+  }
+
+  if (payload.sizeChartJson !== undefined) {
+    if (!sameJson(row.size_chart_json ?? null, payload.sizeChartJson ?? null)) {
+      updates.push({
+        field: "sizeChartJson",
+        column: "size_chart_json",
+        value: payload.sizeChartJson ?? null,
+        cast: "::jsonb",
+      });
+    }
   }
 
   if (payload.isActive !== undefined) {

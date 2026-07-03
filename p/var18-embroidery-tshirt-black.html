@@ -23,7 +23,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/legal.css" />
 <link rel="stylesheet" href="/assets/product.css" />
-<script type="application/ld+json">{"@context":"https://schema.org/","@type":"Product","name":"Футболка GTA","description":"Чёрная футболка с вышивкой в стилистике GTA — деталь для своих, без громких надписей. Стежок вместо принта носится дольше и выглядит дороже.","image":["https://ir.ozone.ru/s3/multimedia-1-k/8303578400.jpg","https://ir.ozone.ru/s3/multimedia-1-o/8303578404.jpg","https://ir.ozone.ru/s3/multimedia-1-f/8303578395.jpg","https://ir.ozone.ru/s3/multimedia-1-k/8057845280.jpg"],"sku":"var18-embroidery-tshirt-black","brand":{"@type":"Brand","name":"KOMUI"},"category":"Футболки","color":"Черный","material":"100% хлопок","url":"https://komui.ru/p/var18-embroidery-tshirt-black","offers":{"@type":"AggregateOffer","priceCurrency":"RUB","lowPrice":2900,"highPrice":2900,"offerCount":4,"offers":[{"@type":"Offer","sku":"3134088725","name":"Черная футболка с вышивкой GTA L","price":4571,"priceCurrency":"RUB","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","url":"https://komui.ru/p/var18-embroidery-tshirt-black"},{"@type":"Offer","sku":"3134088667","name":"Черная футболка с вышивкой GTA XL","price":4571,"priceCurrency":"RUB","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","url":"https://komui.ru/p/var18-embroidery-tshirt-black"},{"@type":"Offer","sku":"3134088875","name":"Черная футболка с вышивкой GTA S","price":4611,"priceCurrency":"RUB","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","url":"https://komui.ru/p/var18-embroidery-tshirt-black"},{"@type":"Offer","sku":"3134088775","name":"Черная футболка с вышивкой GTA M","price":4611,"priceCurrency":"RUB","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","url":"https://komui.ru/p/var18-embroidery-tshirt-black"}]}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org/","@type":"Product","name":"Футболка GTA","description":"Чёрная футболка с вышивкой в стилистике GTA — деталь для своих, без громких надписей. Стежок вместо принта носится дольше и выглядит дороже.","image":["https://ir.ozone.ru/s3/multimedia-1-k/8303578400.jpg","https://ir.ozone.ru/s3/multimedia-1-o/8303578404.jpg","https://ir.ozone.ru/s3/multimedia-1-f/8303578395.jpg","https://ir.ozone.ru/s3/multimedia-1-k/8057845280.jpg"],"sku":"D18-TSH-EMB-BLK-L","brand":{"@type":"Brand","name":"KOMUI"},"category":"Футболки","color":"Черный","material":"100% хлопок","url":"https://komui.ru/p/var18-embroidery-tshirt-black","offers":{"@type":"AggregateOffer","priceCurrency":"RUB","lowPrice":2900,"highPrice":2900,"offerCount":4,"offers":[{"@type":"Offer","sku":"D18-TSH-EMB-BLK-L","name":"Черная футболка с вышивкой GTA L","price":4571,"priceCurrency":"RUB","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","url":"https://komui.ru/p/var18-embroidery-tshirt-black"},{"@type":"Offer","sku":"D18-TSH-EMB-BLK-XL","name":"Черная футболка с вышивкой GTA XL","price":4571,"priceCurrency":"RUB","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","url":"https://komui.ru/p/var18-embroidery-tshirt-black"},{"@type":"Offer","sku":"D18-TSH-EMB-BLK-S","name":"Черная футболка с вышивкой GTA S","price":4611,"priceCurrency":"RUB","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","url":"https://komui.ru/p/var18-embroidery-tshirt-black"},{"@type":"Offer","sku":"D18-TSH-EMB-BLK-M","name":"Черная футболка с вышивкой GTA M","price":4611,"priceCurrency":"RUB","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","url":"https://komui.ru/p/var18-embroidery-tshirt-black"}]}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org/","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"KOMUI","item":"https://komui.ru/"},{"@type":"ListItem","position":2,"name":"Каталог","item":"https://komui.ru/#catalog"},{"@type":"ListItem","position":3,"name":"Футболки","item":"https://komui.ru/#catalog"},{"@type":"ListItem","position":4,"name":"Футболка GTA","item":"https://komui.ru/p/var18-embroidery-tshirt-black"}]}</script>
 </head>
 <body>
@@ -67,7 +67,10 @@
             <div><span>Состав</span><strong>100% хлопок</strong></div>
           </div>
           <div class="p-sizes-wrap">
-            <div class="p-label">Размер</div>
+            <div class="p-size-head">
+              <div class="p-label">Размер</div>
+              <button type="button" class="p-size-chart-btn" id="pSizeChartOpen">Таблица размеров</button>
+            </div>
             <div class="p-sizes" id="pSizes"><button type="button" class="p-size is-active" data-size="S">S</button><button type="button" class="p-size" data-size="M">M</button><button type="button" class="p-size" data-size="L">L</button><button type="button" class="p-size" data-size="XL">XL</button></div>
           </div>
           <div class="p-actions">
@@ -84,6 +87,31 @@
       <section class="p-desc"><h2>Описание</h2><p>Стильная чёрная футболка с вышивкой GTA — выбор для тех, кто ценит комфорт, качество и современный уличный стиль.<br>Футболка выполнена из плотного 100% хлопка премиум-класса (пенье, плотность 240 г/м²) — материал приятный к телу, дышащий и износостойкий. Ткань не просвечивает, не растягивается и сохраняет форму даже после множества стирок.<br>На груди — аккуратная машинная вышивка по мотивам легендарной игры GTA, которая делает модель узнаваемой и добавляет индивидуальности образу.<br>Свободный оверсайз-крой обеспечивает комфортное прилегание и стильный силуэт. Унисекс-модель одинаково хорошо сидит и на парнях, и на девушках, подчёркивая актуальный streetwear-характер.<br>Идеально сочетается с джинсами, шортами, карго-брюками и кроссовками. Отличный выбор для повседневной носки, прогулок, фотосессий и в подарок фанатам культовой серии игр GTA и любителям уличной моды.<br>Состав: 100% хлопок (пенье)<br>Плотность: 240 г/м²<br>Крой: оверсайз, унисекс<br>Уход: машинная стирка при 30 °C, гладить с изнанки, не отбеливать</p></section>
     </div>
   </section>
+
+  <div class="p-size-chart-modal" id="pSizeChartModal" hidden>
+    <div class="p-size-chart-dialog" role="dialog" aria-modal="true" aria-labelledby="pSizeChartTitle">
+      <div class="p-size-chart-head">
+        <div>
+          <div class="p-size-chart-kicker">Размерная сетка</div>
+          <h2 class="p-size-chart-title" id="pSizeChartTitle">Размеры</h2>
+          <p class="p-size-chart-sub">Футболка: замеры изделия в сантиметрах из Ozon.</p>
+        </div>
+        <button type="button" class="p-size-chart-close" id="pSizeChartClose" aria-label="Закрыть таблицу размеров">×</button>
+      </div>
+      <div class="p-size-chart-body">
+        <div class="p-size-chart-scroll">
+          <table class="p-size-chart-table">
+            <thead><tr><th>Размер</th><th>Российский размер</th><th>Размер указанный на этикетке</th><th>Длина, см</th><th>Ширина, см</th></tr></thead>
+            <tbody><tr><td>S</td><td>46</td><td>48</td><td>70</td><td>51</td></tr><tr><td>M</td><td>48</td><td>50</td><td>72</td><td>53</td></tr><tr><td>L</td><td>50</td><td>52</td><td>74</td><td>57</td></tr><tr><td>XL</td><td>52</td><td>54</td><td>76</td><td>59</td></tr><tr><td>XXL</td><td>54</td><td>56</td><td>78</td><td>61</td></tr></tbody>
+          </table>
+        </div>
+        <div class="p-size-chart-note">
+          <p><strong>Как сверять:</strong> сравните замеры с вещью, которая уже хорошо сидит. Для оверсайз-посадки берите привычный размер или на один больше.</p>
+          <p>Допустимое расхождение замеров: 1-2 см.</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </main>
 <footer><div class="wrap foot">
   <div><h5>KOMUI</h5><p>Аниме-мерч: футболки, худи и свитшоты с принтами и вышивкой.</p></div>
@@ -97,6 +125,33 @@
   var CART_KEY = 'komui-cart-v1';
   var sizes = document.getElementById('pSizes');
   var add = document.getElementById('pAdd');
+  var chartOpen = document.getElementById('pSizeChartOpen');
+  var chartModal = document.getElementById('pSizeChartModal');
+  var chartClose = document.getElementById('pSizeChartClose');
+  var lastChartFocus = null;
+  function openSizeChart(){
+    if (!chartModal) return;
+    lastChartFocus = document.activeElement;
+    chartModal.hidden = false;
+    document.body.classList.add('has-size-chart');
+    if (chartClose) chartClose.focus();
+  }
+  function closeSizeChart(){
+    if (!chartModal) return;
+    chartModal.hidden = true;
+    document.body.classList.remove('has-size-chart');
+    if (lastChartFocus && lastChartFocus.focus) lastChartFocus.focus();
+  }
+  if (chartOpen) chartOpen.addEventListener('click', openSizeChart);
+  if (chartClose) chartClose.addEventListener('click', closeSizeChart);
+  if (chartModal) {
+    chartModal.addEventListener('click', function(e){
+      if (e.target === chartModal) closeSizeChart();
+    });
+  }
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && chartModal && !chartModal.hidden) closeSizeChart();
+  });
   if (sizes) {
     sizes.addEventListener('click', function(e){
       var btn = e.target.closest('.p-size');

@@ -41,11 +41,36 @@
 .p-meta strong{color:#14151c;font-weight:600;font-size:14px}
 
 .p-sizes-wrap{display:flex;flex-direction:column;gap:10px}
+.p-size-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .p-label{font-size:13px;font-weight:600;color:#14151c;text-transform:uppercase;letter-spacing:.04em}
+.p-size-chart-btn{height:34px;padding:0 12px;border-radius:999px;border:1.5px solid #d3d6e1;background:#fff;color:var(--p-mag);font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;transition:border-color .15s,background .15s,transform .15s}
+.p-size-chart-btn:hover{border-color:var(--p-mag);background:rgba(0,38,249,.06);transform:translateY(-1px)}
+.p-size-chart-btn:focus-visible,.p-size-chart-close:focus-visible{outline:3px solid rgba(0,38,249,.24);outline-offset:2px}
 .p-sizes{display:flex;gap:8px;flex-wrap:wrap}
 .p-size{min-width:54px;height:46px;padding:0 14px;border-radius:12px;background:#fff;border:1.5px solid #d3d6e1;font-weight:600;font-family:inherit;font-size:14px;color:#14151c;cursor:pointer;transition:all .15s}
 .p-size:hover{border-color:var(--p-mag)}
 .p-size.is-active{background:#14151c;border-color:#14151c;color:#fff}
+
+.p-size-chart-modal[hidden]{display:none}
+.p-size-chart-modal{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(20,21,28,.48);backdrop-filter:blur(8px)}
+.p-size-chart-dialog{width:min(760px,100%);max-height:min(86vh,720px);overflow:hidden;border-radius:18px;background:#fff;border:1px solid #e5e7ef;box-shadow:0 30px 80px -28px rgba(20,21,28,.45);display:flex;flex-direction:column}
+.p-size-chart-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:22px 24px 14px;border-bottom:1px solid #e5e7ef}
+.p-size-chart-kicker{font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--p-mag);margin-bottom:6px}
+.p-size-chart-title{font-family:'Unbounded',sans-serif;font-size:24px;line-height:1.15;font-weight:800;color:#14151c;margin:0}
+.p-size-chart-sub{margin:7px 0 0;color:#52566a;font-size:14px;line-height:1.45}
+.p-size-chart-close{width:36px;height:36px;border-radius:50%;border:1.5px solid #d3d6e1;background:#fff;color:#52566a;font-size:24px;line-height:1;cursor:pointer;flex:0 0 auto}
+.p-size-chart-close:hover{border-color:var(--p-mag);color:var(--p-mag)}
+.p-size-chart-body{padding:18px 24px 22px;overflow:auto}
+.p-size-chart-scroll{overflow-x:auto;border:1px solid #e5e7ef;border-radius:14px}
+.p-size-chart-table{width:100%;min-width:560px;border-collapse:collapse;background:#fff}
+.p-size-chart-table th,.p-size-chart-table td{padding:14px 16px;text-align:left;border-bottom:1px solid #e5e7ef;font-size:14px;white-space:nowrap}
+.p-size-chart-table th{background:#f5f6fa;color:#52566a;font-size:12px;text-transform:uppercase;letter-spacing:.06em;font-weight:900}
+.p-size-chart-table tbody tr:last-child td{border-bottom:none}
+.p-size-chart-table td:first-child{font-family:'Unbounded',sans-serif;font-weight:800;color:#14151c}
+.p-size-chart-note{display:grid;gap:8px;margin-top:14px;color:#52566a;font-size:13px;line-height:1.45}
+.p-size-chart-note p{margin:0}
+.p-size-chart-note strong{color:#14151c}
+body.has-size-chart{overflow:hidden}
 
 .p-actions{display:flex;flex-direction:column;gap:10px;margin-top:6px}
 .p-cta{height:56px;border-radius:14px;background:linear-gradient(135deg,#0026F9 0%,#173cff 60%,#304fff 100%);color:#fff;font-weight:700;font-size:16px;font-family:inherit;cursor:pointer;border:none;transition:transform .15s, box-shadow .15s;box-shadow:0 10px 30px -10px rgba(0,38,249,.5)}
@@ -105,6 +130,14 @@
   .c-copy-grid{grid-template-columns:1fr;gap:18px}
 }
 @media (max-width:620px){
+  .p-size-head{align-items:flex-start}
+  .p-size-chart-btn{height:32px;padding:0 10px;font-size:11px}
+  .p-size-chart-modal{align-items:flex-end;padding:0;background:rgba(20,21,28,.54)}
+  .p-size-chart-dialog{width:100%;max-height:88vh;border-radius:18px 18px 0 0}
+  .p-size-chart-head{padding:18px 18px 12px}
+  .p-size-chart-title{font-size:20px}
+  .p-size-chart-body{padding:14px 18px 18px}
+  .p-size-chart-table{min-width:520px}
   .c-hero{padding:42px 0 32px}
   .c-hero h1{font-size:29px;line-height:1.1;letter-spacing:-.045em}
   .c-hero .lead,.c-head p{width:300px;max-width:100%;overflow-wrap:anywhere}

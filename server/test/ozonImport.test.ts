@@ -464,6 +464,64 @@ test("buildOzonPreview safely adds new storefront sizes without changing site pr
   assert.equal(preview.warnings.some((warning) => warning.code === "price_updates_disabled"), true);
 });
 
+test("buildOzonPreview stores Ozon size chart JSON on matched storefront product", () => {
+  const sizeChart = {
+    table: {
+      columns: ["Размер", "Длина"],
+      rows: [["S", "73"]],
+    },
+  };
+  const preview = buildOzonPreview(
+    [
+      {
+        offer_id: "D005-TSH-PRT-WHT-S",
+        sku: 123,
+        product_id: 456,
+        name: "Matched",
+        price: { marketing_seller_price: "3190" },
+        size_chart_json: sizeChart,
+      },
+    ],
+    [
+      {
+        id: "11111111-1111-1111-1111-111111111111",
+        design_key: "var5|print|tshirt|white",
+        name: "Existing product",
+        slug: "existing-product",
+        sizes: ["S"],
+        price_min: 2990,
+        price_max: 2990,
+        ozon_product_ids: [456],
+        ozon_skus: [123],
+        ozon_offer_ids: ["D005-TSH-PRT-WHT-S"],
+        size_chart_json: null,
+        offers: [
+          {
+            offer_id: "D005-TSH-PRT-WHT-S",
+            product_id: 456,
+            sku: 123,
+            name: "Matched",
+            size: "S",
+            price: 2990,
+          },
+        ],
+      },
+    ],
+    [],
+    { serverPostgres: true, supabase: false },
+    { supabaseWriteEnabled: false },
+    { updatePrices: false },
+  );
+
+  const item = preview.items[0];
+  assert.deepEqual(item.sizeChartJson, sizeChart);
+  assert.equal(item.diff?.changedFields.includes("size_chart_json"), true);
+  assert.deepEqual(
+    item.diff?.fields.find((field) => field.field === "size_chart_json")?.next,
+    sizeChart,
+  );
+});
+
 test("buildOzonPreview groups unmatched structured Ozon offers as new product candidates", () => {
   const preview = buildOzonPreview(
     [
