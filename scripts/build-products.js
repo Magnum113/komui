@@ -720,9 +720,9 @@ function renderProductPage(product, products = []) {
             <a class="p-secondary" href="/#catalog">К другим товарам</a>
           </div>
           <div class="p-trust">
-            <div>СДЭК по России</div>
-            <div>Оплата онлайн</div>
-            <div>Возврат в течение 7 дней</div>
+            ${product.decoration_type ? `<div>${escapeHtml(product.decoration_type)}</div>` : ''}
+            <div>100% хлопок</div>
+            <div>Плотность 240 г/м²</div>
           </div>
         </div>
       </div>
