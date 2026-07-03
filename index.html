@@ -518,6 +518,7 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
 .size-pick button.sel:focus-visible{box-shadow:var(--focus-ring),0 10px 22px -14px rgba(0,38,249,.72)}
 .modal .msize-chart-panel{margin:-8px 0 22px;padding:14px;border-radius:16px;background:var(--panel-2);box-shadow:inset 0 0 0 1px var(--line-2)}
 .modal .msize-chart-panel[hidden]{display:none}
+.modal .msize-chart-head{display:none}
 .modal .msize-chart-scroll{overflow-x:auto;border-radius:12px;background:var(--panel)}
 .modal .msize-chart-table{width:100%;min-width:460px;border-collapse:collapse}
 .modal .msize-chart-table th,.modal .msize-chart-table td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--line);font-size:12px;white-space:nowrap}
@@ -724,11 +725,27 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
   .modal.madd-floating .madd-float{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
   .modal .madd-float:hover{transform:translateX(-50%) translateY(-2px)}
   .modal .mdesc{order:5;margin-bottom:20px}
-  .modal .msize-head{order:6}
+  .modal .msize-head{order:6;justify-content:flex-start}
+  .modal .msize-head .mlabel{order:0}
+  .modal .msize-head .msize-chart-btn{order:1}
   .modal .mlabel{order:6}
   .modal .size-pick{order:7}
-  .modal .msize-chart-panel{order:8;margin:-4px 0 20px;padding:12px;border-radius:14px}
+  .modal.size-sheet-open::after{
+    content:'';position:absolute;inset:0;z-index:20;background:rgba(20,21,28,.42);
+    backdrop-filter:blur(5px);border-radius:inherit
+  }
+  .modal .msize-chart-panel{
+    order:8;position:absolute;left:0;right:0;bottom:0;z-index:21;margin:0;padding:0 0 calc(18px + env(safe-area-inset-bottom));
+    max-height:min(76vh,620px);overflow:hidden;border-radius:20px 20px 0 0;background:var(--panel);
+    box-shadow:0 -22px 54px -24px rgba(20,21,28,.44);transform:translateY(0)
+  }
+  .modal .msize-chart-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:18px 18px 12px;border-bottom:1px solid var(--line)}
+  .modal .msize-chart-kicker{font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--mag);margin-bottom:5px}
+  .modal .msize-chart-title{font-family:'Unbounded',sans-serif;font-size:20px;line-height:1.15;font-weight:800;color:var(--txt);margin:0}
+  .modal .msize-chart-close{width:36px;height:36px;border-radius:50%;border:0;background:var(--panel-2);box-shadow:inset 0 0 0 1.5px var(--line-2);color:var(--txt-2);font-size:22px;line-height:1;display:flex;align-items:center;justify-content:center}
+  .modal .msize-chart-scroll{margin:14px 18px 0;max-height:calc(min(76vh,620px) - 142px);overflow:auto;border-radius:14px;box-shadow:inset 0 0 0 1px var(--line)}
   .modal .msize-chart-table{min-width:430px}
+  .modal .msize-chart-note{margin:12px 20px 0}
   .modal .mfeat{order:9;margin-top:12px;gap:12px}
   .modal .mmedia{width:100%;height:auto;aspect-ratio:4/5;padding:0;overflow:hidden}
   .modal .mmedia .product-photo,
@@ -1270,6 +1287,13 @@ function modalSizeChartHtml(product){
   const head=chart.columns.map(column=>`<th>${esc(column)}</th>`).join('');
   const rows=chart.rows.map(row=>`<tr>${chart.columns.map((_,i)=>`<td>${esc(row[i]||'')}</td>`).join('')}</tr>`).join('');
   return `<div class="msize-chart-panel" id="mSizeChartPanel" hidden>
+    <div class="msize-chart-head">
+      <div>
+        <div class="msize-chart-kicker">Размерная сетка</div>
+        <h3 class="msize-chart-title">Таблица размеров</h3>
+      </div>
+      <button class="msize-chart-close" id="mSizeChartClose" type="button" aria-label="Закрыть таблицу размеров">×</button>
+    </div>
     <div class="msize-chart-scroll"><table class="msize-chart-table"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>
     <div class="msize-chart-note">Замеры изделия из Ozon. Сравните с вещью, которая уже хорошо сидит.</div>
   </div>`;
@@ -1695,12 +1719,30 @@ function openModal(id){
   $('#sizePick').onclick=e=>{const b=e.target.closest('[data-size]');if(!b)return;sel=b.dataset.size;$$('#sizePick button').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');};
   const chartToggle=$('#mSizeChartToggle');
   const chartPanel=$('#mSizeChartPanel');
+  const chartClose=$('#mSizeChartClose');
   if(chartToggle&&chartPanel){
-    chartToggle.onclick=()=>{
-      const open=chartPanel.hidden;
-      chartPanel.hidden=!open;
-      chartToggle.setAttribute('aria-expanded',String(open));
+    const openChart=()=>{
+      chartPanel.hidden=false;
+      m.classList.add('size-sheet-open');
+      chartToggle.setAttribute('aria-expanded','true');
+      if(window.matchMedia?.('(max-width:600px)').matches)chartClose?.focus();
     };
+    const closeChart=()=>{
+      chartPanel.hidden=true;
+      m.classList.remove('size-sheet-open');
+      chartToggle.setAttribute('aria-expanded','false');
+      chartToggle.focus?.();
+    };
+    chartToggle.onclick=()=>{
+      if(chartPanel.hidden)openChart();
+      else closeChart();
+    };
+    chartClose?.addEventListener('click',closeChart);
+    m.addEventListener('click',e=>{
+      if(chartPanel.hidden||!m.classList.contains('size-sheet-open'))return;
+      if(e.target.closest('#mSizeChartPanel,#mSizeChartToggle'))return;
+      closeChart();
+    });
   }
   const handleAdd=()=>{addToCart(p.id,sel);closeAll();};
   $('#madd').onclick=handleAdd;
@@ -1741,7 +1783,7 @@ function setMobileCollectionMenu(open){
   box?.classList.toggle('open',open);btn?.setAttribute('aria-expanded',open?'true':'false');
 }
 function closeCollectionMenus(){setCollectionMenu(false);setMobileCollectionMenu(false);}
-function closeAll(){closePhotoLightbox();closeCollectionMenus();const _m=$('#modal');_m.classList.remove('show');_m.classList.remove('madd-floating');if(window.__maddIO){try{window.__maddIO.disconnect();}catch(e){}window.__maddIO=null;}if(window.__modalAutoplay){clearInterval(window.__modalAutoplay);window.__modalAutoplay=null;}$('#cart').classList.remove('show');$('#filters').classList.remove('show');$('#mobileMenu').classList.remove('show');setOverlay(false);}
+function closeAll(){closePhotoLightbox();closeCollectionMenus();const _m=$('#modal');_m.classList.remove('show');_m.classList.remove('madd-floating');_m.classList.remove('size-sheet-open');if(window.__maddIO){try{window.__maddIO.disconnect();}catch(e){}window.__maddIO=null;}if(window.__modalAutoplay){clearInterval(window.__modalAutoplay);window.__modalAutoplay=null;}$('#cart').classList.remove('show');$('#filters').classList.remove('show');$('#mobileMenu').classList.remove('show');setOverlay(false);}
 function openCart(){updateCart();$('#cart').classList.add('show');setOverlay(true);}
 
 /* ---------------- toast ---------------- */
@@ -1794,7 +1836,7 @@ $('#cartFoot').addEventListener('click',e=>{
   location.href='/checkout';
 });
 // overlay + esc
-$('#overlay').onclick=closeAll;document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('#photoLightbox').classList.contains('show'))closePhotoLightbox();else closeAll();}});
+$('#overlay').onclick=closeAll;document.addEventListener('keydown',e=>{if(e.key==='Escape'){const chart=$('#mSizeChartPanel');if(chart&&!chart.hidden){chart.hidden=true;$('#modal').classList.remove('size-sheet-open');$('#mSizeChartToggle')?.setAttribute('aria-expanded','false');return;}if($('#photoLightbox').classList.contains('show'))closePhotoLightbox();else closeAll();}});
 // header buttons
 $('#searchBtn').onclick=()=>{$('#catalog').scrollIntoView({behavior:'smooth'});setTimeout(()=>$('#searchInput').focus(),500);};
 $('#filterToggle').onclick=()=>{$('#filters').classList.add('show');setOverlay(true);$('#applyMobile').style.display='block';};
