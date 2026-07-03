@@ -252,15 +252,27 @@ function productImages(product) {
   return [...new Set(list)];
 }
 
+function visibleOffers(product) {
+  return (product.offers || []).filter(o => o && !o.archived && o.visible !== false);
+}
+
+function productSku(product) {
+  const offerWithId = visibleOffers(product).find(o => o.offer_id);
+  if (offerWithId) return String(offerWithId.offer_id);
+  const firstOzonOfferId = Array.isArray(product.ozon_offer_ids)
+    ? product.ozon_offer_ids.find(Boolean)
+    : null;
+  return String(firstOzonOfferId || product.slug || product.id || '');
+}
+
 function buildJsonLd(product) {
   const images = productImages(product);
   const lowPrice = Number(product.price_min);
   const highPrice = Number(product.price_max);
-  const offers = (product.offers || [])
-    .filter(o => o && !o.archived && o.visible !== false)
+  const offers = visibleOffers(product)
     .map(o => ({
       '@type': 'Offer',
-      sku: String(o.sku || o.offer_id || ''),
+      sku: String(o.offer_id || o.sku || ''),
       name: o.name || product.name,
       price: Number(o.price || lowPrice),
       priceCurrency: product.currency || 'RUB',
@@ -274,7 +286,7 @@ function buildJsonLd(product) {
     name: product.name,
     description: shortFrom(product),
     image: images,
-    sku: product.slug,
+    sku: productSku(product),
     brand: { '@type': 'Brand', name: 'KOMUI' },
     category: product.category,
     color: product.color_name,
