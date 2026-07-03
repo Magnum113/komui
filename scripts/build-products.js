@@ -257,8 +257,18 @@ function collectionStats(products) {
   return { categories, techniques };
 }
 
+function publicCopy(value) {
+  return String(value || '')
+    .replace(/Ozon-фото/gi, 'детальными фото')
+    .replace(/фото\s+Ozon/gi, 'фото товара')
+    .replace(/\bOzon\b/gi, 'маркетплейса')
+    .replace(/[ \t\f\v]+/g, ' ')
+    .replace(/ *\n */g, '\n')
+    .trim();
+}
+
 function shortFrom(product) {
-  const s = (product.short_description || product.description || '').trim();
+  const s = publicCopy(product.short_description || product.description);
   // Take first ~160 chars on a sentence-ish boundary for meta description.
   const clean = s.replace(/\s+/g, ' ').replace(/[🔹]/g, '').trim();
   if (clean.length <= 160) return clean;
@@ -268,7 +278,7 @@ function shortFrom(product) {
 }
 
 function descriptionHtml(product) {
-  const raw = (product.description || '').trim();
+  const raw = publicCopy(product.description);
   if (!raw) return '';
   // Split into paragraphs by double newlines, then turn single newlines into <br>.
   const blocks = raw.split(/\n{2,}/).map(b => b.trim()).filter(Boolean);
@@ -624,6 +634,7 @@ function renderProductPage(product, products = []) {
        </div>`
     : '';
   const recommendationsHtml = productRecommendations(product, products);
+  const lead = publicCopy(product.short_description);
   const badgeSeen = new Set();
   const badgePool = [product.collection_name, product.anime_title, product.character_name]
     .filter(Boolean)
@@ -684,7 +695,7 @@ function renderProductPage(product, products = []) {
         <div class="p-info">
           ${badgesHtml ? `<div class="p-badges">${badgesHtml}</div>` : ''}
           <h1>${escapeHtml(product.name)}</h1>
-          ${product.short_description ? `<p class="p-lead">${escapeHtml(product.short_description)}</p>` : ''}
+          ${lead ? `<p class="p-lead">${escapeHtml(lead)}</p>` : ''}
           <div class="p-price-row">
             <span class="p-price">${escapeHtml(priceText)}</span>
             ${oldPriceHtml}

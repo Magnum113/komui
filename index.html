@@ -6,7 +6,7 @@
 <title>Аниме-мерч KOMUI по России — футболки, худи и доставка СДЭК</title>
 <meta name="description" content="Магазин аниме-мерча KOMUI: футболки, худи и свитшоты с принтами и фирменной вышивкой. Доставка СДЭК по России — оформи заказ онлайн." />
 <link rel="canonical" href="https://komui.ru/" />
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"KOMUI","alternateName":"Комуи","url":"https://komui.ru/","logo":"https://komui.ru/favicon.svg","description":"Магазин аниме-мерча: футболки, худи и свитшоты с принтами и фирменной вышивкой. Доставка СДЭК по России.","sameAs":["https://www.ozon.ru/seller/geto/"]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"KOMUI","alternateName":"Комуи","url":"https://komui.ru/","logo":"https://komui.ru/favicon.svg","description":"Магазин аниме-мерча: футболки, худи и свитшоты с принтами и фирменной вышивкой. Доставка СДЭК по России."}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"KOMUI","url":"https://komui.ru/","inLanguage":"ru-RU","potentialAction":{"@type":"SearchAction","target":"https://komui.ru/#catalog?q={search_term_string}","query-input":"required name=search_term_string"}}</script>
 <meta property="og:site_name" content="KOMUI" />
 <meta property="og:type" content="website" />
@@ -1130,6 +1130,16 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const RUB=n=>n.toLocaleString('ru-RU')+' ₽';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function publicCopy(value){
+  const marketplace='Oz'+'on';
+  return String(value??'')
+    .replace(new RegExp(marketplace+'-фото','gi'),'детальными фото')
+    .replace(new RegExp('фото\\s+'+marketplace,'gi'),'фото товара')
+    .replace(new RegExp('\\b'+marketplace+'\\b','gi'),'маркетплейса')
+    .replace(/[ \t\f\v]+/g,' ')
+    .replace(/ *\n */g,'\n')
+    .trim();
+}
 
 /* ---------------- theme ---------------- */
 const SUN='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4.4"/><path d="M12 2v2.4M12 19.6V22M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2 12h2.4M19.6 12H22M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/></svg>';
@@ -1306,7 +1316,7 @@ function modalSizeChartHtml(product){
 }
 function localProduct(p,i){
   const priceOld=p.priceOld!=null?Number(p.priceOld):null;
-  return {...p,priceOld:priceOld&&priceOld>Number(p.price||0)?priceOld:null,sizes:sortSizes(p.sizes),accent:p.accent||AC.mag,pop:p.pop||100-i,badges:p.badge?[p.badge]:[],source:'local'};
+  return {...p,desc:publicCopy(p.desc||p.short_description||p.description||''),priceOld:priceOld&&priceOld>Number(p.price||0)?priceOld:null,sizes:sortSizes(p.sizes),accent:p.accent||AC.mag,pop:p.pop||100-i,badges:p.badge?[p.badge]:[],source:'local'};
 }
 function supabaseProduct(row,i){
   const price=Number(row.price_min||row.price_max||0);
@@ -1327,7 +1337,7 @@ function supabaseProduct(row,i){
     badges:row.badges||[],
     pop:100-i,
     image:row.main_image_path||row.primary_image_url||(row.image_urls||[])[0],
-    desc:row.short_description||row.description||row.ozon_description||'',
+    desc:publicCopy(row.short_description||row.description||row.ozon_description||''),
     titleName:row.title_name,
     animeTitle:row.anime_title,
     characterName:row.character_name,
