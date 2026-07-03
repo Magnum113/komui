@@ -422,7 +422,7 @@ function renderSizeChart(product) {
         <div>
           <div class="p-size-chart-kicker">Размерная сетка</div>
           <h2 class="p-size-chart-title" id="pSizeChartTitle">${escapeHtml(title)}</h2>
-          <p class="p-size-chart-sub">${escapeHtml(itemType)}: замеры изделия в сантиметрах из Ozon.</p>
+          <p class="p-size-chart-sub">${escapeHtml(itemType)}: замеры изделия в сантиметрах.</p>
         </div>
         <button type="button" class="p-size-chart-close" id="pSizeChartClose" aria-label="Закрыть таблицу размеров">×</button>
       </div>
