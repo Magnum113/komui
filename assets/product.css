@@ -77,7 +77,7 @@
 .p-size-chart-table{width:100%;min-width:560px;border-collapse:collapse;background:#fff}
 .p-size-chart-table th,.p-size-chart-table td{padding:14px 16px;text-align:left;border-bottom:1px solid #e5e7ef;font-size:14px;white-space:nowrap}
 .p-size-chart-table th{background:#f5f6fa;color:#52566a;font-size:12px;text-transform:uppercase;letter-spacing:.06em;font-weight:900}
-.p-size-chart-table th.is-ru-size{line-height:1.12;white-space:normal}
+.p-size-chart-table th.is-ru-size,.p-size-chart-table th.is-label-size{line-height:1.12;white-space:normal}
 .p-size-chart-table tbody tr:last-child td{border-bottom:none}
 .p-size-chart-table td:first-child{font-family:'Unbounded',sans-serif;font-weight:800;color:#14151c}
 .p-size-chart-note{display:grid;gap:8px;margin-top:14px;color:#52566a;font-size:13px;line-height:1.45}

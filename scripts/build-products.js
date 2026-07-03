@@ -422,6 +422,9 @@ function sizeChartHeaderHtml(column) {
   if (label.toLowerCase() === 'российский размер') {
     return '<th class="is-ru-size">Российский<br>размер</th>';
   }
+  if (label.toLowerCase() === 'размер указанный на этикетке') {
+    return '<th class="is-label-size">Размер<br>указанный<br>на этикетке</th>';
+  }
   return `<th>${escapeHtml(label)}</th>`;
 }
 
