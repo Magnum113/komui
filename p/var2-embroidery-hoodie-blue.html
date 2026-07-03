@@ -339,7 +339,47 @@
     thumbs.forEach(function(thumb){
       thumb.addEventListener('click', function(){ stop(); go(Number(thumb.getAttribute('data-go')) || 0); });
     });
-    gallery.addEventListener('pointerdown', stop, { once: true });
+    var startX = 0;
+    var startY = 0;
+    var dx = 0;
+    var startIndex = 0;
+    var dragging = false;
+    var locked = false;
+    function finishSwipe(){
+      if (!dragging) return;
+      dragging = false;
+      track.style.transition = '';
+      if (locked && Math.abs(dx) > Math.min(90, gallery.clientWidth * .18)) {
+        step(dx < 0 ? 1 : -1);
+      } else {
+        go(startIndex);
+      }
+    }
+    gallery.addEventListener('pointerdown', function(e){
+      stop();
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      if (e.target.closest('.p-garr,.p-gdot,.p-thumb')) return;
+      startX = e.clientX;
+      startY = e.clientY;
+      dx = 0;
+      startIndex = index;
+      dragging = true;
+      locked = false;
+      track.style.transition = 'none';
+      if (gallery.setPointerCapture) gallery.setPointerCapture(e.pointerId);
+    });
+    gallery.addEventListener('pointermove', function(e){
+      if (!dragging) return;
+      dx = e.clientX - startX;
+      var dy = e.clientY - startY;
+      if (!locked && Math.abs(dx) + Math.abs(dy) > 10) locked = Math.abs(dx) > Math.abs(dy);
+      if (!locked) return;
+      e.preventDefault();
+      track.style.transform = 'translateX(calc(' + (-startIndex * 100) + '% + ' + dx + 'px))';
+    }, { passive: false });
+    gallery.addEventListener('pointerup', finishSwipe);
+    gallery.addEventListener('pointercancel', finishSwipe);
+    gallery.addEventListener('lostpointercapture', finishSwipe);
     gallery.addEventListener('mouseenter', stop, { once: true });
     go(0);
     start();
