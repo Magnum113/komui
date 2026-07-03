@@ -761,12 +761,14 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
   .cursor-glow{display:none}
 }
 @media(max-width:430px){
-  .grid{grid-template-columns:1fr}
-  .card .info{padding:14px}
-  .card .info h3{font-size:15px}
-  .card .price{font-size:17px;gap:7px}
-  .card .price .price-old{font-size:11px}
-  .card .sizes{min-width:52px;padding:5px 8px;font-size:11px}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .card{border-radius:16px}
+  .card .info{padding:11px}
+  .card .info h3{font-size:14px;line-height:1.2;margin-bottom:9px}
+  .card .info .meta{grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:6px}
+  .card .price{font-size:14px;line-height:1.05;gap:3px;flex-direction:column;align-items:flex-start}
+  .card .price .price-old{font-size:10px}
+  .card .sizes{min-width:40px;padding:4px 7px;font-size:10px}
 }
 @media(prefers-reduced-motion:reduce){
   *{animation-duration:.001s!important;animation-iteration-count:1!important}
