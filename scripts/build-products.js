@@ -257,7 +257,7 @@ function buildJsonLd(product) {
   const lowPrice = Number(product.price_min);
   const highPrice = Number(product.price_max);
   const offers = (product.offers || [])
-    .filter(o => o && !o.archived)
+    .filter(o => o && !o.archived && o.visible !== false)
     .map(o => ({
       '@type': 'Offer',
       sku: String(o.sku || o.offer_id || ''),
