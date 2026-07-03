@@ -495,6 +495,13 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
 .modal .mprice{font-family:'Unbounded',sans-serif;font-size:24px;font-weight:700;margin-bottom:18px}
 .modal .mdesc{color:var(--txt-2);font-size:15px;line-height:1.55;margin-bottom:22px;max-width:36ch}
 .modal .mlabel{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--txt-3);font-weight:700;margin-bottom:10px}
+.modal .msize-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.modal .msize-head .mlabel{margin-bottom:0}
+.modal .msize-chart-btn{position:relative;height:32px;padding:0 12px;border:0;border-radius:999px;background:var(--panel-2);color:var(--mag);font-weight:800;font-size:12px;line-height:1;box-shadow:inset 0 0 0 1.5px var(--line-2);transition:background-color .18s,color .18s,box-shadow .18s,transform .18s}
+.modal .msize-chart-btn::after{content:'';position:absolute;inset:-4px}
+.modal .msize-chart-btn:hover{box-shadow:inset 0 0 0 1.5px var(--mag)}
+.modal .msize-chart-btn:active{transform:scale(.96)}
+.modal .msize-chart-btn:focus-visible{outline:none;box-shadow:var(--focus-ring),inset 0 0 0 1.5px var(--line-2)}
 .size-pick{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:24px}
 .size-pick button{
   -webkit-appearance:none;appearance:none;display:flex;align-items:center;justify-content:center;
@@ -509,6 +516,15 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
 .size-pick button:focus{outline:none}
 .size-pick button:focus-visible{box-shadow:var(--focus-ring),inset 0 0 0 1.5px var(--line-2)}
 .size-pick button.sel:focus-visible{box-shadow:var(--focus-ring),0 10px 22px -14px rgba(0,38,249,.72)}
+.modal .msize-chart-panel{margin:-8px 0 22px;padding:14px;border-radius:16px;background:var(--panel-2);box-shadow:inset 0 0 0 1px var(--line-2)}
+.modal .msize-chart-panel[hidden]{display:none}
+.modal .msize-chart-scroll{overflow-x:auto;border-radius:12px;background:var(--panel)}
+.modal .msize-chart-table{width:100%;min-width:460px;border-collapse:collapse}
+.modal .msize-chart-table th,.modal .msize-chart-table td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--line);font-size:12px;white-space:nowrap}
+.modal .msize-chart-table th{color:var(--txt-3);font-weight:900;letter-spacing:.06em;text-transform:uppercase;background:var(--panel-2)}
+.modal .msize-chart-table tbody tr:last-child td{border-bottom:none}
+.modal .msize-chart-table td:first-child{font-family:'Unbounded',sans-serif;font-weight:800;color:var(--txt)}
+.modal .msize-chart-note{margin:10px 2px 0;color:var(--txt-3);font-size:12px;line-height:1.45}
 .modal .madd{width:100%;padding:16px;border-radius:13px;background:var(--grad-action);color:var(--on-accent);font-weight:800;font-size:15px;background-size:200% 200%;animation:gradmove 6s ease infinite;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 12px 32px -16px rgba(0,38,249,.65),inset 0 1px 0 rgba(255,255,255,.22)}
 .modal .madd:hover{transform:translateY(-2px);box-shadow:0 14px 36px -12px rgba(0,38,249,.5)}
 .modal .madd-float{display:none}
@@ -708,9 +724,12 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
   .modal.madd-floating .madd-float{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
   .modal .madd-float:hover{transform:translateX(-50%) translateY(-2px)}
   .modal .mdesc{order:5;margin-bottom:20px}
+  .modal .msize-head{order:6}
   .modal .mlabel{order:6}
   .modal .size-pick{order:7}
-  .modal .mfeat{order:8;margin-top:12px;gap:12px}
+  .modal .msize-chart-panel{order:8;margin:-4px 0 20px;padding:12px;border-radius:14px}
+  .modal .msize-chart-table{min-width:430px}
+  .modal .mfeat{order:9;margin-top:12px;gap:12px}
   .modal .mmedia{width:100%;height:auto;aspect-ratio:4/5;padding:0;overflow:hidden}
   .modal .mmedia .product-photo,
   .modal .mmedia .gtrack .gimg{width:100%;height:100%;object-fit:cover;object-position:center}
@@ -1184,6 +1203,77 @@ function cardSizesHtml(sizes){
   if(!summary)return '';
   return `<span class="sizes" aria-label="${esc(summary.aria)}" title="${esc(summary.aria)}"><span class="sizes-value">${esc(summary.label)}</span></span>`;
 }
+function cleanChartCell(value){
+  return String(value??'').replace(/\u00a0/g,' ').replace(/\s+/g,' ').trim();
+}
+function parseSizeChartJson(value){
+  if(!value)return null;
+  if(typeof value==='string'){
+    const trimmed=value.trim();
+    if(!trimmed)return null;
+    try{return JSON.parse(trimmed);}catch(e){return null;}
+  }
+  return typeof value==='object'?value:null;
+}
+function chartLabel(cell){
+  if(Array.isArray(cell)){
+    const label=cleanChartCell(cell[0]);
+    const hint=cleanChartCell(cell[1]);
+    if(label==='RU')return hint||'Российский размер';
+    if(label==='INT')return hint||'Размер';
+    return label||hint;
+  }
+  const label=cleanChartCell(cell);
+  if(label==='RU')return 'Российский размер';
+  if(label==='INT')return 'Размер';
+  return label;
+}
+function isApparelSizeValue(value){
+  return /^(?:XS|S|M|L|XL|XXL|XXXL|2XL|3XL)$/i.test(cleanChartCell(value));
+}
+function sizeChartSource(product){
+  const direct=parseSizeChartJson(product.size_chart_json||product.sizeChartJson);
+  if(direct)return direct;
+  for(const offer of product.offers||[]){
+    const chart=parseSizeChartJson(offer.size_chart_json||offer.sizeChartJson);
+    if(chart)return chart;
+  }
+  return null;
+}
+function buildSizeChart(product){
+  const chart=sizeChartSource(product);
+  const content=Array.isArray(chart?.content)?chart.content:[];
+  const widget=content.find(item=>item&&item.widgetName==='tcTable'&&item.table);
+  const body=Array.isArray(widget?.table?.body)?widget.table.body:[];
+  const series=body.map(row=>{
+    const data=Array.isArray(row?.data)?row.data:[];
+    if(data.length<2)return null;
+    return {label:chartLabel(data[0])||'Параметр',values:data.slice(1).map(cleanChartCell)};
+  }).filter(Boolean);
+  if(!series.length)return null;
+  const sizeSeries=series.find(item=>item.values.some(isApparelSizeValue)&&!/россий/i.test(item.label))
+    ||series.find(item=>/международ|^int$/i.test(item.label))
+    ||series[0];
+  const columns=['Размер',...series.filter(item=>item!==sizeSeries).map(item=>item.label)];
+  const maxRows=Math.max(...series.map(item=>item.values.length));
+  const rows=[];
+  for(let i=0;i<maxRows;i++){
+    const size=sizeSeries.values[i]||'';
+    if(!size)continue;
+    rows.push([size,...series.filter(item=>item!==sizeSeries).map(item=>item.values[i]||'')]);
+  }
+  return rows.length?{columns,rows}:null;
+}
+function modalSizeChartHtml(product){
+  const chart=buildSizeChart(product);
+  if(!chart)return '';
+  const head=chart.columns.map(column=>`<th>${esc(column)}</th>`).join('');
+  const rows=chart.rows.map(row=>`<tr>${chart.columns.map((_,i)=>`<td>${esc(row[i]||'')}</td>`).join('')}</tr>`).join('');
+  return `<div class="msize-chart-panel" id="mSizeChartPanel" hidden>
+    <div class="msize-chart-scroll"><table class="msize-chart-table"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="msize-chart-note">Замеры изделия из Ozon. Сравните с вещью, которая уже хорошо сидит.</div>
+  </div>`;
+}
 function localProduct(p,i){
   const priceOld=p.priceOld!=null?Number(p.priceOld):null;
   return {...p,priceOld:priceOld&&priceOld>Number(p.price||0)?priceOld:null,sizes:sortSizes(p.sizes),accent:p.accent||AC.mag,pop:p.pop||100-i,badges:p.badge?[p.badge]:[],source:'local'};
@@ -1212,6 +1302,7 @@ function supabaseProduct(row,i){
     animeTitle:row.anime_title,
     characterName:row.character_name,
     designKey:row.design_key,
+    size_chart_json:row.size_chart_json,
     photos:row.image_urls||[],
     offers:row.offers||[],
     source:'supabase'
@@ -1583,6 +1674,8 @@ function updateCart(){
 function openModal(id){
   const p=P.find(x=>x.id==id);let sel=p.sizes.includes('M')?'M':p.sizes[0];
   const addBtn=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg> Добавить в корзину`;
+  const sizeChart=modalSizeChartHtml(p);
+  const sizeChartButton=sizeChart?`<button class="msize-chart-btn" id="mSizeChartToggle" type="button" aria-expanded="false" aria-controls="mSizeChartPanel">Таблица размеров</button>`:'';
   $('#modal').innerHTML=`<button class="mclose" id="mclose">✕</button>
     <button class="madd madd-float" id="maddFloat" type="button" aria-label="Добавить в корзину">${addBtn}</button>
     <div class="mgrid">
@@ -1590,8 +1683,9 @@ function openModal(id){
     <div class="mbody">
       <div class="col">${p.col}</div><h2>${p.name}</h2>
       <div class="mprice">${RUB(p.price)}${p.priceOld?`<s class="mprice-old">${RUB(p.priceOld)}</s>`:''}</div><p class="mdesc">${p.desc}</p>
-      <div class="mlabel">Размер</div>
+      <div class="msize-head"><div class="mlabel">Размер</div>${sizeChartButton}</div>
       <div class="size-pick" id="sizePick">${p.sizes.map(s=>`<button data-size="${s}"${s===sel?' class="sel"':''}>${s}</button>`).join('')}</div>
+      ${sizeChart}
       <button class="madd" id="madd">${addBtn}</button>
       <div class="mfeat"><div>✦ ${p.type}</div><div>✦ 100% хлопок</div><div>✦ Плотность 240 г/м²</div></div>
     </div></div>`;
@@ -1599,6 +1693,15 @@ function openModal(id){
   initGalleries();
   $('#mclose').onclick=closeAll;
   $('#sizePick').onclick=e=>{const b=e.target.closest('[data-size]');if(!b)return;sel=b.dataset.size;$$('#sizePick button').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');};
+  const chartToggle=$('#mSizeChartToggle');
+  const chartPanel=$('#mSizeChartPanel');
+  if(chartToggle&&chartPanel){
+    chartToggle.onclick=()=>{
+      const open=chartPanel.hidden;
+      chartPanel.hidden=!open;
+      chartToggle.setAttribute('aria-expanded',String(open));
+    };
+  }
   const handleAdd=()=>{addToCart(p.id,sel);closeAll();};
   $('#madd').onclick=handleAdd;
   $('#maddFloat').onclick=handleAdd;

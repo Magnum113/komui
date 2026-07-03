@@ -41,10 +41,12 @@
 .p-meta strong{color:#14151c;font-weight:600;font-size:14px}
 
 .p-sizes-wrap{display:flex;flex-direction:column;gap:10px}
-.p-size-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.p-size-head{display:flex;align-items:center;justify-content:flex-start;gap:10px;min-height:34px}
 .p-label{font-size:13px;font-weight:600;color:#14151c;text-transform:uppercase;letter-spacing:.04em}
-.p-size-chart-btn{height:34px;padding:0 12px;border-radius:999px;border:1.5px solid #d3d6e1;background:#fff;color:var(--p-mag);font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;transition:border-color .15s,background .15s,transform .15s}
+.p-size-chart-btn{position:relative;height:30px;padding:0 11px;border-radius:999px;border:1.5px solid #d3d6e1;background:#fff;color:var(--p-mag);font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;transition:border-color .15s,background-color .15s,transform .15s}
+.p-size-chart-btn::after{content:'';position:absolute;inset:-5px}
 .p-size-chart-btn:hover{border-color:var(--p-mag);background:rgba(0,38,249,.06);transform:translateY(-1px)}
+.p-size-chart-btn:active{transform:scale(.96)}
 .p-size-chart-btn:focus-visible,.p-size-chart-close:focus-visible{outline:3px solid rgba(0,38,249,.24);outline-offset:2px}
 .p-sizes{display:flex;gap:8px;flex-wrap:wrap}
 .p-size{min-width:54px;height:46px;padding:0 14px;border-radius:12px;background:#fff;border:1.5px solid #d3d6e1;font-weight:600;font-family:inherit;font-size:14px;color:#14151c;cursor:pointer;transition:all .15s}
@@ -130,8 +132,8 @@ body.has-size-chart{overflow:hidden}
   .c-copy-grid{grid-template-columns:1fr;gap:18px}
 }
 @media (max-width:620px){
-  .p-size-head{align-items:flex-start}
-  .p-size-chart-btn{height:32px;padding:0 10px;font-size:11px}
+  .p-size-head{align-items:center;gap:9px}
+  .p-size-chart-btn{height:30px;padding:0 10px;font-size:11px}
   .p-size-chart-modal{align-items:flex-end;padding:0;background:rgba(20,21,28,.54)}
   .p-size-chart-dialog{width:100%;max-height:88vh;border-radius:18px 18px 0 0}
   .p-size-chart-head{padding:18px 18px 12px}
