@@ -322,24 +322,143 @@ function renderCollectionFooterLinks() {
 
 function renderHeaderActions() {
   return `<div class="shop-header-actions" aria-label="Быстрые действия">
-      <a class="shop-header-icon" href="/#catalog" aria-label="Поиск">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16.65 16.65 3.85 3.85"/></svg>
-      </a>
+      <button class="shop-header-icon shop-search-toggle" type="button" aria-label="Поиск" aria-expanded="false" aria-controls="shopSearchPanel">
+        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      </button>
       <a class="shop-header-icon" href="/#cart" aria-label="Корзина">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h14l-1.4 8.4a2 2 0 0 1-2 1.6H9.2a2 2 0 0 1-2-1.6L5.8 4.8H3"/><circle cx="9.5" cy="21" r="1"/><circle cx="17.5" cy="21" r="1"/></svg>
+        <svg width="19" height="19" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
       </a>
-      <button class="shop-header-icon shop-menu-toggle" type="button" aria-label="Меню" aria-expanded="false">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg>
+      <button class="shop-header-icon shop-menu-toggle" type="button" aria-label="Меню" aria-expanded="false" aria-controls="shopMenuPanel">
+        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
       </button>
     </div>`;
+}
+
+function renderHeaderPanels() {
+  return `<div class="shop-layer" id="shopLayer" hidden></div>
+<aside class="shop-menu-panel" id="shopMenuPanel" hidden aria-label="Меню">
+  <div class="shop-panel-head">
+    <div><span>Меню</span><strong>KOMUI</strong></div>
+    <button type="button" class="shop-panel-close" data-shop-close aria-label="Закрыть">×</button>
+  </div>
+  <nav class="shop-menu-list">
+    <a href="/#catalog">Каталог</a>
+    <a href="/#catalog" data-shop-cat="Футболки">Футболки</a>
+    <a href="/#catalog" data-shop-cat="Худи">Худи</a>
+    <a href="/collections/naruto">Naruto</a>
+    <a href="/collections/jujutsu-kaisen">Jujutsu Kaisen</a>
+    <a href="/delivery">Доставка и оплата</a>
+    <a href="/returns">Возврат и обмен</a>
+    <a href="/sizes">Размерная сетка</a>
+    <a href="/care">Уход за вещами</a>
+  </nav>
+</aside>
+<section class="shop-search-panel" id="shopSearchPanel" hidden aria-labelledby="shopSearchTitle">
+  <div class="shop-panel-head">
+    <div><span>Поиск</span><strong id="shopSearchTitle">Найти товар</strong></div>
+    <button type="button" class="shop-panel-close" data-shop-close aria-label="Закрыть">×</button>
+  </div>
+  <div class="shop-search-box">
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+    <input id="shopSearchInput" type="search" placeholder="Футболка, худи, Naruto, Gojo..." autocomplete="off">
+  </div>
+  <div class="shop-search-results" id="shopSearchResults" aria-live="polite"></div>
+</section>`;
 }
 
 function renderHeaderScript() {
   return `<script>
 (function(){
-  var toggle=document.querySelector('.shop-menu-toggle');
-  if(!toggle)return;
-  toggle.addEventListener('click',function(){ location.href='/#catalog'; });
+  var layer = document.getElementById('shopLayer');
+  var menu = document.getElementById('shopMenuPanel');
+  var search = document.getElementById('shopSearchPanel');
+  var menuToggle = document.querySelector('.shop-menu-toggle');
+  var searchToggle = document.querySelector('.shop-search-toggle');
+  var input = document.getElementById('shopSearchInput');
+  var results = document.getElementById('shopSearchResults');
+  var products = Array.isArray(window.KOMUI_PRODUCTS) ? window.KOMUI_PRODUCTS : [];
+
+  function setLocked(locked){ document.body.classList.toggle('has-shop-layer', locked); }
+  function closePanels(){
+    if (layer) layer.hidden = true;
+    if (menu) menu.hidden = true;
+    if (search) search.hidden = true;
+    if (menuToggle) menuToggle.setAttribute('aria-expanded', 'false');
+    if (searchToggle) searchToggle.setAttribute('aria-expanded', 'false');
+    setLocked(false);
+  }
+  function openPanel(panel, toggle){
+    closePanels();
+    if (layer) layer.hidden = false;
+    if (panel) panel.hidden = false;
+    if (toggle) toggle.setAttribute('aria-expanded', 'true');
+    setLocked(true);
+  }
+  function imageOf(product){
+    if (!product) return '';
+    if (product.primary_image_url) return product.primary_image_url;
+    if (product.main_image_path) return product.main_image_path;
+    if (Array.isArray(product.image_urls) && product.image_urls[0]) return product.image_urls[0];
+    return '';
+  }
+  function money(value){
+    var n = Number(value);
+    if (!Number.isFinite(n) || n <= 0) return '';
+    return n.toLocaleString('ru-RU') + ' ₽';
+  }
+  function esc(value){
+    return String(value == null ? '' : value)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+  function haystack(product){
+    return [
+      product.name, product.category, product.product_type, product.decoration_type,
+      product.color_name, product.collection_name, product.anime_title, product.character_name,
+      product.design_name, Array.isArray(product.tags) ? product.tags.join(' ') : ''
+    ].filter(Boolean).join(' ').toLowerCase();
+  }
+  function renderResults(query){
+    if (!results) return;
+    var q = String(query || '').trim().toLowerCase();
+    var list = products
+      .filter(function(product){ return product && product.slug && (!q || haystack(product).indexOf(q) !== -1); })
+      .slice(0, 8);
+    if (!list.length) {
+      results.innerHTML = '<div class="shop-search-empty">Ничего не нашли. Попробуйте запрос вроде Gojo, Naruto, худи или футболка.</div>';
+      return;
+    }
+    results.innerHTML = list.map(function(product){
+      var img = imageOf(product);
+      var meta = [product.collection_name || product.anime_title, product.category, product.color_name].filter(Boolean).join(' · ');
+      var price = money(product.price_min);
+      return '<a class="shop-search-item" href="/p/' + esc(product.slug) + '">' +
+        '<span class="shop-search-img">' + (img ? '<img src="' + esc(img) + '" alt="' + esc(product.name) + '" loading="lazy" decoding="async">' : '') + '</span>' +
+        '<span class="shop-search-copy"><strong>' + esc(product.name) + '</strong>' +
+        (meta ? '<small>' + esc(meta) + '</small>' : '') + '</span>' +
+        (price ? '<b>' + esc(price) + '</b>' : '') +
+      '</a>';
+    }).join('');
+  }
+
+  if (menuToggle && menu) {
+    menuToggle.addEventListener('click', function(){ openPanel(menu, menuToggle); });
+  }
+  if (searchToggle && search) {
+    searchToggle.addEventListener('click', function(){
+      openPanel(search, searchToggle);
+      renderResults(input ? input.value : '');
+      setTimeout(function(){ if (input) input.focus(); }, 40);
+    });
+  }
+  if (input) input.addEventListener('input', function(){ renderResults(input.value); });
+  document.addEventListener('click', function(e){
+    if (e.target.closest('[data-shop-close]') || e.target === layer) closePanels();
+    if (e.target.closest('.shop-menu-list a,.shop-search-item')) closePanels();
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && layer && !layer.hidden) closePanels();
+  });
 })();
 </script>`;
 }
@@ -776,6 +895,7 @@ function renderProductPage(product, products = []) {
     ${renderHeaderActions()}
   </div>
 </header>
+${renderHeaderPanels()}
 <main>
   <section class="p-page">
     <div class="wrap">
@@ -820,6 +940,7 @@ function renderProductPage(product, products = []) {
   </section>
 ${sizeChartModalHtml}
 </main>
+<script src="/data/storefront-products.js"></script>
 ${renderHeaderScript()}
 <footer><div class="wrap foot">
   <div><h5>KOMUI</h5><p>Аниме-мерч: футболки, худи и свитшоты с принтами и вышивкой.</p></div>
@@ -1114,6 +1235,7 @@ function renderCollectionPage(landing) {
     ${renderHeaderActions()}
   </div>
 </header>
+${renderHeaderPanels()}
 <main class="c-page">
   <section class="c-hero">
     <div class="wrap">
@@ -1157,6 +1279,7 @@ function renderCollectionPage(landing) {
     </div>
   </section>
 </main>
+<script src="/data/storefront-products.js"></script>
 ${renderHeaderScript()}
 <footer><div class="wrap foot">
   <div><h5>KOMUI</h5><p>Аниме-мерч: футболки, худи и свитшоты с принтами и вышивкой.</p></div>
