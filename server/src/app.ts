@@ -207,6 +207,9 @@ export function buildApp({ config, db = createDb(config) }: AppOptions) {
     if (!product) {
       return jsonError(reply, 404, "not_found", "Product not found");
     }
+    if (product.slug !== request.params.slug) {
+      reply.header("X-Komui-Canonical-Slug", product.slug);
+    }
     return product;
   });
 

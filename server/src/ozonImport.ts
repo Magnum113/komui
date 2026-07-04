@@ -7,6 +7,7 @@ import { auditAdminEvent } from "./audit";
 import type { AppConfig } from "./config";
 import type { Db } from "./db";
 import { HttpError } from "./errors";
+import { buildSeoProductSlug } from "./seoSlugs";
 
 const OZON_PRICE_PATH = "/v5/product/info/prices";
 const OZON_PRODUCT_INFO_LIST_PATH = "/v3/product/info/list";
@@ -1459,6 +1460,11 @@ function buildNewProductGroups(items: OzonPreviewItem[]): OzonProductGroup[] {
 
     productGroups.push({
       ...inferred,
+      slug: buildSeoProductSlug({
+        suggestedName,
+        decorationSlug: inferred.decorationSlug,
+        colorSlug: inferred.colorSlug,
+      }),
       itemIds: groupItems.map((item) => item.itemId),
       offerIds: groupItems
         .map((item) => item.offerId)

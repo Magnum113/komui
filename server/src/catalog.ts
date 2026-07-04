@@ -1,48 +1,56 @@
 import type { Db } from "./db";
 
 const PUBLIC_PRODUCT_COLUMNS = `
-  id,
-  design_key,
-  ozon_variant,
-  name,
-  slug,
-  description,
-  ozon_description,
-  category,
-  category_slug,
-  product_type,
-  product_type_slug,
-  decoration_type,
-  decoration_slug,
-  color_name,
-  color_slug,
-  color_hex,
-  franchise_type,
-  title_name,
-  title_slug,
-  anime_title,
-  anime_slug,
-  character_name,
-  character_slug,
-  collection_name,
-  collection_slug,
-  design_name,
-  design_slug,
-  tags,
-  sizes,
-  price_min,
-  price_max,
-  currency,
-  primary_image_url,
-  main_image_path,
-  image_urls,
-  size_chart_json,
-  offers,
-  is_active,
-  sort_order,
-  short_description,
-  badges,
-  compare_at_price
+  p.id,
+  p.design_key,
+  p.ozon_variant,
+  p.name,
+  p.slug,
+  p.description,
+  p.ozon_description,
+  p.category,
+  p.category_slug,
+  p.product_type,
+  p.product_type_slug,
+  p.decoration_type,
+  p.decoration_slug,
+  p.color_name,
+  p.color_slug,
+  p.color_hex,
+  p.franchise_type,
+  p.title_name,
+  p.title_slug,
+  p.anime_title,
+  p.anime_slug,
+  p.character_name,
+  p.character_slug,
+  p.collection_name,
+  p.collection_slug,
+  p.design_name,
+  p.design_slug,
+  p.tags,
+  p.sizes,
+  p.price_min,
+  p.price_max,
+  p.currency,
+  p.primary_image_url,
+  p.main_image_path,
+  p.image_urls,
+  p.size_chart_json,
+  p.offers,
+  p.is_active,
+  p.sort_order,
+  p.short_description,
+  p.badges,
+  p.compare_at_price,
+  coalesce(
+    (
+      select jsonb_agg(r.old_slug order by r.created_at asc, r.old_slug asc)
+      from public.merch_storefront_product_slug_redirects r
+      where r.product_id = p.id
+    ),
+    '[]'::jsonb
+  ) as slug_redirects
 `;
 
 export type PublicOffer = {
@@ -100,10 +108,12 @@ export type PublicProduct = {
   short_description?: string | null;
   badges: string[];
   compare_at_price?: string | number | null;
+  slug_redirects?: string[];
 };
 
 type ProductRow = PublicProduct & {
   offers: unknown;
+  slug_redirects?: unknown;
 };
 
 export function sanitizeOffer(value: unknown): PublicOffer | null {
@@ -146,10 +156,14 @@ export function sanitizeProduct(row: ProductRow): PublicProduct {
         .map(sanitizeOffer)
         .filter((item): item is PublicOffer => item !== null)
     : [];
+  const slugRedirects = Array.isArray(row.slug_redirects)
+    ? row.slug_redirects.filter((item): item is string => typeof item === "string")
+    : [];
 
   return {
     ...row,
     offers,
+    slug_redirects: slugRedirects,
   };
 }
 
@@ -166,9 +180,9 @@ export class CatalogRepository {
     const result = await this.db.query<ProductRow>(
       `
         select ${PUBLIC_PRODUCT_COLUMNS}
-        from public.merch_storefront_products
-        where is_active is true
-        order by sort_order asc, id asc
+        from public.merch_storefront_products p
+        where p.is_active is true
+        order by p.sort_order asc, p.id asc
         limit $1
       `,
       [limit],
@@ -181,9 +195,18 @@ export class CatalogRepository {
     const result = await this.db.query<ProductRow>(
       `
         select ${PUBLIC_PRODUCT_COLUMNS}
-        from public.merch_storefront_products
-        where is_active is true
-          and slug = $1
+        from public.merch_storefront_products p
+        where p.is_active is true
+          and (
+            p.slug = $1
+            or exists (
+              select 1
+              from public.merch_storefront_product_slug_redirects r
+              where r.product_id = p.id
+                and r.old_slug = $1
+            )
+          )
+        order by case when p.slug = $1 then 0 else 1 end
         limit 1
       `,
       [slug],

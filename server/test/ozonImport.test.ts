@@ -571,7 +571,10 @@ test("buildOzonPreview groups unmatched structured Ozon offers as new product ca
   assert.equal(preview.items[0].inferredProduct?.designKey, "var21|print|tshirt|washed-grey");
   assert.equal(preview.items[1].size, "XXL");
   assert.deepEqual(preview.newProductGroups[0]?.sizes, ["S", "XXL"]);
-  assert.equal(preview.newProductGroups[0]?.slug, "var21-print-tshirt-washed-grey");
+  assert.equal(
+    preview.newProductGroups[0]?.slug,
+    "varenaya-futbolka-s-printom-yazyk-sukuny-seraya",
+  );
   assert.equal(preview.newProductGroups[0]?.suggestedName, "Вареная футболка с принтом Язык Сукуны");
   assert.equal(
     preview.warnings.some((warning) => warning.code === "new_products_require_creation"),
