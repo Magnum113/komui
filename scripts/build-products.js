@@ -779,7 +779,7 @@ function renderProductPage(product, products = []) {
           <div class="p-meta">
             ${product.color_name ? `<div><span>Цвет</span><strong>${escapeHtml(product.color_name)}</strong></div>` : ''}
             ${product.decoration_type ? `<div><span>Оформление</span><strong>${escapeHtml(product.decoration_type)}</strong></div>` : ''}
-            ${product.category ? `<div><span>Категория</span><strong>${escapeHtml(product.category)}</strong></div>` : ''}
+            <div><span>Плотность</span><strong>240 г/м²</strong></div>
             <div><span>Состав</span><strong>100% хлопок</strong></div>
           </div>
           <div class="p-sizes-wrap">
@@ -790,12 +790,8 @@ function renderProductPage(product, products = []) {
           </div>
           <div class="p-actions">
             <button type="button" class="p-cta" id="pAdd" data-id="${escapeAttr(product.id)}">Добавить в корзину</button>
+            <button type="button" class="p-cta p-cta-float" id="pAddFloat" data-id="${escapeAttr(product.id)}">Добавить в корзину</button>
             <a class="p-secondary" href="/#catalog">К другим товарам</a>
-          </div>
-          <div class="p-trust">
-            ${product.decoration_type ? `<div>${escapeHtml(product.decoration_type)}</div>` : ''}
-            <div>100% хлопок</div>
-            <div>Плотность 240 г/м²</div>
           </div>
         </div>
       </div>
@@ -817,6 +813,7 @@ ${sizeChartModalHtml}
   var CART_KEY = 'komui-cart-v1';
   var sizes = document.getElementById('pSizes');
   var add = document.getElementById('pAdd');
+  var addFloat = document.getElementById('pAddFloat');
   var chartOpen = document.getElementById('pSizeChartOpen');
   var chartModal = document.getElementById('pSizeChartModal');
   var chartClose = document.getElementById('pSizeChartClose');
@@ -936,8 +933,13 @@ ${sizeChartModalHtml}
     start();
   }
   initGallery();
-  if (add) {
-    add.addEventListener('click', function(){
+  var addedToCart = false;
+  function goToCart(){ location.href = '/#cart'; }
+  function handleAdd(){
+      if (addedToCart) {
+        goToCart();
+        return;
+      }
       var id = add.getAttribute('data-id');
       var activeSize = sizes && sizes.querySelector('.p-size.is-active');
       var size = activeSize ? activeSize.getAttribute('data-size') : null;
@@ -950,9 +952,22 @@ ${sizeChartModalHtml}
       else cart.push({ key: key, id: id, size: size, qty: 1 });
       try { localStorage.setItem(CART_KEY, JSON.stringify(cart)); } catch(e){}
       add.textContent = 'Добавлено · перейти в корзину';
+      if (addFloat) addFloat.textContent = 'Добавлено · перейти в корзину';
       add.classList.add('is-added');
-      add.onclick = function(){ location.href = '/#cart'; };
-    });
+      if (addFloat) addFloat.classList.add('is-added');
+      addedToCart = true;
+  }
+  if (add) {
+    add.addEventListener('click', handleAdd);
+    if (addFloat) addFloat.addEventListener('click', handleAdd);
+    if ('IntersectionObserver' in window && addFloat) {
+      var addObserver = new IntersectionObserver(function(entries){
+        var entry = entries[0];
+        if (!entry) return;
+        document.body.classList.toggle('has-p-cta-float', !entry.isIntersecting && entry.boundingClientRect.top < 0);
+      }, { threshold: 0.05 });
+      addObserver.observe(add);
+    }
   }
 })();
 </script>
