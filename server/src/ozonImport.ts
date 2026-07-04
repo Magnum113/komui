@@ -290,6 +290,10 @@ export type OzonPreviewItem = {
       };
     };
   };
+  warnings?: Array<{
+    code: string;
+    message: string;
+  }>;
 };
 
 type PreviewBuildResult = {
@@ -335,6 +339,7 @@ type OzonProductGroup = OzonInferredProduct & {
   primaryImageUrl: string | null;
   imageUrls: string[];
   sizeChartJson?: unknown;
+  sizeChartConflict?: boolean;
   minOzonPrice: number | null;
   maxOzonPrice: number | null;
 };
@@ -1440,6 +1445,89 @@ function findMerchProductMatch(
   return undefined;
 }
 
+type SizeChartConflict = {
+  storefrontProductId: string;
+  productName: string;
+  chartCount: number;
+  offerIds: string[];
+};
+
+function collectSizeChartVariants<T>(
+  values: T[],
+  getValue: (value: T) => unknown,
+) {
+  const variants = new Map<string, { value: unknown; count: number }>();
+  for (const item of values) {
+    const chart = getValue(item);
+    if (chart === undefined) continue;
+    const key = stableJsonStringify(chart);
+    const existing = variants.get(key);
+    if (existing) {
+      existing.count += 1;
+    } else {
+      variants.set(key, { value: chart, count: 1 });
+    }
+  }
+  return variants;
+}
+
+function singleNonConflictingSizeChart<T>(
+  values: T[],
+  getValue: (value: T) => unknown,
+) {
+  const variants = collectSizeChartVariants(values, getValue);
+  if (variants.size !== 1) {
+    return { value: undefined, conflict: variants.size > 1 };
+  }
+  const first = variants.values().next().value;
+  return { value: first?.value, conflict: false };
+}
+
+function analyzeStorefrontSizeChartConflicts(
+  ozonItems: OzonPriceItem[],
+  indexes: ReturnType<typeof buildIndexes>,
+) {
+  const groups = new Map<
+    string,
+    {
+      row: StorefrontRow;
+      items: OzonPriceItem[];
+      offerIds: string[];
+    }
+  >();
+
+  for (const ozonItem of ozonItems) {
+    if (ozonItem.size_chart_json === undefined) continue;
+    const storefrontMatch = findStorefrontMatch(ozonItem, indexes);
+    if (!storefrontMatch) continue;
+    const existing = groups.get(storefrontMatch.row.id) ?? {
+      row: storefrontMatch.row,
+      items: [],
+      offerIds: [],
+    };
+    existing.items.push(ozonItem);
+    const offerId = offerIdForDisplay(ozonItem.offer_id);
+    if (offerId) existing.offerIds.push(offerId);
+    groups.set(storefrontMatch.row.id, existing);
+  }
+
+  const conflicts = new Map<string, SizeChartConflict>();
+  for (const [productId, group] of groups) {
+    const variants = collectSizeChartVariants(
+      group.items,
+      (item) => item.size_chart_json,
+    );
+    if (variants.size <= 1) continue;
+    conflicts.set(productId, {
+      storefrontProductId: productId,
+      productName: group.row.name,
+      chartCount: variants.size,
+      offerIds: uniqueStrings(group.offerIds),
+    });
+  }
+  return conflicts;
+}
+
 function stripTrailingSizeFromName(value: string | undefined) {
   if (!value) return "";
   return value
@@ -1473,8 +1561,10 @@ function buildNewProductGroups(items: OzonPreviewItem[]): OzonProductGroup[] {
       .filter((price): price is number => price !== undefined);
     const suggestedName = stripTrailingSizeFromName(first.name) ||
       `${inferred.productType} ${inferred.ozonVariant}`;
-    const sizeChartJson = groupItems.find((item) => item.sizeChartJson !== undefined)
-      ?.sizeChartJson;
+    const sizeChart = singleNonConflictingSizeChart(
+      groupItems,
+      (item) => item.sizeChartJson,
+    );
 
     productGroups.push({
       ...inferred,
@@ -1501,7 +1591,8 @@ function buildNewProductGroups(items: OzonPreviewItem[]): OzonProductGroup[] {
       suggestedName,
       primaryImageUrl: imageUrls[0] ?? null,
       imageUrls,
-      sizeChartJson,
+      sizeChartJson: sizeChart.value,
+      sizeChartConflict: sizeChart.conflict,
       minOzonPrice: prices.length ? Math.min(...prices) : null,
       maxOzonPrice: prices.length ? Math.max(...prices) : null,
     });
@@ -1523,6 +1614,7 @@ export function buildOzonPreview(
   const updatePrices = options.updatePrices === true;
   const syncSizes = options.syncSizes ?? "add";
   const indexes = buildIndexes(storefrontRows, merchRows);
+  const sizeChartConflicts = analyzeStorefrontSizeChartConflicts(ozonItems, indexes);
   const items: OzonPreviewItem[] = [];
   let matchedStorefront = 0;
   let matchedMerchProducts = 0;
@@ -1551,6 +1643,17 @@ export function buildOzonPreview(
 
     const storefrontMatch = findStorefrontMatch(ozonItem, indexes);
     const merchMatch = findMerchProductMatch(ozonItem, indexes);
+    const sizeChartConflict = storefrontMatch
+      ? sizeChartConflicts.get(storefrontMatch.row.id)
+      : undefined;
+    const itemWarnings: OzonPreviewItem["warnings"] = [];
+    if (sizeChartConflict && ozonItem.size_chart_json !== undefined) {
+      itemWarnings.push({
+        code: "storefront_size_chart_conflict",
+        message:
+          "У SKU этой карточки в Ozon разные таблицы размеров; size_chart_json не обновляется автоматически.",
+      });
+    }
     const plannedActions: OzonPreviewItem["plannedActions"] = [];
     const media = ozonItem.media_loaded ? mediaFromOzonItem(ozonItem) : undefined;
     const source: PreviewOzonFields = {
@@ -1569,7 +1672,7 @@ export function buildOzonPreview(
           : undefined,
       archived:
         typeof ozonItem.archived === "boolean" ? ozonItem.archived : undefined,
-      sizeChartJson: ozonItem.size_chart_json,
+      sizeChartJson: sizeChartConflict ? undefined : ozonItem.size_chart_json,
       media: media
         ? {
             primaryImage: media.primaryImage ?? null,
@@ -1707,7 +1810,11 @@ export function buildOzonPreview(
     items.push({
       itemId,
       status: storefrontMatch || merchMatch ? (hasImportAction ? "matched" : "noop") : "unmatched",
-      severity: storefrontMatch || merchMatch ? "info" : "warning",
+      severity: itemWarnings.length > 0
+        ? "warning"
+        : storefrontMatch || merchMatch
+          ? "info"
+          : "warning",
       ...source,
       matchReason: storefrontMatch?.reason || merchMatch?.reason,
       inferredProduct: storefrontMatch || merchMatch ? undefined : inferredProduct,
@@ -1720,6 +1827,7 @@ export function buildOzonPreview(
       plannedActions,
       diff,
       mediaDiff,
+      warnings: itemWarnings.length > 0 ? itemWarnings : undefined,
     });
   }
 
@@ -1739,6 +1847,29 @@ export function buildOzonPreview(
       message:
         "Найдены новые Ozon-дизайны без карточек витрины. Создайте карточки через admin API, затем повторите preview/import для оставшихся изменений.",
       count: productGroups.length,
+    });
+  }
+  if (sizeChartConflicts.size > 0) {
+    const examples = [...sizeChartConflicts.values()]
+      .slice(0, 3)
+      .map((item) => item.productName)
+      .join(", ");
+    warnings.push({
+      code: "storefront_size_chart_conflict",
+      message:
+        `У некоторых карточек сайта разные SKU в Ozon отдают разные таблицы размеров; size_chart_json пропущен для автоимпорта${examples ? `: ${examples}` : ""}.`,
+      count: sizeChartConflicts.size,
+    });
+  }
+  const productGroupSizeChartConflicts = productGroups.filter(
+    (group) => group.sizeChartConflict,
+  ).length;
+  if (productGroupSizeChartConflicts > 0) {
+    warnings.push({
+      code: "new_product_size_chart_conflict",
+      message:
+        "У некоторых новых Ozon-дизайнов разные SKU отдают разные таблицы размеров; при создании карточки size_chart_json нужно выбрать вручную.",
+      count: productGroupSizeChartConflicts,
     });
   }
   if (targets.supabase && !settings.supabaseWriteEnabled) {

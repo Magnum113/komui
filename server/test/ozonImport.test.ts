@@ -615,6 +615,123 @@ test("buildOzonPreview ignores size chart JSON object key order", () => {
   assert.equal(preview.summary.noop, 1);
 });
 
+test("buildOzonPreview skips storefront size chart when matched Ozon offers disagree", () => {
+  const sizeChartA = {
+    content: [{ table: { title: "Размеры A", body: [{ data: [["Размер"], "S"] }] } }],
+  };
+  const sizeChartB = {
+    content: [{ table: { title: "Размеры B", body: [{ data: [["Размер"], "M"] }] } }],
+  };
+
+  const preview = buildOzonPreview(
+    [
+      {
+        offer_id: "D008-HDY-EMB-WHT-REG-FLC-S",
+        sku: 1001,
+        product_id: 2001,
+        name: "Худи Gravity",
+        size_chart_json: sizeChartA,
+      },
+      {
+        offer_id: "D008-HDY-EMB-WHT-REG-NF-M",
+        sku: 1002,
+        product_id: 2002,
+        name: "Худи Gravity",
+        size_chart_json: sizeChartB,
+      },
+    ],
+    [
+      {
+        id: "11111111-1111-1111-1111-111111111111",
+        design_key: "var8|embroidery|hoodie|white",
+        name: "Худи Gravity",
+        slug: "hudi-gravity-vyshivka-belaya",
+        sizes: ["S", "M"],
+        price_min: 3900,
+        price_max: 3900,
+        ozon_product_ids: [2001, 2002],
+        ozon_skus: [1001, 1002],
+        ozon_offer_ids: [
+          "D008-HDY-EMB-WHT-REG-FLC-S",
+          "D008-HDY-EMB-WHT-REG-NF-M",
+        ],
+        size_chart_json: null,
+        offers: [
+          {
+            offer_id: "D008-HDY-EMB-WHT-REG-FLC-S",
+            product_id: 2001,
+            sku: 1001,
+            name: "Худи Gravity",
+            size: "S",
+          },
+          {
+            offer_id: "D008-HDY-EMB-WHT-REG-NF-M",
+            product_id: 2002,
+            sku: 1002,
+            name: "Худи Gravity",
+            size: "M",
+          },
+        ],
+      },
+    ],
+    [],
+    { serverPostgres: true, supabase: false },
+    { supabaseWriteEnabled: false },
+    { updatePrices: false },
+  );
+
+  assert.equal(preview.summary.actionableServerPostgres, 0);
+  assert.equal(preview.summary.noop, 2);
+  assert.equal(preview.canImport, false);
+  assert.equal(
+    preview.warnings.some((warning) => warning.code === "storefront_size_chart_conflict"),
+    true,
+  );
+  for (const item of preview.items) {
+    assert.equal(item.status, "noop");
+    assert.equal(item.sizeChartJson, undefined);
+    assert.equal(
+      item.diff?.changedFields.includes("size_chart_json"),
+      false,
+    );
+    assert.equal(item.warnings?.[0]?.code, "storefront_size_chart_conflict");
+  }
+});
+
+test("buildOzonPreview does not choose a size chart for new product group conflicts", () => {
+  const preview = buildOzonPreview(
+    [
+      {
+        offer_id: "D021-TSH-PRT-WGRY-S",
+        sku: 1001,
+        product_id: 2001,
+        name: "Вареная футболка S",
+        size_chart_json: { table: { title: "A" } },
+      },
+      {
+        offer_id: "D021-TSH-PRT-WGRY-M",
+        sku: 1002,
+        product_id: 2002,
+        name: "Вареная футболка M",
+        size_chart_json: { table: { title: "B" } },
+      },
+    ],
+    [],
+    [],
+    { serverPostgres: true, supabase: false },
+    { supabaseWriteEnabled: false },
+    { updatePrices: false },
+  );
+
+  assert.equal(preview.newProductGroups.length, 1);
+  assert.equal(preview.newProductGroups[0].sizeChartJson, undefined);
+  assert.equal(preview.newProductGroups[0].sizeChartConflict, true);
+  assert.equal(
+    preview.warnings.some((warning) => warning.code === "new_product_size_chart_conflict"),
+    true,
+  );
+});
+
 test("buildOzonPreview groups unmatched structured Ozon offers as new product candidates", () => {
   const preview = buildOzonPreview(
     [
