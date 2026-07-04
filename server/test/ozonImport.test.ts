@@ -390,6 +390,82 @@ test("buildOzonPreview reports media diff without overwriting manual main image"
   assert.equal(preview.items[0].mediaDiff?.product.mainImagePath.preservedManualOverride, true);
 });
 
+test("buildOzonPreview filters blocked Ozon warning image from storefront media", () => {
+  const blockedWarningImage = "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg";
+  const preview = buildOzonPreview(
+    [
+      {
+        offer_id: "D005-TSH-PRT-WHT-S",
+        sku: 123,
+        product_id: 456,
+        name: "Matched",
+        price: { marketing_seller_price: "2990" },
+        primary_image: ["https://img.test/main.jpg"],
+        images: [
+          "https://img.test/main.jpg",
+          "https://img.test/extra.jpg",
+          blockedWarningImage,
+        ],
+        media_loaded: true,
+      },
+    ],
+    [
+      {
+        id: "11111111-1111-1111-1111-111111111111",
+        design_key: "var5|print|tshirt|white",
+        name: "Existing product",
+        slug: "existing-product",
+        price_min: 2990,
+        price_max: 2990,
+        primary_image_url: "https://img.test/main.jpg",
+        main_image_path: null,
+        image_urls: [
+          "https://img.test/main.jpg",
+          "https://img.test/extra.jpg",
+          blockedWarningImage,
+        ],
+        ozon_product_ids: [456],
+        ozon_skus: [123],
+        ozon_offer_ids: ["D005-TSH-PRT-WHT-S"],
+        offers: [
+          {
+            offer_id: "D005-TSH-PRT-WHT-S",
+            product_id: 456,
+            sku: 123,
+            name: "Matched",
+            price: 2990,
+            primary_image: "https://img.test/main.jpg",
+            images: [
+              "https://img.test/main.jpg",
+              "https://img.test/extra.jpg",
+              blockedWarningImage,
+            ],
+          },
+        ],
+      },
+    ],
+    [],
+    { serverPostgres: true, supabase: false },
+    { supabaseWriteEnabled: false },
+    { updatePrices: true, syncSizes: "off" },
+  );
+
+  assert.equal(preview.summary.actionableServerPostgres, 1);
+  assert.equal(preview.items[0].plannedActions[0]?.action, "update_storefront_offer");
+  assert.deepEqual(preview.items[0].media?.images, [
+    "https://img.test/main.jpg",
+    "https://img.test/extra.jpg",
+  ]);
+  assert.equal(preview.items[0].diff?.changedFields.includes("offers.images"), true);
+  assert.equal(preview.items[0].diff?.changedFields.includes("image_urls"), true);
+  assert.deepEqual(preview.items[0].mediaDiff?.offer.images.removed, [
+    blockedWarningImage,
+  ]);
+  assert.deepEqual(preview.items[0].mediaDiff?.product.imageUrls.removed, [
+    blockedWarningImage,
+  ]);
+});
+
 test("buildOzonPreview marks unchanged merch product as noop", () => {
   const preview = buildOzonPreview(
     [

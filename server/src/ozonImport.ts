@@ -14,6 +14,11 @@ const OZON_PRODUCT_INFO_LIST_PATH = "/v3/product/info/list";
 const OZON_PRODUCT_INFO_ATTRIBUTES_PATH = "/v4/product/info/attributes";
 const OZON_DEFAULT_BASE_URL = "https://api-seller.ozon.ru";
 const OZON_SIZE_CHART_ATTRIBUTE_ID = 13164;
+const BLOCKED_OZON_IMAGE_URLS = new Set([
+  // Ozon warning card about fake sellers. It is useful on Ozon, but should not
+  // be imported into storefront product galleries.
+  "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg",
+]);
 
 const LEGACY_DESIGN_KEY_ALIASES: Record<string, string[]> = {
   // Historical storefront records were created before Ozon offer_id design
@@ -523,6 +528,10 @@ function uniqueStrings(values: unknown[]) {
   return result;
 }
 
+function publicOzonImageStrings(values: unknown[]) {
+  return uniqueStrings(values).filter((value) => !BLOCKED_OZON_IMAGE_URLS.has(value));
+}
+
 function blankToNull(value: unknown): string | null {
   return toStringId(value) ?? null;
 }
@@ -546,10 +555,10 @@ function mediaFromOzonItem(item: Pick<
   OzonPriceItem,
   "primary_image" | "images" | "images360" | "color_image"
 >) {
-  const primaryImage = collectStrings(item.primary_image)[0];
-  const images = uniqueStrings([primaryImage, item.images]);
-  const images360 = uniqueStrings([item.images360]);
-  const colorImage = collectStrings(item.color_image)[0];
+  const primaryImage = publicOzonImageStrings([item.primary_image])[0];
+  const images = publicOzonImageStrings([primaryImage, item.images]);
+  const images360 = publicOzonImageStrings([item.images360]);
+  const colorImage = publicOzonImageStrings([item.color_image])[0];
   return {
     primaryImage,
     images,
@@ -620,13 +629,13 @@ function imageUrlsFromOffers(
 ) {
   const activeOffers = offers.filter((offer) => offer.archived !== true);
   const sourceOffers = activeOffers.length > 0 ? activeOffers : offers;
-  const images = uniqueStrings(
+  const images = publicOzonImageStrings(
     sourceOffers.flatMap((offer) => [
       offer.primary_image,
       offer.images,
     ]),
   );
-  return images.length > 0 ? images : stringArray(fallback);
+  return images.length > 0 ? images : publicOzonImageStrings([fallback]);
 }
 
 function nextMainImagePath(current: unknown, nextPrimaryImage: string | null) {
@@ -1550,7 +1559,7 @@ function buildNewProductGroups(items: OzonPreviewItem[]): OzonProductGroup[] {
     const inferred = first?.inferredProduct;
     if (!first || !inferred) continue;
 
-    const imageUrls = uniqueStrings(
+    const imageUrls = publicOzonImageStrings(
       groupItems.flatMap((item) => [
         item.media?.primaryImage,
         item.media?.images,
@@ -2586,8 +2595,8 @@ export async function handleAdminCreateOzonStorefrontProduct(
   }
 
   const imageUrls = product.imageUrls !== undefined
-    ? uniqueStrings(product.imageUrls)
-    : uniqueStrings(group?.imageUrls ?? []);
+    ? publicOzonImageStrings([product.imageUrls])
+    : publicOzonImageStrings([group?.imageUrls ?? []]);
   if (!imageUrls.length) {
     throw new HttpError(400, "missing_images", "At least one product image is required");
   }
