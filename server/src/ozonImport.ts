@@ -14,6 +14,15 @@ const OZON_PRODUCT_INFO_ATTRIBUTES_PATH = "/v4/product/info/attributes";
 const OZON_DEFAULT_BASE_URL = "https://api-seller.ozon.ru";
 const OZON_SIZE_CHART_ATTRIBUTE_ID = 13164;
 
+const LEGACY_DESIGN_KEY_ALIASES: Record<string, string[]> = {
+  // Historical storefront records were created before Ozon offer_id design
+  // numbers became stable. These aliases keep preview/import from offering
+  // duplicate "new cards" for known products that already exist on the site.
+  "var2|embroidery|tshirt|white": ["var13|embroidery|tshirt|white"],
+  "var25|print|tshirt|black": ["var5|print|tshirt|black"],
+  "var7|print|tshirt|white": ["var7|print|tshirt|other"],
+};
+
 const targetSchema = z
   .object({
     serverPostgres: z.boolean().optional(),
@@ -859,6 +868,12 @@ export function designKeyCandidatesFromOfferId(value: unknown): string[] {
   if (!normalized) return [];
 
   const candidates = new Set<string>();
+  const addCandidate = (designKey: string) => {
+    candidates.add(designKey);
+    for (const alias of LEGACY_DESIGN_KEY_ALIASES[designKey] ?? []) {
+      candidates.add(alias);
+    }
+  };
   const modern = /^D(\d+)-([A-Z]+)-([A-Z]+)-([A-Z]+)(?:-|$)/.exec(
     normalized,
   );
@@ -868,7 +883,7 @@ export function designKeyCandidatesFromOfferId(value: unknown): string[] {
     const decoration = DECORATION_CODE_TO_SLUG[decorationCode];
     const color = COLOR_CODE_TO_SLUG[colorCode];
     if (product && decoration && color) {
-      candidates.add(`var${Number(designNumber)}|${decoration}|${product}|${color}`);
+      addCandidate(`var${Number(designNumber)}|${decoration}|${product}|${color}`);
     }
   }
 
@@ -902,7 +917,7 @@ export function designKeyCandidatesFromOfferId(value: unknown): string[] {
               ? "beige"
               : undefined;
     if (product && decoration && color) {
-      candidates.add(`${design}|${decoration}|${product}|${color}`);
+      addCandidate(`${design}|${decoration}|${product}|${color}`);
     }
   }
 

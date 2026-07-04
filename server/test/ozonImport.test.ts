@@ -22,6 +22,21 @@ test("designKeyCandidatesFromOfferId maps structured Ozon offer ids", () => {
   ]);
 });
 
+test("designKeyCandidatesFromOfferId includes known legacy storefront aliases", () => {
+  assert.deepEqual(designKeyCandidatesFromOfferId("D2-TSH-EMB-WHT-L"), [
+    "var2|embroidery|tshirt|white",
+    "var13|embroidery|tshirt|white",
+  ]);
+  assert.deepEqual(designKeyCandidatesFromOfferId("D25-TSH-PRT-BLK-XXL"), [
+    "var25|print|tshirt|black",
+    "var5|print|tshirt|black",
+  ]);
+  assert.deepEqual(designKeyCandidatesFromOfferId("D7-TSH-PRT-WHT-M"), [
+    "var7|print|tshirt|white",
+    "var7|print|tshirt|other",
+  ]);
+});
+
 test("priceFromOzonItem prefers marketing seller price", () => {
   const item: OzonPriceItem = {
     price: {
