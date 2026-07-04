@@ -1002,8 +1002,26 @@ function sameNumberValue(current: unknown, next: unknown) {
   return current === next;
 }
 
+function stableJsonValue(value: unknown): unknown {
+  if (value === undefined) return null;
+  if (Array.isArray(value)) return value.map(stableJsonValue);
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    return Object.fromEntries(
+      Object.keys(record)
+        .sort()
+        .map((key) => [key, stableJsonValue(record[key])]),
+    );
+  }
+  return value;
+}
+
+function stableJsonStringify(value: unknown) {
+  return JSON.stringify(stableJsonValue(value ?? null));
+}
+
 function sameJsonValue(current: unknown, next: unknown) {
-  return JSON.stringify(current ?? null) === JSON.stringify(next ?? null);
+  return stableJsonStringify(current) === stableJsonStringify(next);
 }
 
 function sameDiffValue(field: string, current: unknown, next: unknown) {

@@ -537,6 +537,84 @@ test("buildOzonPreview stores Ozon size chart JSON on matched storefront product
   );
 });
 
+test("buildOzonPreview ignores size chart JSON object key order", () => {
+  const currentSizeChart = {
+    content: [
+      {
+        table: {
+          title: "Размеры",
+          body: [
+            { data: [["INT", "Международный размер"], "S", "M"] },
+            { data: [["Длина, см", ""], "70", "72"] },
+          ],
+        },
+        widgetName: "tcTable",
+      },
+    ],
+    version: 0.1,
+  };
+  const ozonSizeChart = {
+    content: [
+      {
+        widgetName: "tcTable",
+        table: {
+          body: [
+            { data: [["INT", "Международный размер"], "S", "M"] },
+            { data: [["Длина, см", ""], "70", "72"] },
+          ],
+          title: "Размеры",
+        },
+      },
+    ],
+    version: 0.1,
+  };
+
+  const preview = buildOzonPreview(
+    [
+      {
+        offer_id: "D005-TSH-PRT-WHT-S",
+        sku: 123,
+        product_id: 456,
+        name: "Matched",
+        size_chart_json: ozonSizeChart,
+      },
+    ],
+    [
+      {
+        id: "11111111-1111-1111-1111-111111111111",
+        design_key: "var5|print|tshirt|white",
+        name: "Existing product",
+        slug: "existing-product",
+        sizes: ["S"],
+        ozon_product_ids: [456],
+        ozon_skus: [123],
+        ozon_offer_ids: ["D005-TSH-PRT-WHT-S"],
+        size_chart_json: currentSizeChart,
+        offers: [
+          {
+            offer_id: "D005-TSH-PRT-WHT-S",
+            product_id: 456,
+            sku: 123,
+            name: "Matched",
+            size: "S",
+          },
+        ],
+      },
+    ],
+    [],
+    { serverPostgres: true, supabase: false },
+    { supabaseWriteEnabled: false },
+    { updatePrices: false },
+  );
+
+  assert.equal(preview.items[0].diff?.changed, false);
+  assert.equal(
+    preview.items[0].diff?.changedFields.includes("size_chart_json"),
+    false,
+  );
+  assert.equal(preview.summary.noop, 1);
+});
+
 test("buildOzonPreview groups unmatched structured Ozon offers as new product candidates", () => {
   const preview = buildOzonPreview(
     [
