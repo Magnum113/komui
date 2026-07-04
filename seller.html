@@ -24,15 +24,49 @@
 <header class="site-header">
   <div class="wrap nav">
     <a class="brand" href="/">KOMUI<span class="dot">.</span></a>
-    <nav class="nav-links">
-      <a href="/#catalog">Каталог</a>
-      <a href="/delivery">Доставка</a>
-      <a href="/returns">Возврат</a>
-      <a href="/offer">Оферта</a>
-      <a href="/privacy">Персональные данные</a>
-    </nav>
+    <div class="shop-header-actions" aria-label="Быстрые действия">
+      <button class="shop-header-icon shop-search-toggle" type="button" aria-label="Поиск" aria-expanded="false" aria-controls="shopSearchPanel">
+        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      </button>
+      <a class="shop-header-icon" href="/#cart" aria-label="Корзина">
+        <svg width="19" height="19" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span class="shop-cart-count" aria-label="Корзина пуста">0</span>
+      </a>
+      <button class="shop-header-icon shop-menu-toggle" type="button" aria-label="Меню" aria-expanded="false" aria-controls="shopMenuPanel">
+        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+    </div>
   </div>
 </header>
+<div class="shop-layer" id="shopLayer" hidden></div>
+<aside class="shop-menu-panel" id="shopMenuPanel" hidden aria-label="Меню">
+  <div class="shop-panel-head">
+    <div><span>Меню</span><strong>KOMUI</strong></div>
+    <button type="button" class="shop-panel-close" data-shop-close aria-label="Закрыть">×</button>
+  </div>
+  <nav class="shop-menu-list">
+    <a href="/#catalog">Каталог</a>
+    <a href="/#catalog">Футболки</a>
+    <a href="/#catalog">Худи</a>
+    <a href="/collections/naruto">Naruto</a>
+    <a href="/collections/jujutsu-kaisen">Jujutsu Kaisen</a>
+    <a href="/delivery">Доставка и оплата</a>
+    <a href="/returns">Возврат и обмен</a>
+    <a href="/sizes">Размерная сетка</a>
+    <a href="/care">Уход за вещами</a>
+  </nav>
+</aside>
+<section class="shop-search-panel" id="shopSearchPanel" hidden aria-labelledby="shopSearchTitle">
+  <div class="shop-panel-head">
+    <div><span>Поиск</span><strong id="shopSearchTitle">Найти товар</strong></div>
+    <button type="button" class="shop-panel-close" data-shop-close aria-label="Закрыть">×</button>
+  </div>
+  <div class="shop-search-box">
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+    <input id="shopSearchInput" type="search" placeholder="Футболка, худи, Naruto, Gojo..." autocomplete="off">
+  </div>
+  <div class="shop-search-results" id="shopSearchResults" aria-live="polite"></div>
+</section>
 <main>
   <section class="legal-hero">
     <div class="wrap">
@@ -93,5 +127,7 @@
     <div><h5>Контакты</h5><a href="mailto:smmshit@ya.ru">smmshit@ya.ru</a><a href="/#catalog">Вернуться в каталог</a></div>
   </div>
 </footer>
+<script src="/data/storefront-products.js"></script>
+<script src="/assets/shop-header.js"></script>
 </body>
 </html>

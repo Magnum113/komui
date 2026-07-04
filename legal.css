@@ -25,8 +25,9 @@ a{color:inherit;text-decoration:none}
 .display{font-family:'Unbounded',sans-serif}
 .site-header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.86);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
 .nav{height:72px;display:flex;align-items:center;justify-content:space-between;gap:20px}
-.brand{font-family:'Unbounded',sans-serif;font-weight:900;font-size:24px;letter-spacing:.04em}
-.brand .dot{color:var(--mag)}
+.site-header .wrap.nav{width:100%;max-width:var(--maxw);margin:0 auto;padding:0 24px}
+.brand,.site-header .brand{font-family:'Unbounded',sans-serif;font-weight:900;font-size:24px;letter-spacing:.04em;line-height:1;color:var(--txt)}
+.brand .dot,.site-header .brand .dot{color:var(--mag)}
 .nav-links{display:flex;gap:18px;align-items:center;font-size:14px;font-weight:700;color:var(--txt-2)}
 .nav-links a{padding:8px 0;white-space:nowrap}
 .nav-links a:hover{color:var(--mag)}
@@ -36,6 +37,8 @@ a{color:inherit;text-decoration:none}
 .shop-header-icon:hover{color:var(--txt);border-color:var(--line-2);transform:translateY(-1px)}
 .shop-header-icon:active{transform:scale(.96)}
 .shop-header-icon:focus-visible{outline:3px solid rgba(0,38,249,.22);outline-offset:2px}
+.shop-cart-count{position:absolute;top:-7px;right:-7px;min-width:19px;height:19px;padding:0 5px;border-radius:10px;background:var(--mag);color:#fff;font-size:11px;font-weight:900;line-height:19px;text-align:center;font-variant-numeric:tabular-nums;box-shadow:0 0 12px rgba(0,38,249,.44);transform:scale(0);transition:transform .22s cubic-bezier(.34,1.56,.64,1)}
+.shop-cart-count.show{transform:scale(1)}
 .shop-layer{position:fixed;inset:0;z-index:95;background:rgba(20,21,28,.44);backdrop-filter:blur(7px)}
 .shop-layer[hidden],.shop-menu-panel[hidden],.shop-search-panel[hidden]{display:none}
 .shop-menu-panel,.shop-search-panel{position:fixed;z-index:110;background:var(--panel);border:1px solid var(--line);box-shadow:0 28px 80px -28px rgba(30,30,60,.45)}
@@ -109,8 +112,9 @@ footer{border-top:1px solid var(--line);background:#fff;padding:34px 0;color:var
 .foot a:hover{color:var(--mag)}
 .foot p{font-size:14px}
 @media(max-width:860px){
-  .site-header .nav{height:60px;padding:0 14px;display:flex;align-items:center;justify-content:space-between;flex-direction:row;gap:8px;flex-wrap:nowrap}
-  .brand{font-size:22px;line-height:1}
+  .site-header .wrap.nav{width:100%;padding:0 14px}
+  .site-header .nav{height:60px;display:flex;align-items:center;justify-content:space-between;flex-direction:row;gap:8px;flex-wrap:nowrap}
+  .brand,.site-header .brand{font-size:22px;line-height:1}
   .shop-header-actions{display:flex;flex-direction:row;align-items:center;justify-content:flex-end;margin-left:auto;gap:6px;flex:0 0 auto}
   .shop-header-icon{width:38px;height:38px;flex-basis:38px}
   .shop-search-panel{left:10px;right:10px;top:auto;bottom:10px;width:auto;max-height:min(78vh,680px);transform:none;border-radius:18px}

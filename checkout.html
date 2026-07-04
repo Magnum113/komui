@@ -21,6 +21,7 @@
 <link rel="preconnect" href="https://api-maps.yandex.ru">
 <link rel="preconnect" href="https://yastatic.net">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Unbounded:wght@600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./legal.css" />
 <style>
 :root{
   --bg:#f5f6fa;
@@ -350,15 +351,52 @@ img,svg{display:block}
 </style>
 </head>
 <body>
-<header class="checkout-header">
-  <div class="wrap header-inner">
-    <a class="brand" href="/" aria-label="KOMUI, на главную">KOMUI<span class="dot">.</span></a>
-    <a class="back-link" href="/">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
-      <span>Вернуться в магазин</span>
-    </a>
+<header class="site-header">
+  <div class="wrap nav">
+    <a class="brand" href="/">KOMUI<span class="dot">.</span></a>
+    <div class="shop-header-actions" aria-label="Быстрые действия">
+      <button class="shop-header-icon shop-search-toggle" type="button" aria-label="Поиск" aria-expanded="false" aria-controls="shopSearchPanel">
+        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      </button>
+      <a class="shop-header-icon" href="/#cart" aria-label="Корзина">
+        <svg width="19" height="19" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span class="shop-cart-count" aria-label="Корзина пуста">0</span>
+      </a>
+      <button class="shop-header-icon shop-menu-toggle" type="button" aria-label="Меню" aria-expanded="false" aria-controls="shopMenuPanel">
+        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+    </div>
   </div>
 </header>
+<div class="shop-layer" id="shopLayer" hidden></div>
+<aside class="shop-menu-panel" id="shopMenuPanel" hidden aria-label="Меню">
+  <div class="shop-panel-head">
+    <div><span>Меню</span><strong>KOMUI</strong></div>
+    <button type="button" class="shop-panel-close" data-shop-close aria-label="Закрыть">×</button>
+  </div>
+  <nav class="shop-menu-list">
+    <a href="/#catalog">Каталог</a>
+    <a href="/#catalog">Футболки</a>
+    <a href="/#catalog">Худи</a>
+    <a href="/collections/naruto">Naruto</a>
+    <a href="/collections/jujutsu-kaisen">Jujutsu Kaisen</a>
+    <a href="/delivery">Доставка и оплата</a>
+    <a href="/returns">Возврат и обмен</a>
+    <a href="/sizes">Размерная сетка</a>
+    <a href="/care">Уход за вещами</a>
+  </nav>
+</aside>
+<section class="shop-search-panel" id="shopSearchPanel" hidden aria-labelledby="shopSearchTitle">
+  <div class="shop-panel-head">
+    <div><span>Поиск</span><strong id="shopSearchTitle">Найти товар</strong></div>
+    <button type="button" class="shop-panel-close" data-shop-close aria-label="Закрыть">×</button>
+  </div>
+  <div class="shop-search-box">
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+    <input id="shopSearchInput" type="search" placeholder="Футболка, худи, Naruto, Gojo..." autocomplete="off">
+  </div>
+  <div class="shop-search-results" id="shopSearchResults" aria-live="polite"></div>
+</section>
 
 <main class="checkout-main">
   <div class="wrap" id="checkoutView">
@@ -1353,5 +1391,7 @@ function init(){
 init();
 })();
 </script>
+<script src="/data/storefront-products.js"></script>
+<script src="/assets/shop-header.js"></script>
 </body>
 </html>
