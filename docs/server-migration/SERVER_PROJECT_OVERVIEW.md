@@ -1290,19 +1290,24 @@ Production headers:
 
 ```ts
 const headers = {
-  Authorization: `Bearer ${process.env.KOMUI_ADMIN_API_TOKEN!}`,
+  "X-Komui-Admin-Token": process.env.KOMUI_ADMIN_API_TOKEN!,
   "Content-Type": "application/json",
 };
 ```
 
-Compatibility note:
+Target switching note:
 
-For the old admin deployment that still uses `https://stage.komui.ru/api`,
-Nginx routes only `stage.komui.ru/api/admin/*` to the production backend
-(`127.0.0.1:3001`). Public stage API and stage storefront remain staging
-(`127.0.0.1:3000`). This compatibility route exists to avoid accidental writes
-to staging from the live admin, but the admin env should still be changed to the
-production URL above.
+The external admin can switch between production and stage in its UI. The
+selected target is stored in the admin browser cookie `komui_api_target`.
+
+- `prod` calls `https://komui.ru/api` and writes to production backend
+  `127.0.0.1:3001`.
+- `stage` calls `https://stage.komui.ru/api` and writes to staging backend
+  `127.0.0.1:3000`.
+
+Do not route `stage.komui.ru/api/admin/*` to production. That old temporary
+compatibility route was removed after the admin gained explicit target
+switching.
 
 If the admin intentionally targets stage for testing, use a separate admin
 deployment/env and keep the stage Basic Auth headers:
