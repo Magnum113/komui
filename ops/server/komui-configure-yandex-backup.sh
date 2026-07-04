@@ -22,7 +22,7 @@ if [[ -z "$access_key_id" || -z "$secret_access_key" ]]; then
   exit 1
 fi
 
-install -d -m 0700 /etc/komui
+install -d -o root -g komui -m 0710 /etc/komui
 tmp="$(mktemp)"
 trap 'rm -f "$tmp"' EXIT
 
