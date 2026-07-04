@@ -30,15 +30,15 @@
 <header class="site-header">
   <div class="wrap nav">
     <a class="brand" href="/">KOMUI<span class="dot">.</span></a>
-    <div class="nav-actions" aria-label="Быстрые действия">
-      <a class="nav-icon" href="/#catalog" aria-label="Поиск">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
+    <div class="shop-header-actions" aria-label="Быстрые действия">
+      <a class="shop-header-icon" href="/#catalog" aria-label="Поиск">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16.65 16.65 3.85 3.85"/></svg>
       </a>
-      <a class="nav-icon" href="/#cart" aria-label="Корзина">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 7h15l-1.5 9h-12L6 7Z"/><path d="M6 7 5.4 4H3"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg>
+      <a class="shop-header-icon" href="/#cart" aria-label="Корзина">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h14l-1.4 8.4a2 2 0 0 1-2 1.6H9.2a2 2 0 0 1-2-1.6L5.8 4.8H3"/><circle cx="9.5" cy="21" r="1"/><circle cx="17.5" cy="21" r="1"/></svg>
       </a>
-      <button class="nav-icon nav-menu-toggle" type="button" aria-label="Меню" aria-expanded="false">
-        <span class="nav-burger-lines" aria-hidden="true"></span>
+      <button class="shop-header-icon shop-menu-toggle" type="button" aria-label="Меню" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg>
       </button>
     </div>
   </div>
@@ -166,14 +166,9 @@
 </main>
 <script>
 (function(){
-  var header=document.querySelector('.site-header');
-  var toggle=document.querySelector('.nav-menu-toggle');
-  var links=document.querySelector('.nav-links');
-  if(!header||!toggle||!links)return;
-  toggle.addEventListener('click',function(){
-    var open=header.classList.toggle('menu-open');
-    toggle.setAttribute('aria-expanded',open?'true':'false');
-  });
+  var toggle=document.querySelector('.shop-menu-toggle');
+  if(!toggle)return;
+  toggle.addEventListener('click',function(){ location.href='/#catalog'; });
 })();
 </script>
 <footer><div class="wrap foot">
