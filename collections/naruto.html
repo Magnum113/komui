@@ -41,12 +41,6 @@
         <span class="nav-burger-lines" aria-hidden="true"></span>
       </button>
     </div>
-    <nav class="nav-links">
-      <a href="/#catalog">Каталог</a>
-      <a href="/collections/naruto">Naruto</a>
-      <a href="/collections/jujutsu-kaisen">Jujutsu Kaisen</a>
-      <a href="/delivery">Доставка</a>
-    </nav>
   </div>
 </header>
 <main class="c-page">
@@ -304,7 +298,8 @@
 (function(){
   var header=document.querySelector('.site-header');
   var toggle=document.querySelector('.nav-menu-toggle');
-  if(!header||!toggle)return;
+  var links=document.querySelector('.nav-links');
+  if(!header||!toggle||!links)return;
   toggle.addEventListener('click',function(){
     var open=header.classList.toggle('menu-open');
     toggle.setAttribute('aria-expanded',open?'true':'false');

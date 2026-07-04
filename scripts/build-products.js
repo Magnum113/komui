@@ -339,7 +339,8 @@ function renderHeaderScript() {
 (function(){
   var header=document.querySelector('.site-header');
   var toggle=document.querySelector('.nav-menu-toggle');
-  if(!header||!toggle)return;
+  var links=document.querySelector('.nav-links');
+  if(!header||!toggle||!links)return;
   toggle.addEventListener('click',function(){
     var open=header.classList.toggle('menu-open');
     toggle.setAttribute('aria-expanded',open?'true':'false');
@@ -778,12 +779,6 @@ function renderProductPage(product, products = []) {
   <div class="wrap nav">
     <a class="brand" href="/">KOMUI<span class="dot">.</span></a>
     ${renderHeaderActions()}
-    <nav class="nav-links">
-      <a href="/#catalog">Каталог</a>
-      <a href="/delivery">Доставка</a>
-      <a href="/returns">Возврат</a>
-      <a href="/sizes">Размеры</a>
-    </nav>
   </div>
 </header>
 <main>
@@ -1122,12 +1117,6 @@ function renderCollectionPage(landing) {
   <div class="wrap nav">
     <a class="brand" href="/">KOMUI<span class="dot">.</span></a>
     ${renderHeaderActions()}
-    <nav class="nav-links">
-      <a href="/#catalog">Каталог</a>
-      <a href="/collections/naruto">Naruto</a>
-      <a href="/collections/jujutsu-kaisen">Jujutsu Kaisen</a>
-      <a href="/delivery">Доставка</a>
-    </nav>
   </div>
 </header>
 <main class="c-page">
