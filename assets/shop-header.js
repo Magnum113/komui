@@ -9,6 +9,39 @@
   var results = document.getElementById('shopSearchResults');
   var products = Array.isArray(window.KOMUI_PRODUCTS) ? window.KOMUI_PRODUCTS : [];
 
+  function initPromoBar(){
+    var timers = Array.prototype.slice.call(document.querySelectorAll('#promoTimer,[data-promo-timer-clone]'));
+    var copy = document.getElementById('promoCopy');
+    var codeNode = document.getElementById('promoCode');
+    var code = codeNode && codeNode.textContent ? codeNode.textContent.trim() : 'KOMUI10';
+    function tickPromo(){
+      if (!timers.length) return;
+      var now = new Date();
+      var end = new Date(now);
+      end.setHours(23, 59, 59, 999);
+      var diff = Math.max(0, end - now);
+      var h = String(Math.floor(diff / 36e5)).padStart(2, '0');
+      var m = String(Math.floor(diff % 36e5 / 6e4)).padStart(2, '0');
+      var s = String(Math.floor(diff % 6e4 / 1e3)).padStart(2, '0');
+      timers.forEach(function(timer){ timer.textContent = h + ':' + m + ':' + s; });
+    }
+    tickPromo();
+    if (timers.length) setInterval(tickPromo, 1000);
+    if (copy) {
+      copy.addEventListener('click', function(){
+        function done(text){
+          copy.textContent = text;
+          setTimeout(function(){ copy.textContent = 'Скопировать'; }, 2000);
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(code).then(function(){ done('Готово ✓'); }, function(){ done(code); });
+        } else {
+          done(code);
+        }
+      });
+    }
+  }
+
   function cartItems(){
     try {
       var value = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
@@ -128,5 +161,6 @@
   });
   window.addEventListener('pageshow', updateCartCount);
   document.addEventListener('komui:cart-updated', updateCartCount);
+  initPromoBar();
   updateCartCount();
 })();

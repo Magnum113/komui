@@ -335,6 +335,25 @@ function renderHeaderActions() {
     </div>`;
 }
 
+function renderPromoBar() {
+  return `<div class="announce">
+  <div class="announce-track">
+    <div class="announce-inner">
+      <div class="announce-offer"><b>−10% на первый заказ</b></div>
+      <div class="announce-code" id="promoCode">KOMUI10</div>
+      <div class="announce-timer">сгорит через <span id="promoTimer">--:--:--</span></div>
+      <button class="announce-copy" id="promoCopy" type="button">Скопировать</button>
+    </div>
+    <div class="announce-inner announce-inner-copy" aria-hidden="true">
+      <div class="announce-offer"><b>−10% на первый заказ</b></div>
+      <div class="announce-code">KOMUI10</div>
+      <div class="announce-timer">сгорит через <span data-promo-timer-clone>--:--:--</span></div>
+      <span class="announce-copy">Скопировать</span>
+    </div>
+  </div>
+</div>`;
+}
+
 function renderHeaderPanels() {
   return `<div class="shop-layer" id="shopLayer" hidden></div>
 <aside class="shop-menu-panel" id="shopMenuPanel" hidden aria-label="Меню">
@@ -797,6 +816,7 @@ function renderProductPage(product, products = []) {
 <script type="application/ld+json">${buildBreadcrumbLd(product)}</script>
 </head>
 <body>
+${renderPromoBar()}
 <header class="site-header">
   <div class="wrap nav">
     <a class="brand" href="/">KOMUI<span class="dot">.</span></a>
@@ -1138,6 +1158,7 @@ function renderCollectionPage(landing) {
 <script type="application/ld+json">${buildCollectionBreadcrumbLd(landing)}</script>
 </head>
 <body>
+${renderPromoBar()}
 <header class="site-header">
   <div class="wrap nav">
     <a class="brand" href="/">KOMUI<span class="dot">.</span></a>
