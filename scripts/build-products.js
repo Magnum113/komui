@@ -320,6 +320,34 @@ function renderCollectionFooterLinks() {
     .join('');
 }
 
+function renderHeaderActions() {
+  return `<div class="nav-actions" aria-label="Быстрые действия">
+      <a class="nav-icon" href="/#catalog" aria-label="Поиск">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
+      </a>
+      <a class="nav-icon" href="/#cart" aria-label="Корзина">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 7h15l-1.5 9h-12L6 7Z"/><path d="M6 7 5.4 4H3"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg>
+      </a>
+      <button class="nav-icon nav-menu-toggle" type="button" aria-label="Меню" aria-expanded="false">
+        <span class="nav-burger-lines" aria-hidden="true"></span>
+      </button>
+    </div>`;
+}
+
+function renderHeaderScript() {
+  return `<script>
+(function(){
+  var header=document.querySelector('.site-header');
+  var toggle=document.querySelector('.nav-menu-toggle');
+  if(!header||!toggle)return;
+  toggle.addEventListener('click',function(){
+    var open=header.classList.toggle('menu-open');
+    toggle.setAttribute('aria-expanded',open?'true':'false');
+  });
+})();
+</script>`;
+}
+
 function collectionStats(products) {
   const categories = new Map();
   const techniques = new Map();
@@ -749,6 +777,7 @@ function renderProductPage(product, products = []) {
 <header class="site-header">
   <div class="wrap nav">
     <a class="brand" href="/">KOMUI<span class="dot">.</span></a>
+    ${renderHeaderActions()}
     <nav class="nav-links">
       <a href="/#catalog">Каталог</a>
       <a href="/delivery">Доставка</a>
@@ -801,6 +830,7 @@ function renderProductPage(product, products = []) {
   </section>
 ${sizeChartModalHtml}
 </main>
+${renderHeaderScript()}
 <footer><div class="wrap foot">
   <div><h5>KOMUI</h5><p>Аниме-мерч: футболки, худи и свитшоты с принтами и вышивкой.</p></div>
   <div><h5>Покупателю</h5><a href="/delivery">Доставка и оплата</a><a href="/returns">Возврат и обмен</a><a href="/sizes">Размерная сетка</a><a href="/care">Уход</a></div>
@@ -1091,6 +1121,7 @@ function renderCollectionPage(landing) {
 <header class="site-header">
   <div class="wrap nav">
     <a class="brand" href="/">KOMUI<span class="dot">.</span></a>
+    ${renderHeaderActions()}
     <nav class="nav-links">
       <a href="/#catalog">Каталог</a>
       <a href="/collections/naruto">Naruto</a>
@@ -1142,6 +1173,7 @@ function renderCollectionPage(landing) {
     </div>
   </section>
 </main>
+${renderHeaderScript()}
 <footer><div class="wrap foot">
   <div><h5>KOMUI</h5><p>Аниме-мерч: футболки, худи и свитшоты с принтами и вышивкой.</p></div>
   <div><h5>Покупателю</h5><a href="/delivery">Доставка и оплата</a><a href="/returns">Возврат и обмен</a><a href="/sizes">Размерная сетка</a><a href="/care">Уход</a></div>
