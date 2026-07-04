@@ -165,7 +165,7 @@ location = /404.html {
 
 location / {
     rewrite ^/(.+)/$ /$1 permanent;
-    try_files $uri $uri.html =404;
+    try_files $uri $uri.html $uri/ =404;
 }
 NGINX
 }
