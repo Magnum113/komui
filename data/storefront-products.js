@@ -134,7 +134,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D16-TSH-PRT-WGRY-S",
         "name": "Вареная футболка с принтом Сатору годжо",
         "size": "S",
-        "price": 4149,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-1/7749823717.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-n/7749823631.jpg",
@@ -157,7 +157,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D16-TSH-PRT-WGRY-M",
         "name": "Вареная футболка с принтом Сатору годжо M",
         "size": "M",
-        "price": 4230,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-1/7749823717.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-n/7749823631.jpg",
@@ -180,7 +180,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D16-TSH-PRT-WGRY-L",
         "name": "Вареная футболка с принтом Сатору годжо L",
         "size": "L",
-        "price": 4230,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-1/7749823717.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-n/7749823631.jpg",
@@ -203,7 +203,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D16-TSH-PRT-WGRY-XL",
         "name": "Вареная футболка с принтом Сатору годжо XL",
         "size": "XL",
-        "price": 4230,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-1/7749823717.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-n/7749823631.jpg",
@@ -225,6 +225,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D16-TSH-PRT-WGRY-XXL",
         "name": "Вареная футболка с принтом Сатору годжо XXL",
         "size": "XXL",
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-1/7749823717.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-n/7749823631.jpg",
@@ -380,7 +381,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D20-TSH-PRT-WGRY-S",
         "name": "Вареная футболка с принтом Сатору годжо ЧБ2 S",
         "size": "S",
-        "price": 4692,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-f/11713146459.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-d/11713146529.jpg",
@@ -402,7 +403,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D20-TSH-PRT-WGRY-M",
         "name": "Вареная футболка с принтом Сатору годжо ЧБ2 M",
         "size": "M",
-        "price": 4680,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-f/11713146459.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-d/11713146529.jpg",
@@ -424,7 +425,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D20-TSH-PRT-WGRY-L",
         "name": "Вареная футболка с принтом Сатору годжо ЧБ2 L",
         "size": "L",
-        "price": 4698,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-f/11713146459.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-d/11713146529.jpg",
@@ -446,7 +447,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D20-TSH-PRT-WGRY-XL",
         "name": "Вареная футболка с принтом Сатору годжо ЧБ2 XL",
         "size": "XL",
-        "price": 4689,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-f/11713146459.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-d/11713146529.jpg",
@@ -468,7 +469,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D20-TSH-PRT-WGRY-2XL",
         "name": "Вареная футболка с принтом Сатору годжо ЧБ2 XXL",
         "size": "XXL",
-        "price": 4677,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-f/11713146459.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-d/11713146529.jpg",
@@ -538,8 +539,8 @@ window.KOMUI_PRODUCTS = [
       "XL",
       "XXL"
     ],
-    "price_min": "4149.00",
-    "price_max": "4611.00",
+    "price_min": "2900.00",
+    "price_max": "2900.00",
     "currency": "RUB",
     "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-m/7663468918.jpg",
     "main_image_path": "./assets/ozon-main/20-футболка-наруто-с-вышивкой-akatsuki.jpg",
@@ -635,7 +636,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D4-TSH-EMB-WHT-M",
         "name": "Футболка Наруто с вышивкой Akatsuki Белая M",
         "size": "M",
-        "price": 4611,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-m/7663468918.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-1/7663468897.jpg",
@@ -653,7 +654,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D4-TSH-EMB-WHT-XL",
         "name": "Футболка Наруто с вышивкой Akatsuki Белая XL",
         "size": "XL",
-        "price": 4149,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-m/7663468918.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-1/7663468897.jpg",
@@ -671,7 +672,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D4-TSH-EMB-WHT-L",
         "name": "Футболка Наруто с вышивкой Akatsuki Белая L",
         "size": "L",
-        "price": 4611,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-m/7663468918.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-1/7663468897.jpg",
@@ -689,6 +690,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D4-TSH-EMB-WHT-XXL",
         "name": "Футболка Наруто с вышивкой Akatsuki Белая XXL",
         "size": "XXL",
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-m/7663468918.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-1/7663468897.jpg",
@@ -704,6 +706,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D4-TSH-EMB-WHT-S",
         "name": "Футболка Наруто с вышивкой Akatsuki",
         "size": "S",
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-m/7663468918.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-1/7663468897.jpg",
@@ -865,7 +868,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D2-TSH-EMB-BLK-S",
         "name": "Футболка Наруто с вышивкой Itachi S",
         "size": "S",
-        "price": 6700,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-9/7633890693.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-i/7633890738.jpg",
@@ -884,7 +887,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D2-TSH-EMB-BLK-M",
         "name": "Футболка Наруто с вышивкой Itachi M черная",
         "size": "M",
-        "price": 6700,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-9/7633890693.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-i/7633890738.jpg",
@@ -903,7 +906,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D2-TSH-EMB-BLK-L",
         "name": "Футболка Наруто с вышивкой Itachi L Черная",
         "size": "L",
-        "price": 6700,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-9/7633890693.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-i/7633890738.jpg",
@@ -922,7 +925,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D2-TSH-EMB-BLK-XL",
         "name": "Футболка Наруто с вышивкой Itachi Черная XL",
         "size": "XL",
-        "price": 6700,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-9/7633890693.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-i/7633890738.jpg",
@@ -941,7 +944,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D2-TSH-EMB-BLK-2XL",
         "name": "Футболка Наруто с вышивкой Itachi Черная XXL",
         "size": "XXL",
-        "price": 6700,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-9/7633890693.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-i/7633890738.jpg",
@@ -1007,8 +1010,8 @@ window.KOMUI_PRODUCTS = [
       "L",
       "XL"
     ],
-    "price_min": "5155.00",
-    "price_max": "5796.00",
+    "price_min": "3500.00",
+    "price_max": "3500.00",
     "currency": "RUB",
     "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-7/7903388923.jpg",
     "main_image_path": "./assets/ozon-main/18-худи-с-вышивкой-итачи.jpg",
@@ -1101,7 +1104,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D2-HDY-EMB-BLK-REG-FLC-S",
         "name": "Толстовка с вышивкой Итачи Черная S",
         "size": "S",
-        "price": 5544,
+        "price": 3500,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-7/7903388923.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-w/7903388876.jpg",
@@ -1121,7 +1124,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D2-HDY-EMB-BLK-REG-FLC-M",
         "name": "Худи с вышивкой Итачи Черная M",
         "size": "M",
-        "price": 5637,
+        "price": 3500,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-7/7903388923.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-w/7903388876.jpg",
@@ -1141,7 +1144,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D2-HDY-EMB-BLK-REG-FLC-XL",
         "name": "Худи с вышивкой Итачи Черная XL",
         "size": "XL",
-        "price": 5155,
+        "price": 3500,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-7/7903388923.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-w/7903388876.jpg",
@@ -1161,7 +1164,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D2-HDY-EMB-BLK-REG-FLC-L",
         "name": "Худи с вышивкой Итачи Черная L",
         "size": "L",
-        "price": 5796,
+        "price": 3500,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-7/7903388923.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-w/7903388876.jpg",
@@ -1183,7 +1186,7 @@ window.KOMUI_PRODUCTS = [
     "badges": [
       "hit"
     ],
-    "compare_at_price": null
+    "compare_at_price": "6000"
   },
   {
     "id": "a91a98da-4f03-4c81-9bc4-8145ecbb1c70",
@@ -1228,8 +1231,8 @@ window.KOMUI_PRODUCTS = [
       "XL",
       "XXL"
     ],
-    "price_min": "4149.00",
-    "price_max": "4611.00",
+    "price_min": "2900.00",
+    "price_max": "2900.00",
     "currency": "RUB",
     "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-b/7716066347.jpg",
     "main_image_path": "./assets/ozon-main/15-футболка-с-принтом-наруто.jpg",
@@ -1325,7 +1328,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D15-TSH-PRT-WHT-S",
         "name": "Футболка с принтом Наруто Белая S",
         "size": "S",
-        "price": 4149,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-b/7716066347.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-p/7716066325.jpg",
@@ -1343,7 +1346,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D15-TSH-PRT-WHT-L",
         "name": "Футболка с принтом Наруто Белая L",
         "size": "L",
-        "price": 4611,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-b/7716066347.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-p/7716066325.jpg",
@@ -1361,7 +1364,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D15-TSH-PRT-WHT-M",
         "name": "Футболка с принтом Наруто Белая М",
         "size": "M",
-        "price": 4149,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-b/7716066347.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-p/7716066325.jpg",
@@ -1379,7 +1382,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D15-TSH-PRT-WHT-XL",
         "name": "Футболка с принтом Наруто Белая XL",
         "size": "XL",
-        "price": 4611,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-b/7716066347.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-p/7716066325.jpg",
@@ -1397,6 +1400,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D15-TSH-PRT-WHT-XXL",
         "name": "Футболка с принтом Наруто Белая XXL",
         "size": "XXL",
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-b/7716066347.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-p/7716066325.jpg",
@@ -1546,7 +1550,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D16-TSH-PRT-WBEG-S",
         "name": "Бежевая вареная футболка с принтом Сатору годжо S",
         "size": "S",
-        "price": 6700,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-b/9237853199.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-o/9237853248.jpg",
@@ -1567,7 +1571,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D16-TSH-PRT-WBEG-M",
         "name": "Бежевая вареная футболка с принтом Сатору годжо M",
         "size": "M",
-        "price": 6700,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-b/9237853199.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-o/9237853248.jpg",
@@ -1588,7 +1592,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D16-TSH-PRT-WBEG-L",
         "name": "Бежевая вареная футболка с принтом Сатору годжо L",
         "size": "L",
-        "price": 6700,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-b/9237853199.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-o/9237853248.jpg",
@@ -1609,7 +1613,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D16-TSH-PRT-WBEG-XL",
         "name": "Бежевая вареная футболка с принтом Сатору годжо XL",
         "size": "XL",
-        "price": 6700,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-b/9237853199.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-o/9237853248.jpg",
@@ -1630,7 +1634,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D16-TSH-PRT-WBEG-2XL",
         "name": "Бежевая вареная футболка с принтом Сатору годжо XXL",
         "size": "XXL",
-        "price": 6700,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-b/9237853199.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-o/9237853248.jpg",
@@ -1696,8 +1700,8 @@ window.KOMUI_PRODUCTS = [
       "XL",
       "XXL"
     ],
-    "price_min": "5683.00",
-    "price_max": "6575.00",
+    "price_min": "3900.00",
+    "price_max": "3900.00",
     "currency": "RUB",
     "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-9/8224713081.jpg",
     "main_image_path": "./assets/ozon-main/02-худи-без-начеса-с-вышивкой-gta.jpg",
@@ -1794,7 +1798,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D18-HDY-EMB-BLK-CRP-NF-M",
         "name": "Худи укороченное с вышивкой GTA Черная M",
         "size": "M",
-        "price": 5683,
+        "price": 3900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-9/8224713081.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-p/8222756065.jpg",
@@ -1813,7 +1817,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D18-HDY-EMB-BLK-CRP-NF-S",
         "name": "Худи укороченное с вышивкой GTA Черная S",
         "size": "S",
-        "price": 5683,
+        "price": 3900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-9/8224713081.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-p/8222756065.jpg",
@@ -1832,7 +1836,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D18-HDY-EMB-BLK-CRP-NF-L",
         "name": "Худи укороченное с вышивкой GTA Черная L",
         "size": "L",
-        "price": 5683,
+        "price": 3900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-r/8222756355.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-p/8222756065.jpg",
@@ -1851,7 +1855,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D18-HDY-EMB-BLK-REG-NF-S",
         "name": "Худи без начеса с вышивкой GTA Черная S",
         "size": "S",
-        "price": 6575,
+        "price": 3900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-f/8426384907.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-w/8426384960.jpg",
@@ -1869,7 +1873,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D18-HDY-EMB-BLK-REG-NF-XL",
         "name": "Худи без начеса с вышивкой GTA Черная XL",
         "size": "XL",
-        "price": 6575,
+        "price": 3900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-f/8426384907.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-w/8426384960.jpg",
@@ -1887,7 +1891,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D18-HDY-EMB-BLK-REG-NF-2XL",
         "name": "Худи без начеса с вышивкой GTA Черная XXL",
         "size": "XXL",
-        "price": 6575,
+        "price": 3900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-f/8426384907.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-w/8426384960.jpg",
@@ -1905,7 +1909,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D18-HDY-EMB-BLK-REG-NF-M",
         "name": "Худи без начеса с вышивкой GTA Черная M",
         "size": "M",
-        "price": 6575,
+        "price": 3900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-f/8426384907.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-w/8426384960.jpg",
@@ -1923,7 +1927,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D18-HDY-EMB-BLK-REG-NF-L",
         "name": "Худи без начеса с вышивкой GTA Черная L",
         "size": "L",
-        "price": 6575,
+        "price": 3900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-f/8426384907.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-w/8426384960.jpg",
@@ -1941,7 +1945,7 @@ window.KOMUI_PRODUCTS = [
     "sort_order": 8,
     "short_description": "Худи без начёса: не парит летом и держит форму к осени. Аккуратная вышивка в духе GTA вместо громких принтов — тот случай, когда решает деталь.",
     "badges": [],
-    "compare_at_price": null
+    "compare_at_price": "6000"
   },
   {
     "id": "4d4af0f7-6c22-48b1-bc76-3e5803d9bf9e",
@@ -1986,8 +1990,8 @@ window.KOMUI_PRODUCTS = [
       "XL",
       "XXL"
     ],
-    "price_min": "5590.00",
-    "price_max": "6575.00",
+    "price_min": "3500.00",
+    "price_max": "3500.00",
     "currency": "RUB",
     "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-x/7983638457.jpg",
     "main_image_path": "./assets/ozon-main/03-худи-с-вышивкой-gravity.jpg",
@@ -2099,7 +2103,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-HDY-EMB-WHT-REG-FLC-S",
         "name": "Худи с вышивкой Gravity S",
         "size": "S",
-        "price": 5590,
+        "price": 3500,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-x/7983638457.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-n/7983638483.jpg",
@@ -2118,7 +2122,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-HDY-EMB-WHT-REG-NF-S",
         "name": "Худи без начеса с вышивкой Gravity S",
         "size": "S",
-        "price": 6464,
+        "price": 3500,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-g/8426112064.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-r/8426112003.jpg",
@@ -2136,7 +2140,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-HDY-EMB-WHT-REG-NF-2XL",
         "name": "Худи без начеса с вышивкой Gravity XXL",
         "size": "XXL",
-        "price": 6575,
+        "price": 3500,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-g/8426112064.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-r/8426112003.jpg",
@@ -2154,7 +2158,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-HDY-EMB-WHT-REG-NF-L",
         "name": "Худи без начеса с вышивкой Gravity L",
         "size": "L",
-        "price": 6575,
+        "price": 3500,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-g/8426112064.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-r/8426112003.jpg",
@@ -2172,7 +2176,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-HDY-EMB-WHT-REG-NF-XL",
         "name": "Худи без начеса с вышивкой Gravity XL",
         "size": "XL",
-        "price": 6575,
+        "price": 3500,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-g/8426112064.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-r/8426112003.jpg",
@@ -2190,7 +2194,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-HDY-EMB-WHT-REG-NF-M",
         "name": "Худи без начеса с вышивкой Gravity M",
         "size": "M",
-        "price": 6575,
+        "price": 3500,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-g/8426112064.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-r/8426112003.jpg",
@@ -2208,7 +2212,7 @@ window.KOMUI_PRODUCTS = [
     "sort_order": 9,
     "short_description": "Белое худи из авторской линейки Gravity: чистый силуэт и вышитый логотип, который проявляется только вблизи. Минимализм, который дружит с чем угодно.",
     "badges": [],
-    "compare_at_price": null
+    "compare_at_price": "6000"
   },
   {
     "id": "502ef3c7-1fa4-4784-9bd3-a957fcfb7e29",
@@ -2338,7 +2342,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D2-TSH-EMB-WBEG-S",
         "name": "Футболка варенная Наруто с вышивкой Itachi S",
         "size": "S",
-        "price": 6700,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-e/9225817862.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-e/9225817934.jpg",
@@ -2357,7 +2361,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D2-TSH-EMB-WBEG-M",
         "name": "Футболка варенная Наруто с вышивкой Itachi M",
         "size": "M",
-        "price": 6700,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-e/9225817862.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-e/9225817934.jpg",
@@ -2376,7 +2380,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D2-TSH-EMB-WBEG-L",
         "name": "Футболка варенная Наруто с вышивкой Itachi M",
         "size": "L",
-        "price": 6700,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-e/9225817862.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-e/9225817934.jpg",
@@ -2395,7 +2399,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D2-TSH-EMB-WBEG-XL",
         "name": "Футболка варенная Наруто с вышивкой Itachi XL",
         "size": "XL",
-        "price": 6700,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-e/9225817862.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-e/9225817934.jpg",
@@ -2414,6 +2418,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D2-TSH-EMB-WBEG-XXL",
         "name": "Футболка варенная Наруто с вышивкой Itachi XXL",
         "size": "XXL",
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-e/9225817862.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-e/9225817934.jpg",
@@ -2573,7 +2578,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D19-TSH-PRT-WHT-S",
         "name": "Футболка с принтом Сатору годжо Белая S",
         "size": "S",
-        "price": 4194,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-m/7750118614.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-t/7750118657.jpg",
@@ -2592,7 +2597,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D19-TSH-PRT-WHT-M",
         "name": "Футболка с принтом Сатору годжо Белая M",
         "size": "M",
-        "price": 5393,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-m/7750118614.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-t/7750118657.jpg",
@@ -2611,7 +2616,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D19-TSH-PRT-WHT-L",
         "name": "Футболка с принтом Сатору годжо Белая L",
         "size": "L",
-        "price": 4824,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-m/7750118614.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-t/7750118657.jpg",
@@ -2630,7 +2635,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D19-TSH-PRT-WHT-XL",
         "name": "Футболка с принтом Сатору годжо Белая XL",
         "size": "XL",
-        "price": 4824,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-m/7750118614.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-t/7750118657.jpg",
@@ -2649,7 +2654,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D19-TSH-PRT-WHT-2XL",
         "name": "Футболка с принтом Сатору годжо Белая XXL",
         "size": "XXL",
-        "price": 5393,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-m/7750118614.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-t/7750118657.jpg",
@@ -2810,7 +2815,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D17-TSH-PRT-BLK-XL",
         "name": "Черная футболка с принтом Сатору годжо XL",
         "size": "XL",
-        "price": 4611,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-0/7865728380.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-u/7865728338.jpg",
@@ -2828,7 +2833,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D17-TSH-PRT-BLK-S",
         "name": "Черная футболка с принтом Сатору годжо S",
         "size": "S",
-        "price": 4149,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-0/7865728380.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-u/7865728338.jpg",
@@ -2846,7 +2851,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D17-TSH-PRT-BLK-L",
         "name": "Черная футболка с принтом Сатору годжо L",
         "size": "L",
-        "price": 4611,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-0/7865728380.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-u/7865728338.jpg",
@@ -2864,7 +2869,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D17-TSH-PRT-BLK-M",
         "name": "Черная футболка с принтом Сатору годжо M",
         "size": "M",
-        "price": 4611,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-0/7865728380.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-u/7865728338.jpg",
@@ -2882,7 +2887,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D17-TSH-PRT-BLK-2XL",
         "name": "Черная футболка с принтом Сатору годжо XXL",
         "size": "XXL",
-        "price": 4611,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-0/7865728380.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-u/7865728338.jpg",
@@ -3044,7 +3049,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D16-TSH-PRT-WHT-M",
         "name": "Белая футболка с принтом Сатору годжо M",
         "size": "M",
-        "price": 4700,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-6/9227350266.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-x/9227350185.jpg",
@@ -3064,7 +3069,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D16-TSH-PRT-WHT-S",
         "name": "Белая футболка с принтом Сатору годжо S",
         "size": "S",
-        "price": 4700,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-6/9227350266.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-x/9227350185.jpg",
@@ -3084,7 +3089,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D16-TSH-PRT-WHT-L",
         "name": "Белая футболка с принтом Сатору годжо L",
         "size": "L",
-        "price": 4700,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-6/9227350266.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-x/9227350185.jpg",
@@ -3104,7 +3109,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D16-TSH-PRT-WHT-XL",
         "name": "Белая футболка с принтом Сатору годжо XL",
         "size": "XL",
-        "price": 4183,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-6/9227350266.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-x/9227350185.jpg",
@@ -3124,6 +3129,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D16-TSH-PRT-WHT-XXL",
         "name": "Белая футболка с принтом Сатору годжо XXL",
         "size": "XXL",
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-6/9227350266.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-x/9227350185.jpg",
@@ -3284,7 +3290,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D3-TSH-EMB-BLK-S",
         "name": "Футболка Наруто с вышивкой Akatsuki Swoosh S",
         "size": "S",
-        "price": 4724,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-b/7656042143.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-b/7634389907.jpg",
@@ -3303,7 +3309,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D3-TSH-EMB-BLK-M",
         "name": "Футболка Наруто с вышивкой Akatsuki Swoosh M",
         "size": "M",
-        "price": 4149,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-b/7656042143.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-b/7634389907.jpg",
@@ -3321,7 +3327,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D3-TSH-EMB-BLK-XL",
         "name": "Футболка Наруто с вышивкой Akatsuki Swoosh XL",
         "size": "XL",
-        "price": 4611,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-b/7656042143.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-b/7634389907.jpg",
@@ -3339,7 +3345,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D3-TSH-EMB-BLK-L",
         "name": "Футболка Наруто с вышивкой Akatsuki Swoosh L",
         "size": "L",
-        "price": 4611,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-b/7656042143.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-b/7634389907.jpg",
@@ -3357,6 +3363,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D3-TSH-EMB-BLK-XXL",
         "name": "Футболка Наруто с вышивкой Akatsuki Swoosh XXL",
         "size": "XXL",
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-b/7656042143.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-b/7634389907.jpg",
@@ -3514,7 +3521,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D14-TSH-EMB-WHT-M",
         "name": "Футболка Наруто с вышивкой Madara Белая M",
         "size": "M",
-        "price": 4149,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-s/7683411952.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-u/7683411954.jpg",
@@ -3532,7 +3539,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D14-TSH-EMB-WHT-S",
         "name": "Футболка Наруто с вышивкой Madara Белая S",
         "size": "S",
-        "price": 4611,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-s/7683411952.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-u/7683411954.jpg",
@@ -3550,7 +3557,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D14-TSH-EMB-WHT-L",
         "name": "Футболка Наруто с вышивкой Madara Белая L",
         "size": "L",
-        "price": 4149,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-s/7683411952.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-u/7683411954.jpg",
@@ -3568,7 +3575,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D14-TSH-EMB-WHT-XL",
         "name": "Футболка Наруто с вышивкой Madara Белая XL",
         "size": "XL",
-        "price": 4155,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-s/7683411952.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-u/7683411954.jpg",
@@ -3586,6 +3593,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D14-TSH-EMB-WHT-XXL",
         "name": "Футболка Наруто с вышивкой Madara Белая XXL",
         "size": "XXL",
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-s/7683411952.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-u/7683411954.jpg",
@@ -3646,8 +3654,8 @@ window.KOMUI_PRODUCTS = [
       "XL",
       "XXL"
     ],
-    "price_min": "4149.00",
-    "price_max": "4611.00",
+    "price_min": "2900.00",
+    "price_max": "2900.00",
     "currency": "RUB",
     "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-8/7669380392.jpg",
     "main_image_path": "./assets/ozon-main/11-футболка-наруто-с-принтом-akatsuki.jpg",
@@ -3747,7 +3755,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D5-TSH-PRT-WHT-S",
         "name": "Футболка Наруто с принтом Akatsuki Белая S",
         "size": "S",
-        "price": 4611,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-8/7669380392.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-g/7669380436.jpg",
@@ -3769,7 +3777,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D5-TSH-PRT-WHT-L",
         "name": "Футболка Наруто с принтом Akatsuki Белая L",
         "size": "L",
-        "price": 4611,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-8/7669380392.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-g/7669380436.jpg",
@@ -3786,7 +3794,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D5-TSH-PRT-WHT-XL",
         "name": "Футболка Наруто с принтом Akatsuki Белая XL",
         "size": "XL",
-        "price": 4149,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-8/7669380392.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-g/7669380436.jpg",
@@ -3803,7 +3811,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D5-TSH-PRT-WHT-M",
         "name": "Футболка Наруто с принтом Akatsuki Белый M",
         "size": "M",
-        "price": 4611,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-8/7669380392.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-g/7669380436.jpg",
@@ -3820,6 +3828,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D5-TSH-PRT-WHT-XXL",
         "name": "Футболка Наруто с принтом Akatsuki Белая XXL",
         "size": "XXL",
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-8/7669380392.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-g/7669380436.jpg",
@@ -3976,7 +3985,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D25-TSH-PRT-BLK-M",
         "name": "Футболка Наруто с принтом Akatsuki черная M",
         "size": "M",
-        "price": 4724,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-d/7865638933.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-h/7865639009.jpg",
@@ -3994,7 +4003,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D25-TSH-PRT-BLK-L",
         "name": "Футболка Наруто с принтом Akatsuki черная L",
         "size": "L",
-        "price": 4149,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-d/7865638933.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-h/7865639009.jpg",
@@ -4012,7 +4021,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D25-TSH-PRT-BLK-S",
         "name": "Футболка Наруто с принтом Akatsuki черная S",
         "size": "S",
-        "price": 4611,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-d/7865638933.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-h/7865639009.jpg",
@@ -4030,7 +4039,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D25-TSH-PRT-BLK-XL",
         "name": "Футболка Наруто с принтом Akatsuki черная XL",
         "size": "XL",
-        "price": 4149,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-d/7865638933.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-h/7865639009.jpg",
@@ -4048,6 +4057,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D25-TSH-PRT-BLK-XXL",
         "name": "Футболка Наруто с принтом Akatsuki черная XXL",
         "size": "XXL",
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-d/7865638933.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-h/7865639009.jpg",
@@ -4204,7 +4214,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D1-TSH-PRT-BLK-S",
         "name": "Футболка Наруто Akatsuki",
         "size": "S",
-        "price": 4611,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-q/7609295474.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-h/7609295717.jpg",
@@ -4221,7 +4231,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D1-TSH-PRT-BLK-L",
         "name": "Футболка с принтом Наруто Akatsuki черная L",
         "size": "L",
-        "price": 4611,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-q/7609295474.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-h/7609295717.jpg",
@@ -4238,7 +4248,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D1-TSH-PRT-BLK-M",
         "name": "Футболка с принтом Наруто Akatsuki черная M",
         "size": "M",
-        "price": 4240,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-q/7609295474.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-h/7609295717.jpg",
@@ -4255,7 +4265,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D1-TSH-PRT-BLK-XL",
         "name": "Футболка с принтом Наруто Akatsuki черная XL",
         "size": "XL",
-        "price": 4611,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-q/7609295474.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-h/7609295717.jpg",
@@ -4272,6 +4282,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D1-TSH-PRT-BLK-XXL",
         "name": "Футболка с принтом Наруто Akatsuki черная XXL",
         "size": "XXL",
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-q/7609295474.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-h/7609295717.jpg",
@@ -4427,7 +4438,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-TSH-EMB-WHT-S",
         "name": "Футболка с вышивкой Gravity Белая S",
         "size": "S",
-        "price": 4660,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-1/7676186005.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-3/7676186007.jpg",
@@ -4444,7 +4455,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-TSH-EMB-WHT-XL",
         "name": "Футболка с вышивкой Gravity Белая XL",
         "size": "XL",
-        "price": 4660,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-1/7676186005.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-3/7676186007.jpg",
@@ -4461,7 +4472,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-TSH-EMB-WHT-L",
         "name": "Футболка с вышивкой Gravity белая L",
         "size": "L",
-        "price": 4660,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-1/7676186005.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-3/7676186007.jpg",
@@ -4478,7 +4489,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-TSH-EMB-WHT-M",
         "name": "Футболка с вышивкой Gravity белая M",
         "size": "M",
-        "price": 4660,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-1/7676186005.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-3/7676186007.jpg",
@@ -4495,6 +4506,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-TSH-EMB-WHT-XXL",
         "name": "Футболка с вышивкой Gravity Белая XXL",
         "size": "XXL",
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-1/7676186005.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-3/7676186007.jpg",
@@ -4651,7 +4663,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-TSH-PRT-WHT-XL",
         "name": "Футболка с принтом Gravity Белая XL",
         "size": "XL",
-        "price": 4621,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-t/7982948081.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-y/7982947726.jpg",
@@ -4669,7 +4681,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-TSH-PRT-WHT-S",
         "name": "Футболка с принтом Gravity Белая S",
         "size": "S",
-        "price": 4773,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-t/7982948081.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-y/7982947726.jpg",
@@ -4687,7 +4699,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-TSH-PRT-WHT-L",
         "name": "Футболка с принтом Gravity Белая L",
         "size": "L",
-        "price": 4773,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-t/7982948081.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-y/7982947726.jpg",
@@ -4705,7 +4717,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-TSH-PRT-WHT-M",
         "name": "Футболка с принтом Gravity Белая M",
         "size": "M",
-        "price": 4773,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-t/7982948081.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-y/7982947726.jpg",
@@ -4723,6 +4735,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-TSH-PRT-WHT-XXL",
         "name": "Футболка с принтом Gravity Белая XXL",
         "size": "XXL",
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-t/7982948081.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-y/7982947726.jpg",
@@ -4880,7 +4893,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-TSH-PRT-BLK-XL",
         "name": "Футболка с принтом Gravity Черный XL",
         "size": "XL",
-        "price": 4660,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-5/7878893981.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-1/7878894013.jpg",
@@ -4898,7 +4911,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-TSH-PRT-BLK-S",
         "name": "Футболка с принтом Gravity Черный S",
         "size": "S",
-        "price": 4660,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-5/7878893981.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-1/7878894013.jpg",
@@ -4916,7 +4929,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-TSH-PRT-BLK-M",
         "name": "Футболка с принтом Gravity Черный M",
         "size": "M",
-        "price": 4660,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-5/7878893981.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-1/7878894013.jpg",
@@ -4934,7 +4947,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-TSH-PRT-BLK-L",
         "name": "Футболка с принтом Gravity Черный L",
         "size": "L",
-        "price": 4660,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-5/7878893981.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-1/7878894013.jpg",
@@ -4952,6 +4965,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-TSH-PRT-BLK-XXL",
         "name": "Футболка с принтом Gravity Черный XXL",
         "size": "XXL",
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-5/7878893981.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-1/7878894013.jpg",
@@ -5109,7 +5123,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D18-TSH-EMB-BLK-L",
         "name": "Черная футболка с вышивкой GTA L",
         "size": "L",
-        "price": 4571,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-k/8303578400.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-o/8303578404.jpg",
@@ -5127,7 +5141,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D18-TSH-EMB-BLK-XL",
         "name": "Черная футболка с вышивкой GTA XL",
         "size": "XL",
-        "price": 4571,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-k/8303578400.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-o/8303578404.jpg",
@@ -5145,7 +5159,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D18-TSH-EMB-BLK-S",
         "name": "Черная футболка с вышивкой GTA S",
         "size": "S",
-        "price": 4611,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-k/8303578400.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-o/8303578404.jpg",
@@ -5163,7 +5177,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D18-TSH-EMB-BLK-M",
         "name": "Черная футболка с вышивкой GTA M",
         "size": "M",
-        "price": 4611,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-k/8303578400.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-o/8303578404.jpg",
@@ -5181,6 +5195,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D18-TSH-EMB-BLK-XXL",
         "name": "Черная футболка с вышивкой GTA XXL",
         "size": "XXL",
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-k/8303578400.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-o/8303578404.jpg",
@@ -5239,8 +5254,8 @@ window.KOMUI_PRODUCTS = [
       "M",
       "L"
     ],
-    "price_min": "5590.00",
-    "price_max": "5590.00",
+    "price_min": "3900.00",
+    "price_max": "3900.00",
     "currency": "RUB",
     "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-n/8224018223.jpg",
     "main_image_path": "./assets/ozon-main/21-худи-с-вышивкой-gravity.jpg",
@@ -5348,7 +5363,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-HDY-EMB-BLK-REG-FLC-M",
         "name": "Худи с вышивкой Gravity Черная M",
         "size": "M",
-        "price": 5590,
+        "price": 3900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-n/8224018223.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-z/8224018451.jpg",
@@ -5367,7 +5382,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-HDY-EMB-BLK-REG-FLC-S",
         "name": "Худи с вышивкой Gravity Черная S",
         "size": "S",
-        "price": 5590,
+        "price": 3900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-n/8224018223.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-z/8224018451.jpg",
@@ -5386,7 +5401,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-HDY-EMB-BLK-REG-FLC-L",
         "name": "Худи с вышивкой Gravity Черная L",
         "size": "L",
-        "price": 5590,
+        "price": 3900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-n/8224018223.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-z/8224018451.jpg",
@@ -5405,7 +5420,7 @@ window.KOMUI_PRODUCTS = [
     "sort_order": 23,
     "short_description": "Чёрное худи Gravity с вышивкой — тёплая база авторской линейки KOMUI. Логотип проявляется только тем, кто присмотрится.",
     "badges": [],
-    "compare_at_price": null
+    "compare_at_price": "6000"
   },
   {
     "id": "c7e4c913-8a5c-4ce1-9398-0fbd427bd339",
@@ -5534,7 +5549,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-TSH-PRT-WGRY-M",
         "name": "Футболка варенка с принтом Gravity Серая M",
         "size": "M",
-        "price": 4660,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-b/7983900947.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-5/7983900869.jpg",
@@ -5552,7 +5567,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-TSH-PRT-WGRY-S",
         "name": "Футболка варенка с принтом Gravity Серая S",
         "size": "S",
-        "price": 4660,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-b/7983900947.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-5/7983900869.jpg",
@@ -5570,6 +5585,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-TSH-PRT-WGRY-XXL",
         "name": "Футболка варенка с принтом Gravity Серая XXL",
         "size": "XXL",
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-b/7983900947.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-5/7983900869.jpg",
@@ -5585,6 +5601,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-TSH-PRT-WGRY-L",
         "name": "Футболка варенка с принтом Gravity Серая L",
         "size": "L",
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-b/7983900947.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-5/7983900869.jpg",
@@ -5600,6 +5617,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D8-TSH-PRT-WGRY-XL",
         "name": "Футболка варенка с принтом Gravity Серая XL",
         "size": "XL",
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-b/7983900947.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-5/7983900869.jpg",
@@ -5755,7 +5773,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D12-TSH-EMB-WHT-S",
         "name": "Футболка Наруто с вышивкой Дарт Вейдер Белая",
         "size": "S",
-        "price": 6700,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-8/7683436664.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-w/7683436688.jpg",
@@ -5773,7 +5791,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D12-TSH-EMB-WHT-M",
         "name": "Футболка оверсайз с вышивкой Дарт Вейдер Белая",
         "size": "M",
-        "price": 6700,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-8/7683436664.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-w/7683436688.jpg",
@@ -5834,8 +5852,8 @@ window.KOMUI_PRODUCTS = [
       "XL",
       "XXL"
     ],
-    "price_min": "4149.00",
-    "price_max": "4611.00",
+    "price_min": "2900.00",
+    "price_max": "2900.00",
     "currency": "RUB",
     "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-o/7683391320.jpg",
     "main_image_path": "./assets/ozon-main/24-футболка-наруто-с-вышивкой-itachi.jpg",
@@ -5931,7 +5949,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D2-TSH-EMB-WHT-M",
         "name": "Футболка Наруто с вышивкой Itachi Белая",
         "size": "M",
-        "price": 4149,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-o/7683391320.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-r/7683391323.jpg",
@@ -5949,7 +5967,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D2-TSH-EMB-WHT-S",
         "name": "Футболка Наруто с вышивкой Itachi Белая",
         "size": "S",
-        "price": 4611,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-o/7683391320.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-r/7683391323.jpg",
@@ -5967,6 +5985,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D2-TSH-EMB-WHT-L",
         "name": "Футболка Наруто с вышивкой Itachi Белая L",
         "size": "L",
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-o/7683391320.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-r/7683391323.jpg",
@@ -5982,6 +6001,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D2-TSH-EMB-WHT-XL",
         "name": "Футболка Наруто с вышивкой Itachi Белая XL",
         "size": "XL",
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-o/7683391320.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-r/7683391323.jpg",
@@ -5997,6 +6017,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D2-TSH-EMB-WHT-XXL",
         "name": "Футболка Наруто с вышивкой Itachi Белая XXL",
         "size": "XXL",
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-o/7683391320.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-r/7683391323.jpg",
@@ -6138,7 +6159,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D17-TSH-PRT-WBLU-S",
         "name": "Синяя вареная футболка с принтом Сатору годжо S",
         "size": "S",
-        "price": 4644,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-b/9237572147.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-s/9237571660.jpg",
@@ -6298,7 +6319,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D7-TSH-PRT-WHT-S",
         "name": "Футболка Наруто с принтом Akatsuki и текстом",
         "size": "S",
-        "price": 4611,
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-l/7669712433.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-a/7669712782.jpg",
@@ -6315,6 +6336,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D7-TSH-PRT-WHT-XXL",
         "name": "Футболка Наруто с принтом Akatsuki и текстом XXL",
         "size": "XXL",
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-l/7669712433.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-a/7669712782.jpg",
@@ -6329,6 +6351,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D7-TSH-PRT-WHT-XL",
         "name": "Футболка Наруто с принтом Akatsuki и текстом XL",
         "size": "XL",
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-l/7669712433.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-a/7669712782.jpg",
@@ -6343,6 +6366,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D7-TSH-PRT-WHT-M",
         "name": "Футболка Наруто с принтом Akatsuki и текстом M",
         "size": "M",
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-l/7669712433.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-a/7669712782.jpg",
@@ -6357,6 +6381,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D7-TSH-PRT-WHT-L",
         "name": "Футболка Наруто с принтом Akatsuki и текстом L",
         "size": "L",
+        "price": 2900,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-l/7669712433.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-a/7669712782.jpg",
@@ -6412,8 +6437,8 @@ window.KOMUI_PRODUCTS = [
     "sizes": [
       "S"
     ],
-    "price_min": "5796.00",
-    "price_max": "5796.00",
+    "price_min": "3500.00",
+    "price_max": "3500.00",
     "currency": "RUB",
     "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-o/8426251896.jpg",
     "main_image_path": "https://ir.ozone.ru/s3/multimedia-1-o/8426251896.jpg",
@@ -6505,7 +6530,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D2-HDY-EMB-BLU-REG-NF-S",
         "name": "Худи с вышивкой Итачи Синяя S",
         "size": "S",
-        "price": 5796,
+        "price": 3500,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-o/8426251896.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-9/8426251953.jpg",
@@ -6524,7 +6549,7 @@ window.KOMUI_PRODUCTS = [
     "sort_order": 30,
     "short_description": "Синее худи с вышивкой Итачи — мягкий уход от привычного чёрного. Глубокий цвет, тёплый футер и деталь, ради которой и берут.",
     "badges": [],
-    "compare_at_price": null
+    "compare_at_price": "6000"
   },
   {
     "id": "88d76464-d0c1-44d3-a59d-c7cd3c786a78",
@@ -6565,8 +6590,8 @@ window.KOMUI_PRODUCTS = [
     "sizes": [
       "S"
     ],
-    "price_min": "8000.00",
-    "price_max": "8000.00",
+    "price_min": "3200.00",
+    "price_max": "3200.00",
     "currency": "RUB",
     "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-w/7958557220.jpg",
     "main_image_path": "./assets/ozon-main/04-свитшот-с-вышивкой-итачи.jpg",
@@ -6586,7 +6611,7 @@ window.KOMUI_PRODUCTS = [
         "offer_id": "D2-SWT-EMB-BLK-S",
         "name": "Свитшот с вышивкой Itachi Черная S",
         "size": "S",
-        "price": 8000,
+        "price": 3200,
         "images": [
           "https://ir.ozone.ru/s3/multimedia-1-w/7958557220.jpg",
           "https://ir.ozone.ru/s3/multimedia-1-r/7958556783.jpg",
@@ -6605,6 +6630,6 @@ window.KOMUI_PRODUCTS = [
     "sort_order": 31,
     "short_description": "Чёрный свитшот с вышивкой Итачи. Отдельная карточка без смешения с футболками.",
     "badges": [],
-    "compare_at_price": null
+    "compare_at_price": "5500"
   }
 ];
