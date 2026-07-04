@@ -1279,7 +1279,33 @@ rollback mechanism is manual DNS rollback at the DNS provider.
 
 The separate admin project should call KOMUI backend server-side only.
 
-Staging env:
+Production env for the external admin:
+
+```text
+KOMUI_MIGRATION_API_BASE_URL=https://komui.ru/api
+KOMUI_ADMIN_API_TOKEN=<from /etc/komui/backend-production.env>
+```
+
+Production headers:
+
+```ts
+const headers = {
+  Authorization: `Bearer ${process.env.KOMUI_ADMIN_API_TOKEN!}`,
+  "Content-Type": "application/json",
+};
+```
+
+Compatibility note:
+
+For the old admin deployment that still uses `https://stage.komui.ru/api`,
+Nginx routes only `stage.komui.ru/api/admin/*` to the production backend
+(`127.0.0.1:3001`). Public stage API and stage storefront remain staging
+(`127.0.0.1:3000`). This compatibility route exists to avoid accidental writes
+to staging from the live admin, but the admin env should still be changed to the
+production URL above.
+
+If the admin intentionally targets stage for testing, use a separate admin
+deployment/env and keep the stage Basic Auth headers:
 
 ```text
 KOMUI_MIGRATION_API_BASE_URL=https://stage.komui.ru/api
@@ -1287,7 +1313,7 @@ KOMUI_ADMIN_API_TOKEN=<from /etc/komui/backend.env>
 KOMUI_STAGE_BASIC_AUTH=<from /etc/komui/staging-access.env>
 ```
 
-Staging headers:
+Stage headers:
 
 ```ts
 const basic = Buffer.from(process.env.KOMUI_STAGE_BASIC_AUTH!).toString("base64");
