@@ -1,0 +1,28 @@
+# KOMUI
+
+> KOMUI (Комуи) — российский бренд и интернет-магазин аниме-мерча: футболки, худи и свитшоты с DTF-принтами и вышивкой по вселенным Naruto, Jujutsu Kaisen, Gravity, Grand Theft Auto и Star Wars. В каталоге 34 товара: футболки от 2900 ₽, свитшоты от 3200 ₽, худи от 3500 ₽. Размеры S–XXL, 100% хлопок, унисекс. Доставка СДЭК в пункты выдачи по всей России. Бренд также продаёт на Ozon (продавец GETO).
+
+## Каталог
+
+- [Все товары](https://komui.ru/): каталог с фильтрами по коллекции, типу нанесения (принт или вышивка), размеру, цвету и цене
+
+## Коллекции
+
+- [Naruto](https://komui.ru/collections/naruto): футболки, худи и свитшоты — Akatsuki, Itachi Uchiha, Madara, Naruto Uzumaki
+- [Jujutsu Kaisen](https://komui.ru/collections/jujutsu-kaisen): футболки с Сатору Годжо и Рёмен Сукуной, включая варёные модели (acid wash)
+- [Gravity](https://komui.ru/collections/gravity): футболки и худи с принтами и вышивкой по Gravity
+- [Grand Theft Auto](https://komui.ru/collections/grand-theft-auto): футболки и худи с вышивкой GTA
+- [Star Wars](https://komui.ru/collections/star-wars): кроссовер-дизайны, включая Дарта Вейдера
+
+## Покупателям
+
+- [Доставка и оплата](https://komui.ru/delivery): доставка СДЭК до пункта выдачи, оплата картой через Т-Банк, ответы на частые вопросы
+- [Возврат и обмен](https://komui.ru/returns): условия возврата и обмена товара
+- [Размеры](https://komui.ru/sizes): таблицы замеров изделий в сантиметрах и советы по выбору размера
+- [Уход за вещами](https://komui.ru/care): как стирать одежду с DTF-принтом и вышивкой
+
+## Optional
+
+- [О продавце](https://komui.ru/seller)
+- [Публичная оферта](https://komui.ru/offer)
+- [Карта сайта](https://komui.ru/sitemap.xml)

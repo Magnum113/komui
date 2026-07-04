@@ -158,6 +158,8 @@ fail() {
     --include '/favicon.svg' \
     --include '/legal.css' \
     --include '/robots.txt' \
+    --include '/llms.txt' \
+    --include '/nginx-product-redirects.conf' \
     --include '/sitemap.xml' \
     --exclude '*' \
     "$source_dir/" "$frontend_release_dir/"

@@ -9,14 +9,30 @@ server {
     }
 
     location / {
-        return 301 https://$host$request_uri;
+        return 301 https://komui.ru$request_uri;
     }
 }
 
 server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
-    server_name komui.ru www.komui.ru;
+    server_name www.komui.ru;
+
+    ssl_certificate /etc/letsencrypt/live/komui.ru/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/komui.ru/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    access_log /var/log/nginx/komui.production.access.log;
+    error_log /var/log/nginx/komui.production.error.log warn;
+
+    return 301 https://komui.ru$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name komui.ru;
 
     ssl_certificate /etc/letsencrypt/live/komui.ru/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/komui.ru/privkey.pem;

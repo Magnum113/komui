@@ -155,8 +155,17 @@ location /api/ {
     proxy_send_timeout 30s;
 }
 
+include /var/lib/komui/production-root/nginx-product-redirects.conf;
+
+error_page 404 /404.html;
+
+location = /404.html {
+    internal;
+}
+
 location / {
-    try_files $uri $uri.html $uri/ /index.html;
+    rewrite ^/(.+)/$ /$1 permanent;
+    try_files $uri $uri.html =404;
 }
 NGINX
 }
