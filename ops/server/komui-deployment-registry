@@ -23,10 +23,13 @@ from typing import Any
 
 DEFAULT_REGISTRY = Path("/var/lib/komui/deployments.jsonl")
 DEFAULT_CURRENT = Path("/var/lib/komui/deployment-current.json")
-BACKEND_CURRENT = Path("/opt/komui/current")
-FRONTEND_CURRENT = Path("/var/lib/komui/staging-root")
+STAGE_BACKEND_CURRENT = Path("/opt/komui/current")
+STAGE_FRONTEND_CURRENT = Path("/var/lib/komui/staging-root")
+PROD_BACKEND_CURRENT = Path("/opt/komui/production-current")
+PROD_FRONTEND_CURRENT = Path("/var/lib/komui/production-root")
 BACKEND_RELEASES = Path("/opt/komui/releases")
-FRONTEND_RELEASES = Path("/opt/komui/frontend-releases")
+STAGE_FRONTEND_RELEASES = Path("/opt/komui/frontend-releases")
+PROD_FRONTEND_RELEASES = Path("/opt/komui/production-frontend-releases")
 ALERT_BIN = Path("/usr/local/sbin/komui-alert")
 
 
@@ -57,14 +60,15 @@ def systemd_state(unit: str) -> str:
 def service_states() -> dict[str, str]:
     return {
         "komui-backend": systemd_state("komui-backend"),
+        "komui-production-backend": systemd_state("komui-production-backend"),
         "nginx": systemd_state("nginx"),
         "postgresql": systemd_state("postgresql"),
     }
 
 
-def active_snapshot() -> dict[str, Any]:
-    backend_path = active_path(BACKEND_CURRENT)
-    frontend_path = active_path(FRONTEND_CURRENT)
+def release_snapshot(backend_current: Path, frontend_current: Path) -> dict[str, Any]:
+    backend_path = active_path(backend_current)
+    frontend_path = active_path(frontend_current)
     return {
         "backend": {
             "release": release_name(backend_path),
@@ -77,13 +81,20 @@ def active_snapshot() -> dict[str, Any]:
     }
 
 
+def active_snapshot() -> dict[str, Any]:
+    return {
+        "stage": release_snapshot(STAGE_BACKEND_CURRENT, STAGE_FRONTEND_CURRENT),
+        "prod": release_snapshot(PROD_BACKEND_CURRENT, PROD_FRONTEND_CURRENT),
+    }
+
+
 def release_path_for(component: str, release: str) -> str:
     if not release:
         return ""
     if component == "backend":
         return str(BACKEND_RELEASES / release)
     if component == "frontend":
-        return str(FRONTEND_RELEASES / release)
+        return str(STAGE_FRONTEND_RELEASES / release)
     return ""
 
 
@@ -136,8 +147,13 @@ def bullet_lines(values: list[str], prefix: str = "  • ") -> list[str]:
 
 def compact_event_for_notify(event: dict[str, Any]) -> str:
     active = event.get("active") or {}
-    backend = active.get("backend") or {}
-    frontend = active.get("frontend") or {}
+    target = ((event.get("metadata") or {}).get("target") or "").strip()
+    target_active = active.get(target) if target in ("stage", "prod") else None
+    if not isinstance(target_active, dict):
+        # Backward compatibility for records created before target-aware snapshots.
+        target_active = active
+    backend = target_active.get("backend") or {}
+    frontend = target_active.get("frontend") or {}
     services = event.get("services") or {}
 
     lines = [
@@ -147,6 +163,7 @@ def compact_event_for_notify(event: dict[str, Any]) -> str:
         f"Релиз: {value_or_dash(event.get('release'))}",
         f"Предыдущий релиз: {value_or_dash(event.get('previousRelease'))}",
         f"Git commit: {value_or_dash(event.get('gitCommit'))}",
+        f"Контур: {value_or_dash(target)}",
         f"Описание: {value_or_dash(event.get('summary'))}",
         "",
         "Проверки:",
@@ -155,7 +172,7 @@ def compact_event_for_notify(event: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
-            "Активно сейчас:",
+            "Активно сейчас на этом контуре:",
             f"  • backend: {value_or_dash(backend.get('release'))}",
             f"  • frontend: {value_or_dash(frontend.get('release'))}",
             "",
@@ -315,7 +332,12 @@ def command_current(args: argparse.Namespace) -> int:
     return 0
 
 
-def list_release_dir(path: Path, active: str, component: str) -> list[dict[str, Any]]:
+def list_release_dir(
+    path: Path,
+    active_by_target: dict[str, str],
+    component: str,
+    target: str,
+) -> list[dict[str, Any]]:
     if not path.exists():
         return []
     rows: list[dict[str, Any]] = []
@@ -325,7 +347,8 @@ def list_release_dir(path: Path, active: str, component: str) -> list[dict[str, 
         rows.append(
             {
                 "component": component,
-                "active": str(child.resolve()) == active,
+                "target": target,
+                "active": str(child.resolve()) == active_by_target.get(target),
                 "release": child.name,
                 "path": str(child.resolve()),
                 "mtime": datetime.fromtimestamp(child.stat().st_mtime, timezone.utc)
@@ -339,24 +362,37 @@ def list_release_dir(path: Path, active: str, component: str) -> list[dict[str, 
 
 def command_list_releases(args: argparse.Namespace) -> int:
     rows: list[dict[str, Any]] = []
+    active_backends = {
+        "stage": active_path(STAGE_BACKEND_CURRENT),
+        "prod": active_path(PROD_BACKEND_CURRENT),
+    }
+    active_frontends = {
+        "stage": active_path(STAGE_FRONTEND_CURRENT),
+        "prod": active_path(PROD_FRONTEND_CURRENT),
+    }
     if args.component in ("backend", "all"):
-        rows.extend(list_release_dir(BACKEND_RELEASES, active_path(BACKEND_CURRENT), "backend"))
+        rows.extend(list_release_dir(BACKEND_RELEASES, active_backends, "backend", "stage"))
+        rows.extend(list_release_dir(BACKEND_RELEASES, active_backends, "backend", "prod"))
     if args.component in ("frontend", "all"):
-        rows.extend(list_release_dir(FRONTEND_RELEASES, active_path(FRONTEND_CURRENT), "frontend"))
+        rows.extend(list_release_dir(STAGE_FRONTEND_RELEASES, active_frontends, "frontend", "stage"))
+        rows.extend(list_release_dir(PROD_FRONTEND_RELEASES, active_frontends, "frontend", "prod"))
 
     if args.format == "json":
         print(json.dumps(rows, ensure_ascii=False, indent=2))
     else:
-        print("component active release                              mtime")
-        print("-" * 78)
+        print("target component active release                              mtime")
+        print("-" * 86)
         for row in rows:
             marker = "*" if row["active"] else " "
-            print(f"{row['component']:<9} {marker:<6} {row['release']:<36} {row['mtime']}")
+            print(
+                f"{row['target']:<6} {row['component']:<9} "
+                f"{marker:<6} {row['release']:<36} {row['mtime']}"
+            )
     return 0
 
 
 def command_rollback_command(args: argparse.Namespace) -> int:
-    release_dir = BACKEND_RELEASES if args.component == "backend" else FRONTEND_RELEASES
+    release_dir = BACKEND_RELEASES if args.component == "backend" else STAGE_FRONTEND_RELEASES
     release_path = release_dir / args.release
     if not release_path.is_dir():
         raise SystemExit(f"Release does not exist: {release_path}")
