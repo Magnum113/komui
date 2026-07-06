@@ -159,6 +159,7 @@ fail() {
     --include '/legal.css' \
     --include '/robots.txt' \
     --include '/llms.txt' \
+    --include '/llms-full.txt' \
     --include '/nginx-product-redirects.conf' \
     --include '/sitemap.xml' \
     --exclude '*' \

@@ -1,28 +1,49 @@
 # KOMUI
 
-> KOMUI (Комуи) — российский бренд и интернет-магазин аниме-мерча: футболки, худи и свитшоты с DTF-принтами и вышивкой по вселенным Naruto, Jujutsu Kaisen, Gravity, Grand Theft Auto и Star Wars. В каталоге 34 товара: футболки от 2900 ₽, свитшоты от 3200 ₽, худи от 3500 ₽. Размеры S–XXL, 100% хлопок, унисекс. Доставка СДЭК в пункты выдачи по всей России. Бренд также продаёт на Ozon (продавец GETO).
-
-## Каталог
-
-- [Все товары](https://komui.ru/): каталог с фильтрами по коллекции, типу нанесения (принт или вышивка), размеру, цвету и цене
+> KOMUI — российский бренд аниме-одежды: футболки, худи и свитшоты с DTF-принтами и машинной вышивкой по Naruto, Jujutsu Kaisen, GTA и другим вселенным. Доставка СДЭК по всей России.
 
 ## Коллекции
 
-- [Naruto](https://komui.ru/collections/naruto): футболки, худи и свитшоты — Akatsuki, Itachi Uchiha, Madara, Naruto Uzumaki
-- [Jujutsu Kaisen](https://komui.ru/collections/jujutsu-kaisen): футболки с Сатору Годжо и Рёмен Сукуной, включая варёные модели (acid wash)
-- [Gravity](https://komui.ru/collections/gravity): футболки и худи с принтами и вышивкой по Gravity
+- [Naruto](https://komui.ru/collections/naruto): 16 товаров — вышивка и принты Akatsuki, Itachi Uchiha, Madara, Naruto Uzumaki; футболки, худи и свитшот
+- [Jujutsu Kaisen](https://komui.ru/collections/jujutsu-kaisen): 10 товаров — Сатору Годжо и Рёмен Сукуна, классические и варёные (acid wash) футболки
+- [Gravity](https://komui.ru/collections/gravity): 6 товаров — футболки и худи с принтами и вышивкой по Gravity
 - [Grand Theft Auto](https://komui.ru/collections/grand-theft-auto): футболки и худи с вышивкой GTA
-- [Star Wars](https://komui.ru/collections/star-wars): кроссовер-дизайны, включая Дарта Вейдера
+- [Star Wars](https://komui.ru/collections/star-wars): кроссовер-дизайны, включая вышивку с Дартом Вейдером
+
+## Популярные товары
+
+- [Футболка-варёнка Сатору Годжо](https://komui.ru/p/futbolka-varenka-jujutsu-kaisen-satoru-gojo-print-seraya): 2900 ₽, DTF-принт, серая варёнка, размеры S–XXL
+- [Футболка Наруто Akatsuki](https://komui.ru/p/futbolka-naruto-akatsuki-vyshivka-belaya): 2900 ₽, машинная вышивка облака Акацуки, белая, размеры S–XXL
+- [Футболка Наруто Itachi](https://komui.ru/p/futbolka-naruto-itachi-uchiha-vyshivka-chernaya): 2900 ₽, вышивка Итачи Учиха, чёрная, размеры S–XXL
+- [Худи Итачи](https://komui.ru/p/hudi-naruto-itachi-uchiha-vyshivka-chernaya): 3500 ₽, вышивка, чёрное, размеры S–XL
+- [Футболка Наруто](https://komui.ru/p/futbolka-naruto-naruto-uzumaki-print-belaya): 2900 ₽, DTF-принт Наруто Узумаки, белая, размеры S–XXL
 
 ## Покупателям
 
-- [Доставка и оплата](https://komui.ru/delivery): доставка СДЭК до пункта выдачи, оплата картой через Т-Банк, ответы на частые вопросы
-- [Возврат и обмен](https://komui.ru/returns): условия возврата и обмена товара
-- [Размеры](https://komui.ru/sizes): таблицы замеров изделий в сантиметрах и советы по выбору размера
-- [Уход за вещами](https://komui.ru/care): как стирать одежду с DTF-принтом и вышивкой
+- [Доставка и оплата](https://komui.ru/delivery): доставка СДЭК до пункта выдачи по России, стоимость рассчитывается в чекауте до оплаты, FAQ по срокам и смене ПВЗ
+- [Возврат и обмен](https://komui.ru/returns): условия возврата и обмена товара при дистанционной покупке
+- [Размеры](https://komui.ru/sizes): таблицы замеров изделий в сантиметрах (длина, ширина) и советы по выбору размера и посадки
+- [Уход за вещами](https://komui.ru/care): как стирать одежду с DTF-принтом и вышивкой — наизнанку, до 30 °C, без отбеливателя и прямого утюга по рисунку
+
+## Ключевые факты
+
+- KOMUI — бренд одежды из России; отправка заказов из Махачкалы (Республика Дагестан)
+- Каталог: 34 товара — 28 футболок по 2900 ₽, 5 худи по 3500–3900 ₽, свитшот 3200 ₽
+- Две техники нанесения: DTF-принт и машинная вышивка; 100% хлопок, крой унисекс, размеры S–XXL
+- Оплата: банковской картой онлайн (интернет-эквайринг Т-Банк); доставка: СДЭК в пункты выдачи по всей России
+- Продавец: ИП Кадимагомедов М. А., ИНН 053602598018 — полные реквизиты на странице «О продавце»
+- Официальный магазин бренда на Ozon — продавец GETO (https://www.ozon.ru/seller/geto/)
+- Не путать: бренд одежды KOMUI не связан с персонажем Komui Lee из аниме D.Gray-man
+
+## Контакты
+
+- Сайт: https://komui.ru
+- Email: smmshit@ya.ru
+- Реквизиты продавца: https://komui.ru/seller
 
 ## Optional
 
-- [О продавце](https://komui.ru/seller)
 - [Публичная оферта](https://komui.ru/offer)
+- [Политика обработки персональных данных](https://komui.ru/privacy)
 - [Карта сайта](https://komui.ru/sitemap.xml)
+- [Полный каталог для AI-систем](https://komui.ru/llms-full.txt): все 34 товара с ценами, размерами, цветами и типом нанесения

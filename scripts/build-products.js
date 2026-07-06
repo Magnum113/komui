@@ -1312,6 +1312,50 @@ Sitemap: ${SITE_ORIGIN}/sitemap.xml
 `;
 }
 
+function renderLlmsFull(products) {
+  const today = new Date().toISOString().slice(0, 10);
+  const groups = new Map();
+  for (const p of products) {
+    const key = p.anime_title || p.collection_name || 'Другие коллекции';
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(p);
+  }
+
+  const lines = [
+    '# KOMUI — полный каталог для AI-систем',
+    '',
+    `> Все товары интернет-магазина KOMUI (https://komui.ru) с актуальными ценами, размерами, цветами и типом нанесения. Обновлено: ${today}. Краткая версия: https://komui.ru/llms.txt`,
+    '',
+  ];
+
+  for (const [group, items] of groups) {
+    lines.push(`## ${group} (${items.length} тов.)`);
+    lines.push('');
+    for (const p of items) {
+      const facts = [
+        formatPriceRange(p.price_min, p.price_max),
+        p.decoration_type ? `нанесение: ${p.decoration_type.toLowerCase()}` : '',
+        p.color_name ? `цвет: ${p.color_name.toLowerCase()}` : '',
+        (p.sizes || []).length ? `размеры: ${p.sizes.join(', ')}` : '',
+        p.category ? `категория: ${p.category.toLowerCase()}` : '',
+        p.character_name ? `персонаж: ${p.character_name}` : '',
+      ].filter(Boolean).join('; ');
+      lines.push(`- [${p.name}](${SITE_ORIGIN}/p/${p.slug}): ${facts}`);
+    }
+    lines.push('');
+  }
+
+  lines.push('## Покупателям');
+  lines.push('');
+  lines.push(`- [Доставка и оплата](${SITE_ORIGIN}/delivery): доставка СДЭК до пункта выдачи по России, стоимость рассчитывается в чекауте до оплаты`);
+  lines.push(`- [Возврат и обмен](${SITE_ORIGIN}/returns): условия возврата и обмена товара при дистанционной покупке`);
+  lines.push(`- [Размеры](${SITE_ORIGIN}/sizes): таблицы замеров изделий в сантиметрах и советы по выбору размера`);
+  lines.push(`- [Уход за вещами](${SITE_ORIGIN}/care): стирка наизнанку до 30 °C, без отбеливателя и прямого утюга по рисунку`);
+  lines.push(`- [О продавце](${SITE_ORIGIN}/seller): реквизиты ИП Кадимагомедов М. А., ИНН 053602598018`);
+  lines.push('');
+  return lines.join('\n');
+}
+
 async function main() {
   const products = await loadProducts();
   if (!products.length) {
@@ -1375,6 +1419,9 @@ async function main() {
 
   const robotsPath = path.join(ROOT, 'robots.txt');
   fs.writeFileSync(robotsPath, renderRobots(), 'utf8');
+
+  fs.writeFileSync(path.join(ROOT, 'llms-full.txt'), renderLlmsFull(products), 'utf8');
+  console.log('✓ Wrote llms-full.txt');
 
   console.log(`✓ Wrote ${written} product page(s) to /p`);
   console.log(`✓ Wrote ${productRedirects.length} product redirect(s)`);
