@@ -1,0 +1,12 @@
+{
+  "private": true,
+  "scripts": {
+    "build:products": "node scripts/build-products.js",
+    "sync:media": "node scripts/sync-product-media.js",
+    "sync:media:dry-run": "node scripts/sync-product-media.js --dry-run"
+  },
+  "dependencies": {
+    "sharp": "^0.33.5"
+  },
+  "packageManager": "pnpm@11.7.0"
+}

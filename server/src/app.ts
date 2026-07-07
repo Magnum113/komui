@@ -10,6 +10,7 @@ import { createDb, type Db } from "./db";
 import { auditAdminEvent } from "./audit";
 import { CatalogRepository, normalizeLimit } from "./catalog";
 import { HttpError } from "./errors";
+import { mediaManifestStatus } from "./mediaManifest";
 import {
   handleCdekDeliveryPoints,
   handleCdekDeliveryQuote,
@@ -175,6 +176,7 @@ export function buildApp({ config, db = createDb(config) }: AppOptions) {
         ok: true,
         database: ping.database_name,
         config: publicConfig(config),
+        media: mediaManifestStatus(),
       };
     } catch (error) {
       return jsonError(reply, 503, "not_ready", "Database is not ready");

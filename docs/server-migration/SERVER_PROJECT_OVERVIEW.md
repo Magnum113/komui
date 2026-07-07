@@ -1,6 +1,6 @@
 # KOMUI self-hosted server project overview
 
-Дата актуализации: 30 июня 2026 года.
+Дата актуализации: 7 июля 2026 года.
 
 Этот документ описывает, как устроена текущая серверная реализация KOMUI на
 `89.111.152.112`, какие компоненты уже перенесены с Supabase/Vercel, где лежит
@@ -54,6 +54,131 @@ LEGACY_ORIGIN=https://komui.vercel.app
 пишет в текущую production Supabase-базу. Это сделано намеренно.
 
 ### 1.1. Последние существенные обновления
+
+#### 7 июля 2026 — product media migration foundation
+
+Начата реализация пункта GEO/SEO roadmap по переносу товарных фото с Ozon CDN
+на `komui.ru`.
+
+Целевое состояние:
+
+- PostgreSQL может продолжать хранить исходные `https://ir.ozone.ru/...` как
+  source-of-truth;
+- публичный HTML, `data/storefront-products.js`, Product JSON-LD, `og:image`,
+  `twitter:image` и `/api/v1/products` должны отдавать только
+  `https://komui.ru/media/products/...` или относительные
+  `/media/products/...`;
+- товарные фото физически лежат вне git на сервере:
+
+```text
+/var/lib/komui/media-cache/
+  manifest.json
+  manifest.previous.json
+  public/products/<hash-prefix>/<hash>/
+    original.jpg
+    480.webp
+    800.webp
+    1200.webp
+    thumb.webp
+```
+
+Добавлены файлы:
+
+- `package.json` в корне проекта — root build dependencies для scripts;
+- `pnpm-lock.yaml`, `pnpm-workspace.yaml`;
+- `scripts/sync-product-media.js` — сбор Ozon image URL из каталога, скачивание
+  оригиналов, генерация WebP variants, manifest и reports;
+- `docs/SEO_MEDIA_MIGRATION_PLAN.md` — детальный план реализации;
+- `server/src/mediaManifest.ts` — backend mapping Ozon URL -> public media URL.
+
+Изменён `scripts/build-products.js`:
+
+- читает manifest из `KOMUI_MEDIA_MANIFEST_PATH` или
+  `/var/lib/komui/media-cache/manifest.json`;
+- в локальной разработке автоматически использует
+  `.komui/media-cache/manifest.json`, если он существует;
+- поддерживает `KOMUI_MEDIA_STRICT=1`;
+- заменяет Ozon URLs на `/media/products/...`;
+- генерирует `srcset`, `sizes`, `width`, `height`;
+- ставит `fetchpriority="high"` на первую hero image product page;
+- использует `thumb.webp` для product gallery thumbnails;
+- удаляет `preconnect` к `https://ir.ozone.ru`;
+- пишет `og:image`, `twitter:image` и Product JSON-LD image с
+  `https://komui.ru/media/products/...`;
+- генерирует `data/storefront-products.js` уже с локальными media URLs, чтобы
+  главная после загрузки JS не возвращала картинки Ozon CDN.
+
+Изменён backend:
+
+- `sanitizeProduct()` в `server/src/catalog.ts` применяет media manifest mapping
+  к `primary_image_url`, `main_image_path`, `image_urls`,
+  `offers[].primary_image`, `offers[].images`;
+- `/health/ready` отдаёт `media` block со статусом manifest:
+  `path`, `loaded`, `sourceImages`, `publicImages`, `strict`;
+- если manifest отсутствует и strict mode не включён, API работает как раньше;
+- если `KOMUI_MEDIA_STRICT=1` и встречен неизвестный Ozon URL, API/build падает,
+  чтобы не публиковать Ozon CDN.
+
+Важно: постоянный backend env не должен включать `KOMUI_MEDIA_STRICT=1` без
+отдельного решения. Иначе новый Ozon URL, который ещё не попал в manifest,
+может сломать публичный catalog API до media sync. Strict mode используется в
+deploy build/sync проверках.
+
+Изменён deploy pipeline `ops/server/komui-deploy-from-git`:
+
+- ставит root build dependencies;
+- запускает `scripts/sync-product-media.js --strict` перед static build;
+- собирает static frontend с
+  `KOMUI_MEDIA_MANIFEST_PATH=/var/lib/komui/media-cache/manifest.json` и
+  `KOMUI_MEDIA_STRICT=1`;
+- проверяет публичные static artifacts на отсутствие `ir.ozone.ru`;
+- после активации backend/frontend проверяет public catalog API на отсутствие
+  `ir.ozone.ru`;
+- пишет media cache metadata в deployment registry.
+
+Изменён production runtime nginx snippet generator
+`ops/server/komui-traffic-switch-apply.sh`:
+
+```nginx
+location ^~ /media/products/ {
+    alias /var/lib/komui/media-cache/public/products/;
+    access_log off;
+    expires 30d;
+    add_header Cache-Control "public, max-age=2592000, immutable";
+    add_header X-Content-Type-Options "nosniff" always;
+}
+```
+
+Локальная проверка на 7 июля 2026:
+
+```text
+products: 34
+unique Ozon image URLs: 143
+manifest images: 143
+media-cache size: 63M
+failed downloads: 0
+```
+
+Проверено:
+
+- `KOMUI_MEDIA_STRICT=1 node scripts/build-products.js` — OK;
+- public static artifacts `index.html`, `p/`, `collections/`, `data/`,
+  `sitemap.xml`, `llms-full.txt` не содержат `ir.ozone.ru`;
+- backend tests — 48/48 passed;
+- backend TypeScript build — OK;
+- shell syntax для deploy scripts — OK.
+
+Оставшиеся связанные работы:
+
+- убедиться, что staging nginx тоже отдаёт `/media/products/` через alias на
+  `/var/lib/komui/media-cache/public/products/`;
+- задеплоить изменения через stage/prod pipeline;
+- после deploy проверить:
+
+```bash
+curl -fsS https://komui.ru/api/v1/products?limit=100 | grep ir.ozone.ru
+curl -I https://komui.ru/media/products/<hash-prefix>/<hash>/800.webp
+```
 
 #### 30 июня 2026 — server-side CDEK shipment creation
 

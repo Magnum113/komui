@@ -39,9 +39,11 @@ log_dir="${KOMUI_DEPLOY_LOG_DIR:-/var/log/komui/deploy}"
 lock_path="${KOMUI_DEPLOY_LOCK_PATH:-/run/komui-deploy.lock}"
 npm_cache_dir="${KOMUI_NPM_CACHE_DIR:-/var/cache/komui/npm}"
 deploy_home="${KOMUI_DEPLOY_HOME:-/var/lib/komui/deploy-home}"
+media_cache_dir="${KOMUI_MEDIA_CACHE_DIR:-/var/lib/komui/media-cache}"
+media_report_dir="${KOMUI_MEDIA_REPORT_DIR:-/var/log/komui/media-sync}"
 run_id="$(date -u +%Y%m%dT%H%M%SZ)"
 
-install -d -m 0755 "$log_dir" /opt/komui /var/lib/komui "$npm_cache_dir" "$deploy_home"
+install -d -m 0755 "$log_dir" /opt/komui /var/lib/komui "$npm_cache_dir" "$deploy_home" "$media_cache_dir" "$media_report_dir"
 log_file="$log_dir/${run_id}-${target}.log"
 
 exec > >(tee -a "$log_file") 2>&1
@@ -100,7 +102,20 @@ fail() {
   fi
 
   log "removing stale backend dependency/build artifacts"
-  rm -rf server/node_modules server/dist
+  rm -rf node_modules server/node_modules server/dist
+
+  if [[ -f package.json ]]; then
+    log "installing root build dependencies"
+    if command -v pnpm >/dev/null 2>&1; then
+      pnpm install --frozen-lockfile
+    elif command -v corepack >/dev/null 2>&1; then
+      corepack pnpm install --frozen-lockfile
+    elif [[ -f package-lock.json ]]; then
+      npm ci
+    else
+      npm install --no-audit --no-fund
+    fi
+  fi
 
   log "installing backend dependencies"
   npm --prefix server ci
@@ -132,8 +147,26 @@ fail() {
       ;;
   esac
 
-  log "building static frontend from $api_base"
-  KOMUI_API_BASE_URL="$api_base" node scripts/build-products.js
+  log "syncing product media from $api_base"
+  KOMUI_API_BASE_URL="$api_base" \
+    KOMUI_MEDIA_CACHE_DIR="$media_cache_dir" \
+    KOMUI_MEDIA_REPORT_DIR="$media_report_dir" \
+    KOMUI_MEDIA_STRICT=1 \
+    node scripts/sync-product-media.js --strict
+
+  log "building static frontend from $api_base with media manifest"
+  KOMUI_API_BASE_URL="$api_base" \
+    KOMUI_MEDIA_MANIFEST_PATH="$media_cache_dir/manifest.json" \
+    KOMUI_MEDIA_STRICT=1 \
+    node scripts/build-products.js
+
+  log "checking public static artifacts for external Ozon image URLs"
+  if grep -R "ir\\.ozone\\.ru" \
+    index.html p collections data sitemap.xml llms-full.txt llms.txt nginx-product-redirects.conf \
+    >/tmp/komui-ozon-url-check.log 2>/dev/null; then
+    tail -n 20 /tmp/komui-ozon-url-check.log || true
+    fail "public static artifacts still contain ir.ozone.ru"
+  fi
 
   backend_release_dir="/opt/komui/releases/$release"
   frontend_release_dir="$frontend_releases/$release"
@@ -207,6 +240,28 @@ fail() {
     fail "frontend activation failed"
   fi
 
+  log "checking public catalog API for external Ozon image URLs"
+  api_body="$(mktemp)"
+  api_smoke_ok=0
+  if curl -fsS --max-time 10 "$public_smoke_url" -o "$api_body"; then
+    api_smoke_ok=1
+  elif [[ "$target" == "stage" && -f /etc/komui/staging-access.env ]]; then
+    # shellcheck disable=SC1091
+    . /etc/komui/staging-access.env
+    if curl -fsS --max-time 10 -u "$STAGING_USER:$STAGING_PASSWORD" "$public_smoke_url" -o "$api_body"; then
+      api_smoke_ok=1
+    fi
+  fi
+  if [[ "$api_smoke_ok" -ne 1 ]]; then
+    rm -f "$api_body"
+    fail "public catalog API smoke failed"
+  fi
+  if grep -q "ir\\.ozone\\.ru" "$api_body"; then
+    rm -f "$api_body"
+    fail "public catalog API still contains ir.ozone.ru"
+  fi
+  rm -f "$api_body"
+
   if [[ "$target" == "stage" && -x /usr/local/sbin/komui-healthcheck ]]; then
     /usr/local/sbin/komui-healthcheck
   fi
@@ -222,9 +277,10 @@ fail() {
       --previous-release "$(basename "$previous_backend" 2>/dev/null || true)" \
       --git-commit "$commit" \
       --summary "Deploy ${target} from Git via Telegram bot" \
-      --check "git_fetch,backend_tests,backend_build,backend_ready,frontend_build,nginx_reload,public_smoke" \
+      --check "git_fetch,root_build_deps,backend_tests,backend_build,media_sync,frontend_build,static_no_ozon_urls,backend_ready,nginx_reload,public_smoke,api_no_ozon_urls" \
       --metadata "target=$target" \
       --metadata "frontendRelease=$frontend_release_dir" \
+      --metadata "mediaCacheDir=$media_cache_dir" \
       --no-notify >/dev/null || true
   fi
 

@@ -54,10 +54,12 @@ Vercel deployment и production-конфигурация не переключа
 - Скачать с контролем status/MIME/размера.
 - Проверить декодирование.
 - Создать стабильный mapping.
-- Обновить БД и generated pages.
+- Обновить generated pages и public API mapping.
 - Включить immutable caching в Nginx.
 
-Этот пункт можно выполнить после запуска, но тогда проект временно останется зависим от Ozon CDN.
+Стратегия реализации: БД может хранить исходные Ozon URLs как source-of-truth,
+а публичный слой (`build-products.js` и backend `/v1/products`) мапит их через
+`/var/lib/komui/media-cache/manifest.json` в `/media/products/...`.
 
 ### 6.5. Шрифты
 
@@ -163,7 +165,7 @@ Supabase project и production webhooks не переключались.
   - `/functions/v1`;
 - `data/supabase-config.js` отсутствует в активном frontend release.
 
-Ограничения:
+Ограничения на момент 27 июня 2026:
 
 - browser smoke через Playwright не выполнен: локальный temporary package
   `playwright` не был доступен через `require()` в текущем окружении. Вместо
@@ -179,3 +181,62 @@ Supabase project и production webhooks не переключались.
 - можно переходить к этапу 7 — изолированная staging-приёмка, backup и
   operational verification;
 - production cutover по-прежнему заблокирован до отдельного явного разрешения.
+
+## Дополнение 7 июля 2026 — перенос товарных фото с Ozon CDN
+
+Статус: `реализовано в коде, ожидает stage/prod deploy`.
+
+Выполнено:
+
+- создан детальный план: `docs/SEO_MEDIA_MIGRATION_PLAN.md`;
+- добавлен root `package.json` для build scripts;
+- добавлен `scripts/sync-product-media.js`;
+- локально собраны 143 уникальных Ozon image URLs из 34 товаров;
+- скачаны оригиналы;
+- сгенерированы WebP variants `480.webp`, `800.webp`, `1200.webp`,
+  `thumb.webp`;
+- создан локальный manifest `.komui/media-cache/manifest.json`;
+- локальный media-cache после sync занимает около `63M`;
+- `scripts/build-products.js` теперь читает manifest и генерирует HTML/data с
+  `/media/products/...`;
+- Product JSON-LD, `og:image`, `twitter:image`, product gallery,
+  recommendations, collection cards и prerender catalog используют local media;
+- для hero images добавлены `srcset`, `sizes`, `width`, `height`,
+  `fetchpriority="high"`;
+- thumbnails используют `thumb.webp`;
+- `data/storefront-products.js` генерируется с local media URLs;
+- добавлен backend mapping через `server/src/mediaManifest.ts`;
+- `/health/ready` показывает статус media manifest;
+- deploy script запускает media sync, strict frontend build и проверки на
+  отсутствие `ir.ozone.ru`;
+- production nginx runtime snippet получил `/media/products/` alias.
+
+Локальные проверки:
+
+```bash
+KOMUI_MEDIA_STRICT=1 node scripts/build-products.js
+rg "ir\\.ozone\\.ru" index.html p collections data sitemap.xml llms-full.txt llms.txt nginx-product-redirects.conf
+```
+
+Результат:
+
+```text
+build OK
+ir.ozone.ru не найден в публичных static artifacts
+```
+
+Backend:
+
+```text
+server TypeScript build: OK
+server tests: 48/48 passed
+```
+
+Оставшиеся server-side действия:
+
+- применить изменения на сервере через deploy;
+- убедиться, что stage nginx, как и production snippet, отдаёт
+  `/media/products/` из `/var/lib/komui/media-cache/public/products/`;
+- после deploy проверить `https://stage.komui.ru/api/v1/products?limit=100` и
+  `https://komui.ru/api/v1/products?limit=100` на отсутствие `ir.ozone.ru`;
+- проверить несколько `/media/products/.../800.webp` через `curl -I`.

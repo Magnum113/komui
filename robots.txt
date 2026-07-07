@@ -8,3 +8,7 @@ Disallow: /marketing-consent
 Disallow: /personal-data-consent
 
 Sitemap: https://komui.ru/sitemap.xml
+
+# AI discovery files (llmstxt.org convention):
+# llms: https://komui.ru/llms.txt
+# llms-full: https://komui.ru/llms-full.txt

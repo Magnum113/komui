@@ -1,4 +1,8 @@
 import type { Db } from "./db";
+import {
+  resolvePublicMediaUrl,
+  resolvePublicMediaUrls,
+} from "./mediaManifest";
 
 const PUBLIC_PRODUCT_COLUMNS = `
   p.id,
@@ -160,10 +164,30 @@ export function sanitizeProduct(row: ProductRow): PublicProduct {
     ? row.slug_redirects.filter((item): item is string => typeof item === "string")
     : [];
 
-  return {
+  const product: PublicProduct = {
     ...row,
     offers,
     slug_redirects: slugRedirects,
+  };
+
+  return {
+    ...product,
+    primary_image_url: resolvePublicMediaUrl(product.primary_image_url) as
+      | string
+      | null
+      | undefined,
+    main_image_path: resolvePublicMediaUrl(product.main_image_path) as
+      | string
+      | null
+      | undefined,
+    image_urls: resolvePublicMediaUrls(product.image_urls),
+    offers: product.offers.map((offer) => ({
+      ...offer,
+      primary_image: resolvePublicMediaUrl(offer.primary_image) as
+        | string
+        | undefined,
+      images: offer.images ? resolvePublicMediaUrls(offer.images) : undefined,
+    })),
   };
 }
 

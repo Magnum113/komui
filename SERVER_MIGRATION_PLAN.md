@@ -125,6 +125,23 @@
   текущий Supabase и новую PostgreSQL на сервере.
 - Supabase/Vercel можно отключить без потери функций и данных.
 
+## Дополнение по media/SEO, 7 июля 2026
+
+Пункт дорожной карты по переносу товарных фото с `ir.ozone.ru` на `komui.ru`
+реализован в коде и ожидает stage/prod deploy-проверки:
+
+- `scripts/sync-product-media.js` скачивает Ozon images в
+  `/var/lib/komui/media-cache`;
+- генерируются WebP variants и `manifest.json`;
+- `scripts/build-products.js` генерирует static HTML/data с
+  `/media/products/...`;
+- backend API `/v1/products` мапит Ozon URLs через media manifest;
+- deploy pipeline запускает media sync, strict build и проверки на отсутствие
+  `ir.ozone.ru` в public static/API artifacts.
+
+До полного закрытия пункта нужно выполнить deploy и проверить реальные
+`stage.komui.ru`/`komui.ru` ответы.
+
 ## Рабочие артефакты
 
 На каждом этапе обновляются:

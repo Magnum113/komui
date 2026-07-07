@@ -20,6 +20,13 @@ const SITE_ORIGIN = 'https://komui.ru';
 const API_BASE_URL = String(process.env.KOMUI_API_BASE_URL || '').replace(/\/$/, '');
 const API_PRODUCTS_PATH = process.env.KOMUI_API_PRODUCTS_PATH || '/v1/products?limit=200';
 const API_TIMEOUT_MS = 10_000;
+const LOCAL_MEDIA_MANIFEST_PATH = path.join(ROOT, '.komui', 'media-cache', 'manifest.json');
+const DEFAULT_MEDIA_MANIFEST_PATH = fs.existsSync(LOCAL_MEDIA_MANIFEST_PATH)
+  ? LOCAL_MEDIA_MANIFEST_PATH
+  : '/var/lib/komui/media-cache/manifest.json';
+const MEDIA_MANIFEST_PATH = process.env.KOMUI_MEDIA_MANIFEST_PATH || DEFAULT_MEDIA_MANIFEST_PATH;
+const MEDIA_STRICT = process.env.KOMUI_MEDIA_STRICT === '1';
+const MEDIA_PUBLIC_PREFIX = '/media/products/';
 const STATIC_PAGES = [
   { url: '/', changefreq: 'weekly', priority: '1.0' },
   { url: '/delivery', changefreq: 'monthly', priority: '0.5' },
@@ -30,6 +37,169 @@ const STATIC_PAGES = [
   { url: '/privacy', changefreq: 'yearly', priority: '0.2' },
   { url: '/seller', changefreq: 'yearly', priority: '0.2' },
 ];
+
+function readJsonIfExists(filePath) {
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  } catch (err) {
+    if (err && err.code === 'ENOENT') return null;
+    throw err;
+  }
+}
+
+function loadMediaManifest() {
+  const manifest = readJsonIfExists(MEDIA_MANIFEST_PATH);
+  const images = manifest && manifest.images && typeof manifest.images === 'object'
+    ? manifest.images
+    : {};
+  const bySource = new Map();
+  const byPublicUrl = new Map();
+
+  for (const [sourceUrl, entry] of Object.entries(images)) {
+    if (!entry || typeof entry !== 'object') continue;
+    bySource.set(sourceUrl, entry);
+    for (const url of [
+      entry.original,
+      entry.fallback,
+      entry.thumb,
+      ...(Array.isArray(entry.variants) ? entry.variants.map(variant => variant && variant.url) : []),
+    ]) {
+      if (typeof url === 'string' && url) byPublicUrl.set(url, entry);
+    }
+  }
+
+  return {
+    path: MEDIA_MANIFEST_PATH,
+    loaded: Boolean(manifest),
+    bySource,
+    byPublicUrl,
+  };
+}
+
+const MEDIA_MANIFEST = loadMediaManifest();
+
+function isOzonImageUrl(value) {
+  if (typeof value !== 'string' || !value) return false;
+  try {
+    const parsed = new URL(value);
+    return parsed.hostname === 'ir.ozone.ru';
+  } catch {
+    return false;
+  }
+}
+
+function isPublicMediaUrl(value) {
+  return typeof value === 'string' && value.startsWith(MEDIA_PUBLIC_PREFIX);
+}
+
+function absolutizeUrl(value) {
+  if (!value) return '';
+  if (/^https?:\/\//i.test(value)) return value;
+  if (String(value).startsWith('/')) return `${SITE_ORIGIN}${value}`;
+  return value;
+}
+
+function mediaEntryFor(value) {
+  if (!value || typeof value !== 'string') return null;
+  if (MEDIA_MANIFEST.bySource.has(value)) return MEDIA_MANIFEST.bySource.get(value);
+  if (MEDIA_MANIFEST.byPublicUrl.has(value)) return MEDIA_MANIFEST.byPublicUrl.get(value);
+  return null;
+}
+
+function resolvePublicImage(value, options = {}) {
+  if (!value) return '';
+  const absolute = Boolean(options.absolute);
+  const entry = mediaEntryFor(value);
+  const resolved = entry && options.variant === 'thumb' && entry.thumb
+    ? entry.thumb
+    : entry && entry.fallback
+      ? entry.fallback
+      : value;
+
+  if (isOzonImageUrl(value) && !entry && MEDIA_STRICT) {
+    throw new Error(`Media manifest does not contain Ozon image URL: ${value}`);
+  }
+
+  return absolute ? absolutizeUrl(resolved) : resolved;
+}
+
+function resolvePublicImages(values, options = {}) {
+  return (values || [])
+    .map(value => resolvePublicImage(value, options))
+    .filter(Boolean);
+}
+
+function imageSrcSet(value, options = {}) {
+  const absolute = Boolean(options.absolute);
+  if (options.variant === 'thumb') return '';
+  const entry = mediaEntryFor(value);
+  if (!entry || !Array.isArray(entry.variants)) return '';
+  return entry.variants
+    .filter(variant => variant && variant.url && variant.width)
+    .map(variant => `${absolute ? absolutizeUrl(variant.url) : variant.url} ${variant.width}w`)
+    .join(', ');
+}
+
+function imageDimensions(value) {
+  const entry = mediaEntryFor(value);
+  if (!entry) return {};
+  const fallback = Array.isArray(entry.variants)
+    ? entry.variants.find(variant => variant && variant.url === entry.fallback) || entry.variants[0]
+    : null;
+  return {
+    width: Number((fallback && fallback.width) || entry.width) || undefined,
+    height: Number((fallback && fallback.height) || entry.height) || undefined,
+  };
+}
+
+function imageThumbDimensions(value) {
+  const entry = mediaEntryFor(value);
+  if (!entry || !entry.thumb || !entry.width || !entry.height) return {};
+  const ratio = Number(entry.height) / Number(entry.width);
+  if (!Number.isFinite(ratio) || ratio <= 0) return {};
+  return {
+    width: 320,
+    height: Math.round(320 * ratio),
+  };
+}
+
+function renderResponsiveImage(value, options = {}) {
+  if (!value) return '';
+  const src = resolvePublicImage(value, options);
+  const srcset = imageSrcSet(value, options);
+  const dimensions = options.variant === 'thumb' ? imageThumbDimensions(value) : imageDimensions(value);
+  const attrs = [
+    options.className ? `class="${escapeAttr(options.className)}"` : '',
+    `src="${escapeAttr(src)}"`,
+    srcset ? `srcset="${escapeAttr(srcset)}"` : '',
+    options.sizes ? `sizes="${escapeAttr(options.sizes)}"` : '',
+    `alt="${escapeAttr(options.alt || '')}"`,
+    dimensions.width ? `width="${escapeAttr(dimensions.width)}"` : '',
+    dimensions.height ? `height="${escapeAttr(dimensions.height)}"` : '',
+    `loading="${escapeAttr(options.loading || 'lazy')}"`,
+    options.fetchpriority ? `fetchpriority="${escapeAttr(options.fetchpriority)}"` : '',
+    `decoding="${escapeAttr(options.decoding || 'async')}"`,
+    options.draggable === false ? 'draggable="false"' : '',
+  ].filter(Boolean);
+  return `<img ${attrs.join(' ')}>`;
+}
+
+function mapProductMedia(product) {
+  const mapped = {
+    ...product,
+    primary_image_url: resolvePublicImage(product.primary_image_url),
+    main_image_path: resolvePublicImage(product.main_image_path),
+    image_urls: resolvePublicImages(product.image_urls || []),
+    offers: Array.isArray(product.offers)
+      ? product.offers.map(offer => ({
+          ...offer,
+          primary_image: resolvePublicImage(offer && offer.primary_image),
+          images: resolvePublicImages((offer && offer.images) || []),
+        }))
+      : [],
+  };
+  return mapped;
+}
 const COLLECTION_LANDINGS = [
   {
     slug: 'naruto',
@@ -434,7 +604,7 @@ function productImages(product) {
   const list = (product.image_urls && product.image_urls.length ? product.image_urls : [product.primary_image_url])
     .filter(Boolean);
   // De-dupe while preserving order.
-  return [...new Set(list)];
+  return [...new Set(resolvePublicImages(list))];
 }
 
 function cleanChartCell(value) {
@@ -620,7 +790,7 @@ function productSku(product) {
 }
 
 function buildJsonLd(product) {
-  const images = productImages(product);
+  const images = productImages(product).map(absolutizeUrl);
   const lowPrice = Number(product.price_min);
   const highPrice = Number(product.price_max);
   const offers = visibleOffers(product)
@@ -701,7 +871,11 @@ function productRecommendationCard(product) {
   const sizes = catalogSizesHtml(product.sizes || []);
   return `<article class="p-reco-card">
     <a class="p-reco-media" href="/p/${escapeAttr(product.slug)}" aria-label="${escapeAttr(product.name)}">
-      ${img ? `<img src="${escapeAttr(img)}" alt="${escapeAttr(product.name)}" loading="lazy" decoding="async">` : ''}
+      ${img ? renderResponsiveImage(img, {
+        alt: product.name,
+        loading: 'lazy',
+        sizes: '(max-width: 768px) 45vw, 220px',
+      }) : ''}
     </a>
     <div class="p-reco-body">
       ${collection ? `<div class="p-reco-col">${escapeHtml(collection)}</div>` : ''}
@@ -755,7 +929,7 @@ function renderProductPage(product, products = []) {
   const title = buildTitle(product);
   const description = shortFrom(product);
   const canonical = `${SITE_ORIGIN}/p/${product.slug}`;
-  const ogImage = heroImage || `${SITE_ORIGIN}/assets/og-image.png`;
+  const ogImage = heroImage ? absolutizeUrl(heroImage) : `${SITE_ORIGIN}/assets/og-image.png`;
   const sizeButtons = product.sizes
     .map((s, i) => `<button type="button" class="p-size${i === 0 ? ' is-active' : ''}" data-size="${escapeAttr(s)}">${escapeHtml(s)}</button>`)
     .join('');
@@ -768,7 +942,14 @@ function renderProductPage(product, products = []) {
     ? `<div class="p-gallery" data-p-gallery>
         <div class="p-hero">
           <div class="p-track" id="pTrack">
-            ${images.map((u, i) => `<img class="p-slide" src="${escapeAttr(u)}" alt="${escapeAttr(product.name)} — фото ${i + 1}" loading="${i === 0 ? 'eager' : 'lazy'}" decoding="async" draggable="false">`).join('')}
+            ${images.map((u, i) => renderResponsiveImage(u, {
+              className: 'p-slide',
+              alt: `${product.name} — фото ${i + 1}`,
+              loading: i === 0 ? 'eager' : 'lazy',
+              fetchpriority: i === 0 ? 'high' : '',
+              sizes: '(max-width: 900px) 100vw, 680px',
+              draggable: false,
+            })).join('')}
           </div>
           ${images.length > 1 ? `<button type="button" class="p-garr p-prev" id="pPrev" aria-label="Предыдущее фото"><span aria-hidden="true">‹</span></button>
           <button type="button" class="p-garr p-next" id="pNext" aria-label="Следующее фото"><span aria-hidden="true">›</span></button>
@@ -776,7 +957,12 @@ function renderProductPage(product, products = []) {
             ${images.map((_, i) => `<button type="button" class="p-gdot${i === 0 ? ' is-active' : ''}" data-go="${i}" aria-label="Фото ${i + 1}"></button>`).join('')}
           </div>` : ''}
         </div>
-        ${galleryThumbs.length > 1 ? `<div class="p-thumbs">${galleryThumbs.map((u, i) => `<button type="button" class="p-thumb${i === 0 ? ' is-active' : ''}" data-go="${i}" aria-label="Показать фото ${i + 1}"><img src="${escapeAttr(u)}" alt="${escapeAttr(product.name)} — миниатюра ${i + 1}" loading="lazy" decoding="async"></button>`).join('')}</div>` : ''}
+        ${galleryThumbs.length > 1 ? `<div class="p-thumbs">${galleryThumbs.map((u, i) => `<button type="button" class="p-thumb${i === 0 ? ' is-active' : ''}" data-go="${i}" aria-label="Показать фото ${i + 1}">${renderResponsiveImage(u, {
+          alt: `${product.name} — миниатюра ${i + 1}`,
+          loading: 'lazy',
+          variant: 'thumb',
+          sizes: '96px',
+        })}</button>`).join('')}</div>` : ''}
        </div>`
     : '';
   const recommendationsHtml = productRecommendations(product, products);
@@ -808,7 +994,6 @@ function renderProductPage(product, products = []) {
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://ir.ozone.ru">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/legal.css" />
 <link rel="stylesheet" href="/assets/product.css" />
@@ -1059,7 +1244,11 @@ function collectionProductCard(product) {
     .join('');
   return `<article class="c-card">
     <a class="c-card-media" href="/p/${escapeAttr(product.slug)}" aria-label="${escapeAttr(product.name)}">
-      ${img ? `<img src="${escapeAttr(img)}" alt="${escapeAttr(product.name)}" loading="lazy" decoding="async">` : ''}
+      ${img ? renderResponsiveImage(img, {
+        alt: product.name,
+        loading: 'lazy',
+        sizes: '(max-width: 768px) 50vw, 280px',
+      }) : ''}
     </a>
     <div class="c-card-body">
       ${badges ? `<div class="c-card-badges">${badges}</div>` : ''}
@@ -1150,7 +1339,6 @@ function renderCollectionPage(landing) {
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://ir.ozone.ru">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/legal.css" />
 <link rel="stylesheet" href="/assets/product.css" />
@@ -1232,6 +1420,8 @@ function renderSitemap(products, collectionLandings = []) {
       changefreq: p.changefreq,
       priority: p.priority,
     })),
+    { loc: `${SITE_ORIGIN}/llms.txt`, lastmod: today, changefreq: 'weekly', priority: '0.3' },
+    { loc: `${SITE_ORIGIN}/llms-full.txt`, lastmod: today, changefreq: 'weekly', priority: '0.3' },
     ...collectionLandings.map(landing => ({
       loc: `${SITE_ORIGIN}/collections/${landing.slug}`,
       lastmod: today,
@@ -1258,7 +1448,7 @@ function renderCatalogPrerender(products, limit = 12) {
   // Their primary purpose: give crawlers (Yandex/Google/GPTBot/PerplexityBot)
   // a real HTML list of products with descriptive text and direct links.
   const items = products.slice(0, limit).map(p => {
-    const img = (p.image_urls && p.image_urls[0]) || p.primary_image_url || '';
+    const img = productImages(p)[0] || '';
     const price = formatPriceRange(p.price_min, p.price_max) || '';
     const oldPrice = Number(p.compare_at_price);
     const oldPriceHtml = oldPrice && oldPrice > Number(p.price_min)
@@ -1270,7 +1460,11 @@ function renderCatalogPrerender(products, limit = 12) {
     const alt = altParts.length ? altParts.join(' ') : p.name;
     return `<article class="card prerender" data-id="${escapeAttr(p.id)}">` +
       `<a class="media" href="/p/${escapeAttr(p.slug)}" aria-label="${escapeAttr(p.name)}">` +
-        (img ? `<img src="${escapeAttr(img)}" alt="${escapeAttr(alt)}" loading="lazy" decoding="async">` : '') +
+        (img ? renderResponsiveImage(img, {
+          alt,
+          loading: 'lazy',
+          sizes: '(max-width: 768px) 50vw, 320px',
+        }) : '') +
       `</a>` +
       `<div class="info">` +
         (collection ? `<div class="col">${escapeHtml(collection)}</div>` : '') +
@@ -1309,6 +1503,10 @@ Disallow: /marketing-consent
 Disallow: /personal-data-consent
 
 Sitemap: ${SITE_ORIGIN}/sitemap.xml
+
+# AI discovery files (llmstxt.org convention):
+# llms: ${SITE_ORIGIN}/llms.txt
+# llms-full: ${SITE_ORIGIN}/llms-full.txt
 `;
 }
 
@@ -1357,11 +1555,20 @@ function renderLlmsFull(products) {
 }
 
 async function main() {
-  const products = await loadProducts();
-  if (!products.length) {
+  const sourceProducts = await loadProducts();
+  if (!sourceProducts.length) {
     console.error('No products found in data/storefront-products.js');
     process.exit(1);
   }
+  if (MEDIA_MANIFEST.loaded) {
+    console.log(`✓ Loaded media manifest: ${MEDIA_MANIFEST.path} (${MEDIA_MANIFEST.bySource.size} source image(s))`);
+  } else if (MEDIA_STRICT) {
+    throw new Error(`KOMUI_MEDIA_STRICT=1 but media manifest was not found: ${MEDIA_MANIFEST.path}`);
+  } else {
+    console.warn(`! Media manifest not found: ${MEDIA_MANIFEST.path}; image URLs will be left as-is`);
+  }
+
+  const products = sourceProducts.map(mapProductMedia);
   writeStorefrontProductsFallback(products);
   const collectionLandings = buildCollectionLandings(products);
   const productRedirects = buildProductRedirects(products);

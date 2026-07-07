@@ -1,6 +1,9 @@
 # KOMUI Storefront
 
-Статическая витрина аниме-мерча KOMUI: футболки, худи и свитшоты с принтами и вышивкой. Проект собран как один самодостаточный HTML-файл с локальными данными и изображениями. Сборка, Node.js и backend для запуска витрины не требуются.
+Статическая витрина и self-hosted backend аниме-мерча KOMUI: футболки, худи и
+свитшоты с принтами и вышивкой. Production работает на собственном сервере:
+nginx отдаёт HTML/static, Fastify backend отдаёт API, PostgreSQL хранит каталог,
+заказы, платежи, CDEK и admin/Ozon import данные.
 
 ## Что внутри
 
@@ -9,23 +12,34 @@
 - Поиск и сортировка товаров.
 - Карточки товаров с галереей изображений.
 - Быстрый просмотр товара.
-- Демо-корзина без реальной оплаты.
+- Корзина, checkout, T-Bank payment flow и CDEK delivery flow через KOMUI API.
 - Подключение к KOMUI API, если конфиг доступен.
 - Локальный fallback-каталог, если API недоступен.
+- SEO product pages, collection pages, sitemap, robots и LLM-файлы.
+- Локальный media-cache для товарных фото вместо hotlink на Ozon CDN.
 
 ## Технологии
 
-Проект написан на чистом frontend-стеке:
+Frontend написан на чистом стеке:
 
 - HTML5;
-- CSS3 внутри `index.html`;
-- vanilla JavaScript внутри `index.html`;
+- CSS3;
+- vanilla JavaScript;
 - локальные JSON/JS-файлы с данными;
-- локальные JPG-изображения;
+- WebP-изображения из локального media-cache;
 - KOMUI backend API как внешний источник каталога;
 - Google Fonts: `Unbounded`, `Inter`, `Noto Sans JP`.
 
-В проекте нет React, Next.js, npm-скриптов, сборщика и серверной части.
+Backend:
+
+- Node.js 22;
+- Fastify;
+- PostgreSQL;
+- TypeScript;
+- systemd/nginx deploy на сервере.
+
+Root `package.json` используется для build scripts, включая media sync через
+`sharp`. Backend-зависимости лежат отдельно в `server/package.json`.
 
 ## Структура проекта
 
@@ -49,6 +63,13 @@
 ├── sku-mapping.csv
 ├── sku-mapping.md
 ├── sku-template-guide.md
+├── scripts/
+│   ├── build-products.js
+│   └── sync-product-media.js
+├── server/
+│   ├── src/
+│   └── test/
+├── ops/server/
 └── README.md
 ```
 
@@ -71,17 +92,70 @@
 - `addToCart()` и `updateCart()` управляют корзиной.
 - `initHeroProducts()` и canvas-логика отвечают за анимации главного экрана.
 
-### `assets/`
+### `scripts/sync-product-media.js`
 
-Изображения товаров.
-
-- `assets/ozon-main/` - 24 основные картинки, которые использует локальный fallback-каталог.
-
-Пути к изображениям в данных должны быть относительными от корня проекта, например:
+Синхронизирует товарные изображения из `https://ir.ozone.ru` в локальный
+media-cache:
 
 ```text
-./assets/ozon-main/01-футболка-с-принтом-сатору-годжо.jpg
+/var/lib/komui/media-cache/
+  manifest.json
+  manifest.previous.json
+  public/products/<hash-prefix>/<hash>/
+    original.jpg
+    480.webp
+    800.webp
+    1200.webp
+    thumb.webp
 ```
+
+Публичный URL:
+
+```text
+/media/products/<hash-prefix>/<hash>/800.webp
+```
+
+Локально cache лежит в `.komui/media-cache` и не попадает в git.
+
+Основные команды:
+
+```bash
+node scripts/sync-product-media.js --dry-run
+node scripts/sync-product-media.js
+KOMUI_API_BASE_URL=http://127.0.0.1:3001 node scripts/sync-product-media.js
+```
+
+### `scripts/build-products.js`
+
+Генерирует:
+
+- `p/*.html`;
+- `collections/*.html`;
+- `sitemap.xml`;
+- `robots.txt`;
+- `llms-full.txt`;
+- `data/storefront-products.js`;
+- `nginx-product-redirects.conf`.
+
+При наличии media manifest заменяет Ozon image URLs на `/media/products/...`,
+добавляет `srcset`, `sizes`, `width`, `height`, `fetchpriority` для hero image и
+пишет Product JSON-LD/meta images уже с `https://komui.ru/media/products/...`.
+
+Production build должен запускаться в strict mode:
+
+```bash
+KOMUI_MEDIA_MANIFEST_PATH=/var/lib/komui/media-cache/manifest.json \
+KOMUI_MEDIA_STRICT=1 \
+KOMUI_API_BASE_URL=http://127.0.0.1:3001 \
+node scripts/build-products.js
+```
+
+### `assets/`
+
+Статические изображения сайта и исторические локальные картинки.
+
+Актуальные товарные фото production не хранятся в git. Они живут на сервере в
+`/var/lib/komui/media-cache` и отдаются nginx по `/media/products/...`.
 
 ### `data/storefront-products.js`
 
@@ -92,7 +166,9 @@ window.KOMUI_STORE_STATS = { ... };
 window.KOMUI_PRODUCTS = [ ... ];
 ```
 
-Эти данные используются, если KOMUI API недоступен или не настроен. При обновлении каталога важно синхронизировать API-источник и локальный fallback.
+Эти данные используются, если KOMUI API недоступен или не настроен. Файл
+генерируется `scripts/build-products.js`. После media migration в нём должны
+быть только `/media/products/...`, а не `https://ir.ozone.ru/...`.
 
 ### `data/api-config.js`
 
@@ -183,22 +259,37 @@ http://localhost:8080
 
 ## Деплой
 
-Проект можно деплоить как обычную статическую папку.
+Production/stage deploy выполняется на сервере скриптом:
 
-Подходящие варианты:
+```bash
+sudo /usr/local/sbin/komui-deploy-from-git stage main
+sudo /usr/local/sbin/komui-deploy-from-git prod main
+```
 
-- GitHub Pages;
-- Netlify;
-- Vercel static project;
-- любой nginx/apache/static hosting.
+Скрипт:
 
-Для GitHub Pages обычно достаточно выбрать ветку `main` и корень репозитория как source.
+1. подтягивает `origin/main`;
+2. ставит root build dependencies;
+3. ставит backend dependencies;
+4. гоняет backend tests;
+5. собирает backend;
+6. запускает `scripts/sync-product-media.js`;
+7. собирает static frontend в `KOMUI_MEDIA_STRICT=1`;
+8. проверяет, что публичные артефакты не содержат `ir.ozone.ru`;
+9. создаёт immutable backend/frontend releases;
+10. переключает symlink;
+11. перезапускает backend/nginx;
+12. проверяет public API и отсутствие `ir.ozone.ru` в catalog API.
 
 ## Важные нюансы
 
 - Корзина живёт только в памяти страницы. После перезагрузки она очищается.
 - Email-форма в футере не отправляет данные на backend.
 - Frontend не должен содержать приватные ключи backend-интеграций и базы данных.
+- Public HTML, JSON-LD, meta images, `data/storefront-products.js` и
+  `/api/v1/products` не должны отдавать `ir.ozone.ru`.
+- PostgreSQL может хранить исходные Ozon URLs как source-of-truth. Публичный
+  слой мапит их через media manifest.
 - Тексты из API вставляются в DOM через HTML-шаблоны. Если источник данных станет пользовательским, нужно добавить escaping/sanitization.
 - `.env.local`, `.DS_Store`, `.git/`, `.claude/` и другие локальные файлы не должны попадать в репозиторий.
 - Файл `data/api-config.js` допустим только для публичных URL/путей. Секреты туда не добавлять.
@@ -227,5 +318,7 @@ python3 -m http.server 8080
 - quick view открывается;
 - галерея листается;
 - товар добавляется в корзину;
-- изображения не отдают 404;
-- Supabase-запрос либо отвечает 200, либо сайт корректно остаётся на fallback-данных.
+- изображения `/media/products/...` не отдают 404;
+- `/api/v1/products?limit=100` не содержит `ir.ozone.ru`;
+- `index.html`, `p/`, `collections/`, `data/` не содержат `ir.ozone.ru`;
+- KOMUI API либо отвечает 200, либо сайт корректно остаётся на fallback-данных.

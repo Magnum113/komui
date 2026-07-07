@@ -8,7 +8,16 @@
 агентов. Все существенные изменения серверной реализации нужно описывать в
 основном документе выше.
 
-Последнее крупное обновление: 30 июня 2026 — server-side создание CDEK
+Последнее крупное обновление: 7 июля 2026 — начата реализация пункта
+GEO/SEO roadmap по переносу товарных фото с Ozon CDN на `komui.ru`.
+Добавлены root build dependencies, `scripts/sync-product-media.js`,
+локальный/server media-cache, manifest mapping, WebP variants, `srcset`,
+`width/height`, `fetchpriority`, nginx `/media/products/`, backend API mapping
+через `server/src/mediaManifest.ts` и deploy checks, которые запрещают
+`ir.ozone.ru` в публичных static/API артефактах. Подробный план:
+`docs/SEO_MEDIA_MIGRATION_PLAN.md`.
+
+Предыдущее крупное обновление: 30 июня 2026 — server-side создание CDEK
 shipment, admin retry endpoint, ожидание трек-номера и кнопка отслеживания СДЭК
 на странице результата оплаты. Также исправлен повтор оплаты после failed
 payment: stale payment draft очищается, а checkout создаёт новый платёж вместо

@@ -131,6 +131,14 @@ location ^~ /.well-known/acme-challenge/ {
     default_type text/plain;
 }
 
+location ^~ /media/products/ {
+    alias /var/lib/komui/media-cache/public/products/;
+    access_log off;
+    expires 30d;
+    add_header Cache-Control "public, max-age=2592000, immutable";
+    add_header X-Content-Type-Options "nosniff" always;
+}
+
 location = /api/v1/webhooks/tbank {
     proxy_pass http://127.0.0.1:3001/v1/webhooks/tbank;
     proxy_http_version 1.1;

@@ -48,18 +48,18 @@ window.KOMUI_PRODUCTS = [
     "price_min": "2900.00",
     "price_max": "2900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-y/12106445254.jpg",
-    "main_image_path": "https://ir.ozone.ru/s3/multimedia-1-y/12106445254.jpg",
+    "primary_image_url": "/media/products/c2/c2bfaf7fa7bad2b3/800.webp",
+    "main_image_path": "/media/products/c2/c2bfaf7fa7bad2b3/800.webp",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-y/12106445254.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-6/11995439478.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-c/12106441128.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-a/12107643778.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-x/12107643081.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/c2/c2bfaf7fa7bad2b3/800.webp",
+      "/media/products/64/64ac705202a65490/800.webp",
+      "/media/products/e1/e157a2f928a53859/800.webp",
+      "/media/products/2c/2c27ff3f2b388508/800.webp",
+      "/media/products/a8/a8ca1dc1c929f308/800.webp",
+      "/media/products/f1/f17ec7c55e7c3715/800.webp",
+      "/media/products/49/4911f91ac320dfc3/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -134,17 +134,17 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-y/12106445254.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-6/11995439478.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-c/12106441128.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-a/12107643778.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-x/12107643081.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/c2/c2bfaf7fa7bad2b3/800.webp",
+          "/media/products/64/64ac705202a65490/800.webp",
+          "/media/products/e1/e157a2f928a53859/800.webp",
+          "/media/products/2c/2c27ff3f2b388508/800.webp",
+          "/media/products/a8/a8ca1dc1c929f308/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-y/12106445254.jpg"
+        "primary_image": "/media/products/c2/c2bfaf7fa7bad2b3/800.webp"
       },
       {
         "sku": 4933339776,
@@ -153,17 +153,17 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-y/12106445254.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-6/11995439478.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-c/12106441128.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-a/12107643778.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-x/12107643081.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/c2/c2bfaf7fa7bad2b3/800.webp",
+          "/media/products/64/64ac705202a65490/800.webp",
+          "/media/products/e1/e157a2f928a53859/800.webp",
+          "/media/products/2c/2c27ff3f2b388508/800.webp",
+          "/media/products/a8/a8ca1dc1c929f308/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-y/12106445254.jpg"
+        "primary_image": "/media/products/c2/c2bfaf7fa7bad2b3/800.webp"
       },
       {
         "sku": 4933337073,
@@ -172,17 +172,17 @@ window.KOMUI_PRODUCTS = [
         "size": "XXL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-y/12106445254.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-6/11995439478.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-c/12106441128.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-a/12107643778.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-x/12107643081.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/c2/c2bfaf7fa7bad2b3/800.webp",
+          "/media/products/64/64ac705202a65490/800.webp",
+          "/media/products/e1/e157a2f928a53859/800.webp",
+          "/media/products/2c/2c27ff3f2b388508/800.webp",
+          "/media/products/a8/a8ca1dc1c929f308/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-y/12106445254.jpg"
+        "primary_image": "/media/products/c2/c2bfaf7fa7bad2b3/800.webp"
       },
       {
         "sku": 4933338884,
@@ -191,17 +191,17 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-y/12106445254.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-6/11995439478.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-c/12106441128.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-a/12107643778.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-x/12107643081.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/c2/c2bfaf7fa7bad2b3/800.webp",
+          "/media/products/64/64ac705202a65490/800.webp",
+          "/media/products/e1/e157a2f928a53859/800.webp",
+          "/media/products/2c/2c27ff3f2b388508/800.webp",
+          "/media/products/a8/a8ca1dc1c929f308/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-y/12106445254.jpg"
+        "primary_image": "/media/products/c2/c2bfaf7fa7bad2b3/800.webp"
       },
       {
         "sku": 4933338895,
@@ -210,17 +210,17 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-y/12106445254.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-6/11995439478.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-c/12106441128.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-a/12107643778.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-x/12107643081.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/c2/c2bfaf7fa7bad2b3/800.webp",
+          "/media/products/64/64ac705202a65490/800.webp",
+          "/media/products/e1/e157a2f928a53859/800.webp",
+          "/media/products/2c/2c27ff3f2b388508/800.webp",
+          "/media/products/a8/a8ca1dc1c929f308/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-y/12106445254.jpg"
+        "primary_image": "/media/products/c2/c2bfaf7fa7bad2b3/800.webp"
       }
     ],
     "is_active": true,
@@ -277,15 +277,15 @@ window.KOMUI_PRODUCTS = [
     "price_min": "2900.00",
     "price_max": "2900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-n/12107954795.jpg",
-    "main_image_path": "https://ir.ozone.ru/s3/multimedia-1-n/12107954795.jpg",
+    "primary_image_url": "/media/products/6b/6b90b94acf6004f2/800.webp",
+    "main_image_path": "/media/products/6b/6b90b94acf6004f2/800.webp",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-n/12107954795.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-2/12107953802.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/6b/6b90b94acf6004f2/800.webp",
+      "/media/products/6e/6e78cdda03b23d5d/800.webp",
+      "/media/products/f1/f17ec7c55e7c3715/800.webp",
+      "/media/products/49/4911f91ac320dfc3/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -360,14 +360,14 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-n/12107954795.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-2/12107953802.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/6b/6b90b94acf6004f2/800.webp",
+          "/media/products/6e/6e78cdda03b23d5d/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-n/12107954795.jpg"
+        "primary_image": "/media/products/6b/6b90b94acf6004f2/800.webp"
       },
       {
         "sku": 4933961899,
@@ -376,14 +376,14 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-n/12107954795.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-2/12107953802.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/6b/6b90b94acf6004f2/800.webp",
+          "/media/products/6e/6e78cdda03b23d5d/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-n/12107954795.jpg"
+        "primary_image": "/media/products/6b/6b90b94acf6004f2/800.webp"
       },
       {
         "sku": 4933962841,
@@ -392,14 +392,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XXL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-n/12107954795.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-2/12107953802.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/6b/6b90b94acf6004f2/800.webp",
+          "/media/products/6e/6e78cdda03b23d5d/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-n/12107954795.jpg"
+        "primary_image": "/media/products/6b/6b90b94acf6004f2/800.webp"
       },
       {
         "sku": 4933962506,
@@ -408,14 +408,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-n/12107954795.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-2/12107953802.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/6b/6b90b94acf6004f2/800.webp",
+          "/media/products/6e/6e78cdda03b23d5d/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-n/12107954795.jpg"
+        "primary_image": "/media/products/6b/6b90b94acf6004f2/800.webp"
       },
       {
         "sku": 4933962873,
@@ -424,14 +424,14 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-n/12107954795.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-2/12107953802.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/6b/6b90b94acf6004f2/800.webp",
+          "/media/products/6e/6e78cdda03b23d5d/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-n/12107954795.jpg"
+        "primary_image": "/media/products/6b/6b90b94acf6004f2/800.webp"
       }
     ],
     "is_active": true,
@@ -488,15 +488,15 @@ window.KOMUI_PRODUCTS = [
     "price_min": "2900.00",
     "price_max": "2900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-o/12109478460.jpg",
-    "main_image_path": "https://ir.ozone.ru/s3/multimedia-1-o/12109478460.jpg",
+    "primary_image_url": "/media/products/14/148268b23b96c163/800.webp",
+    "main_image_path": "/media/products/14/148268b23b96c163/800.webp",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-o/12109478460.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-a/12109476826.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/14/148268b23b96c163/800.webp",
+      "/media/products/06/06d5a05e35c8d602/800.webp",
+      "/media/products/f1/f17ec7c55e7c3715/800.webp",
+      "/media/products/49/4911f91ac320dfc3/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -571,14 +571,14 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-o/12109478460.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-a/12109476826.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/14/148268b23b96c163/800.webp",
+          "/media/products/06/06d5a05e35c8d602/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-o/12109478460.jpg"
+        "primary_image": "/media/products/14/148268b23b96c163/800.webp"
       },
       {
         "sku": 4933963289,
@@ -587,14 +587,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XXL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-o/12109478460.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-a/12109476826.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/14/148268b23b96c163/800.webp",
+          "/media/products/06/06d5a05e35c8d602/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-o/12109478460.jpg"
+        "primary_image": "/media/products/14/148268b23b96c163/800.webp"
       },
       {
         "sku": 4933963055,
@@ -603,14 +603,14 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-o/12109478460.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-a/12109476826.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/14/148268b23b96c163/800.webp",
+          "/media/products/06/06d5a05e35c8d602/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-o/12109478460.jpg"
+        "primary_image": "/media/products/14/148268b23b96c163/800.webp"
       },
       {
         "sku": 4933962704,
@@ -619,14 +619,14 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-o/12109478460.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-a/12109476826.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/14/148268b23b96c163/800.webp",
+          "/media/products/06/06d5a05e35c8d602/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-o/12109478460.jpg"
+        "primary_image": "/media/products/14/148268b23b96c163/800.webp"
       },
       {
         "sku": 4933963133,
@@ -635,14 +635,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-o/12109478460.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-a/12109476826.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/14/148268b23b96c163/800.webp",
+          "/media/products/06/06d5a05e35c8d602/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-o/12109478460.jpg"
+        "primary_image": "/media/products/14/148268b23b96c163/800.webp"
       }
     ],
     "is_active": true,
@@ -699,15 +699,15 @@ window.KOMUI_PRODUCTS = [
     "price_min": "2900.00",
     "price_max": "2900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-3/12109664055.jpg",
-    "main_image_path": "https://ir.ozone.ru/s3/multimedia-1-3/12109664055.jpg",
+    "primary_image_url": "/media/products/38/38d93a0df6132c9e/800.webp",
+    "main_image_path": "/media/products/38/38d93a0df6132c9e/800.webp",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-3/12109664055.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12109669263.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/38/38d93a0df6132c9e/800.webp",
+      "/media/products/d6/d61d37f3068cbc10/800.webp",
+      "/media/products/f1/f17ec7c55e7c3715/800.webp",
+      "/media/products/49/4911f91ac320dfc3/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -782,14 +782,14 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-3/12109664055.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12109669263.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/38/38d93a0df6132c9e/800.webp",
+          "/media/products/d6/d61d37f3068cbc10/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-3/12109664055.jpg"
+        "primary_image": "/media/products/38/38d93a0df6132c9e/800.webp"
       },
       {
         "sku": 4933963134,
@@ -798,14 +798,14 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-3/12109664055.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12109669263.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/38/38d93a0df6132c9e/800.webp",
+          "/media/products/d6/d61d37f3068cbc10/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-3/12109664055.jpg"
+        "primary_image": "/media/products/38/38d93a0df6132c9e/800.webp"
       },
       {
         "sku": 4933963108,
@@ -814,14 +814,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XXL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-3/12109664055.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12109669263.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/38/38d93a0df6132c9e/800.webp",
+          "/media/products/d6/d61d37f3068cbc10/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-3/12109664055.jpg"
+        "primary_image": "/media/products/38/38d93a0df6132c9e/800.webp"
       },
       {
         "sku": 4933963303,
@@ -830,14 +830,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-3/12109664055.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12109669263.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/38/38d93a0df6132c9e/800.webp",
+          "/media/products/d6/d61d37f3068cbc10/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-3/12109664055.jpg"
+        "primary_image": "/media/products/38/38d93a0df6132c9e/800.webp"
       },
       {
         "sku": 4933962877,
@@ -846,14 +846,14 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-3/12109664055.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12109669263.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/38/38d93a0df6132c9e/800.webp",
+          "/media/products/d6/d61d37f3068cbc10/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-3/12109664055.jpg"
+        "primary_image": "/media/products/38/38d93a0df6132c9e/800.webp"
       }
     ],
     "is_active": true,
@@ -910,20 +910,20 @@ window.KOMUI_PRODUCTS = [
     "price_min": "2900.00",
     "price_max": "2900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-1/7749823717.jpg",
-    "main_image_path": "https://ir.ozone.ru/s3/multimedia-1-1/7749823717.jpg",
+    "primary_image_url": "/media/products/d2/d20409df3a89abae/800.webp",
+    "main_image_path": "/media/products/d2/d20409df3a89abae/800.webp",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-1/7749823717.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-n/7749823631.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-8/11450867012.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-n/11450868827.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-9/11450869101.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-c/11450867232.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-g/11450867524.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/d2/d20409df3a89abae/800.webp",
+      "/media/products/c7/c7f739aa438f9eeb/800.webp",
+      "/media/products/e2/e23ffa73db504835/800.webp",
+      "/media/products/ab/abaaf20a13db81ee/800.webp",
+      "/media/products/ca/cad3eda767f8cded/800.webp",
+      "/media/products/18/18b30bddfe47c96f/800.webp",
+      "/media/products/a9/a9a0d115866b03ca/800.webp",
+      "/media/products/f1/f17ec7c55e7c3715/800.webp",
+      "/media/products/49/4911f91ac320dfc3/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -998,19 +998,19 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-1/7749823717.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-n/7749823631.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/11450867012.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-n/11450868827.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-9/11450869101.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-c/11450867232.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-g/11450867524.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/d2/d20409df3a89abae/800.webp",
+          "/media/products/c7/c7f739aa438f9eeb/800.webp",
+          "/media/products/e2/e23ffa73db504835/800.webp",
+          "/media/products/ab/abaaf20a13db81ee/800.webp",
+          "/media/products/ca/cad3eda767f8cded/800.webp",
+          "/media/products/18/18b30bddfe47c96f/800.webp",
+          "/media/products/a9/a9a0d115866b03ca/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-1/7749823717.jpg",
+        "primary_image": "/media/products/d2/d20409df3a89abae/800.webp",
         "archived": false,
         "visible": null
       },
@@ -1021,19 +1021,19 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-1/7749823717.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-n/7749823631.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/11450867012.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-n/11450868827.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-9/11450869101.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-c/11450867232.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-g/11450867524.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/d2/d20409df3a89abae/800.webp",
+          "/media/products/c7/c7f739aa438f9eeb/800.webp",
+          "/media/products/e2/e23ffa73db504835/800.webp",
+          "/media/products/ab/abaaf20a13db81ee/800.webp",
+          "/media/products/ca/cad3eda767f8cded/800.webp",
+          "/media/products/18/18b30bddfe47c96f/800.webp",
+          "/media/products/a9/a9a0d115866b03ca/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-1/7749823717.jpg",
+        "primary_image": "/media/products/d2/d20409df3a89abae/800.webp",
         "archived": false,
         "visible": null
       },
@@ -1044,19 +1044,19 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-1/7749823717.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-n/7749823631.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/11450867012.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-n/11450868827.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-9/11450869101.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-c/11450867232.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-g/11450867524.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/d2/d20409df3a89abae/800.webp",
+          "/media/products/c7/c7f739aa438f9eeb/800.webp",
+          "/media/products/e2/e23ffa73db504835/800.webp",
+          "/media/products/ab/abaaf20a13db81ee/800.webp",
+          "/media/products/ca/cad3eda767f8cded/800.webp",
+          "/media/products/18/18b30bddfe47c96f/800.webp",
+          "/media/products/a9/a9a0d115866b03ca/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-1/7749823717.jpg",
+        "primary_image": "/media/products/d2/d20409df3a89abae/800.webp",
         "archived": false,
         "visible": null
       },
@@ -1067,18 +1067,18 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-1/7749823717.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-n/7749823631.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/11450867012.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-n/11450868827.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-9/11450869101.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-c/11450867232.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/d2/d20409df3a89abae/800.webp",
+          "/media/products/c7/c7f739aa438f9eeb/800.webp",
+          "/media/products/e2/e23ffa73db504835/800.webp",
+          "/media/products/ab/abaaf20a13db81ee/800.webp",
+          "/media/products/ca/cad3eda767f8cded/800.webp",
+          "/media/products/18/18b30bddfe47c96f/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-1/7749823717.jpg",
+        "primary_image": "/media/products/d2/d20409df3a89abae/800.webp",
         "archived": false,
         "visible": null
       },
@@ -1089,18 +1089,18 @@ window.KOMUI_PRODUCTS = [
         "size": "XXL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-1/7749823717.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-n/7749823631.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/11450867012.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-n/11450868827.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-9/11450869101.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-c/11450867232.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/d2/d20409df3a89abae/800.webp",
+          "/media/products/c7/c7f739aa438f9eeb/800.webp",
+          "/media/products/e2/e23ffa73db504835/800.webp",
+          "/media/products/ab/abaaf20a13db81ee/800.webp",
+          "/media/products/ca/cad3eda767f8cded/800.webp",
+          "/media/products/18/18b30bddfe47c96f/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-1/7749823717.jpg"
+        "primary_image": "/media/products/d2/d20409df3a89abae/800.webp"
       }
     ],
     "is_active": true,
@@ -1161,19 +1161,19 @@ window.KOMUI_PRODUCTS = [
     "price_min": "2900.00",
     "price_max": "2900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-f/11713146459.jpg",
-    "main_image_path": "https://ir.ozone.ru/s3/multimedia-1-f/11713146459.jpg",
+    "primary_image_url": "/media/products/61/61cd91fd6c4a8225/800.webp",
+    "main_image_path": "/media/products/61/61cd91fd6c4a8225/800.webp",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-f/11713146459.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-d/11713146529.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-9/11716278921.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-7/11716278955.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-s/11716278940.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-t/11716278941.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/61/61cd91fd6c4a8225/800.webp",
+      "/media/products/e1/e1470b7b34577138/800.webp",
+      "/media/products/f2/f237b65f99613d96/800.webp",
+      "/media/products/3f/3f71273a3eb061ab/800.webp",
+      "/media/products/ab/ab79e75a1c65d13f/800.webp",
+      "/media/products/44/44b492e7f8fe35fb/800.webp",
+      "/media/products/f1/f17ec7c55e7c3715/800.webp",
+      "/media/products/49/4911f91ac320dfc3/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -1248,18 +1248,18 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-f/11713146459.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-d/11713146529.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-9/11716278921.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-7/11716278955.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/11716278940.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-t/11716278941.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/61/61cd91fd6c4a8225/800.webp",
+          "/media/products/e1/e1470b7b34577138/800.webp",
+          "/media/products/f2/f237b65f99613d96/800.webp",
+          "/media/products/3f/3f71273a3eb061ab/800.webp",
+          "/media/products/ab/ab79e75a1c65d13f/800.webp",
+          "/media/products/44/44b492e7f8fe35fb/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-f/11713146459.jpg",
+        "primary_image": "/media/products/61/61cd91fd6c4a8225/800.webp",
         "archived": false,
         "visible": null
       },
@@ -1270,18 +1270,18 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-f/11713146459.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-d/11713146529.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-9/11716278921.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-7/11716278955.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/11716278940.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-t/11716278941.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/61/61cd91fd6c4a8225/800.webp",
+          "/media/products/e1/e1470b7b34577138/800.webp",
+          "/media/products/f2/f237b65f99613d96/800.webp",
+          "/media/products/3f/3f71273a3eb061ab/800.webp",
+          "/media/products/ab/ab79e75a1c65d13f/800.webp",
+          "/media/products/44/44b492e7f8fe35fb/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-f/11713146459.jpg",
+        "primary_image": "/media/products/61/61cd91fd6c4a8225/800.webp",
         "archived": false,
         "visible": null
       },
@@ -1292,18 +1292,18 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-f/11713146459.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-d/11713146529.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-9/11716278921.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-7/11716278955.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/11716278940.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-t/11716278941.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/61/61cd91fd6c4a8225/800.webp",
+          "/media/products/e1/e1470b7b34577138/800.webp",
+          "/media/products/f2/f237b65f99613d96/800.webp",
+          "/media/products/3f/3f71273a3eb061ab/800.webp",
+          "/media/products/ab/ab79e75a1c65d13f/800.webp",
+          "/media/products/44/44b492e7f8fe35fb/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-f/11713146459.jpg",
+        "primary_image": "/media/products/61/61cd91fd6c4a8225/800.webp",
         "archived": false,
         "visible": null
       },
@@ -1314,18 +1314,18 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-f/11713146459.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-d/11713146529.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-9/11716278921.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-7/11716278955.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/11716278940.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-t/11716278941.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/61/61cd91fd6c4a8225/800.webp",
+          "/media/products/e1/e1470b7b34577138/800.webp",
+          "/media/products/f2/f237b65f99613d96/800.webp",
+          "/media/products/3f/3f71273a3eb061ab/800.webp",
+          "/media/products/ab/ab79e75a1c65d13f/800.webp",
+          "/media/products/44/44b492e7f8fe35fb/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-f/11713146459.jpg",
+        "primary_image": "/media/products/61/61cd91fd6c4a8225/800.webp",
         "archived": false,
         "visible": null
       },
@@ -1336,18 +1336,18 @@ window.KOMUI_PRODUCTS = [
         "size": "XXL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-f/11713146459.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-d/11713146529.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-9/11716278921.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-7/11716278955.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/11716278940.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-t/11716278941.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/61/61cd91fd6c4a8225/800.webp",
+          "/media/products/e1/e1470b7b34577138/800.webp",
+          "/media/products/f2/f237b65f99613d96/800.webp",
+          "/media/products/3f/3f71273a3eb061ab/800.webp",
+          "/media/products/ab/ab79e75a1c65d13f/800.webp",
+          "/media/products/44/44b492e7f8fe35fb/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-f/11713146459.jpg",
+        "primary_image": "/media/products/61/61cd91fd6c4a8225/800.webp",
         "archived": false,
         "visible": null
       }
@@ -1410,15 +1410,15 @@ window.KOMUI_PRODUCTS = [
     "price_min": "2900.00",
     "price_max": "2900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-m/7663468918.jpg",
+    "primary_image_url": "/media/products/13/13015025b8d14269/800.webp",
     "main_image_path": "./assets/ozon-main/20-футболка-наруто-с-вышивкой-akatsuki.jpg",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-m/7663468918.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-1/7663468897.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-g/7663468912.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/13/13015025b8d14269/800.webp",
+      "/media/products/d7/d7f9f917adef8649/800.webp",
+      "/media/products/7e/7ef35b53d12505e0/800.webp",
+      "/media/products/93/932601cd10b4adcb/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -1506,14 +1506,14 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-m/7663468918.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-1/7663468897.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-g/7663468912.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/13/13015025b8d14269/800.webp",
+          "/media/products/d7/d7f9f917adef8649/800.webp",
+          "/media/products/7e/7ef35b53d12505e0/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-m/7663468918.jpg",
+        "primary_image": "/media/products/13/13015025b8d14269/800.webp",
         "archived": false,
         "visible": null
       },
@@ -1524,14 +1524,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-m/7663468918.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-1/7663468897.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-g/7663468912.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/13/13015025b8d14269/800.webp",
+          "/media/products/d7/d7f9f917adef8649/800.webp",
+          "/media/products/7e/7ef35b53d12505e0/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-m/7663468918.jpg",
+        "primary_image": "/media/products/13/13015025b8d14269/800.webp",
         "archived": false,
         "visible": null
       },
@@ -1542,14 +1542,14 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-m/7663468918.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-1/7663468897.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-g/7663468912.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/13/13015025b8d14269/800.webp",
+          "/media/products/d7/d7f9f917adef8649/800.webp",
+          "/media/products/7e/7ef35b53d12505e0/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-m/7663468918.jpg",
+        "primary_image": "/media/products/13/13015025b8d14269/800.webp",
         "archived": false,
         "visible": null
       },
@@ -1560,14 +1560,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XXL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-m/7663468918.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-1/7663468897.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-g/7663468912.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/13/13015025b8d14269/800.webp",
+          "/media/products/d7/d7f9f917adef8649/800.webp",
+          "/media/products/7e/7ef35b53d12505e0/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-m/7663468918.jpg"
+        "primary_image": "/media/products/13/13015025b8d14269/800.webp"
       },
       {
         "sku": 3216093577,
@@ -1576,14 +1576,14 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-m/7663468918.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-1/7663468897.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-g/7663468912.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/13/13015025b8d14269/800.webp",
+          "/media/products/d7/d7f9f917adef8649/800.webp",
+          "/media/products/7e/7ef35b53d12505e0/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-m/7663468918.jpg"
+        "primary_image": "/media/products/13/13015025b8d14269/800.webp"
       }
     ],
     "is_active": true,
@@ -1644,16 +1644,16 @@ window.KOMUI_PRODUCTS = [
     "price_min": "2900.00",
     "price_max": "2900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-9/7633890693.jpg",
-    "main_image_path": "https://ir.ozone.ru/s3/multimedia-1-9/7633890693.jpg",
+    "primary_image_url": "/media/products/fa/fa91b2aee200f5b1/800.webp",
+    "main_image_path": "/media/products/fa/fa91b2aee200f5b1/800.webp",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-9/7633890693.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-i/7633890738.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-h/7633803581.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-8/7633803572.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/fa/fa91b2aee200f5b1/800.webp",
+      "/media/products/5c/5cbc799b717d6154/800.webp",
+      "/media/products/f3/f3b4c70aee3d048c/800.webp",
+      "/media/products/ad/ad7a42eaa5799384/800.webp",
+      "/media/products/93/932601cd10b4adcb/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -1741,15 +1741,15 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-9/7633890693.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-i/7633890738.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-h/7633803581.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/7633803572.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/fa/fa91b2aee200f5b1/800.webp",
+          "/media/products/5c/5cbc799b717d6154/800.webp",
+          "/media/products/f3/f3b4c70aee3d048c/800.webp",
+          "/media/products/ad/ad7a42eaa5799384/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-9/7633890693.jpg",
+        "primary_image": "/media/products/fa/fa91b2aee200f5b1/800.webp",
         "archived": false,
         "visible": null
       },
@@ -1760,15 +1760,15 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-9/7633890693.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-i/7633890738.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-h/7633803581.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/7633803572.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/fa/fa91b2aee200f5b1/800.webp",
+          "/media/products/5c/5cbc799b717d6154/800.webp",
+          "/media/products/f3/f3b4c70aee3d048c/800.webp",
+          "/media/products/ad/ad7a42eaa5799384/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-9/7633890693.jpg",
+        "primary_image": "/media/products/fa/fa91b2aee200f5b1/800.webp",
         "archived": false,
         "visible": null
       },
@@ -1779,15 +1779,15 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-9/7633890693.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-i/7633890738.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-h/7633803581.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/7633803572.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/fa/fa91b2aee200f5b1/800.webp",
+          "/media/products/5c/5cbc799b717d6154/800.webp",
+          "/media/products/f3/f3b4c70aee3d048c/800.webp",
+          "/media/products/ad/ad7a42eaa5799384/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-9/7633890693.jpg",
+        "primary_image": "/media/products/fa/fa91b2aee200f5b1/800.webp",
         "archived": false,
         "visible": null
       },
@@ -1798,15 +1798,15 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-9/7633890693.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-i/7633890738.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-h/7633803581.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/7633803572.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/fa/fa91b2aee200f5b1/800.webp",
+          "/media/products/5c/5cbc799b717d6154/800.webp",
+          "/media/products/f3/f3b4c70aee3d048c/800.webp",
+          "/media/products/ad/ad7a42eaa5799384/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-9/7633890693.jpg",
+        "primary_image": "/media/products/fa/fa91b2aee200f5b1/800.webp",
         "archived": false,
         "visible": null
       },
@@ -1817,15 +1817,15 @@ window.KOMUI_PRODUCTS = [
         "size": "XXL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-9/7633890693.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-i/7633890738.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-h/7633803581.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/7633803572.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/fa/fa91b2aee200f5b1/800.webp",
+          "/media/products/5c/5cbc799b717d6154/800.webp",
+          "/media/products/f3/f3b4c70aee3d048c/800.webp",
+          "/media/products/ad/ad7a42eaa5799384/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-9/7633890693.jpg",
+        "primary_image": "/media/products/fa/fa91b2aee200f5b1/800.webp",
         "archived": false,
         "visible": null
       }
@@ -1887,17 +1887,17 @@ window.KOMUI_PRODUCTS = [
     "price_min": "3500.00",
     "price_max": "3500.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-7/7903388923.jpg",
+    "primary_image_url": "/media/products/12/12685d780d99dd30/800.webp",
     "main_image_path": "./assets/ozon-main/18-худи-с-вышивкой-итачи.jpg",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-7/7903388923.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-w/7903388876.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-n/7903389011.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-1/7903388701.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-b/7903388855.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-b/7903388207.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/12/12685d780d99dd30/800.webp",
+      "/media/products/2e/2e21599b035f859c/800.webp",
+      "/media/products/ae/aedd63716cc202c1/800.webp",
+      "/media/products/89/8982c07e537ac289/800.webp",
+      "/media/products/c1/c193c2d5f7defb03/800.webp",
+      "/media/products/3d/3ddc56f369ff027d/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -1980,16 +1980,16 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 3500,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-7/7903388923.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-w/7903388876.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-n/7903389011.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-1/7903388701.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-b/7903388855.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-b/7903388207.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/12/12685d780d99dd30/800.webp",
+          "/media/products/2e/2e21599b035f859c/800.webp",
+          "/media/products/ae/aedd63716cc202c1/800.webp",
+          "/media/products/89/8982c07e537ac289/800.webp",
+          "/media/products/c1/c193c2d5f7defb03/800.webp",
+          "/media/products/3d/3ddc56f369ff027d/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-7/7903388923.jpg",
+        "primary_image": "/media/products/12/12685d780d99dd30/800.webp",
         "archived": false,
         "visible": null
       },
@@ -2000,16 +2000,16 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 3500,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-7/7903388923.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-w/7903388876.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-n/7903389011.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-1/7903388701.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-b/7903388855.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-b/7903388207.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/12/12685d780d99dd30/800.webp",
+          "/media/products/2e/2e21599b035f859c/800.webp",
+          "/media/products/ae/aedd63716cc202c1/800.webp",
+          "/media/products/89/8982c07e537ac289/800.webp",
+          "/media/products/c1/c193c2d5f7defb03/800.webp",
+          "/media/products/3d/3ddc56f369ff027d/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-7/7903388923.jpg",
+        "primary_image": "/media/products/12/12685d780d99dd30/800.webp",
         "archived": false,
         "visible": null
       },
@@ -2020,16 +2020,16 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 3500,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-7/7903388923.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-w/7903388876.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-n/7903389011.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-1/7903388701.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-b/7903388855.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-b/7903388207.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/12/12685d780d99dd30/800.webp",
+          "/media/products/2e/2e21599b035f859c/800.webp",
+          "/media/products/ae/aedd63716cc202c1/800.webp",
+          "/media/products/89/8982c07e537ac289/800.webp",
+          "/media/products/c1/c193c2d5f7defb03/800.webp",
+          "/media/products/3d/3ddc56f369ff027d/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-7/7903388923.jpg",
+        "primary_image": "/media/products/12/12685d780d99dd30/800.webp",
         "archived": false,
         "visible": null
       },
@@ -2040,16 +2040,16 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 3500,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-7/7903388923.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-w/7903388876.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-n/7903389011.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-1/7903388701.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-b/7903388855.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-b/7903388207.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/12/12685d780d99dd30/800.webp",
+          "/media/products/2e/2e21599b035f859c/800.webp",
+          "/media/products/ae/aedd63716cc202c1/800.webp",
+          "/media/products/89/8982c07e537ac289/800.webp",
+          "/media/products/c1/c193c2d5f7defb03/800.webp",
+          "/media/products/3d/3ddc56f369ff027d/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-7/7903388923.jpg",
+        "primary_image": "/media/products/12/12685d780d99dd30/800.webp",
         "archived": false,
         "visible": null
       }
@@ -2111,15 +2111,15 @@ window.KOMUI_PRODUCTS = [
     "price_min": "2900.00",
     "price_max": "2900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-b/7716066347.jpg",
+    "primary_image_url": "/media/products/6e/6eaedf9e63e50a9d/800.webp",
     "main_image_path": "./assets/ozon-main/15-футболка-с-принтом-наруто.jpg",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-b/7716066347.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-p/7716066325.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-c/7716066348.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/6e/6eaedf9e63e50a9d/800.webp",
+      "/media/products/96/9691b16093c62d7d/800.webp",
+      "/media/products/f3/f3855c1bd72774a4/800.webp",
+      "/media/products/93/932601cd10b4adcb/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -2207,14 +2207,14 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-b/7716066347.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-p/7716066325.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-c/7716066348.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/6e/6eaedf9e63e50a9d/800.webp",
+          "/media/products/96/9691b16093c62d7d/800.webp",
+          "/media/products/f3/f3855c1bd72774a4/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-b/7716066347.jpg",
+        "primary_image": "/media/products/6e/6eaedf9e63e50a9d/800.webp",
         "archived": false,
         "visible": null
       },
@@ -2225,14 +2225,14 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-b/7716066347.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-p/7716066325.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-c/7716066348.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/6e/6eaedf9e63e50a9d/800.webp",
+          "/media/products/96/9691b16093c62d7d/800.webp",
+          "/media/products/f3/f3855c1bd72774a4/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-b/7716066347.jpg",
+        "primary_image": "/media/products/6e/6eaedf9e63e50a9d/800.webp",
         "archived": false,
         "visible": null
       },
@@ -2243,14 +2243,14 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-b/7716066347.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-p/7716066325.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-c/7716066348.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/6e/6eaedf9e63e50a9d/800.webp",
+          "/media/products/96/9691b16093c62d7d/800.webp",
+          "/media/products/f3/f3855c1bd72774a4/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-b/7716066347.jpg",
+        "primary_image": "/media/products/6e/6eaedf9e63e50a9d/800.webp",
         "archived": false,
         "visible": null
       },
@@ -2261,14 +2261,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-b/7716066347.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-p/7716066325.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-c/7716066348.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/6e/6eaedf9e63e50a9d/800.webp",
+          "/media/products/96/9691b16093c62d7d/800.webp",
+          "/media/products/f3/f3855c1bd72774a4/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-b/7716066347.jpg",
+        "primary_image": "/media/products/6e/6eaedf9e63e50a9d/800.webp",
         "archived": false,
         "visible": null
       },
@@ -2279,14 +2279,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XXL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-b/7716066347.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-p/7716066325.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-c/7716066348.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/6e/6eaedf9e63e50a9d/800.webp",
+          "/media/products/96/9691b16093c62d7d/800.webp",
+          "/media/products/f3/f3855c1bd72774a4/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-b/7716066347.jpg"
+        "primary_image": "/media/products/6e/6eaedf9e63e50a9d/800.webp"
       }
     ],
     "is_active": true,
@@ -2346,18 +2346,18 @@ window.KOMUI_PRODUCTS = [
     "price_min": "2900.00",
     "price_max": "2900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-b/9237853199.jpg",
-    "main_image_path": "https://ir.ozone.ru/s3/multimedia-1-b/9237853199.jpg",
+    "primary_image_url": "/media/products/12/1253ca7020528e55/800.webp",
+    "main_image_path": "/media/products/12/1253ca7020528e55/800.webp",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-b/9237853199.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-o/9237853248.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-t/9237853253.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-b/11783890271.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-q/11783888882.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-o/11783926608.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/12/1253ca7020528e55/800.webp",
+      "/media/products/10/10e2582b4c9b04c0/800.webp",
+      "/media/products/7c/7c8346d4c8c45a90/800.webp",
+      "/media/products/33/33fb8f1bd20374c7/800.webp",
+      "/media/products/09/09cb350842597edb/800.webp",
+      "/media/products/b1/b1f1396883ecb712/800.webp",
+      "/media/products/f1/f17ec7c55e7c3715/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -2432,17 +2432,17 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-b/9237853199.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-o/9237853248.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-t/9237853253.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-b/11783890271.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-q/11783888882.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-o/11783926608.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/12/1253ca7020528e55/800.webp",
+          "/media/products/10/10e2582b4c9b04c0/800.webp",
+          "/media/products/7c/7c8346d4c8c45a90/800.webp",
+          "/media/products/33/33fb8f1bd20374c7/800.webp",
+          "/media/products/09/09cb350842597edb/800.webp",
+          "/media/products/b1/b1f1396883ecb712/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-b/9237853199.jpg",
+        "primary_image": "/media/products/12/1253ca7020528e55/800.webp",
         "archived": false,
         "visible": null
       },
@@ -2453,17 +2453,17 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-b/9237853199.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-o/9237853248.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-t/9237853253.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-b/11783890271.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-q/11783888882.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-o/11783926608.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/12/1253ca7020528e55/800.webp",
+          "/media/products/10/10e2582b4c9b04c0/800.webp",
+          "/media/products/7c/7c8346d4c8c45a90/800.webp",
+          "/media/products/33/33fb8f1bd20374c7/800.webp",
+          "/media/products/09/09cb350842597edb/800.webp",
+          "/media/products/b1/b1f1396883ecb712/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-b/9237853199.jpg",
+        "primary_image": "/media/products/12/1253ca7020528e55/800.webp",
         "archived": false,
         "visible": null
       },
@@ -2474,17 +2474,17 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-b/9237853199.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-o/9237853248.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-t/9237853253.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-b/11783890271.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-q/11783888882.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-o/11783926608.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/12/1253ca7020528e55/800.webp",
+          "/media/products/10/10e2582b4c9b04c0/800.webp",
+          "/media/products/7c/7c8346d4c8c45a90/800.webp",
+          "/media/products/33/33fb8f1bd20374c7/800.webp",
+          "/media/products/09/09cb350842597edb/800.webp",
+          "/media/products/b1/b1f1396883ecb712/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-b/9237853199.jpg",
+        "primary_image": "/media/products/12/1253ca7020528e55/800.webp",
         "archived": false,
         "visible": null
       },
@@ -2495,17 +2495,17 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-b/9237853199.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-o/9237853248.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-t/9237853253.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-b/11783890271.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-q/11783888882.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-o/11783926608.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/12/1253ca7020528e55/800.webp",
+          "/media/products/10/10e2582b4c9b04c0/800.webp",
+          "/media/products/7c/7c8346d4c8c45a90/800.webp",
+          "/media/products/33/33fb8f1bd20374c7/800.webp",
+          "/media/products/09/09cb350842597edb/800.webp",
+          "/media/products/b1/b1f1396883ecb712/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-b/9237853199.jpg",
+        "primary_image": "/media/products/12/1253ca7020528e55/800.webp",
         "archived": false,
         "visible": null
       },
@@ -2516,17 +2516,17 @@ window.KOMUI_PRODUCTS = [
         "size": "XXL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-b/9237853199.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-o/9237853248.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-t/9237853253.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-b/11783890271.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-q/11783888882.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-o/11783926608.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/12/1253ca7020528e55/800.webp",
+          "/media/products/10/10e2582b4c9b04c0/800.webp",
+          "/media/products/7c/7c8346d4c8c45a90/800.webp",
+          "/media/products/33/33fb8f1bd20374c7/800.webp",
+          "/media/products/09/09cb350842597edb/800.webp",
+          "/media/products/b1/b1f1396883ecb712/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-b/9237853199.jpg",
+        "primary_image": "/media/products/12/1253ca7020528e55/800.webp",
         "archived": false,
         "visible": null
       }
@@ -2586,21 +2586,21 @@ window.KOMUI_PRODUCTS = [
     "price_min": "3900.00",
     "price_max": "3900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-9/8224713081.jpg",
+    "primary_image_url": "/media/products/48/481d412f4ecd074b/800.webp",
     "main_image_path": "./assets/ozon-main/02-худи-без-начеса-с-вышивкой-gta.jpg",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-9/8224713081.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-p/8222756065.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-d/8222756197.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-v/8222756431.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-k/8222523500.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/8222756355.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-f/8426384907.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-w/8426384960.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-i/8426384802.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-s/8426384884.jpg"
+      "/media/products/48/481d412f4ecd074b/800.webp",
+      "/media/products/50/501744262ea35493/800.webp",
+      "/media/products/1a/1a4bbbf5bc334ed9/800.webp",
+      "/media/products/2d/2dc1028ee9e160f0/800.webp",
+      "/media/products/c6/c69210ab1d76bdc0/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp",
+      "/media/products/4f/4fd775f10e78995d/800.webp",
+      "/media/products/c7/c795bc4fdfcc1356/800.webp",
+      "/media/products/b4/b45f08b881fd74f3/800.webp",
+      "/media/products/f8/f87122373160205e/800.webp",
+      "/media/products/90/909d3748cd95d738/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -2683,15 +2683,15 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 3900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-9/8224713081.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-p/8222756065.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-d/8222756197.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-v/8222756431.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-k/8222523500.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/48/481d412f4ecd074b/800.webp",
+          "/media/products/50/501744262ea35493/800.webp",
+          "/media/products/1a/1a4bbbf5bc334ed9/800.webp",
+          "/media/products/2d/2dc1028ee9e160f0/800.webp",
+          "/media/products/c6/c69210ab1d76bdc0/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-9/8224713081.jpg",
+        "primary_image": "/media/products/48/481d412f4ecd074b/800.webp",
         "archived": false,
         "visible": null
       },
@@ -2702,15 +2702,15 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 3900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-9/8224713081.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-p/8222756065.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-d/8222756197.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-v/8222756431.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-k/8222523500.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/48/481d412f4ecd074b/800.webp",
+          "/media/products/50/501744262ea35493/800.webp",
+          "/media/products/1a/1a4bbbf5bc334ed9/800.webp",
+          "/media/products/2d/2dc1028ee9e160f0/800.webp",
+          "/media/products/c6/c69210ab1d76bdc0/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-9/8224713081.jpg",
+        "primary_image": "/media/products/48/481d412f4ecd074b/800.webp",
         "archived": false,
         "visible": null
       },
@@ -2721,15 +2721,15 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 3900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-r/8222756355.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-p/8222756065.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-d/8222756197.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-v/8222756431.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-k/8222523500.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/4f/4fd775f10e78995d/800.webp",
+          "/media/products/50/501744262ea35493/800.webp",
+          "/media/products/1a/1a4bbbf5bc334ed9/800.webp",
+          "/media/products/2d/2dc1028ee9e160f0/800.webp",
+          "/media/products/c6/c69210ab1d76bdc0/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-r/8222756355.jpg",
+        "primary_image": "/media/products/4f/4fd775f10e78995d/800.webp",
         "archived": false,
         "visible": null
       },
@@ -2740,14 +2740,14 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 3900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-f/8426384907.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-w/8426384960.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-i/8426384802.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/8426384884.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/c7/c795bc4fdfcc1356/800.webp",
+          "/media/products/b4/b45f08b881fd74f3/800.webp",
+          "/media/products/f8/f87122373160205e/800.webp",
+          "/media/products/90/909d3748cd95d738/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-f/8426384907.jpg",
+        "primary_image": "/media/products/c7/c795bc4fdfcc1356/800.webp",
         "archived": false,
         "visible": null
       },
@@ -2758,14 +2758,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 3900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-f/8426384907.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-w/8426384960.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-i/8426384802.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/8426384884.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/c7/c795bc4fdfcc1356/800.webp",
+          "/media/products/b4/b45f08b881fd74f3/800.webp",
+          "/media/products/f8/f87122373160205e/800.webp",
+          "/media/products/90/909d3748cd95d738/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-f/8426384907.jpg",
+        "primary_image": "/media/products/c7/c795bc4fdfcc1356/800.webp",
         "archived": false,
         "visible": null
       },
@@ -2776,14 +2776,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XXL",
         "price": 3900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-f/8426384907.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-w/8426384960.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-i/8426384802.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/8426384884.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/c7/c795bc4fdfcc1356/800.webp",
+          "/media/products/b4/b45f08b881fd74f3/800.webp",
+          "/media/products/f8/f87122373160205e/800.webp",
+          "/media/products/90/909d3748cd95d738/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-f/8426384907.jpg",
+        "primary_image": "/media/products/c7/c795bc4fdfcc1356/800.webp",
         "archived": false,
         "visible": null
       },
@@ -2794,14 +2794,14 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 3900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-f/8426384907.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-w/8426384960.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-i/8426384802.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/8426384884.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/c7/c795bc4fdfcc1356/800.webp",
+          "/media/products/b4/b45f08b881fd74f3/800.webp",
+          "/media/products/f8/f87122373160205e/800.webp",
+          "/media/products/90/909d3748cd95d738/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-f/8426384907.jpg",
+        "primary_image": "/media/products/c7/c795bc4fdfcc1356/800.webp",
         "archived": false,
         "visible": null
       },
@@ -2812,14 +2812,14 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 3900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-f/8426384907.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-w/8426384960.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-i/8426384802.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/8426384884.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/c7/c795bc4fdfcc1356/800.webp",
+          "/media/products/b4/b45f08b881fd74f3/800.webp",
+          "/media/products/f8/f87122373160205e/800.webp",
+          "/media/products/90/909d3748cd95d738/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-f/8426384907.jpg",
+        "primary_image": "/media/products/c7/c795bc4fdfcc1356/800.webp",
         "archived": false,
         "visible": null
       }
@@ -2879,20 +2879,20 @@ window.KOMUI_PRODUCTS = [
     "price_min": "3500.00",
     "price_max": "3500.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-x/7983638457.jpg",
+    "primary_image_url": "/media/products/5b/5b2123b9b5aa77c3/800.webp",
     "main_image_path": "./assets/ozon-main/03-худи-с-вышивкой-gravity.jpg",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-x/7983638457.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-n/7983638483.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-z/7983638675.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-b/7983638291.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-x/7983638709.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-g/8426112064.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/8426112003.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-w/8426112260.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-e/8426112350.jpg"
+      "/media/products/5b/5b2123b9b5aa77c3/800.webp",
+      "/media/products/f8/f8292ef393b4beaa/800.webp",
+      "/media/products/09/0990b65d3fd6fa5b/800.webp",
+      "/media/products/52/52dfdc27fc532ebf/800.webp",
+      "/media/products/91/91e9373073ec5eca/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp",
+      "/media/products/c5/c56ba224d0dfa0c8/800.webp",
+      "/media/products/ab/ab2244f94c49c5c1/800.webp",
+      "/media/products/08/081c7c2bc5d221ee/800.webp",
+      "/media/products/43/43b038877bfff9b1/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -2991,15 +2991,15 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 3500,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-x/7983638457.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-n/7983638483.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-z/7983638675.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-b/7983638291.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-x/7983638709.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/5b/5b2123b9b5aa77c3/800.webp",
+          "/media/products/f8/f8292ef393b4beaa/800.webp",
+          "/media/products/09/0990b65d3fd6fa5b/800.webp",
+          "/media/products/52/52dfdc27fc532ebf/800.webp",
+          "/media/products/91/91e9373073ec5eca/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-x/7983638457.jpg",
+        "primary_image": "/media/products/5b/5b2123b9b5aa77c3/800.webp",
         "archived": false,
         "visible": null
       },
@@ -3010,14 +3010,14 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 3500,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-g/8426112064.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/8426112003.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-w/8426112260.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-e/8426112350.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/c5/c56ba224d0dfa0c8/800.webp",
+          "/media/products/ab/ab2244f94c49c5c1/800.webp",
+          "/media/products/08/081c7c2bc5d221ee/800.webp",
+          "/media/products/43/43b038877bfff9b1/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-g/8426112064.jpg",
+        "primary_image": "/media/products/c5/c56ba224d0dfa0c8/800.webp",
         "archived": false,
         "visible": null
       },
@@ -3028,14 +3028,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XXL",
         "price": 3500,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-g/8426112064.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/8426112003.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-w/8426112260.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-e/8426112350.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/c5/c56ba224d0dfa0c8/800.webp",
+          "/media/products/ab/ab2244f94c49c5c1/800.webp",
+          "/media/products/08/081c7c2bc5d221ee/800.webp",
+          "/media/products/43/43b038877bfff9b1/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-g/8426112064.jpg",
+        "primary_image": "/media/products/c5/c56ba224d0dfa0c8/800.webp",
         "archived": false,
         "visible": null
       },
@@ -3046,14 +3046,14 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 3500,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-g/8426112064.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/8426112003.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-w/8426112260.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-e/8426112350.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/c5/c56ba224d0dfa0c8/800.webp",
+          "/media/products/ab/ab2244f94c49c5c1/800.webp",
+          "/media/products/08/081c7c2bc5d221ee/800.webp",
+          "/media/products/43/43b038877bfff9b1/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-g/8426112064.jpg",
+        "primary_image": "/media/products/c5/c56ba224d0dfa0c8/800.webp",
         "archived": false,
         "visible": null
       },
@@ -3064,14 +3064,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 3500,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-g/8426112064.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/8426112003.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-w/8426112260.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-e/8426112350.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/c5/c56ba224d0dfa0c8/800.webp",
+          "/media/products/ab/ab2244f94c49c5c1/800.webp",
+          "/media/products/08/081c7c2bc5d221ee/800.webp",
+          "/media/products/43/43b038877bfff9b1/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-g/8426112064.jpg",
+        "primary_image": "/media/products/c5/c56ba224d0dfa0c8/800.webp",
         "archived": false,
         "visible": null
       },
@@ -3082,14 +3082,14 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 3500,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-g/8426112064.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/8426112003.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-w/8426112260.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-e/8426112350.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/c5/c56ba224d0dfa0c8/800.webp",
+          "/media/products/ab/ab2244f94c49c5c1/800.webp",
+          "/media/products/08/081c7c2bc5d221ee/800.webp",
+          "/media/products/43/43b038877bfff9b1/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-g/8426112064.jpg",
+        "primary_image": "/media/products/c5/c56ba224d0dfa0c8/800.webp",
         "archived": false,
         "visible": null
       }
@@ -3149,16 +3149,16 @@ window.KOMUI_PRODUCTS = [
     "price_min": "2900.00",
     "price_max": "2900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-e/9225817862.jpg",
+    "primary_image_url": "/media/products/36/366af6fb17de50f5/800.webp",
     "main_image_path": "./assets/ozon-main/05-футболка-наруто-с-вышивкой-itachi.jpg",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-e/9225817862.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-e/9225817934.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-b/9225817859.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-a/9225873190.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/36/366af6fb17de50f5/800.webp",
+      "/media/products/6d/6d2c24b6996cb825/800.webp",
+      "/media/products/53/53232f5046c2b19b/800.webp",
+      "/media/products/a0/a06809821d66ac42/800.webp",
+      "/media/products/f1/f17ec7c55e7c3715/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -3233,15 +3233,15 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-e/9225817862.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-e/9225817934.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-b/9225817859.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-a/9225873190.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/36/366af6fb17de50f5/800.webp",
+          "/media/products/6d/6d2c24b6996cb825/800.webp",
+          "/media/products/53/53232f5046c2b19b/800.webp",
+          "/media/products/a0/a06809821d66ac42/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-e/9225817862.jpg",
+        "primary_image": "/media/products/36/366af6fb17de50f5/800.webp",
         "archived": false,
         "visible": null
       },
@@ -3252,15 +3252,15 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-e/9225817862.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-e/9225817934.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-b/9225817859.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-a/9225873190.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/36/366af6fb17de50f5/800.webp",
+          "/media/products/6d/6d2c24b6996cb825/800.webp",
+          "/media/products/53/53232f5046c2b19b/800.webp",
+          "/media/products/a0/a06809821d66ac42/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-e/9225817862.jpg",
+        "primary_image": "/media/products/36/366af6fb17de50f5/800.webp",
         "archived": false,
         "visible": null
       },
@@ -3271,15 +3271,15 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-e/9225817862.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-e/9225817934.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-b/9225817859.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-a/9225873190.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/36/366af6fb17de50f5/800.webp",
+          "/media/products/6d/6d2c24b6996cb825/800.webp",
+          "/media/products/53/53232f5046c2b19b/800.webp",
+          "/media/products/a0/a06809821d66ac42/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-e/9225817862.jpg",
+        "primary_image": "/media/products/36/366af6fb17de50f5/800.webp",
         "archived": false,
         "visible": null
       },
@@ -3290,15 +3290,15 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-e/9225817862.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-e/9225817934.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-b/9225817859.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-a/9225873190.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/36/366af6fb17de50f5/800.webp",
+          "/media/products/6d/6d2c24b6996cb825/800.webp",
+          "/media/products/53/53232f5046c2b19b/800.webp",
+          "/media/products/a0/a06809821d66ac42/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-e/9225817862.jpg",
+        "primary_image": "/media/products/36/366af6fb17de50f5/800.webp",
         "archived": false,
         "visible": null
       },
@@ -3309,15 +3309,15 @@ window.KOMUI_PRODUCTS = [
         "size": "XXL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-e/9225817862.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-e/9225817934.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-b/9225817859.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-a/9225873190.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/36/366af6fb17de50f5/800.webp",
+          "/media/products/6d/6d2c24b6996cb825/800.webp",
+          "/media/products/53/53232f5046c2b19b/800.webp",
+          "/media/products/a0/a06809821d66ac42/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-e/9225817862.jpg"
+        "primary_image": "/media/products/36/366af6fb17de50f5/800.webp"
       }
     ],
     "is_active": true,
@@ -3375,16 +3375,16 @@ window.KOMUI_PRODUCTS = [
     "price_min": "2900.00",
     "price_max": "2900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-m/7750118614.jpg",
+    "primary_image_url": "/media/products/a0/a068954518dd745e/800.webp",
     "main_image_path": "./assets/ozon-main/06-футболка-с-принтом-сатору-годжо.jpg",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-m/7750118614.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-t/7750118657.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-i/7750118610.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-j/7750118647.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/a0/a068954518dd745e/800.webp",
+      "/media/products/f0/f06099f1ad85f5e5/800.webp",
+      "/media/products/b8/b8fb778408f96c38/800.webp",
+      "/media/products/78/7875572c6e6048fe/800.webp",
+      "/media/products/93/932601cd10b4adcb/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -3472,15 +3472,15 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-m/7750118614.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-t/7750118657.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-i/7750118610.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-j/7750118647.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/a0/a068954518dd745e/800.webp",
+          "/media/products/f0/f06099f1ad85f5e5/800.webp",
+          "/media/products/b8/b8fb778408f96c38/800.webp",
+          "/media/products/78/7875572c6e6048fe/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-m/7750118614.jpg",
+        "primary_image": "/media/products/a0/a068954518dd745e/800.webp",
         "archived": false,
         "visible": null
       },
@@ -3491,15 +3491,15 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-m/7750118614.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-t/7750118657.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-i/7750118610.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-j/7750118647.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/a0/a068954518dd745e/800.webp",
+          "/media/products/f0/f06099f1ad85f5e5/800.webp",
+          "/media/products/b8/b8fb778408f96c38/800.webp",
+          "/media/products/78/7875572c6e6048fe/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-m/7750118614.jpg",
+        "primary_image": "/media/products/a0/a068954518dd745e/800.webp",
         "archived": false,
         "visible": null
       },
@@ -3510,15 +3510,15 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-m/7750118614.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-t/7750118657.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-i/7750118610.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-j/7750118647.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/a0/a068954518dd745e/800.webp",
+          "/media/products/f0/f06099f1ad85f5e5/800.webp",
+          "/media/products/b8/b8fb778408f96c38/800.webp",
+          "/media/products/78/7875572c6e6048fe/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-m/7750118614.jpg",
+        "primary_image": "/media/products/a0/a068954518dd745e/800.webp",
         "archived": false,
         "visible": null
       },
@@ -3529,15 +3529,15 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-m/7750118614.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-t/7750118657.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-i/7750118610.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-j/7750118647.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/a0/a068954518dd745e/800.webp",
+          "/media/products/f0/f06099f1ad85f5e5/800.webp",
+          "/media/products/b8/b8fb778408f96c38/800.webp",
+          "/media/products/78/7875572c6e6048fe/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-m/7750118614.jpg",
+        "primary_image": "/media/products/a0/a068954518dd745e/800.webp",
         "archived": false,
         "visible": null
       },
@@ -3548,15 +3548,15 @@ window.KOMUI_PRODUCTS = [
         "size": "XXL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-m/7750118614.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-t/7750118657.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-i/7750118610.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-j/7750118647.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/a0/a068954518dd745e/800.webp",
+          "/media/products/f0/f06099f1ad85f5e5/800.webp",
+          "/media/products/b8/b8fb778408f96c38/800.webp",
+          "/media/products/78/7875572c6e6048fe/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-m/7750118614.jpg",
+        "primary_image": "/media/products/a0/a068954518dd745e/800.webp",
         "archived": false,
         "visible": null
       }
@@ -3616,15 +3616,15 @@ window.KOMUI_PRODUCTS = [
     "price_min": "2900.00",
     "price_max": "2900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-0/7865728380.jpg",
+    "primary_image_url": "/media/products/9b/9bc86c4ebf0f27c9/800.webp",
     "main_image_path": "./assets/ozon-main/07-футболка-с-принтом-сатору-годжо.jpg",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-0/7865728380.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-u/7865728338.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-o/7865728368.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/9b/9bc86c4ebf0f27c9/800.webp",
+      "/media/products/d8/d8898804bb089dbb/800.webp",
+      "/media/products/80/8055bd9795b3fae3/800.webp",
+      "/media/products/93/932601cd10b4adcb/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -3712,14 +3712,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-0/7865728380.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-u/7865728338.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-o/7865728368.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/9b/9bc86c4ebf0f27c9/800.webp",
+          "/media/products/d8/d8898804bb089dbb/800.webp",
+          "/media/products/80/8055bd9795b3fae3/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-0/7865728380.jpg",
+        "primary_image": "/media/products/9b/9bc86c4ebf0f27c9/800.webp",
         "archived": false,
         "visible": null
       },
@@ -3730,14 +3730,14 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-0/7865728380.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-u/7865728338.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-o/7865728368.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/9b/9bc86c4ebf0f27c9/800.webp",
+          "/media/products/d8/d8898804bb089dbb/800.webp",
+          "/media/products/80/8055bd9795b3fae3/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-0/7865728380.jpg",
+        "primary_image": "/media/products/9b/9bc86c4ebf0f27c9/800.webp",
         "archived": false,
         "visible": null
       },
@@ -3748,14 +3748,14 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-0/7865728380.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-u/7865728338.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-o/7865728368.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/9b/9bc86c4ebf0f27c9/800.webp",
+          "/media/products/d8/d8898804bb089dbb/800.webp",
+          "/media/products/80/8055bd9795b3fae3/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-0/7865728380.jpg",
+        "primary_image": "/media/products/9b/9bc86c4ebf0f27c9/800.webp",
         "archived": false,
         "visible": null
       },
@@ -3766,14 +3766,14 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-0/7865728380.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-u/7865728338.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-o/7865728368.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/9b/9bc86c4ebf0f27c9/800.webp",
+          "/media/products/d8/d8898804bb089dbb/800.webp",
+          "/media/products/80/8055bd9795b3fae3/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-0/7865728380.jpg",
+        "primary_image": "/media/products/9b/9bc86c4ebf0f27c9/800.webp",
         "archived": false,
         "visible": null
       },
@@ -3784,14 +3784,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XXL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-0/7865728380.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-u/7865728338.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-o/7865728368.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/9b/9bc86c4ebf0f27c9/800.webp",
+          "/media/products/d8/d8898804bb089dbb/800.webp",
+          "/media/products/80/8055bd9795b3fae3/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-0/7865728380.jpg",
+        "primary_image": "/media/products/9b/9bc86c4ebf0f27c9/800.webp",
         "archived": false,
         "visible": null
       }
@@ -3851,17 +3851,17 @@ window.KOMUI_PRODUCTS = [
     "price_min": "2900.00",
     "price_max": "2900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-6/9227350266.jpg",
+    "primary_image_url": "/media/products/12/124c0e426e6d2ca5/800.webp",
     "main_image_path": "./assets/ozon-main/08-футболка-с-принтом-сатору-годжо.jpg",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-6/9227350266.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-x/9227350185.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-2/9227350370.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-y/9227350222.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-d/12070377841.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/12/124c0e426e6d2ca5/800.webp",
+      "/media/products/3b/3be6e915e8269789/800.webp",
+      "/media/products/44/44e58ef2c0a0ba3b/800.webp",
+      "/media/products/c9/c95d2abe3141b87e/800.webp",
+      "/media/products/4a/4a45176e6fbafa11/800.webp",
+      "/media/products/93/932601cd10b4adcb/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -3949,16 +3949,16 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-6/9227350266.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-x/9227350185.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-2/9227350370.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-y/9227350222.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-d/12070377841.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/12/124c0e426e6d2ca5/800.webp",
+          "/media/products/3b/3be6e915e8269789/800.webp",
+          "/media/products/44/44e58ef2c0a0ba3b/800.webp",
+          "/media/products/c9/c95d2abe3141b87e/800.webp",
+          "/media/products/4a/4a45176e6fbafa11/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-6/9227350266.jpg",
+        "primary_image": "/media/products/12/124c0e426e6d2ca5/800.webp",
         "archived": false,
         "visible": null
       },
@@ -3969,16 +3969,16 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-6/9227350266.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-x/9227350185.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-2/9227350370.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-y/9227350222.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-d/12070377841.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/12/124c0e426e6d2ca5/800.webp",
+          "/media/products/3b/3be6e915e8269789/800.webp",
+          "/media/products/44/44e58ef2c0a0ba3b/800.webp",
+          "/media/products/c9/c95d2abe3141b87e/800.webp",
+          "/media/products/4a/4a45176e6fbafa11/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-6/9227350266.jpg",
+        "primary_image": "/media/products/12/124c0e426e6d2ca5/800.webp",
         "archived": false,
         "visible": null
       },
@@ -3989,16 +3989,16 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-6/9227350266.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-x/9227350185.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-2/9227350370.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-y/9227350222.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-d/12070377841.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/12/124c0e426e6d2ca5/800.webp",
+          "/media/products/3b/3be6e915e8269789/800.webp",
+          "/media/products/44/44e58ef2c0a0ba3b/800.webp",
+          "/media/products/c9/c95d2abe3141b87e/800.webp",
+          "/media/products/4a/4a45176e6fbafa11/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-6/9227350266.jpg",
+        "primary_image": "/media/products/12/124c0e426e6d2ca5/800.webp",
         "archived": false,
         "visible": null
       },
@@ -4009,16 +4009,16 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-6/9227350266.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-x/9227350185.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-2/9227350370.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-y/9227350222.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-d/12070377841.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/12/124c0e426e6d2ca5/800.webp",
+          "/media/products/3b/3be6e915e8269789/800.webp",
+          "/media/products/44/44e58ef2c0a0ba3b/800.webp",
+          "/media/products/c9/c95d2abe3141b87e/800.webp",
+          "/media/products/4a/4a45176e6fbafa11/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-6/9227350266.jpg",
+        "primary_image": "/media/products/12/124c0e426e6d2ca5/800.webp",
         "archived": false,
         "visible": null
       },
@@ -4029,16 +4029,16 @@ window.KOMUI_PRODUCTS = [
         "size": "XXL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-6/9227350266.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-x/9227350185.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-2/9227350370.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-y/9227350222.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-d/12070377841.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/12/124c0e426e6d2ca5/800.webp",
+          "/media/products/3b/3be6e915e8269789/800.webp",
+          "/media/products/44/44e58ef2c0a0ba3b/800.webp",
+          "/media/products/c9/c95d2abe3141b87e/800.webp",
+          "/media/products/4a/4a45176e6fbafa11/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-6/9227350266.jpg"
+        "primary_image": "/media/products/12/124c0e426e6d2ca5/800.webp"
       }
     ],
     "is_active": true,
@@ -4096,16 +4096,16 @@ window.KOMUI_PRODUCTS = [
     "price_min": "2900.00",
     "price_max": "2900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-b/7656042143.jpg",
+    "primary_image_url": "/media/products/b4/b47a4eb948cf3e02/800.webp",
     "main_image_path": "./assets/ozon-main/09-футболка-наруто-с-вышивкой-akatsuki-swoosh.jpg",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-b/7656042143.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-b/7634389907.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-1/7634389861.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-l/7634389917.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/b4/b47a4eb948cf3e02/800.webp",
+      "/media/products/fd/fdc0f39fd0d03ac5/800.webp",
+      "/media/products/38/387beba6cb11c67f/800.webp",
+      "/media/products/5b/5bf53cfdcc68604b/800.webp",
+      "/media/products/93/932601cd10b4adcb/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -4193,15 +4193,15 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-b/7656042143.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-b/7634389907.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-1/7634389861.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-l/7634389917.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/b4/b47a4eb948cf3e02/800.webp",
+          "/media/products/fd/fdc0f39fd0d03ac5/800.webp",
+          "/media/products/38/387beba6cb11c67f/800.webp",
+          "/media/products/5b/5bf53cfdcc68604b/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-b/7656042143.jpg",
+        "primary_image": "/media/products/b4/b47a4eb948cf3e02/800.webp",
         "archived": false,
         "visible": null
       },
@@ -4212,14 +4212,14 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-b/7656042143.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-b/7634389907.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-1/7634389861.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/b4/b47a4eb948cf3e02/800.webp",
+          "/media/products/fd/fdc0f39fd0d03ac5/800.webp",
+          "/media/products/38/387beba6cb11c67f/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-b/7656042143.jpg",
+        "primary_image": "/media/products/b4/b47a4eb948cf3e02/800.webp",
         "archived": false,
         "visible": null
       },
@@ -4230,14 +4230,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-b/7656042143.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-b/7634389907.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-1/7634389861.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/b4/b47a4eb948cf3e02/800.webp",
+          "/media/products/fd/fdc0f39fd0d03ac5/800.webp",
+          "/media/products/38/387beba6cb11c67f/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-b/7656042143.jpg",
+        "primary_image": "/media/products/b4/b47a4eb948cf3e02/800.webp",
         "archived": false,
         "visible": null
       },
@@ -4248,14 +4248,14 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-b/7656042143.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-b/7634389907.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-1/7634389861.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/b4/b47a4eb948cf3e02/800.webp",
+          "/media/products/fd/fdc0f39fd0d03ac5/800.webp",
+          "/media/products/38/387beba6cb11c67f/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-b/7656042143.jpg",
+        "primary_image": "/media/products/b4/b47a4eb948cf3e02/800.webp",
         "archived": false,
         "visible": null
       },
@@ -4266,14 +4266,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XXL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-b/7656042143.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-b/7634389907.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-1/7634389861.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/b4/b47a4eb948cf3e02/800.webp",
+          "/media/products/fd/fdc0f39fd0d03ac5/800.webp",
+          "/media/products/38/387beba6cb11c67f/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-b/7656042143.jpg"
+        "primary_image": "/media/products/b4/b47a4eb948cf3e02/800.webp"
       }
     ],
     "is_active": true,
@@ -4331,15 +4331,15 @@ window.KOMUI_PRODUCTS = [
     "price_min": "2900.00",
     "price_max": "2900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-s/7683411952.jpg",
+    "primary_image_url": "/media/products/d6/d6e8cc81e1f89a59/800.webp",
     "main_image_path": "./assets/ozon-main/10-футболка-наруто-с-вышивкой-madara.jpg",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-s/7683411952.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-u/7683411954.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/7683411951.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/d6/d6e8cc81e1f89a59/800.webp",
+      "/media/products/cd/cdac41902e8cf304/800.webp",
+      "/media/products/3f/3f2824ff88644e55/800.webp",
+      "/media/products/93/932601cd10b4adcb/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -4427,14 +4427,14 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-s/7683411952.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-u/7683411954.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/7683411951.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/d6/d6e8cc81e1f89a59/800.webp",
+          "/media/products/cd/cdac41902e8cf304/800.webp",
+          "/media/products/3f/3f2824ff88644e55/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-s/7683411952.jpg",
+        "primary_image": "/media/products/d6/d6e8cc81e1f89a59/800.webp",
         "archived": false,
         "visible": null
       },
@@ -4445,14 +4445,14 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-s/7683411952.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-u/7683411954.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/7683411951.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/d6/d6e8cc81e1f89a59/800.webp",
+          "/media/products/cd/cdac41902e8cf304/800.webp",
+          "/media/products/3f/3f2824ff88644e55/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-s/7683411952.jpg",
+        "primary_image": "/media/products/d6/d6e8cc81e1f89a59/800.webp",
         "archived": false,
         "visible": null
       },
@@ -4463,14 +4463,14 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-s/7683411952.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-u/7683411954.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/7683411951.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/d6/d6e8cc81e1f89a59/800.webp",
+          "/media/products/cd/cdac41902e8cf304/800.webp",
+          "/media/products/3f/3f2824ff88644e55/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-s/7683411952.jpg",
+        "primary_image": "/media/products/d6/d6e8cc81e1f89a59/800.webp",
         "archived": false,
         "visible": null
       },
@@ -4481,14 +4481,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-s/7683411952.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-u/7683411954.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/7683411951.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/d6/d6e8cc81e1f89a59/800.webp",
+          "/media/products/cd/cdac41902e8cf304/800.webp",
+          "/media/products/3f/3f2824ff88644e55/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-s/7683411952.jpg",
+        "primary_image": "/media/products/d6/d6e8cc81e1f89a59/800.webp",
         "archived": false,
         "visible": null
       },
@@ -4499,14 +4499,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XXL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-s/7683411952.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-u/7683411954.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/7683411951.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/d6/d6e8cc81e1f89a59/800.webp",
+          "/media/products/cd/cdac41902e8cf304/800.webp",
+          "/media/products/3f/3f2824ff88644e55/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-s/7683411952.jpg"
+        "primary_image": "/media/products/d6/d6e8cc81e1f89a59/800.webp"
       }
     ],
     "is_active": true,
@@ -4564,19 +4564,19 @@ window.KOMUI_PRODUCTS = [
     "price_min": "2900.00",
     "price_max": "2900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-8/7669380392.jpg",
+    "primary_image_url": "/media/products/cf/cf80f3cfbe5d1481/800.webp",
     "main_image_path": "./assets/ozon-main/11-футболка-наруто-с-принтом-akatsuki.jpg",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-8/7669380392.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-g/7669380436.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-k/8057845280.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-e/11450587082.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-x/11450588109.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-2/11450589050.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-x/11450588253.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/cf/cf80f3cfbe5d1481/800.webp",
+      "/media/products/67/67effc76ec4ac364/800.webp",
+      "/media/products/9c/9c83197f51b307c5/800.webp",
+      "/media/products/25/25b874ae03eab84e/800.webp",
+      "/media/products/63/633f2dcf3d5b602f/800.webp",
+      "/media/products/b6/b60d17031444bffe/800.webp",
+      "/media/products/5d/5d40839ef441c0fd/800.webp",
+      "/media/products/93/932601cd10b4adcb/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -4664,18 +4664,18 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-8/7669380392.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-g/7669380436.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-k/8057845280.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-e/11450587082.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-x/11450588109.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-2/11450589050.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-x/11450588253.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/cf/cf80f3cfbe5d1481/800.webp",
+          "/media/products/67/67effc76ec4ac364/800.webp",
+          "/media/products/9c/9c83197f51b307c5/800.webp",
+          "/media/products/25/25b874ae03eab84e/800.webp",
+          "/media/products/63/633f2dcf3d5b602f/800.webp",
+          "/media/products/b6/b60d17031444bffe/800.webp",
+          "/media/products/5d/5d40839ef441c0fd/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-8/7669380392.jpg",
+        "primary_image": "/media/products/cf/cf80f3cfbe5d1481/800.webp",
         "archived": false,
         "visible": null
       },
@@ -4686,13 +4686,13 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-8/7669380392.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-g/7669380436.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/cf/cf80f3cfbe5d1481/800.webp",
+          "/media/products/67/67effc76ec4ac364/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-8/7669380392.jpg",
+        "primary_image": "/media/products/cf/cf80f3cfbe5d1481/800.webp",
         "archived": false,
         "visible": null
       },
@@ -4703,13 +4703,13 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-8/7669380392.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-g/7669380436.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/cf/cf80f3cfbe5d1481/800.webp",
+          "/media/products/67/67effc76ec4ac364/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-8/7669380392.jpg",
+        "primary_image": "/media/products/cf/cf80f3cfbe5d1481/800.webp",
         "archived": false,
         "visible": null
       },
@@ -4720,13 +4720,13 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-8/7669380392.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-g/7669380436.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/cf/cf80f3cfbe5d1481/800.webp",
+          "/media/products/67/67effc76ec4ac364/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-8/7669380392.jpg",
+        "primary_image": "/media/products/cf/cf80f3cfbe5d1481/800.webp",
         "archived": false,
         "visible": null
       },
@@ -4737,13 +4737,13 @@ window.KOMUI_PRODUCTS = [
         "size": "XXL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-8/7669380392.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-g/7669380436.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/cf/cf80f3cfbe5d1481/800.webp",
+          "/media/products/67/67effc76ec4ac364/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-8/7669380392.jpg"
+        "primary_image": "/media/products/cf/cf80f3cfbe5d1481/800.webp"
       }
     ],
     "is_active": true,
@@ -4801,15 +4801,15 @@ window.KOMUI_PRODUCTS = [
     "price_min": "2900.00",
     "price_max": "2900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-d/7865638933.jpg",
+    "primary_image_url": "/media/products/57/570b10e7d0dfcb07/800.webp",
     "main_image_path": "./assets/ozon-main/12-футболка-наруто-с-принтом-akatsuki.jpg",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-d/7865638933.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-h/7865639009.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-n/7865639051.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/57/570b10e7d0dfcb07/800.webp",
+      "/media/products/d3/d391bdad52920e18/800.webp",
+      "/media/products/96/96864b6c4980379c/800.webp",
+      "/media/products/93/932601cd10b4adcb/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -4897,14 +4897,14 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-d/7865638933.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-h/7865639009.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-n/7865639051.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/57/570b10e7d0dfcb07/800.webp",
+          "/media/products/d3/d391bdad52920e18/800.webp",
+          "/media/products/96/96864b6c4980379c/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-d/7865638933.jpg",
+        "primary_image": "/media/products/57/570b10e7d0dfcb07/800.webp",
         "archived": false,
         "visible": null
       },
@@ -4915,14 +4915,14 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-d/7865638933.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-h/7865639009.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-n/7865639051.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/57/570b10e7d0dfcb07/800.webp",
+          "/media/products/d3/d391bdad52920e18/800.webp",
+          "/media/products/96/96864b6c4980379c/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-d/7865638933.jpg",
+        "primary_image": "/media/products/57/570b10e7d0dfcb07/800.webp",
         "archived": false,
         "visible": null
       },
@@ -4933,14 +4933,14 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-d/7865638933.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-h/7865639009.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-n/7865639051.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/57/570b10e7d0dfcb07/800.webp",
+          "/media/products/d3/d391bdad52920e18/800.webp",
+          "/media/products/96/96864b6c4980379c/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-d/7865638933.jpg",
+        "primary_image": "/media/products/57/570b10e7d0dfcb07/800.webp",
         "archived": false,
         "visible": null
       },
@@ -4951,14 +4951,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-d/7865638933.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-h/7865639009.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-n/7865639051.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/57/570b10e7d0dfcb07/800.webp",
+          "/media/products/d3/d391bdad52920e18/800.webp",
+          "/media/products/96/96864b6c4980379c/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-d/7865638933.jpg",
+        "primary_image": "/media/products/57/570b10e7d0dfcb07/800.webp",
         "archived": false,
         "visible": null
       },
@@ -4969,14 +4969,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XXL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-d/7865638933.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-h/7865639009.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-n/7865639051.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/57/570b10e7d0dfcb07/800.webp",
+          "/media/products/d3/d391bdad52920e18/800.webp",
+          "/media/products/96/96864b6c4980379c/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-d/7865638933.jpg"
+        "primary_image": "/media/products/57/570b10e7d0dfcb07/800.webp"
       }
     ],
     "is_active": true,
@@ -5034,14 +5034,14 @@ window.KOMUI_PRODUCTS = [
     "price_min": "2900.00",
     "price_max": "2900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-q/7609295474.jpg",
+    "primary_image_url": "/media/products/f5/f5770df9344a27c2/800.webp",
     "main_image_path": "./assets/ozon-main/13-футболка-наруто-akatsuki.jpg",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-q/7609295474.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-h/7609295717.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/f5/f5770df9344a27c2/800.webp",
+      "/media/products/35/3562a4cfe824cdba/1200.webp",
+      "/media/products/93/932601cd10b4adcb/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -5129,13 +5129,13 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-q/7609295474.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-h/7609295717.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/f5/f5770df9344a27c2/800.webp",
+          "/media/products/35/3562a4cfe824cdba/1200.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-q/7609295474.jpg",
+        "primary_image": "/media/products/f5/f5770df9344a27c2/800.webp",
         "archived": false,
         "visible": null
       },
@@ -5146,13 +5146,13 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-q/7609295474.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-h/7609295717.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/f5/f5770df9344a27c2/800.webp",
+          "/media/products/35/3562a4cfe824cdba/1200.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-q/7609295474.jpg",
+        "primary_image": "/media/products/f5/f5770df9344a27c2/800.webp",
         "archived": false,
         "visible": null
       },
@@ -5163,13 +5163,13 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-q/7609295474.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-h/7609295717.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/f5/f5770df9344a27c2/800.webp",
+          "/media/products/35/3562a4cfe824cdba/1200.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-q/7609295474.jpg",
+        "primary_image": "/media/products/f5/f5770df9344a27c2/800.webp",
         "archived": false,
         "visible": null
       },
@@ -5180,13 +5180,13 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-q/7609295474.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-h/7609295717.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/f5/f5770df9344a27c2/800.webp",
+          "/media/products/35/3562a4cfe824cdba/1200.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-q/7609295474.jpg",
+        "primary_image": "/media/products/f5/f5770df9344a27c2/800.webp",
         "archived": false,
         "visible": null
       },
@@ -5197,13 +5197,13 @@ window.KOMUI_PRODUCTS = [
         "size": "XXL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-q/7609295474.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-h/7609295717.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/f5/f5770df9344a27c2/800.webp",
+          "/media/products/35/3562a4cfe824cdba/1200.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-q/7609295474.jpg"
+        "primary_image": "/media/products/f5/f5770df9344a27c2/800.webp"
       }
     ],
     "is_active": true,
@@ -5261,14 +5261,14 @@ window.KOMUI_PRODUCTS = [
     "price_min": "2900.00",
     "price_max": "2900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-1/7676186005.jpg",
+    "primary_image_url": "/media/products/b2/b21ca07de9a69809/800.webp",
     "main_image_path": "./assets/ozon-main/14-футболка-с-вышивкой-gravity.jpg",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-1/7676186005.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-3/7676186007.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/b2/b21ca07de9a69809/800.webp",
+      "/media/products/ea/ea51be4b25ee27fc/800.webp",
+      "/media/products/93/932601cd10b4adcb/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -5356,13 +5356,13 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-1/7676186005.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-3/7676186007.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/b2/b21ca07de9a69809/800.webp",
+          "/media/products/ea/ea51be4b25ee27fc/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-1/7676186005.jpg",
+        "primary_image": "/media/products/b2/b21ca07de9a69809/800.webp",
         "archived": false,
         "visible": null
       },
@@ -5373,13 +5373,13 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-1/7676186005.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-3/7676186007.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/b2/b21ca07de9a69809/800.webp",
+          "/media/products/ea/ea51be4b25ee27fc/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-1/7676186005.jpg",
+        "primary_image": "/media/products/b2/b21ca07de9a69809/800.webp",
         "archived": false,
         "visible": null
       },
@@ -5390,13 +5390,13 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-1/7676186005.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-3/7676186007.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/b2/b21ca07de9a69809/800.webp",
+          "/media/products/ea/ea51be4b25ee27fc/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-1/7676186005.jpg",
+        "primary_image": "/media/products/b2/b21ca07de9a69809/800.webp",
         "archived": false,
         "visible": null
       },
@@ -5407,13 +5407,13 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-1/7676186005.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-3/7676186007.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/b2/b21ca07de9a69809/800.webp",
+          "/media/products/ea/ea51be4b25ee27fc/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-1/7676186005.jpg",
+        "primary_image": "/media/products/b2/b21ca07de9a69809/800.webp",
         "archived": false,
         "visible": null
       },
@@ -5424,13 +5424,13 @@ window.KOMUI_PRODUCTS = [
         "size": "XXL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-1/7676186005.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-3/7676186007.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/b2/b21ca07de9a69809/800.webp",
+          "/media/products/ea/ea51be4b25ee27fc/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-1/7676186005.jpg"
+        "primary_image": "/media/products/b2/b21ca07de9a69809/800.webp"
       }
     ],
     "is_active": true,
@@ -5488,15 +5488,15 @@ window.KOMUI_PRODUCTS = [
     "price_min": "2900.00",
     "price_max": "2900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-t/7982948081.jpg",
+    "primary_image_url": "/media/products/5d/5d90573f234721f9/800.webp",
     "main_image_path": "./assets/ozon-main/16-футболка-с-принтом-gravity.jpg",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-t/7982948081.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-y/7982947726.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-i/7982948250.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/5d/5d90573f234721f9/800.webp",
+      "/media/products/53/53dc75d9a58a86bc/800.webp",
+      "/media/products/a1/a1fe474a63ef0f44/800.webp",
+      "/media/products/93/932601cd10b4adcb/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -5584,14 +5584,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-t/7982948081.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-y/7982947726.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-i/7982948250.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/5d/5d90573f234721f9/800.webp",
+          "/media/products/53/53dc75d9a58a86bc/800.webp",
+          "/media/products/a1/a1fe474a63ef0f44/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-t/7982948081.jpg",
+        "primary_image": "/media/products/5d/5d90573f234721f9/800.webp",
         "archived": false,
         "visible": null
       },
@@ -5602,14 +5602,14 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-t/7982948081.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-y/7982947726.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-i/7982948250.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/5d/5d90573f234721f9/800.webp",
+          "/media/products/53/53dc75d9a58a86bc/800.webp",
+          "/media/products/a1/a1fe474a63ef0f44/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-t/7982948081.jpg",
+        "primary_image": "/media/products/5d/5d90573f234721f9/800.webp",
         "archived": false,
         "visible": null
       },
@@ -5620,14 +5620,14 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-t/7982948081.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-y/7982947726.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-i/7982948250.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/5d/5d90573f234721f9/800.webp",
+          "/media/products/53/53dc75d9a58a86bc/800.webp",
+          "/media/products/a1/a1fe474a63ef0f44/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-t/7982948081.jpg",
+        "primary_image": "/media/products/5d/5d90573f234721f9/800.webp",
         "archived": false,
         "visible": null
       },
@@ -5638,14 +5638,14 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-t/7982948081.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-y/7982947726.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-i/7982948250.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/5d/5d90573f234721f9/800.webp",
+          "/media/products/53/53dc75d9a58a86bc/800.webp",
+          "/media/products/a1/a1fe474a63ef0f44/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-t/7982948081.jpg",
+        "primary_image": "/media/products/5d/5d90573f234721f9/800.webp",
         "archived": false,
         "visible": null
       },
@@ -5656,14 +5656,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XXL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-t/7982948081.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-y/7982947726.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-i/7982948250.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/5d/5d90573f234721f9/800.webp",
+          "/media/products/53/53dc75d9a58a86bc/800.webp",
+          "/media/products/a1/a1fe474a63ef0f44/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-t/7982948081.jpg"
+        "primary_image": "/media/products/5d/5d90573f234721f9/800.webp"
       }
     ],
     "is_active": true,
@@ -5721,15 +5721,15 @@ window.KOMUI_PRODUCTS = [
     "price_min": "2900.00",
     "price_max": "2900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-5/7878893981.jpg",
+    "primary_image_url": "/media/products/da/da5baed3abf618b9/800.webp",
     "main_image_path": "./assets/ozon-main/17-футболка-с-принтом-gravity.jpg",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-5/7878893981.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-1/7878894013.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-k/7878894140.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/da/da5baed3abf618b9/800.webp",
+      "/media/products/57/57587fd853dd2ba0/800.webp",
+      "/media/products/2d/2d8e055c4784684d/800.webp",
+      "/media/products/93/932601cd10b4adcb/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -5817,14 +5817,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-5/7878893981.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-1/7878894013.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-k/7878894140.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/da/da5baed3abf618b9/800.webp",
+          "/media/products/57/57587fd853dd2ba0/800.webp",
+          "/media/products/2d/2d8e055c4784684d/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-5/7878893981.jpg",
+        "primary_image": "/media/products/da/da5baed3abf618b9/800.webp",
         "archived": false,
         "visible": null
       },
@@ -5835,14 +5835,14 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-5/7878893981.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-1/7878894013.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-k/7878894140.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/da/da5baed3abf618b9/800.webp",
+          "/media/products/57/57587fd853dd2ba0/800.webp",
+          "/media/products/2d/2d8e055c4784684d/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-5/7878893981.jpg",
+        "primary_image": "/media/products/da/da5baed3abf618b9/800.webp",
         "archived": false,
         "visible": null
       },
@@ -5853,14 +5853,14 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-5/7878893981.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-1/7878894013.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-k/7878894140.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/da/da5baed3abf618b9/800.webp",
+          "/media/products/57/57587fd853dd2ba0/800.webp",
+          "/media/products/2d/2d8e055c4784684d/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-5/7878893981.jpg",
+        "primary_image": "/media/products/da/da5baed3abf618b9/800.webp",
         "archived": false,
         "visible": null
       },
@@ -5871,14 +5871,14 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-5/7878893981.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-1/7878894013.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-k/7878894140.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/da/da5baed3abf618b9/800.webp",
+          "/media/products/57/57587fd853dd2ba0/800.webp",
+          "/media/products/2d/2d8e055c4784684d/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-5/7878893981.jpg",
+        "primary_image": "/media/products/da/da5baed3abf618b9/800.webp",
         "archived": false,
         "visible": null
       },
@@ -5889,14 +5889,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XXL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-5/7878893981.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-1/7878894013.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-k/7878894140.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/da/da5baed3abf618b9/800.webp",
+          "/media/products/57/57587fd853dd2ba0/800.webp",
+          "/media/products/2d/2d8e055c4784684d/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-5/7878893981.jpg"
+        "primary_image": "/media/products/da/da5baed3abf618b9/800.webp"
       }
     ],
     "is_active": true,
@@ -5954,15 +5954,15 @@ window.KOMUI_PRODUCTS = [
     "price_min": "2900.00",
     "price_max": "2900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-k/8303578400.jpg",
+    "primary_image_url": "/media/products/d9/d92b7282803a51e7/800.webp",
     "main_image_path": "./assets/ozon-main/19-футболка-с-вышивкой-gta.jpg",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-k/8303578400.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-o/8303578404.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-f/8303578395.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/d9/d92b7282803a51e7/800.webp",
+      "/media/products/de/de4242e7e539e2ba/800.webp",
+      "/media/products/7c/7c6236c0af52207b/800.webp",
+      "/media/products/93/932601cd10b4adcb/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -6050,14 +6050,14 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-k/8303578400.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-o/8303578404.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-f/8303578395.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/d9/d92b7282803a51e7/800.webp",
+          "/media/products/de/de4242e7e539e2ba/800.webp",
+          "/media/products/7c/7c6236c0af52207b/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-k/8303578400.jpg",
+        "primary_image": "/media/products/d9/d92b7282803a51e7/800.webp",
         "archived": false,
         "visible": null
       },
@@ -6068,14 +6068,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-k/8303578400.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-o/8303578404.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-f/8303578395.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/d9/d92b7282803a51e7/800.webp",
+          "/media/products/de/de4242e7e539e2ba/800.webp",
+          "/media/products/7c/7c6236c0af52207b/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-k/8303578400.jpg",
+        "primary_image": "/media/products/d9/d92b7282803a51e7/800.webp",
         "archived": false,
         "visible": null
       },
@@ -6086,14 +6086,14 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-k/8303578400.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-o/8303578404.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-f/8303578395.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/d9/d92b7282803a51e7/800.webp",
+          "/media/products/de/de4242e7e539e2ba/800.webp",
+          "/media/products/7c/7c6236c0af52207b/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-k/8303578400.jpg",
+        "primary_image": "/media/products/d9/d92b7282803a51e7/800.webp",
         "archived": false,
         "visible": null
       },
@@ -6104,14 +6104,14 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-k/8303578400.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-o/8303578404.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-f/8303578395.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/d9/d92b7282803a51e7/800.webp",
+          "/media/products/de/de4242e7e539e2ba/800.webp",
+          "/media/products/7c/7c6236c0af52207b/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-k/8303578400.jpg",
+        "primary_image": "/media/products/d9/d92b7282803a51e7/800.webp",
         "archived": false,
         "visible": null
       },
@@ -6122,14 +6122,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XXL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-k/8303578400.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-o/8303578404.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-f/8303578395.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/d9/d92b7282803a51e7/800.webp",
+          "/media/products/de/de4242e7e539e2ba/800.webp",
+          "/media/products/7c/7c6236c0af52207b/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-k/8303578400.jpg"
+        "primary_image": "/media/products/d9/d92b7282803a51e7/800.webp"
       }
     ],
     "is_active": true,
@@ -6185,16 +6185,16 @@ window.KOMUI_PRODUCTS = [
     "price_min": "3900.00",
     "price_max": "3900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-n/8224018223.jpg",
+    "primary_image_url": "/media/products/1d/1d11ae6d6f10fcaf/800.webp",
     "main_image_path": "./assets/ozon-main/21-худи-с-вышивкой-gravity.jpg",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-n/8224018223.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-z/8224018451.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-9/8224017885.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-v/8222756431.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-k/8222523500.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/1d/1d11ae6d6f10fcaf/800.webp",
+      "/media/products/8e/8e780269128a5132/800.webp",
+      "/media/products/0c/0c6462dd55b4d71b/800.webp",
+      "/media/products/2d/2dc1028ee9e160f0/800.webp",
+      "/media/products/c6/c69210ab1d76bdc0/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -6293,15 +6293,15 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 3900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-n/8224018223.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-z/8224018451.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-9/8224017885.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-v/8222756431.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-k/8222523500.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/1d/1d11ae6d6f10fcaf/800.webp",
+          "/media/products/8e/8e780269128a5132/800.webp",
+          "/media/products/0c/0c6462dd55b4d71b/800.webp",
+          "/media/products/2d/2dc1028ee9e160f0/800.webp",
+          "/media/products/c6/c69210ab1d76bdc0/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-n/8224018223.jpg",
+        "primary_image": "/media/products/1d/1d11ae6d6f10fcaf/800.webp",
         "archived": false,
         "visible": null
       },
@@ -6312,15 +6312,15 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 3900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-n/8224018223.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-z/8224018451.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-9/8224017885.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-v/8222756431.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-k/8222523500.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/1d/1d11ae6d6f10fcaf/800.webp",
+          "/media/products/8e/8e780269128a5132/800.webp",
+          "/media/products/0c/0c6462dd55b4d71b/800.webp",
+          "/media/products/2d/2dc1028ee9e160f0/800.webp",
+          "/media/products/c6/c69210ab1d76bdc0/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-n/8224018223.jpg",
+        "primary_image": "/media/products/1d/1d11ae6d6f10fcaf/800.webp",
         "archived": false,
         "visible": null
       },
@@ -6331,15 +6331,15 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 3900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-n/8224018223.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-z/8224018451.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-9/8224017885.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-v/8222756431.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-k/8222523500.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/1d/1d11ae6d6f10fcaf/800.webp",
+          "/media/products/8e/8e780269128a5132/800.webp",
+          "/media/products/0c/0c6462dd55b4d71b/800.webp",
+          "/media/products/2d/2dc1028ee9e160f0/800.webp",
+          "/media/products/c6/c69210ab1d76bdc0/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-n/8224018223.jpg",
+        "primary_image": "/media/products/1d/1d11ae6d6f10fcaf/800.webp",
         "archived": false,
         "visible": null
       }
@@ -6399,15 +6399,15 @@ window.KOMUI_PRODUCTS = [
     "price_min": "2900.00",
     "price_max": "2900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-b/7983900947.jpg",
+    "primary_image_url": "/media/products/25/25bb2c62617f6076/800.webp",
     "main_image_path": "./assets/ozon-main/22-футболка-варенка-с-принтом-gravity-серая.jpg",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-b/7983900947.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-5/7983900869.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/25/25bb2c62617f6076/800.webp",
+      "/media/products/5d/5daf0a8899449426/800.webp",
+      "/media/products/f1/f17ec7c55e7c3715/800.webp",
+      "/media/products/49/4911f91ac320dfc3/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -6482,14 +6482,14 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-b/7983900947.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-5/7983900869.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/25/25bb2c62617f6076/800.webp",
+          "/media/products/5d/5daf0a8899449426/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-b/7983900947.jpg",
+        "primary_image": "/media/products/25/25bb2c62617f6076/800.webp",
         "archived": false,
         "visible": null
       },
@@ -6500,14 +6500,14 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-b/7983900947.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-5/7983900869.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/25/25bb2c62617f6076/800.webp",
+          "/media/products/5d/5daf0a8899449426/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-b/7983900947.jpg",
+        "primary_image": "/media/products/25/25bb2c62617f6076/800.webp",
         "archived": false,
         "visible": null
       },
@@ -6518,14 +6518,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XXL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-b/7983900947.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-5/7983900869.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/25/25bb2c62617f6076/800.webp",
+          "/media/products/5d/5daf0a8899449426/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-b/7983900947.jpg"
+        "primary_image": "/media/products/25/25bb2c62617f6076/800.webp"
       },
       {
         "sku": 4921056619,
@@ -6534,14 +6534,14 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-b/7983900947.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-5/7983900869.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/25/25bb2c62617f6076/800.webp",
+          "/media/products/5d/5daf0a8899449426/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-b/7983900947.jpg"
+        "primary_image": "/media/products/25/25bb2c62617f6076/800.webp"
       },
       {
         "sku": 4921056644,
@@ -6550,14 +6550,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-b/7983900947.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-5/7983900869.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/12108479746.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/25/25bb2c62617f6076/800.webp",
+          "/media/products/5d/5daf0a8899449426/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-b/7983900947.jpg"
+        "primary_image": "/media/products/25/25bb2c62617f6076/800.webp"
       }
     ],
     "is_active": true,
@@ -6612,16 +6612,16 @@ window.KOMUI_PRODUCTS = [
     "price_min": "2900.00",
     "price_max": "2900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-8/7683436664.jpg",
+    "primary_image_url": "/media/products/f7/f709c675efbbff2f/800.webp",
     "main_image_path": "./assets/ozon-main/23-футболка-наруто-с-вышивкой-дарт-вейдер.jpg",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-8/7683436664.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-w/7683436688.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-a/7683436666.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-k/8057845280.jpg"
+      "/media/products/f7/f709c675efbbff2f/800.webp",
+      "/media/products/41/4164bc5e86776745/800.webp",
+      "/media/products/d2/d23518835b23627e/800.webp",
+      "/media/products/93/932601cd10b4adcb/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp",
+      "/media/products/9c/9c83197f51b307c5/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -6709,14 +6709,14 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-8/7683436664.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-w/7683436688.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-a/7683436666.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/f7/f709c675efbbff2f/800.webp",
+          "/media/products/41/4164bc5e86776745/800.webp",
+          "/media/products/d2/d23518835b23627e/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-8/7683436664.jpg",
+        "primary_image": "/media/products/f7/f709c675efbbff2f/800.webp",
         "archived": false,
         "visible": null
       },
@@ -6727,12 +6727,12 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-8/7683436664.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-w/7683436688.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-a/7683436666.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-k/8057845280.jpg"
+          "/media/products/f7/f709c675efbbff2f/800.webp",
+          "/media/products/41/4164bc5e86776745/800.webp",
+          "/media/products/d2/d23518835b23627e/800.webp",
+          "/media/products/9c/9c83197f51b307c5/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-8/7683436664.jpg",
+        "primary_image": "/media/products/f7/f709c675efbbff2f/800.webp",
         "archived": false,
         "visible": null
       }
@@ -6792,15 +6792,15 @@ window.KOMUI_PRODUCTS = [
     "price_min": "2900.00",
     "price_max": "2900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-o/7683391320.jpg",
+    "primary_image_url": "/media/products/b2/b2d8945cc1da728d/800.webp",
     "main_image_path": "./assets/ozon-main/24-футболка-наруто-с-вышивкой-itachi.jpg",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-o/7683391320.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/7683391323.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-q/7683391322.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/b2/b2d8945cc1da728d/800.webp",
+      "/media/products/bd/bdb97662958d8024/800.webp",
+      "/media/products/8d/8d6a43eb36ad8ee9/800.webp",
+      "/media/products/93/932601cd10b4adcb/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -6888,14 +6888,14 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-o/7683391320.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/7683391323.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-q/7683391322.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/b2/b2d8945cc1da728d/800.webp",
+          "/media/products/bd/bdb97662958d8024/800.webp",
+          "/media/products/8d/8d6a43eb36ad8ee9/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-o/7683391320.jpg",
+        "primary_image": "/media/products/b2/b2d8945cc1da728d/800.webp",
         "archived": false,
         "visible": null
       },
@@ -6906,14 +6906,14 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-o/7683391320.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/7683391323.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-q/7683391322.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/b2/b2d8945cc1da728d/800.webp",
+          "/media/products/bd/bdb97662958d8024/800.webp",
+          "/media/products/8d/8d6a43eb36ad8ee9/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-o/7683391320.jpg",
+        "primary_image": "/media/products/b2/b2d8945cc1da728d/800.webp",
         "archived": false,
         "visible": null
       },
@@ -6924,14 +6924,14 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-o/7683391320.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/7683391323.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-q/7683391322.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/b2/b2d8945cc1da728d/800.webp",
+          "/media/products/bd/bdb97662958d8024/800.webp",
+          "/media/products/8d/8d6a43eb36ad8ee9/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-o/7683391320.jpg"
+        "primary_image": "/media/products/b2/b2d8945cc1da728d/800.webp"
       },
       {
         "sku": 4920921718,
@@ -6940,14 +6940,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-o/7683391320.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/7683391323.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-q/7683391322.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/b2/b2d8945cc1da728d/800.webp",
+          "/media/products/bd/bdb97662958d8024/800.webp",
+          "/media/products/8d/8d6a43eb36ad8ee9/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-o/7683391320.jpg"
+        "primary_image": "/media/products/b2/b2d8945cc1da728d/800.webp"
       },
       {
         "sku": 4920920679,
@@ -6956,14 +6956,14 @@ window.KOMUI_PRODUCTS = [
         "size": "XXL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-o/7683391320.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/7683391323.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-q/7683391322.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/b2/b2d8945cc1da728d/800.webp",
+          "/media/products/bd/bdb97662958d8024/800.webp",
+          "/media/products/8d/8d6a43eb36ad8ee9/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-o/7683391320.jpg"
+        "primary_image": "/media/products/b2/b2d8945cc1da728d/800.webp"
       }
     ],
     "is_active": true,
@@ -7017,16 +7017,16 @@ window.KOMUI_PRODUCTS = [
     "price_min": "2900.00",
     "price_max": "2900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-b/9237572147.jpg",
-    "main_image_path": "https://ir.ozone.ru/s3/multimedia-1-b/9237572147.jpg",
+    "primary_image_url": "/media/products/3d/3d9391b865e2b281/800.webp",
+    "main_image_path": "/media/products/3d/3d9391b865e2b281/800.webp",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-b/9237572147.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-s/9237571660.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-x/9237571521.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-a/9237572110.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/3d/3d9391b865e2b281/800.webp",
+      "/media/products/f3/f37159eb3fcd0114/800.webp",
+      "/media/products/3c/3c1dd49c21c03bbe/800.webp",
+      "/media/products/8d/8daf2adcb0dc0d97/800.webp",
+      "/media/products/f1/f17ec7c55e7c3715/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -7101,15 +7101,15 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-b/9237572147.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/9237571660.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-x/9237571521.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-a/9237572110.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-s/12069643492.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/3d/3d9391b865e2b281/800.webp",
+          "/media/products/f3/f37159eb3fcd0114/800.webp",
+          "/media/products/3c/3c1dd49c21c03bbe/800.webp",
+          "/media/products/8d/8daf2adcb0dc0d97/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-b/9237572147.jpg",
+        "primary_image": "/media/products/3d/3d9391b865e2b281/800.webp",
         "archived": false,
         "visible": null
       }
@@ -7169,14 +7169,14 @@ window.KOMUI_PRODUCTS = [
     "price_min": "2900.00",
     "price_max": "2900.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-l/7669712433.jpg",
-    "main_image_path": "https://ir.ozone.ru/s3/multimedia-1-l/7669712433.jpg",
+    "primary_image_url": "/media/products/5a/5a7621529b11d848/800.webp",
+    "main_image_path": "/media/products/5a/5a7621529b11d848/800.webp",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-l/7669712433.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-a/7669712782.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/5a/5a7621529b11d848/800.webp",
+      "/media/products/55/5590b7d0f87ac4a0/800.webp",
+      "/media/products/93/932601cd10b4adcb/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -7264,13 +7264,13 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-l/7669712433.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-a/7669712782.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/5a/5a7621529b11d848/800.webp",
+          "/media/products/55/5590b7d0f87ac4a0/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-l/7669712433.jpg",
+        "primary_image": "/media/products/5a/5a7621529b11d848/800.webp",
         "archived": false,
         "visible": null
       },
@@ -7281,13 +7281,13 @@ window.KOMUI_PRODUCTS = [
         "size": "XXL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-l/7669712433.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-a/7669712782.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/5a/5a7621529b11d848/800.webp",
+          "/media/products/55/5590b7d0f87ac4a0/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-l/7669712433.jpg"
+        "primary_image": "/media/products/5a/5a7621529b11d848/800.webp"
       },
       {
         "sku": 4921011631,
@@ -7296,13 +7296,13 @@ window.KOMUI_PRODUCTS = [
         "size": "XL",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-l/7669712433.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-a/7669712782.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/5a/5a7621529b11d848/800.webp",
+          "/media/products/55/5590b7d0f87ac4a0/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-l/7669712433.jpg"
+        "primary_image": "/media/products/5a/5a7621529b11d848/800.webp"
       },
       {
         "sku": 4921012230,
@@ -7311,13 +7311,13 @@ window.KOMUI_PRODUCTS = [
         "size": "M",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-l/7669712433.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-a/7669712782.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/5a/5a7621529b11d848/800.webp",
+          "/media/products/55/5590b7d0f87ac4a0/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-l/7669712433.jpg"
+        "primary_image": "/media/products/5a/5a7621529b11d848/800.webp"
       },
       {
         "sku": 4921012174,
@@ -7326,13 +7326,13 @@ window.KOMUI_PRODUCTS = [
         "size": "L",
         "price": 2900,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-l/7669712433.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-a/7669712782.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-8/12068204192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/5a/5a7621529b11d848/800.webp",
+          "/media/products/55/5590b7d0f87ac4a0/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-l/7669712433.jpg"
+        "primary_image": "/media/products/5a/5a7621529b11d848/800.webp"
       }
     ],
     "is_active": true,
@@ -7386,16 +7386,16 @@ window.KOMUI_PRODUCTS = [
     "price_min": "3500.00",
     "price_max": "3500.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-o/8426251896.jpg",
-    "main_image_path": "https://ir.ozone.ru/s3/multimedia-1-o/8426251896.jpg",
+    "primary_image_url": "/media/products/44/446127ce9fea9d8e/800.webp",
+    "main_image_path": "/media/products/44/446127ce9fea9d8e/800.webp",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-o/8426251896.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-9/8426251953.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-m/8426251930.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-a/8426251702.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-1/8426251765.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/44/446127ce9fea9d8e/800.webp",
+      "/media/products/b9/b9f6db8479fdc1c5/800.webp",
+      "/media/products/b3/b38cbe7b1f668c0e/800.webp",
+      "/media/products/68/68ccc37bdad56512/800.webp",
+      "/media/products/88/880b456102de2274/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -7478,15 +7478,15 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 3500,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-o/8426251896.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-9/8426251953.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-m/8426251930.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-a/8426251702.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-1/8426251765.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/44/446127ce9fea9d8e/800.webp",
+          "/media/products/b9/b9f6db8479fdc1c5/800.webp",
+          "/media/products/b3/b38cbe7b1f668c0e/800.webp",
+          "/media/products/68/68ccc37bdad56512/800.webp",
+          "/media/products/88/880b456102de2274/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-o/8426251896.jpg",
+        "primary_image": "/media/products/44/446127ce9fea9d8e/800.webp",
         "archived": false,
         "visible": null
       }
@@ -7542,16 +7542,16 @@ window.KOMUI_PRODUCTS = [
     "price_min": "3200.00",
     "price_max": "3200.00",
     "currency": "RUB",
-    "primary_image_url": "https://ir.ozone.ru/s3/multimedia-1-w/7958557220.jpg",
+    "primary_image_url": "/media/products/98/987ce89062aaa768/800.webp",
     "main_image_path": "./assets/ozon-main/04-свитшот-с-вышивкой-итачи.jpg",
     "image_urls": [
-      "https://ir.ozone.ru/s3/multimedia-1-w/7958557220.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/7958556783.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-o/7958556600.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/7958557192.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-u/7958556894.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-      "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+      "/media/products/98/987ce89062aaa768/800.webp",
+      "/media/products/5d/5d5775af38621582/800.webp",
+      "/media/products/7e/7ed8567d9f08046e/800.webp",
+      "/media/products/dc/dcf09bcf4351cdd4/800.webp",
+      "/media/products/91/916c81621f7bc801/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/19/195775838e846a30/800.webp"
     ],
     "size_chart_json": null,
     "offers": [
@@ -7562,15 +7562,15 @@ window.KOMUI_PRODUCTS = [
         "size": "S",
         "price": 3200,
         "images": [
-          "https://ir.ozone.ru/s3/multimedia-1-w/7958557220.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/7958556783.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-o/7958556600.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/7958557192.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-u/7958556894.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-r/12069343575.jpg",
-          "https://ir.ozone.ru/s3/multimedia-1-4/12069341824.jpg"
+          "/media/products/98/987ce89062aaa768/800.webp",
+          "/media/products/5d/5d5775af38621582/800.webp",
+          "/media/products/7e/7ed8567d9f08046e/800.webp",
+          "/media/products/dc/dcf09bcf4351cdd4/800.webp",
+          "/media/products/91/916c81621f7bc801/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp",
+          "/media/products/19/195775838e846a30/800.webp"
         ],
-        "primary_image": "https://ir.ozone.ru/s3/multimedia-1-w/7958557220.jpg",
+        "primary_image": "/media/products/98/987ce89062aaa768/800.webp",
         "archived": false,
         "visible": null
       }
