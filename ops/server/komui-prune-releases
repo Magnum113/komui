@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+usage() {
+  cat <<'USAGE'
+Usage:
+  sudo /usr/local/sbin/komui-prune-releases [--dry-run] [--keep N]
+
+Prunes old KOMUI immutable releases while preserving:
+  - currently active stage backend release;
+  - currently active prod backend release;
+  - currently active stage frontend release;
+  - currently active prod frontend release;
+  - newest N releases in every release directory.
+
+Environment:
+  KOMUI_PRUNE_KEEP        Default: 5
+  KOMUI_PRUNE_LOG_FILE    Default: /var/log/komui/prune-releases.log
+USAGE
+}
+
+if [[ "${EUID}" -ne 0 ]]; then
+  echo "Run with sudo." >&2
+  exit 1
+fi
+
+keep_count="${KOMUI_PRUNE_KEEP:-5}"
+dry_run=0
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dry-run)
+      dry_run=1
+      shift
+      ;;
+    --keep)
+      keep_count="${2:-}"
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      usage >&2
+      exit 1
+      ;;
+  esac
+done
+
+if ! [[ "$keep_count" =~ ^[0-9]+$ ]] || (( keep_count < 1 )); then
+  echo "--keep must be a positive integer." >&2
+  exit 1
+fi
+
+log_file="${KOMUI_PRUNE_LOG_FILE:-/var/log/komui/prune-releases.log}"
+lock_path="/run/komui-prune-releases.lock"
+mkdir -p "$(dirname "$log_file")"
+
+exec > >(tee -a "$log_file") 2>&1
+
+timestamp() {
+  date -u +%Y-%m-%dT%H:%M:%SZ
+}
+
+log() {
+  printf '[%s] %s\n' "$(timestamp)" "$*"
+}
+
+active_path() {
+  readlink -f "$1" 2>/dev/null || true
+}
+
+path_size_bytes() {
+  du -sb "$1" 2>/dev/null | awk '{print $1}'
+}
+
+is_active_path() {
+  local path="$1"
+  shift
+  local active
+  for active in "$@"; do
+    [[ -n "$active" && "$path" == "$active" ]] && return 0
+  done
+  return 1
+}
+
+prune_dir() {
+  local label="$1"
+  local dir="$2"
+  shift 2
+  local active_paths=("$@")
+
+  if [[ ! -d "$dir" ]]; then
+    log "skip label=$label reason=missing_dir dir=$dir"
+    return 0
+  fi
+
+  local tmp
+  tmp="$(mktemp)"
+  find "$dir" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' | sort -nr > "$tmp"
+
+  local index=0
+  local kept=0
+  local deleted=0
+  local freed=0
+  local line path size reason
+
+  while IFS= read -r line; do
+    [[ -n "$line" ]] || continue
+    path="${line#* }"
+    index=$((index + 1))
+    reason=""
+
+    if is_active_path "$path" "${active_paths[@]}"; then
+      reason="active"
+    elif (( index <= keep_count )); then
+      reason="newest"
+    fi
+
+    if [[ -n "$reason" ]]; then
+      kept=$((kept + 1))
+      log "KEEP label=$label reason=$reason path=$path"
+      continue
+    fi
+
+    size="$(path_size_bytes "$path")"
+    size="${size:-0}"
+    log "DELETE label=$label bytes=$size path=$path"
+    if (( dry_run == 0 )); then
+      rm -rf --one-file-system -- "$path"
+    fi
+    deleted=$((deleted + 1))
+    freed=$((freed + size))
+  done < "$tmp"
+
+  rm -f "$tmp"
+  log "SUMMARY label=$label kept=$kept deleted=$deleted freed_bytes=$freed dry_run=$dry_run dir=$dir"
+}
+
+(
+  flock -n 9 || {
+    log "ERROR another prune is already running"
+    exit 1
+  }
+
+  log "START keep=$keep_count dry_run=$dry_run"
+
+  stage_backend="$(active_path /opt/komui/current)"
+  prod_backend="$(active_path /opt/komui/production-current)"
+  stage_frontend="$(active_path /var/lib/komui/staging-root)"
+  prod_frontend="$(active_path /var/lib/komui/production-root)"
+
+  log "ACTIVE stage_backend=${stage_backend:-none}"
+  log "ACTIVE prod_backend=${prod_backend:-none}"
+  log "ACTIVE stage_frontend=${stage_frontend:-none}"
+  log "ACTIVE prod_frontend=${prod_frontend:-none}"
+
+  prune_dir "backend" "/opt/komui/releases" "$stage_backend" "$prod_backend"
+  prune_dir "stage_frontend" "/opt/komui/frontend-releases" "$stage_frontend"
+  prune_dir "prod_frontend" "/opt/komui/production-frontend-releases" "$prod_frontend"
+
+  log "DISK $(df -h / | awk 'NR==2{print "used="$3",avail="$4",use="$5}')"
+  log "DONE"
+) 9>"$lock_path"

@@ -1,0 +1,11 @@
+[Unit]
+Description=Run KOMUI release pruning daily
+
+[Timer]
+OnCalendar=*-*-* 04:20:00
+RandomizedDelaySec=20m
+Persistent=true
+Unit=komui-prune-releases.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,10 @@
+[Unit]
+Description=KOMUI prune old releases
+Documentation=file:/usr/local/sbin/komui-prune-releases
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/komui-prune-releases --keep 5
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7

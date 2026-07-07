@@ -281,6 +281,30 @@ sudo /usr/local/sbin/komui-deploy-from-git prod main
 11. перезапускает backend/nginx;
 12. проверяет public API и отсутствие `ir.ozone.ru` в catalog API.
 
+### Release retention
+
+Старые immutable releases автоматически чистятся на сервере:
+
+```bash
+sudo /usr/local/sbin/komui-prune-releases --keep 5
+sudo /usr/local/sbin/komui-prune-releases --dry-run --keep 5
+```
+
+Скрипт сохраняет активные stage/prod backend/frontend symlink targets и
+последние 5 релизов в каждом каталоге:
+
+```text
+/opt/komui/releases/
+/opt/komui/frontend-releases/
+/opt/komui/production-frontend-releases/
+```
+
+Systemd timer запускает чистку ежедневно. Лог:
+
+```text
+/var/log/komui/prune-releases.log
+```
+
 ## Важные нюансы
 
 - Корзина живёт только в памяти страницы. После перезагрузки она очищается.

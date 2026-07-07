@@ -1667,6 +1667,38 @@ sudo /usr/local/sbin/komui-release-activate frontend <previous-release> \
   --summary "Rollback frontend"
 ```
 
+### Release retention
+
+Old immutable releases are pruned by:
+
+```bash
+sudo /usr/local/sbin/komui-prune-releases --keep 5
+```
+
+The script preserves:
+
+- currently active stage backend release;
+- currently active prod backend release;
+- currently active stage frontend release;
+- currently active prod frontend release;
+- newest 5 releases in every release directory.
+
+Release directories:
+
+```text
+/opt/komui/releases/
+/opt/komui/frontend-releases/
+/opt/komui/production-frontend-releases/
+```
+
+Scheduled cleanup:
+
+```bash
+systemctl list-timers komui-prune-releases.timer
+sudo journalctl -u komui-prune-releases.service
+sudo tail -n 100 /var/log/komui/prune-releases.log
+```
+
 ## 18. Local development and verification
 
 Backend:
