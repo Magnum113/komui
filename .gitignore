@@ -3,5 +3,6 @@
 .env*.local
 node_modules/
 .komui/
+generated/
 .ai/**/runtime/
 server/dist/

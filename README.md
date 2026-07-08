@@ -305,6 +305,39 @@ Systemd timer запускает чистку ежедневно. Лог:
 /var/log/komui/prune-releases.log
 ```
 
+### T-Bank Russian Trusted CA
+
+Для исходящих backend-запросов к T-Bank API сервер доверяет сертификатам
+Минцифры РФ. Это не меняет TLS-сертификат `komui.ru`; настройка нужна только
+для Node.js backend, который вызывает T-Bank `/Init` и другие payment API.
+
+На сервере установлены публичные CA из Госуслуг в:
+
+```text
+/usr/local/share/ca-certificates/komui-russian-trusted/
+/etc/komui/certs/komui-node-ca-bundle.pem
+```
+
+Backend env содержит:
+
+```text
+NODE_EXTRA_CA_CERTS=/etc/komui/certs/komui-node-ca-bundle.pem
+```
+
+Повторная установка/обновление после скачивания сертификатов с Госуслуг:
+
+```bash
+sudo /usr/local/sbin/komui-install-russian-trusted-ca /path/to/unpacked/certs
+```
+
+Проверка:
+
+```bash
+curl -fsSI https://mddc.tbank.ru/
+sudo -u komui env NODE_EXTRA_CA_CERTS=/etc/komui/certs/komui-node-ca-bundle.pem \
+  node -e "fetch('https://mddc.tbank.ru/').then(r=>console.log(r.status))"
+```
+
 ## Важные нюансы
 
 - Корзина живёт только в памяти страницы. После перезагрузки она очищается.

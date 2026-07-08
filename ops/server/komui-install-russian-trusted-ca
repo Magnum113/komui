@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+usage() {
+  cat <<'USAGE'
+Usage:
+  sudo /usr/local/sbin/komui-install-russian-trusted-ca <cert-dir>
+
+Installs Russian Trusted CA certificates from a directory containing .crt/.cer/.pem
+files, updates the Ubuntu CA store, builds a Node.js CA bundle, and configures
+KOMUI backend env files with NODE_EXTRA_CA_CERTS.
+
+Expected source files are public CA certificates downloaded from Gosuslugi:
+  - Russian Trusted Root CA
+  - Russian Trusted Sub CA
+  - optional GOST 2025 root/sub certificates if provided by Gosuslugi
+
+The script does not install private keys.
+USAGE
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+if [[ "${EUID}" -ne 0 ]]; then
+  echo "Run with sudo." >&2
+  exit 1
+fi
+
+source_dir="${1:-}"
+if [[ -z "$source_dir" || ! -d "$source_dir" ]]; then
+  usage >&2
+  exit 1
+fi
+
+install_dir="/usr/local/share/ca-certificates/komui-russian-trusted"
+bundle="/etc/komui/certs/komui-node-ca-bundle.pem"
+
+install -d -m 0755 "$install_dir"
+install -d -o root -g komui -m 0750 /etc/komui/certs
+
+installed=0
+while IFS= read -r -d '' cert; do
+  name="$(basename "$cert")"
+  name="${name%.*}.crt"
+  if ! openssl x509 -in "$cert" -noout >/dev/null 2>&1; then
+    echo "Skipping non-X509 file: $cert" >&2
+    continue
+  fi
+  openssl x509 -in "$cert" -out "$install_dir/$name"
+  chmod 0644 "$install_dir/$name"
+  installed=$((installed + 1))
+  echo "Installed CA: $install_dir/$name"
+  openssl x509 -in "$install_dir/$name" -noout -subject -issuer -enddate -fingerprint -sha256
+done < <(find "$source_dir" -maxdepth 2 -type f \( -name '*.crt' -o -name '*.cer' -o -name '*.pem' \) -print0 | sort -z)
+
+if (( installed == 0 )); then
+  echo "No valid X509 certificates found in $source_dir" >&2
+  exit 1
+fi
+
+update-ca-certificates
+
+cat /etc/ssl/certs/ca-certificates.crt > "$bundle"
+chown root:komui "$bundle"
+chmod 0640 "$bundle"
+
+set_env_key() {
+  local file="$1"
+  local key="$2"
+  local value="$3"
+  touch "$file"
+  if grep -q "^${key}=" "$file"; then
+    sed -i "s|^${key}=.*|${key}=${value}|" "$file"
+  else
+    printf "%s=%s\n" "$key" "$value" >> "$file"
+  fi
+  chown root:root "$file"
+  chmod 0600 "$file"
+}
+
+set_env_key /etc/komui/backend.env NODE_EXTRA_CA_CERTS "$bundle"
+set_env_key /etc/komui/backend-production.env NODE_EXTRA_CA_CERTS "$bundle"
+
+chown root:komui /etc/komui /etc/komui/certs
+chmod 0710 /etc/komui
+chmod 0750 /etc/komui/certs
+
+systemctl restart komui-backend
+systemctl restart komui-production-backend
+
+echo "Installed $installed Russian Trusted CA certificate(s)."
+echo "Node CA bundle: $bundle"
+echo "Verification:"
+echo "  curl -fsSI https://mddc.tbank.ru/"
+echo "  sudo -u komui env NODE_EXTRA_CA_CERTS=$bundle node -e \"fetch('https://mddc.tbank.ru/').then(r=>console.log(r.status))\""

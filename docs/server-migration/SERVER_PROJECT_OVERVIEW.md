@@ -899,6 +899,41 @@ Meaning:
 
 T-Bank token/signature logic is implemented in `server/src/crypto.ts`.
 
+### T-Bank Russian Trusted CA
+
+T-Bank can serve payment API endpoints with a Russian Trusted CA certificate
+chain. Ubuntu and Node.js do not always trust this chain by default, so the
+self-hosted server installs the Gosuslugi Russian Trusted CA certificates into
+the OS trust store and exposes the resulting bundle to Node.js.
+
+Installed files:
+
+```text
+/usr/local/share/ca-certificates/komui-russian-trusted/
+/etc/komui/certs/komui-node-ca-bundle.pem
+```
+
+Backend env files contain:
+
+```text
+NODE_EXTRA_CA_CERTS=/etc/komui/certs/komui-node-ca-bundle.pem
+```
+
+Helper:
+
+```bash
+sudo /usr/local/sbin/komui-install-russian-trusted-ca /path/to/unpacked/certs
+```
+
+Verification:
+
+```bash
+curl -fsSI https://mddc.tbank.ru/
+sudo -u komui env NODE_EXTRA_CA_CERTS=/etc/komui/certs/komui-node-ca-bundle.pem \
+  node -e "fetch('https://mddc.tbank.ru/').then(r=>console.log(r.status))"
+sudo /usr/local/sbin/komui-healthcheck
+```
+
 ### Compatibility route for old frontend/function shape
 
 ```text
