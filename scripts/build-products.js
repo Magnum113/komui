@@ -789,20 +789,69 @@ function productSku(product) {
   return String(firstOzonOfferId || product.slug || product.id || '');
 }
 
+function productSchemaPriceValidUntil() {
+  return `${new Date().getUTCFullYear() + 1}-12-31`;
+}
+
+function productSchemaShippingDetails() {
+  return {
+    '@type': 'OfferShippingDetails',
+    shippingDestination: {
+      '@type': 'DefinedRegion',
+      addressCountry: 'RU',
+    },
+    deliveryTime: {
+      '@type': 'ShippingDeliveryTime',
+      handlingTime: {
+        '@type': 'QuantitativeValue',
+        minValue: 1,
+        maxValue: 3,
+        unitCode: 'DAY',
+      },
+      transitTime: {
+        '@type': 'QuantitativeValue',
+        minValue: 2,
+        maxValue: 10,
+        unitCode: 'DAY',
+      },
+    },
+    shippingSettingsLink: `${SITE_ORIGIN}/delivery`,
+  };
+}
+
+function productSchemaReturnPolicy() {
+  return {
+    '@type': 'MerchantReturnPolicy',
+    applicableCountry: 'RU',
+    returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+    merchantReturnDays: 7,
+    returnMethod: 'https://schema.org/ReturnByMail',
+    returnFees: 'https://schema.org/ReturnFeesCustomerResponsibility',
+    merchantReturnLink: `${SITE_ORIGIN}/returns`,
+  };
+}
+
 function buildJsonLd(product) {
   const images = productImages(product).map(absolutizeUrl);
   const lowPrice = Number(product.price_min);
   const highPrice = Number(product.price_max);
+  const priceValidUntil = productSchemaPriceValidUntil();
+  const shippingDetails = productSchemaShippingDetails();
+  const returnPolicy = productSchemaReturnPolicy();
   const offers = visibleOffers(product)
     .map(o => ({
       '@type': 'Offer',
       sku: String(o.offer_id || o.sku || ''),
       name: o.name || product.name,
+      size: o.size || undefined,
       price: Number(o.price || lowPrice),
       priceCurrency: product.currency || 'RUB',
+      priceValidUntil,
       availability: 'https://schema.org/InStock',
       itemCondition: 'https://schema.org/NewCondition',
       url: `${SITE_ORIGIN}/p/${product.slug}`,
+      shippingDetails,
+      hasMerchantReturnPolicy: returnPolicy,
     }));
   const ld = {
     '@context': 'https://schema.org/',
@@ -831,8 +880,11 @@ function buildJsonLd(product) {
       '@type': 'Offer',
       priceCurrency: product.currency || 'RUB',
       price: lowPrice,
+      priceValidUntil,
       availability: 'https://schema.org/InStock',
       url: `${SITE_ORIGIN}/p/${product.slug}`,
+      shippingDetails,
+      hasMerchantReturnPolicy: returnPolicy,
     };
   }
   return JSON.stringify(ld);
