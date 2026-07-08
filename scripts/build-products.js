@@ -570,6 +570,19 @@ function collectionStats(products) {
   return { categories, techniques };
 }
 
+function pluralRu(count, one, few, many) {
+  const n = Math.abs(Number(count)) || 0;
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return one;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+  return many;
+}
+
+function productCountText(count) {
+  return `${count} ${pluralRu(count, 'товар', 'товара', 'товаров')}`;
+}
+
 function publicCopy(value) {
   return String(value || '')
     .replace(/Ozon-фото/gi, 'детальными фото')
@@ -1314,6 +1327,71 @@ function collectionProductCard(product) {
   </article>`;
 }
 
+function mapNames(map) {
+  return [...map.keys()].filter(Boolean);
+}
+
+function joinedList(values, fallback) {
+  const list = values.filter(Boolean);
+  if (!list.length) return fallback;
+  if (list.length === 1) return list[0];
+  return `${list.slice(0, -1).join(', ')} и ${list[list.length - 1]}`;
+}
+
+function collectionSeoSections(landing, stats) {
+  const count = productCountText(landing.products.length);
+  const categories = joinedList(mapNames(stats.categories).map(value => value.toLowerCase()), 'футболки, худи и свитшоты');
+  const techniques = joinedList(mapNames(stats.techniques).map(value => value.toLowerCase()), 'принт и вышивка');
+  const colors = joinedList([...new Set(landing.products.map(product => product.color_name).filter(Boolean))], 'базовые цвета');
+
+  return [
+    {
+      title: `Какие вещи входят в подборку ${landing.name}`,
+      body: `В коллекции сейчас ${count}: ${categories}. Модели различаются по цвету (${colors}), посадке и технике нанесения — ${techniques}. Каждая карточка ведет на отдельную страницу с фотографиями, размерами, ценой и условиями заказа.`,
+    },
+    {
+      title: `Как выбрать ${landing.name} под свой стиль`,
+      body: `Для более заметного образа обычно лучше работают крупный принт, вареная ткань и контрастные цвета. Для спокойной повседневной носки выбирайте вышивку, черную или белую базу и привычную посадку. Перед оплатой сравните размерную сетку с вещью, которая уже хорошо сидит.`,
+    },
+  ];
+}
+
+function collectionFaq(landing, stats) {
+  const count = productCountText(landing.products.length);
+  const categories = joinedList(mapNames(stats.categories).map(value => value.toLowerCase()), 'футболки, худи и свитшоты');
+  const techniques = joinedList(mapNames(stats.techniques).map(value => value.toLowerCase()), 'принт и вышивка');
+
+  return [
+    {
+      question: `Что есть в коллекции ${landing.name}?`,
+      answer: `В подборке ${landing.name} сейчас ${count}: ${categories}. В карточках можно сравнить доступные размеры, цвета, цены, фотографии и тип нанесения.`,
+    },
+    {
+      question: `Что выбрать: принт или вышивку ${landing.name}?`,
+      answer: `Принт заметнее и лучше подходит для акцентного образа. Вышивка выглядит спокойнее, проще сочетается с базовой одеждой и хорошо подходит для ежедневной носки.`,
+    },
+    {
+      question: `Как доставляются товары ${landing.name}?`,
+      answer: `Заказ оформляется онлайн, пункт выдачи выбирается в чекауте. Доставка выполняется СДЭК по России, а итоговая стоимость рассчитывается до оплаты.`,
+    },
+  ];
+}
+
+function buildCollectionFaqLd(landing, stats) {
+  return JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: collectionFaq(landing, stats).map(item => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.answer,
+      },
+    })),
+  });
+}
+
 function buildCollectionPageLd(landing) {
   return JSON.stringify({
     '@context': 'https://schema.org',
@@ -1362,12 +1440,20 @@ function renderCollectionPage(landing) {
     .filter(item => item.slug !== landing.slug)
     .map(item => `<a href="/collections/${escapeAttr(item.slug)}">${escapeHtml(item.name)}</a>`)
     .join('');
-  const contentBlocks = [
-    ...landing.copy,
-    `Внутри подборки ${landing.name} каждая карточка ведет на отдельную страницу товара: там можно рассмотреть фотографии, проверить доступные размеры, цвет, цену, тип нанесения и состав. Это важнее, чем выбирать только по названию тайтла, потому что одна и та же тема может быть выполнена как яркий принт, лаконичная вышивка, базовая футболка, плотное худи или свитшот. Такой фильтр помогает быстрее сравнить ${landing.products.length} товар(ов) по одной теме и не отвлекаться на остальной каталог.`,
-    `Если вы пришли по запросу «футболка ${landing.name}», «худи ${landing.name}» или выбираете подарок фанату, начните с сценария носки. Для заметного образа смотрите принт и вареные цвета, для спокойного повседневного варианта — вышивку и базовую палитру. Перед оплатой лучше сверить размерную сетку и условия ухода. Заказ можно оформить онлайн, выбрать пункт СДЭК по России, а при необходимости воспользоваться правилами обмена или возврата, опубликованными на сайте.`
-  ];
-  const copy = contentBlocks.map(text => `<p>${escapeHtml(text)}</p>`).join('');
+  const introCopy = landing.copy.map(text => `<p>${escapeHtml(text)}</p>`).join('');
+  const seoSections = collectionSeoSections(landing, stats)
+    .map(section => `<section class="c-copy-question">
+          <h3>${escapeHtml(section.title)}</h3>
+          <p>${escapeHtml(section.body)}</p>
+        </section>`)
+    .join('');
+  const faq = collectionFaq(landing, stats);
+  const faqHtml = faq
+    .map(item => `<section class="c-faq-item">
+        <h3>${escapeHtml(item.question)}</h3>
+        <p>${escapeHtml(item.answer)}</p>
+      </section>`)
+    .join('');
   const title = `${landing.title} — KOMUI`;
 
   return `<!DOCTYPE html>
@@ -1396,6 +1482,7 @@ function renderCollectionPage(landing) {
 <link rel="stylesheet" href="/assets/product.css" />
 <script type="application/ld+json">${buildCollectionPageLd(landing)}</script>
 <script type="application/ld+json">${buildCollectionBreadcrumbLd(landing)}</script>
+<script type="application/ld+json">${buildCollectionFaqLd(landing, stats)}</script>
 </head>
 <body>
 ${renderPromoBar()}
@@ -1439,7 +1526,14 @@ ${renderHeaderPanels()}
         <div class="eyebrow">Как выбрать</div>
         <h2>${escapeHtml(landing.title)} от KOMUI</h2>
       </div>
-      <div class="c-copy-text">${copy}</div>
+      <div class="c-copy-text">${introCopy}${seoSections}</div>
+    </div>
+  </section>
+  <section class="c-faq">
+    <div class="wrap">
+      <div class="eyebrow">Вопросы по коллекции</div>
+      <h2>${escapeHtml(landing.name)}: коротко перед заказом</h2>
+      <div class="c-faq-list">${faqHtml}</div>
     </div>
   </section>
   <section class="c-related">

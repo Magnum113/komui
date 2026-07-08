@@ -129,7 +129,7 @@ body.has-size-chart{overflow:hidden}
 .c-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
 .c-main{padding:46px 0 72px}
 .c-head{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;margin-bottom:18px}
-.c-head h2,.c-copy h2,.c-related h2{font-family:'Unbounded',sans-serif;font-size:28px;line-height:1.15;margin:0 0 10px;color:#14151c}
+.c-head h2,.c-copy h2,.c-faq h2,.c-related h2{font-family:'Unbounded',sans-serif;font-size:28px;line-height:1.15;margin:0 0 10px;color:#14151c}
 .c-head p{max-width:720px;color:#52566a;margin:0}
 .c-count{width:74px;height:74px;border-radius:18px;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid #e5e7ef;color:#0026F9;font-family:'Unbounded',sans-serif;font-size:28px;font-weight:900;box-shadow:0 20px 44px -30px rgba(30,30,60,.35)}
 .c-chips{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 26px}
@@ -152,6 +152,13 @@ body.has-size-chart{overflow:hidden}
 .c-copy-grid{display:grid;grid-template-columns:.78fr 1.22fr;gap:42px;align-items:start}
 .c-copy-text{display:grid;gap:15px}
 .c-copy-text p{color:#3f4255;font-size:16px;line-height:1.72;margin:0}
+.c-copy-question{padding-top:10px}
+.c-copy-question h3{font-family:'Unbounded',sans-serif;font-size:18px;line-height:1.25;margin:0 0 8px;color:#14151c}
+.c-faq{padding:58px 0;background:#fff;border-top:1px solid #e5e7ef}
+.c-faq-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:22px}
+.c-faq-item{padding:18px;border:1px solid #e5e7ef;border-radius:16px;background:#f8f9fc}
+.c-faq-item h3{font-size:16px;line-height:1.35;margin:0 0 10px;color:#14151c}
+.c-faq-item p{font-size:14px;line-height:1.6;margin:0;color:#52566a}
 .c-related{padding:42px 0 66px;background:#f5f6fa}
 .c-related-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
 .c-related-links a{display:inline-flex;padding:10px 14px;border-radius:999px;background:#fff;border:1px solid #e5e7ef;color:#52566a;font-weight:800}
@@ -160,6 +167,7 @@ body.has-size-chart{overflow:hidden}
 @media (max-width:920px){
   .c-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .c-copy-grid{grid-template-columns:1fr;gap:18px}
+  .c-faq-list{grid-template-columns:1fr}
 }
 @media (max-width:620px){
   .p-page{padding-top:22px}
