@@ -93,6 +93,7 @@ test("payment creation does not reuse failed payment URL", async () => {
         firstName: "Иван",
         lastName: "Иванов",
         phone: "+7 999 533-00-15",
+        email: "ivan@example.com",
         legalConsent: true,
       },
       delivery: {

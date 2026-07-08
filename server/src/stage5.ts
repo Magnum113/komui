@@ -13,6 +13,7 @@ import {
 import {
   cdekPackageInputsFromOrderItems,
   CheckoutRepository,
+  normalizeEmail,
   normalizePhone,
   orderNumber,
   subtotalAmount,
@@ -117,6 +118,7 @@ function buildReceipt(
   discountAmount: number,
   delivery: { amount: number },
   phone: string,
+  email: string,
 ): Record<string, unknown> | undefined {
   const taxation = config.TBANK_TAXATION;
   const tax = config.TBANK_TAX;
@@ -166,7 +168,7 @@ function buildReceipt(
     });
   }
 
-  return { Phone: phone, Taxation: taxation, Items: receiptItems };
+  return { Phone: phone, Email: email, Taxation: taxation, Items: receiptItems };
 }
 
 export async function handleCdekDeliveryPoints(
@@ -305,6 +307,7 @@ async function insertCheckoutOrder(
         customer_first_name,
         customer_last_name,
         customer_phone,
+        customer_email,
         marketing_consent,
         legal_accepted_at,
         delivery_provider,
@@ -323,9 +326,9 @@ async function insertCheckoutOrder(
         metadata
       )
       values (
-        $1::uuid, $2, $3, $4, $5, $6, $7, $8::boolean, $9::timestamptz,
-        'cdek', $10, $11, $12, $13, $14, $15, 'RUB', $16, $17, $18, $19,
-        'storefront', $20::jsonb
+        $1::uuid, $2, $3, $4, $5, $6, $7, $8, $9::boolean, $10::timestamptz,
+        'cdek', $11, $12, $13, $14, $15, $16, 'RUB', $17, $18, $19, $20,
+        'storefront', $21::jsonb
       )
       returning id
     `,
@@ -337,6 +340,7 @@ async function insertCheckoutOrder(
       order.customer_first_name,
       order.customer_last_name,
       order.customer_phone,
+      order.customer_email,
       order.marketing_consent,
       order.legal_accepted_at,
       order.delivery_point_code,
@@ -405,6 +409,7 @@ export async function handleTbankCreatePayment(
   const firstName = text(customer.firstName, 80);
   const lastName = text(customer.lastName, 80);
   const phone = normalizePhone(customer.phone);
+  const email = normalizeEmail(customer.email);
   const legalConsent = customer.legalConsent === true;
   const marketingConsent = customer.marketingConsent === true;
   const { clientRequestId, accessToken } = validateClientIdentity(
@@ -586,6 +591,7 @@ export async function handleTbankCreatePayment(
         customer_first_name: firstName,
         customer_last_name: lastName,
         customer_phone: phone,
+        customer_email: email,
         marketing_consent: marketingConsent,
         legal_accepted_at: legalAcceptedAt,
         delivery_point_code: delivery.code,
@@ -698,11 +704,12 @@ export async function handleTbankCreatePayment(
     FailURL: `${siteUrl(config)}/payment-result?status=fail&order=${encodeURIComponent(number)}`,
     DATA: {
       Phone: phone,
+      Email: email,
       name: `${lastName} ${firstName}`.slice(0, 100),
       order_number: number,
     },
   };
-  const receipt = buildReceipt(config, orderItems, discount, delivery, phone);
+  const receipt = buildReceipt(config, orderItems, discount, delivery, phone, email);
   if (receipt) initPayload.Receipt = receipt;
   initPayload.Token = createTbankToken(initPayload, tbank.password);
 

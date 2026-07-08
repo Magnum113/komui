@@ -73,6 +73,14 @@ function normalizePhone(value: unknown): string {
   return `+${normalized}`;
 }
 
+function normalizeEmail(value: unknown): string {
+  const email = text(value, 254).toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+    throw new Error("Введите корректный email для электронного чека");
+  }
+  return email;
+}
+
 function orderNumber(): string {
   const randomValue = crypto.getRandomValues(new Uint32Array(1))[0];
   return `KOM-${100_000_000 + (randomValue % 900_000_000)}`;
@@ -120,6 +128,7 @@ function buildReceipt(
   discountAmount: number,
   delivery: { amount: number },
   phone: string,
+  email: string,
 ): Record<string, unknown> | undefined {
   const taxation = Deno.env.get("TBANK_TAXATION");
   const tax = Deno.env.get("TBANK_TAX");
@@ -171,6 +180,7 @@ function buildReceipt(
 
   return {
     Phone: phone,
+    Email: email,
     Taxation: taxation,
     Items: receiptItems,
   };
@@ -203,6 +213,7 @@ Deno.serve(async (request) => {
     const firstName = text(customer.firstName, 80);
     const lastName = text(customer.lastName, 80);
     const phone = normalizePhone(customer.phone);
+    const email = normalizeEmail(customer.email);
     const legalConsent = customer.legalConsent === true;
     const marketingConsent = customer.marketingConsent === true;
     const clientRequestId = text(body.clientRequestId, 36);
@@ -416,6 +427,7 @@ Deno.serve(async (request) => {
           customer_first_name: firstName,
           customer_last_name: lastName,
           customer_phone: phone,
+          customer_email: email,
           marketing_consent: marketingConsent,
           legal_accepted_at: legalAcceptedAt,
           delivery_provider: "cdek",
@@ -509,11 +521,12 @@ Deno.serve(async (request) => {
         `${siteUrl}/payment-result?status=fail&order=${encodeURIComponent(number)}`,
       DATA: {
         Phone: phone,
+        Email: email,
         name: `${lastName} ${firstName}`.slice(0, 100),
         order_number: number,
       },
     };
-    const receipt = buildReceipt(orderItems, discount, delivery, phone);
+    const receipt = buildReceipt(orderItems, discount, delivery, phone, email);
     if (receipt) initPayload.Receipt = receipt;
     initPayload.Token = await createTbankToken(initPayload, password);
 

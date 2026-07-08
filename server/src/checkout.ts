@@ -52,6 +52,18 @@ export function normalizePhone(value: unknown): string {
   return `+${normalized}`;
 }
 
+export function normalizeEmail(value: unknown): string {
+  const email = text(value, 254).toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+    throw new HttpError(
+      400,
+      "invalid_email",
+      "Введите корректный email для электронного чека",
+    );
+  }
+  return email;
+}
+
 export function randomBase64Url(bytesLength = 18): string {
   return randomBytes(bytesLength)
     .toString("base64")

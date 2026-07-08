@@ -16,6 +16,7 @@ const ORDER_COLUMNS = `
   customer_first_name,
   customer_last_name,
   customer_phone,
+  customer_email,
   marketing_consent,
   legal_accepted_at,
   delivery_provider,
@@ -111,6 +112,7 @@ type OrderRow = QueryResultRow & {
   customer_first_name: string;
   customer_last_name: string;
   customer_phone: string;
+  customer_email: string | null;
   marketing_consent: boolean;
   legal_accepted_at: Date | string;
   delivery_provider: string;
@@ -222,6 +224,7 @@ export type AdminOrderSummary = {
     firstName: string;
     lastName: string;
     phone: string;
+    email: string | null;
     marketingConsent: boolean;
   };
   delivery: {
@@ -304,6 +307,7 @@ export function toAdminOrderSummary(row: OrderListRow): AdminOrderSummary {
       firstName: row.customer_first_name,
       lastName: row.customer_last_name,
       phone: row.customer_phone,
+      email: row.customer_email,
       marketingConsent: row.marketing_consent,
     },
     delivery: {
@@ -485,6 +489,7 @@ function listWhere(
       (
         o.order_number ilike $${index} escape '\\'
         or o.customer_phone ilike $${index} escape '\\'
+        or o.customer_email ilike $${index} escape '\\'
         or o.customer_first_name ilike $${index} escape '\\'
         or o.customer_last_name ilike $${index} escape '\\'
         or o.delivery_city ilike $${index} escape '\\'
