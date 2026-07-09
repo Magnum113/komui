@@ -1188,9 +1188,7 @@ function renderProductPage(product, products = []) {
 <meta name="twitter:description" content="${escapeAttr(description)}" />
 <meta name="twitter:image" content="${escapeAttr(ogImage)}" />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/fonts/komui-fonts.css">
 <link rel="stylesheet" href="/legal.css" />
 <link rel="stylesheet" href="/assets/product.css" />
 <script type="application/ld+json">${buildJsonLd(product)}</script>
@@ -1609,9 +1607,7 @@ function renderCollectionPage(landing) {
 <meta name="twitter:description" content="${escapeAttr(landing.metaDescription)}" />
 <meta name="twitter:image" content="${SITE_ORIGIN}/assets/og-image.png" />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/fonts/komui-fonts.css">
 <link rel="stylesheet" href="/legal.css" />
 <link rel="stylesheet" href="/assets/product.css" />
 <script type="application/ld+json">${buildCollectionPageLd(landing)}</script>

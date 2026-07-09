@@ -499,6 +499,19 @@ curl -sSI https://komui.ru/favicon.svg
 
 ## Этап 6. Уменьшить влияние Google Fonts
 
+Статус: реализовано.
+
+Выбранная модель: **self-hosted variable fonts + удаление Noto Sans JP**.
+
+Что сделано:
+
+- `Inter` и `Unbounded` скачаны локально в `/assets/fonts/`;
+- подключение идёт через `/assets/fonts/komui-fonts.css`;
+- внешние `fonts.googleapis.com` и `fonts.gstatic.com` удалены из HTML и генератора страниц;
+- `Noto Sans JP` полностью удалён: логотип использует `Unbounded`, а японские декоративные элементы теперь наследуют основной шрифт/системный fallback;
+- оставлен `font-display: swap`;
+- используются variable `.woff2` диапазоны `400 900`, чтобы не хранить отдельный файл на каждый вес.
+
 ### Проблема
 
 Google Fonts:

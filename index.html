@@ -23,10 +23,8 @@
 <meta name="twitter:image" content="https://komui.ru/assets/og-image.png" />
 <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
 <link rel="shortcut icon" href="./favicon.svg" type="image/svg+xml" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" as="image" href="/media/products/d2/d20409df3a89abae/800.webp" imagesrcset="/media/products/d2/d20409df3a89abae/480.webp 480w, /media/products/d2/d20409df3a89abae/800.webp 800w, /media/products/d2/d20409df3a89abae/1200.webp 1200w" imagesizes="(max-width: 768px) 48vw, 360px" fetchpriority="high">
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/fonts/komui-fonts.css">
 <style>
 :root{
   --bg:#07070c;
@@ -94,7 +92,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 img,svg{display:block;max-width:100%}
 ::selection{background:var(--mag);color:#fff}
 .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
-.jp{font-family:'Noto Sans JP',sans-serif}
+.jp{font-family:inherit}
 .display{font-family:'Unbounded',sans-serif}
 
 /* ---------- custom cursor ---------- */
@@ -201,7 +199,7 @@ html[data-theme="light"] .cursor-glow{mix-blend-mode:multiply;background:radial-
 .blob.b3{width:420px;height:420px;background:#173cff;top:30%;left:55%;animation-delay:-9s;opacity:.4}
 @keyframes float{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(40px,-30px) scale(1.08)}66%{transform:translate(-30px,30px) scale(.96)}}
 .hero-bg::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,transparent 30%,var(--bg) 88%)}
-.kanji-float{position:absolute;z-index:1;font-family:'Noto Sans JP',sans-serif;font-weight:700;color:rgba(255,255,255,.04);user-select:none;animation:float 20s ease-in-out infinite}
+.kanji-float{position:absolute;z-index:1;font-family:inherit;font-weight:700;color:rgba(255,255,255,.04);user-select:none;animation:float 20s ease-in-out infinite}
 .hero-inner{
   position:relative;z-index:3;width:min(48vw,760px);max-width:none;margin:0;
   padding-left:clamp(28px,4.8vw,92px);padding-right:24px
