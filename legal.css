@@ -89,9 +89,9 @@ body.has-shop-layer{overflow:hidden}
 h1{font-family:'Unbounded',sans-serif;font-size:clamp(34px,5vw,58px);line-height:1.02;letter-spacing:-.03em;max-width:900px}
 .lead{max-width:760px;margin-top:18px;color:var(--txt-2);font-size:18px}
 .updated{display:inline-flex;margin-top:22px;padding:8px 12px;border-radius:10px;background:var(--panel-2);border:1px solid var(--line);color:var(--txt-2);font-size:13px;font-weight:700}
-.page-updated{color:var(--txt-3);font-size:11px;font-weight:700;line-height:1.4}
+.page-updated{position:absolute!important;width:1px!important;height:1px!important;margin:-1px!important;padding:0!important;border:0!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;clip-path:inset(50%)!important;white-space:nowrap!important}
 .page-updated time{color:inherit}
-.footer-updated{grid-column:1/-1;margin-top:4px;opacity:.72}
+.footer-updated{grid-column:1/-1}
 .legal-main{padding:42px 0 76px}
 .doc-layout{display:grid;grid-template-columns:260px 1fr;gap:32px;align-items:start}
 .toc{position:sticky;top:96px;border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px;box-shadow:var(--shadow)}

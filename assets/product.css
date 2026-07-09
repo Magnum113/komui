@@ -121,9 +121,9 @@ body.has-size-chart{overflow:hidden}
 .p-desc p{color:#3f4255;font-size:15px;line-height:1.65;margin:0 0 14px;max-width:780px}
 
 .c-page{background:#f5f6fa;overflow-x:hidden}
-.page-updated{color:#8a8fa3;font-size:11px;font-weight:700;line-height:1.4}
+.page-updated{position:absolute!important;width:1px!important;height:1px!important;margin:-1px!important;padding:0!important;border:0!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;clip-path:inset(50%)!important;white-space:nowrap!important}
 .page-updated time{color:inherit}
-.footer-updated{grid-column:1/-1;margin-top:4px;opacity:.72}
+.footer-updated{grid-column:1/-1}
 .c-hero{padding:58px 0 46px;border-bottom:1px solid #e5e7ef;background:linear-gradient(180deg,#fff,#f5f6fa)}
 .c-hero .crumb{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:#8a8fa3;font-size:13px;font-weight:700;margin-bottom:22px}
 .c-hero .crumb a{color:#0026F9}
