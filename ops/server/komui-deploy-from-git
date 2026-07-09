@@ -41,9 +41,10 @@ npm_cache_dir="${KOMUI_NPM_CACHE_DIR:-/var/cache/komui/npm}"
 deploy_home="${KOMUI_DEPLOY_HOME:-/var/lib/komui/deploy-home}"
 media_cache_dir="${KOMUI_MEDIA_CACHE_DIR:-/var/lib/komui/media-cache}"
 media_report_dir="${KOMUI_MEDIA_REPORT_DIR:-/var/log/komui/media-sync}"
+page_lastmod_registry_dir="${KOMUI_PAGE_LASTMOD_REGISTRY_DIR:-/var/lib/komui}"
 run_id="$(date -u +%Y%m%dT%H%M%SZ)"
 
-install -d -m 0755 "$log_dir" /opt/komui /var/lib/komui "$npm_cache_dir" "$deploy_home" "$media_cache_dir" "$media_report_dir"
+install -d -m 0755 "$log_dir" /opt/komui /var/lib/komui "$npm_cache_dir" "$deploy_home" "$media_cache_dir" "$media_report_dir" "$page_lastmod_registry_dir"
 log_file="$log_dir/${run_id}-${target}.log"
 
 exec > >(tee -a "$log_file") 2>&1
@@ -155,9 +156,15 @@ fail() {
     node scripts/sync-product-media.js --strict
 
   log "building static frontend from $api_base with media manifest"
+  indexnow_ping=0
+  if [[ "$target" == "prod" ]]; then
+    indexnow_ping=1
+  fi
   KOMUI_API_BASE_URL="$api_base" \
     KOMUI_MEDIA_MANIFEST_PATH="$media_cache_dir/manifest.json" \
     KOMUI_MEDIA_STRICT=1 \
+    KOMUI_PAGE_LASTMOD_REGISTRY_PATH="$page_lastmod_registry_dir/page-lastmod-$target.json" \
+    KOMUI_INDEXNOW_PING="$indexnow_ping" \
     node scripts/build-products.js
 
   log "checking public static artifacts for external Ozon image URLs"
@@ -193,6 +200,7 @@ fail() {
     --include '/robots.txt' \
     --include '/llms.txt' \
     --include '/llms-full.txt' \
+    --include '/*.txt' \
     --include '/nginx-product-redirects.conf' \
     --include '/sitemap.xml' \
     --exclude '*' \

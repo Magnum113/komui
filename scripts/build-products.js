@@ -14,12 +14,20 @@
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
+const { execFileSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..');
 const SITE_ORIGIN = 'https://komui.ru';
 const API_BASE_URL = String(process.env.KOMUI_API_BASE_URL || '').replace(/\/$/, '');
 const API_PRODUCTS_PATH = process.env.KOMUI_API_PRODUCTS_PATH || '/v1/products?limit=200';
 const API_TIMEOUT_MS = 10_000;
+const PAGE_LASTMOD_REGISTRY_PATH = process.env.KOMUI_PAGE_LASTMOD_REGISTRY_PATH
+  || path.join(ROOT, '.komui', 'page-lastmod.json');
+const TODAY = new Date().toISOString().slice(0, 10);
+const DATE_PUBLISHED_PLACEHOLDER = '__KOMUI_DATE_PUBLISHED__';
+const DATE_MODIFIED_PLACEHOLDER = '__KOMUI_DATE_MODIFIED__';
+const DATE_MODIFIED_RU_PLACEHOLDER = '__KOMUI_DATE_MODIFIED_RU__';
 const LOCAL_MEDIA_MANIFEST_PATH = path.join(ROOT, '.komui', 'media-cache', 'manifest.json');
 const DEFAULT_MEDIA_MANIFEST_PATH = fs.existsSync(LOCAL_MEDIA_MANIFEST_PATH)
   ? LOCAL_MEDIA_MANIFEST_PATH
@@ -27,15 +35,18 @@ const DEFAULT_MEDIA_MANIFEST_PATH = fs.existsSync(LOCAL_MEDIA_MANIFEST_PATH)
 const MEDIA_MANIFEST_PATH = process.env.KOMUI_MEDIA_MANIFEST_PATH || DEFAULT_MEDIA_MANIFEST_PATH;
 const MEDIA_STRICT = process.env.KOMUI_MEDIA_STRICT === '1';
 const MEDIA_PUBLIC_PREFIX = '/media/products/';
+const INDEXNOW_ENABLED = process.env.KOMUI_INDEXNOW_PING === '1';
+const INDEXNOW_ENDPOINT = process.env.KOMUI_INDEXNOW_ENDPOINT || 'https://api.indexnow.org/indexnow';
+const INDEXNOW_KEY_FILE = process.env.KOMUI_INDEXNOW_KEY_FILE || '';
 const STATIC_PAGES = [
-  { url: '/', changefreq: 'weekly', priority: '1.0' },
-  { url: '/delivery', changefreq: 'monthly', priority: '0.5' },
-  { url: '/returns', changefreq: 'monthly', priority: '0.4' },
-  { url: '/sizes', changefreq: 'monthly', priority: '0.5' },
-  { url: '/care', changefreq: 'monthly', priority: '0.3' },
-  { url: '/offer', changefreq: 'yearly', priority: '0.2' },
-  { url: '/privacy', changefreq: 'yearly', priority: '0.2' },
-  { url: '/seller', changefreq: 'yearly', priority: '0.2' },
+  { url: '/', file: 'index.html', changefreq: 'weekly', priority: '1.0' },
+  { url: '/delivery', file: 'delivery.html', changefreq: 'monthly', priority: '0.5' },
+  { url: '/returns', file: 'returns.html', changefreq: 'monthly', priority: '0.4' },
+  { url: '/sizes', file: 'sizes.html', changefreq: 'monthly', priority: '0.5' },
+  { url: '/care', file: 'care.html', changefreq: 'monthly', priority: '0.3' },
+  { url: '/offer', file: 'offer.html', changefreq: 'yearly', priority: '0.2' },
+  { url: '/privacy', file: 'privacy.html', changefreq: 'yearly', priority: '0.2' },
+  { url: '/seller', file: 'seller.html', changefreq: 'yearly', priority: '0.2' },
 ];
 
 function readJsonIfExists(filePath) {
@@ -45,6 +56,120 @@ function readJsonIfExists(filePath) {
     if (err && err.code === 'ENOENT') return null;
     throw err;
   }
+}
+
+function ensureDirForFile(filePath) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+}
+
+function sha256(value) {
+  return crypto.createHash('sha256').update(String(value)).digest('hex');
+}
+
+function dateOnly(value) {
+  if (!value) return TODAY;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return TODAY;
+  return date.toISOString().slice(0, 10);
+}
+
+function maxDate(...dates) {
+  return dates.map(dateOnly).sort().at(-1) || TODAY;
+}
+
+function gitDateForPath(relativePath) {
+  try {
+    const output = execFileSync(
+      'git',
+      ['log', '-1', '--format=%cI', '--', relativePath],
+      { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] },
+    ).trim();
+    if (output) return dateOnly(output);
+  } catch {
+    // Fall through to filesystem mtime.
+  }
+
+  try {
+    return dateOnly(fs.statSync(path.join(ROOT, relativePath)).mtime);
+  } catch {
+    return TODAY;
+  }
+}
+
+function readPageLastmodRegistry() {
+  const registry = readJsonIfExists(PAGE_LASTMOD_REGISTRY_PATH);
+  return registry && typeof registry === 'object' ? registry : {};
+}
+
+function writePageLastmodRegistry(registry) {
+  ensureDirForFile(PAGE_LASTMOD_REGISTRY_PATH);
+  fs.writeFileSync(PAGE_LASTMOD_REGISTRY_PATH, `${JSON.stringify(registry, null, 2)}\n`, 'utf8');
+}
+
+function createPageMetaTracker() {
+  const registry = readPageLastmodRegistry();
+  const nextRegistry = {};
+  const pages = new Map();
+
+  return {
+    track(urlPath, contentForHash, fallbackDate) {
+      const key = urlPath || '/';
+      const hash = sha256(contentForHash);
+      const previous = registry[key] && typeof registry[key] === 'object' ? registry[key] : null;
+      const published = previous?.datePublished || dateOnly(fallbackDate);
+      const modified = previous?.hash === hash
+        ? previous.dateModified || published
+        : previous
+          ? TODAY
+          : published;
+      const meta = {
+        hash,
+        datePublished: published,
+        dateModified: modified,
+      };
+      nextRegistry[key] = meta;
+      pages.set(key, meta);
+      return meta;
+    },
+    page(urlPath) {
+      return pages.get(urlPath || '/');
+    },
+    sitemapDate(urlPath) {
+      return pages.get(urlPath || '/')?.dateModified || TODAY;
+    },
+    save() {
+      writePageLastmodRegistry(nextRegistry);
+    },
+  };
+}
+
+function formatDateRu(date) {
+  try {
+    return new Intl.DateTimeFormat('ru-RU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }).format(new Date(`${date}T00:00:00Z`));
+  } catch {
+    return date;
+  }
+}
+
+function replaceDatePlaceholders(html, meta) {
+  return String(html)
+    .replaceAll(DATE_PUBLISHED_PLACEHOLDER, meta.datePublished)
+    .replaceAll(DATE_MODIFIED_PLACEHOLDER, meta.dateModified)
+    .replaceAll(DATE_MODIFIED_RU_PLACEHOLDER, formatDateRu(meta.dateModified));
+}
+
+function renderUpdatedBadge(meta, className = '') {
+  const classes = ['page-updated', className].filter(Boolean).join(' ');
+  return `<div class="${classes}">Обновлено: <time datetime="${escapeAttr(meta.dateModified)}">${escapeHtml(formatDateRu(meta.dateModified))}</time></div>`;
+}
+
+function renderUpdatedPlaceholder(className = '') {
+  const classes = ['page-updated', className].filter(Boolean).join(' ');
+  return `<div class="${classes}">Обновлено: <time datetime="${DATE_MODIFIED_PLACEHOLDER}">${DATE_MODIFIED_RU_PLACEHOLDER}</time></div>`;
 }
 
 function loadMediaManifest() {
@@ -878,6 +1003,8 @@ function buildJsonLd(product) {
     color: product.color_name,
     material: '100% хлопок',
     url: `${SITE_ORIGIN}/p/${product.slug}`,
+    datePublished: DATE_PUBLISHED_PLACEHOLDER,
+    dateModified: DATE_MODIFIED_PLACEHOLDER,
   };
   if (offers.length) {
     ld.offers = {
@@ -1083,6 +1210,7 @@ ${renderHeaderPanels()}
         <span>${escapeHtml(product.category || 'Товары')}</span><span>/</span>
         <span>${escapeHtml(product.name)}</span>
       </nav>
+      ${renderUpdatedPlaceholder('p-updated')}
       <div class="p-layout">
         ${galleryHtml}
         <div class="p-info">
@@ -1400,6 +1528,8 @@ function buildCollectionPageLd(landing) {
     description: landing.metaDescription,
     url: `${SITE_ORIGIN}/collections/${landing.slug}`,
     inLanguage: 'ru-RU',
+    datePublished: DATE_PUBLISHED_PLACEHOLDER,
+    dateModified: DATE_MODIFIED_PLACEHOLDER,
     about: landing.name,
     mainEntity: {
       '@type': 'ItemList',
@@ -1499,6 +1629,7 @@ ${renderHeaderPanels()}
       <nav class="crumb" aria-label="Хлебные крошки"><a href="/">KOMUI</a><span>/</span><a href="/#strip">Коллекции</a><span>/</span><span>${escapeHtml(landing.name)}</span></nav>
       <div class="eyebrow">Коллекция</div>
       <h1>${escapeHtml(landing.h1)}</h1>
+      ${renderUpdatedPlaceholder('c-updated')}
       <p class="lead">${escapeHtml(landing.lead)}</p>
       <div class="c-actions">
         <a class="btn btn-primary" href="#products">Смотреть товары</a>
@@ -1557,26 +1688,25 @@ ${renderHeaderScript()}
 `;
 }
 
-function renderSitemap(products, collectionLandings = []) {
-  const today = new Date().toISOString().slice(0, 10);
+function renderSitemap(products, collectionLandings = [], tracker) {
   const urls = [
     ...STATIC_PAGES.map(p => ({
       loc: SITE_ORIGIN + p.url,
-      lastmod: today,
+      lastmod: tracker.sitemapDate(p.url),
       changefreq: p.changefreq,
       priority: p.priority,
     })),
-    { loc: `${SITE_ORIGIN}/llms.txt`, lastmod: today, changefreq: 'weekly', priority: '0.3' },
-    { loc: `${SITE_ORIGIN}/llms-full.txt`, lastmod: today, changefreq: 'weekly', priority: '0.3' },
+    { loc: `${SITE_ORIGIN}/llms.txt`, lastmod: tracker.sitemapDate('/llms.txt'), changefreq: 'weekly', priority: '0.3' },
+    { loc: `${SITE_ORIGIN}/llms-full.txt`, lastmod: tracker.sitemapDate('/llms-full.txt'), changefreq: 'weekly', priority: '0.3' },
     ...collectionLandings.map(landing => ({
       loc: `${SITE_ORIGIN}/collections/${landing.slug}`,
-      lastmod: today,
+      lastmod: tracker.sitemapDate(`/collections/${landing.slug}`),
       changefreq: 'weekly',
       priority: '0.75',
     })),
     ...products.map(p => ({
       loc: `${SITE_ORIGIN}/p/${p.slug}`,
-      lastmod: today,
+      lastmod: tracker.sitemapDate(`/p/${p.slug}`),
       changefreq: 'weekly',
       priority: '0.8',
     })),
@@ -1638,6 +1768,117 @@ function injectCatalogPrerender(html, prerender) {
   );
 }
 
+function stripGeneratedPageMeta(html) {
+  return String(html)
+    .replace(/\n?<!--komui:dates:start-->[\s\S]*?<!--komui:dates:end-->/g, '')
+    .replace(/\n?<!--komui:updated:start-->[\s\S]*?<!--komui:updated:end-->/g, '');
+}
+
+function injectStaticPageMeta(html, meta) {
+  const clean = stripGeneratedPageMeta(html);
+  const headMeta = `<!--komui:dates:start-->
+<meta name="datePublished" content="${escapeAttr(meta.datePublished)}" />
+<meta name="dateModified" content="${escapeAttr(meta.dateModified)}" />
+<!--komui:dates:end-->`;
+  const updated = `<!--komui:updated:start-->
+${renderUpdatedBadge(meta, 'static-updated')}
+<!--komui:updated:end-->`;
+  let patched = clean.includes('</head>')
+    ? clean.replace('</head>', `${headMeta}\n</head>`)
+    : clean;
+  patched = patched.replace(/(<main(?:\s[^>]*)?>)/, `$1\n${updated}`);
+  return patched;
+}
+
+function updateStaticPagesWithDates(tracker) {
+  for (const page of STATIC_PAGES) {
+    const filePath = path.join(ROOT, page.file);
+    if (!fs.existsSync(filePath)) continue;
+    const clean = stripGeneratedPageMeta(fs.readFileSync(filePath, 'utf8'));
+    const meta = tracker.track(page.url, clean, gitDateForPath(page.file));
+    fs.writeFileSync(filePath, injectStaticPageMeta(clean, meta), 'utf8');
+  }
+}
+
+function findIndexNowKeyFile() {
+  if (INDEXNOW_KEY_FILE) return path.resolve(ROOT, INDEXNOW_KEY_FILE);
+  const candidates = fs.readdirSync(ROOT)
+    .filter(file => /^[A-Za-z0-9-]{8,128}\.txt$/.test(file))
+    .map(file => path.join(ROOT, file))
+    .filter(file => {
+      try {
+        const key = path.basename(file, '.txt');
+        return fs.readFileSync(file, 'utf8').trim() === key;
+      } catch {
+        return false;
+      }
+    });
+  return candidates[0] || '';
+}
+
+function indexNowConfig() {
+  const keyFile = findIndexNowKeyFile();
+  if (!keyFile) return null;
+  const key = fs.readFileSync(keyFile, 'utf8').trim();
+  const fileName = path.basename(keyFile);
+  return {
+    key,
+    keyLocation: `${SITE_ORIGIN}/${fileName}`,
+  };
+}
+
+function sitemapUrls() {
+  const sitemapPath = path.join(ROOT, 'sitemap.xml');
+  if (!fs.existsSync(sitemapPath)) return [];
+  const xml = fs.readFileSync(sitemapPath, 'utf8');
+  return [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)]
+    .map(match => match[1])
+    .filter(url => url.startsWith(`${SITE_ORIGIN}/`));
+}
+
+async function pingIndexNow(urls) {
+  if (!INDEXNOW_ENABLED) {
+    console.log('! IndexNow ping skipped: KOMUI_INDEXNOW_PING is not 1');
+    return;
+  }
+  const config = indexNowConfig();
+  if (!config) {
+    console.warn('! IndexNow ping skipped: key file not found');
+    return;
+  }
+  if (!urls.length) {
+    console.warn('! IndexNow ping skipped: no URLs');
+    return;
+  }
+  if (typeof fetch !== 'function') {
+    console.warn('! IndexNow ping skipped: global fetch unavailable');
+    return;
+  }
+
+  const payload = {
+    host: new URL(SITE_ORIGIN).hostname,
+    key: config.key,
+    keyLocation: config.keyLocation,
+    urlList: urls.slice(0, 10000),
+  };
+
+  try {
+    const response = await fetch(INDEXNOW_ENDPOINT, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json; charset=utf-8' },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok && response.status !== 202) {
+      const body = await response.text().catch(() => '');
+      console.warn(`! IndexNow ping returned HTTP ${response.status}: ${body.slice(0, 500)}`);
+      return;
+    }
+    console.log(`✓ IndexNow ping accepted (${response.status}) for ${payload.urlList.length} URL(s)`);
+  } catch (err) {
+    console.warn(`! IndexNow ping failed: ${err.message}`);
+  }
+}
+
 function renderRobots() {
   return `# https://komui.ru/robots.txt
 User-agent: *
@@ -1657,7 +1898,6 @@ Sitemap: ${SITE_ORIGIN}/sitemap.xml
 }
 
 function renderLlmsFull(products) {
-  const today = new Date().toISOString().slice(0, 10);
   const groups = new Map();
   for (const p of products) {
     const key = p.anime_title || p.collection_name || 'Другие коллекции';
@@ -1668,7 +1908,7 @@ function renderLlmsFull(products) {
   const lines = [
     '# KOMUI — полный каталог для AI-систем',
     '',
-    `> Все товары интернет-магазина KOMUI (https://komui.ru) с актуальными ценами, размерами, цветами и типом нанесения. Обновлено: ${today}. Краткая версия: https://komui.ru/llms.txt`,
+    `> Все товары интернет-магазина KOMUI (https://komui.ru) с актуальными ценами, размерами, цветами и типом нанесения. Обновлено: ${DATE_MODIFIED_PLACEHOLDER}. Краткая версия: https://komui.ru/llms.txt`,
     '',
   ];
 
@@ -1714,10 +1954,15 @@ async function main() {
     console.warn(`! Media manifest not found: ${MEDIA_MANIFEST.path}; image URLs will be left as-is`);
   }
 
+  const tracker = createPageMetaTracker();
   const products = sourceProducts.map(mapProductMedia);
   writeStorefrontProductsFallback(products);
   const collectionLandings = buildCollectionLandings(products);
   const productRedirects = buildProductRedirects(products);
+  const productFallbackDate = maxDate(
+    gitDateForPath('data/storefront-products.js'),
+    gitDateForPath('scripts/build-products.js'),
+  );
 
   const outDir = path.join(ROOT, 'p');
   fs.mkdirSync(outDir, { recursive: true });
@@ -1729,7 +1974,9 @@ async function main() {
 
   let written = 0;
   for (const product of products) {
-    const html = renderProductPage(product, products);
+    const htmlWithPlaceholders = renderProductPage(product, products);
+    const meta = tracker.track(`/p/${product.slug}`, htmlWithPlaceholders, productFallbackDate);
+    const html = replaceDatePlaceholders(htmlWithPlaceholders, meta);
     fs.writeFileSync(path.join(outDir, `${product.slug}.html`), html, 'utf8');
     written += 1;
   }
@@ -1752,15 +1999,16 @@ async function main() {
     if (file.endsWith('.html')) fs.unlinkSync(path.join(collectionDir, file));
   }
   for (const landing of collectionLandings) {
-    fs.writeFileSync(path.join(collectionDir, `${landing.slug}.html`), renderCollectionPage(landing), 'utf8');
+    const htmlWithPlaceholders = renderCollectionPage(landing);
+    const meta = tracker.track(`/collections/${landing.slug}`, htmlWithPlaceholders, productFallbackDate);
+    const html = replaceDatePlaceholders(htmlWithPlaceholders, meta);
+    fs.writeFileSync(path.join(collectionDir, `${landing.slug}.html`), html, 'utf8');
   }
-
-  fs.writeFileSync(path.join(ROOT, 'sitemap.xml'), renderSitemap(products, collectionLandings), 'utf8');
 
   // Inject 12 prerendered catalog cards into index.html between markers
   // so crawlers see the assortment without executing JS.
   const indexPath = path.join(ROOT, 'index.html');
-  const indexHtml = fs.readFileSync(indexPath, 'utf8');
+  const indexHtml = stripGeneratedPageMeta(fs.readFileSync(indexPath, 'utf8'));
   const prerender = renderCatalogPrerender(products, 12);
   const patched = injectCatalogPrerender(indexHtml, prerender);
   if (patched && patched !== indexHtml) {
@@ -1773,8 +2021,29 @@ async function main() {
   const robotsPath = path.join(ROOT, 'robots.txt');
   fs.writeFileSync(robotsPath, renderRobots(), 'utf8');
 
-  fs.writeFileSync(path.join(ROOT, 'llms-full.txt'), renderLlmsFull(products), 'utf8');
+  const llmsFullWithPlaceholders = renderLlmsFull(products);
+  const llmsFullMeta = tracker.track(
+    '/llms-full.txt',
+    llmsFullWithPlaceholders,
+    maxDate(productFallbackDate, gitDateForPath('scripts/build-products.js')),
+  );
+  fs.writeFileSync(
+    path.join(ROOT, 'llms-full.txt'),
+    replaceDatePlaceholders(llmsFullWithPlaceholders, llmsFullMeta),
+    'utf8',
+  );
+  const llmsPath = path.join(ROOT, 'llms.txt');
+  if (fs.existsSync(llmsPath)) {
+    tracker.track('/llms.txt', fs.readFileSync(llmsPath, 'utf8'), gitDateForPath('llms.txt'));
+  }
   console.log('✓ Wrote llms-full.txt');
+
+  updateStaticPagesWithDates(tracker);
+
+  fs.writeFileSync(path.join(ROOT, 'sitemap.xml'), renderSitemap(products, collectionLandings, tracker), 'utf8');
+  tracker.save();
+
+  await pingIndexNow(sitemapUrls());
 
   console.log(`✓ Wrote ${written} product page(s) to /p`);
   console.log(`✓ Wrote ${productRedirects.length} product redirect(s)`);
