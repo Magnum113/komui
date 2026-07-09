@@ -1196,8 +1196,18 @@ function garment(p){
   else{const s=isTee?1.5:1.34,cx=160,cy=isTee?208:196;mg=`<g transform="translate(${cx-50*s} ${cy-50*s}) scale(${s})">${motif(p.motif,ink,a)}</g>`;}
   return `<svg class="garment" viewBox="0 0 320 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${p.name}"><defs><linearGradient id="sh${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".10"/><stop offset=".5" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".30"/></linearGradient><clipPath id="cp${id}"><path d="${body}"/></clipPath></defs><g clip-path="url(#cp${id})"><path d="${body}" fill="${g}"/><rect width="320" height="360" fill="url(#sh${id})"/></g><path d="${body}" fill="none" stroke="${shade(g,20)}" stroke-width="2" opacity=".7"/>${extra}${mg}</svg>`;
 }
+function mediaSrcSet(src){
+  const value=String(src||'');
+  const match=value.match(/^(.*\/media\/products\/[^/]+\/[^/]+\/)(?:480|800|1200)\.webp(?:\?.*)?$/);
+  if(!match)return '';
+  return `${match[1]}480.webp 480w, ${match[1]}800.webp 800w, ${match[1]}1200.webp 1200w`;
+}
+function responsiveImageAttrs(src,sizes='(max-width: 768px) 50vw, 320px'){
+  const set=mediaSrcSet(src);
+  return `${set?` srcset="${esc(set)}" sizes="${esc(sizes)}"`:''}`;
+}
 function productImage(p, cls='product-photo', loading='lazy'){
-  return `<img class="${cls}" src="${p.image}" alt="${p.name}" loading="${loading}" decoding="async">`;
+  return `<img class="${cls}" src="${esc(p.image)}"${responsiveImageAttrs(p.image)} alt="${esc(p.name)}" loading="${loading}" decoding="async">`;
 }
 function productPhotos(p){
   return [...new Set([p.image,...(p.photos||[])].filter(Boolean))];
@@ -1206,7 +1216,7 @@ function productGallery(p, opts={}){
   const imgs=productPhotos(p);
   const eagerAll=!!opts.eagerAll;
   if(imgs.length<=1)return `<div class="gallery">${productImage(p,'product-photo',eagerAll?'eager':'lazy')}</div>`;
-  const slides=imgs.map((src,i)=>`<img class="gimg" src="${src}" alt="${p.name}" loading="${eagerAll||i===0?'eager':'lazy'}" decoding="async" draggable="false">`).join('');
+  const slides=imgs.map((src,i)=>`<img class="gimg" src="${esc(src)}"${responsiveImageAttrs(src)} alt="${esc(p.name)}" loading="${eagerAll||i===0?'eager':'lazy'}" decoding="async" draggable="false">`).join('');
   const dots=imgs.map((_,i)=>`<button class="gdot${i===0?' on':''}" data-go="${i}" type="button" aria-label="Фото ${i+1}"></button>`).join('');
   const arrow=d=>`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="${d}"/></svg>`;
   return `<div class="gallery" data-gallery>
@@ -1332,6 +1342,9 @@ function localProduct(p,i){
 function supabaseProduct(row,i){
   const price=Number(row.price_min||row.price_max||0);
   const compareAt=row.compare_at_price!=null?Number(row.compare_at_price):null;
+  const mediaImages=(row.image_urls||[]).filter(Boolean);
+  const primaryImage=row.primary_image_url||mediaImages[0]||row.main_image_path;
+  const photos=mediaImages.length?mediaImages:[row.primary_image_url,row.main_image_path].filter(Boolean);
   return {
     id:row.id,
     name:row.name,
@@ -1347,14 +1360,14 @@ function supabaseProduct(row,i){
     sizes:sortSizes(row.sizes),
     badges:row.badges||[],
     pop:100-i,
-    image:row.main_image_path||row.primary_image_url||(row.image_urls||[])[0],
+    image:primaryImage,
     desc:publicCopy(row.short_description||row.description||row.ozon_description||''),
     titleName:row.title_name,
     animeTitle:row.anime_title,
     characterName:row.character_name,
     designKey:row.design_key,
     size_chart_json:row.size_chart_json,
-    photos:row.image_urls||[],
+    photos,
     offers:row.offers||[],
     source:'supabase'
   };
