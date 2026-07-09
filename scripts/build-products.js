@@ -172,6 +172,10 @@ function renderUpdatedPlaceholder(className = '') {
   return `<div class="${classes}">Обновлено: <time datetime="${DATE_MODIFIED_PLACEHOLDER}">${DATE_MODIFIED_RU_PLACEHOLDER}</time></div>`;
 }
 
+function renderUpdatedFooterPlaceholder() {
+  return renderUpdatedPlaceholder('footer-updated');
+}
+
 function loadMediaManifest() {
   const manifest = readJsonIfExists(MEDIA_MANIFEST_PATH);
   const images = manifest && manifest.images && typeof manifest.images === 'object'
@@ -1210,7 +1214,6 @@ ${renderHeaderPanels()}
         <span>${escapeHtml(product.category || 'Товары')}</span><span>/</span>
         <span>${escapeHtml(product.name)}</span>
       </nav>
-      ${renderUpdatedPlaceholder('p-updated')}
       <div class="p-layout">
         ${galleryHtml}
         <div class="p-info">
@@ -1254,6 +1257,7 @@ ${renderHeaderScript()}
   <div><h5>Коллекции</h5>${renderCollectionFooterLinks()}</div>
   <div><h5>Документы</h5><a href="/seller">Продавец</a><a href="/offer">Публичная оферта</a><a href="/privacy">Политика ПДн</a></div>
   <div><h5>Контакты</h5><a href="mailto:smmshit@ya.ru">smmshit@ya.ru</a><a href="/#catalog">Каталог</a></div>
+  ${renderUpdatedFooterPlaceholder()}
 </div></footer>
 <script>
 (function(){
@@ -1629,7 +1633,6 @@ ${renderHeaderPanels()}
       <nav class="crumb" aria-label="Хлебные крошки"><a href="/">KOMUI</a><span>/</span><a href="/#strip">Коллекции</a><span>/</span><span>${escapeHtml(landing.name)}</span></nav>
       <div class="eyebrow">Коллекция</div>
       <h1>${escapeHtml(landing.h1)}</h1>
-      ${renderUpdatedPlaceholder('c-updated')}
       <p class="lead">${escapeHtml(landing.lead)}</p>
       <div class="c-actions">
         <a class="btn btn-primary" href="#products">Смотреть товары</a>
@@ -1682,6 +1685,7 @@ ${renderHeaderScript()}
   <div><h5>Коллекции</h5>${renderCollectionFooterLinks()}</div>
   <div><h5>Документы</h5><a href="/seller">Продавец</a><a href="/offer">Публичная оферта</a><a href="/privacy">Политика ПДн</a></div>
   <div><h5>Контакты</h5><a href="mailto:smmshit@ya.ru">smmshit@ya.ru</a><a href="/#catalog">Каталог</a></div>
+  ${renderUpdatedFooterPlaceholder()}
 </div></footer>
 </body>
 </html>
@@ -1781,12 +1785,16 @@ function injectStaticPageMeta(html, meta) {
 <meta name="dateModified" content="${escapeAttr(meta.dateModified)}" />
 <!--komui:dates:end-->`;
   const updated = `<!--komui:updated:start-->
-${renderUpdatedBadge(meta, 'static-updated')}
+${renderUpdatedBadge(meta, 'footer-updated static-updated')}
 <!--komui:updated:end-->`;
   let patched = clean.includes('</head>')
     ? clean.replace('</head>', `${headMeta}\n</head>`)
     : clean;
-  patched = patched.replace(/(<main(?:\s[^>]*)?>)/, `$1\n${updated}`);
+  if (patched.includes('</footer>')) {
+    patched = patched.replace('</footer>', `${updated}\n</footer>`);
+  } else {
+    patched = patched.replace('</main>', `${updated}\n</main>`);
+  }
   return patched;
 }
 
