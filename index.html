@@ -1224,10 +1224,14 @@ function productGallery(p, opts={}){
   const imgs=productPhotos(p);
   const eagerAll=!!opts.eagerAll;
   if(imgs.length<=1)return `<div class="gallery">${productImage(p,'product-photo',eagerAll?'eager':'lazy')}</div>`;
-  const slides=imgs.map((src,i)=>`<img class="gimg" src="${esc(src)}"${responsiveImageAttrs(src)} alt="${esc(p.name)}" loading="${eagerAll||i===0?'eager':'lazy'}" decoding="async" draggable="false">`).join('');
+  const first=`<img class="gimg" src="${esc(imgs[0])}"${responsiveImageAttrs(imgs[0])} alt="${esc(p.name)}" loading="${eagerAll?'eager':'lazy'}" decoding="async" draggable="false">`;
+  const slides=eagerAll
+    ? imgs.map((src,i)=>`<img class="gimg" src="${esc(src)}"${responsiveImageAttrs(src)} alt="${esc(p.name)}" loading="eager" decoding="async" draggable="false">`).join('')
+    : first;
   const dots=imgs.map((_,i)=>`<button class="gdot${i===0?' on':''}" data-go="${i}" type="button" aria-label="Фото ${i+1}"></button>`).join('');
+  const lazyAttrs=eagerAll?'':` data-gallery-images="${esc(JSON.stringify(imgs))}" data-gallery-alt="${esc(p.name)}"`;
   const arrow=d=>`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="${d}"/></svg>`;
-  return `<div class="gallery" data-gallery>
+  return `<div class="gallery" data-gallery${lazyAttrs}>
       <div class="gtrack">${slides}</div>
       <button class="garr prev" data-prev type="button" aria-label="Предыдущее фото">${arrow('M15 6l-6 6 6 6')}</button>
       <button class="garr next" data-next type="button" aria-label="Следующее фото">${arrow('M9 6l6 6-6 6')}</button>
@@ -1572,6 +1576,61 @@ function initGalleries(){
     galleryGo(g,0);
     initGallerySwipe(g);
   });
+  observeLazyGalleries();
+}
+let lazyGalleryObserver=null;
+function galleryLazyImages(g){
+  try{
+    const images=JSON.parse(g.dataset.galleryImages||'[]');
+    return Array.isArray(images)?images.filter(Boolean):[];
+  }catch(e){
+    return [];
+  }
+}
+function ensureGallerySlides(g,{eager=false}={}){
+  if(!g||g.dataset.galleryLoaded==='1')return;
+  const track=g.querySelector('.gtrack');if(!track)return;
+  const images=galleryLazyImages(g);
+  if(images.length<=track.children.length){
+    g.dataset.galleryLoaded='1';
+    return;
+  }
+  const alt=g.dataset.galleryAlt||'';
+  const current=Number(g.dataset.index)||0;
+  for(let i=track.children.length;i<images.length;i++){
+    const img=document.createElement('img');
+    img.className='gimg';
+    img.src=images[i];
+    const set=mediaSrcSet(images[i]);
+    if(set){
+      img.srcset=set;
+      img.sizes='(max-width: 768px) 50vw, 320px';
+    }
+    img.alt=alt;
+    img.loading=eager?'eager':'lazy';
+    img.decoding='async';
+    img.draggable=false;
+    track.appendChild(img);
+  }
+  g.dataset.galleryLoaded='1';
+  galleryGo(g,current);
+}
+function observeLazyGalleries(){
+  if(!('IntersectionObserver' in window))return;
+  if(!lazyGalleryObserver){
+    lazyGalleryObserver=new IntersectionObserver(entries=>{
+      entries.forEach(entry=>{
+        if(!entry.isIntersecting)return;
+        ensureGallerySlides(entry.target);
+        lazyGalleryObserver.unobserve(entry.target);
+      });
+    },{rootMargin:'700px 0px',threshold:0.01});
+  }
+  $$('.gallery[data-gallery-images]').forEach(g=>{
+    if(g.dataset.galleryLoaded==='1'||g.dataset.galleryObserved==='1')return;
+    g.dataset.galleryObserved='1';
+    lazyGalleryObserver.observe(g);
+  });
 }
 function initGallerySwipe(g){
   let startX=0,startY=0,dx=0,startIndex=0,dragging=false,locked=false;
@@ -1591,6 +1650,7 @@ function initGallerySwipe(g){
   g.addEventListener('pointerdown',e=>{
     if(e.pointerType==='mouse'&&e.button!==0)return;
     if(e.target.closest('[data-prev],[data-next],[data-go]'))return;
+    ensureGallerySlides(g,{eager:true});
     startX=e.clientX;startY=e.clientY;dx=0;startIndex=Number(g.dataset.index)||0;dragging=true;locked=false;
     track.style.transition='none';
     g.setPointerCapture?.(e.pointerId);
@@ -1618,6 +1678,7 @@ function preloadGallerySlide(g,i){
 }
 function galleryGo(g,i,opts={}){
   const track=g.querySelector('.gtrack');if(!track)return;
+  if(opts.forceLoad)ensureGallerySlides(g,{eager:true});
   const dots=[...g.querySelectorAll('.gdot')],n=track.children.length;
   i=(i%n+n)%n;
   if(opts.forceLoad||g.closest('#modal'))preloadGallerySlide(g,i);
