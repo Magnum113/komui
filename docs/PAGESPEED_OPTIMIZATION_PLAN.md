@@ -435,6 +435,15 @@ PageSpeed render-blocking section не должен показывать `/data/
 
 ## Этап 5. Настроить cache headers
 
+Статус: реализовано на production nginx.
+
+Фактическая модель:
+
+- `/media/products/*` — `Cache-Control: public, max-age=2592000, immutable`;
+- `/assets/*` и статические `css/js/svg/webp/avif/jpg/png/gif/woff2` — `Cache-Control: public, max-age=2592000, immutable`;
+- `/data/storefront-products.js` — короткий кэш `Cache-Control: public, max-age=600, stale-while-revalidate=86400`, потому что файл не хэширован и может обновляться при деплое;
+- HTML-страницы не получили долгий кэш, чтобы релизы сайта применялись сразу.
+
 ### Проблема
 
 Для части статики нет cache-control.
