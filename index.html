@@ -25,6 +25,7 @@
 <link rel="shortcut icon" href="./favicon.svg" type="image/svg+xml" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="image" href="/media/products/d2/d20409df3a89abae/800.webp" imagesrcset="/media/products/d2/d20409df3a89abae/480.webp 480w, /media/products/d2/d20409df3a89abae/800.webp 800w, /media/products/d2/d20409df3a89abae/1200.webp 1200w" imagesizes="(max-width: 768px) 48vw, 360px" fetchpriority="high">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -871,10 +872,18 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
     <div class="hero-orbit"></div>
     <div class="hero-orbit o2"></div>
     <div class="hero-scanline"></div>
-    <div class="hero-product main" data-hero-slot="0"></div>
-    <div class="hero-product side" data-hero-slot="1"></div>
-    <div class="hero-product mini" data-hero-slot="2"></div>
-    <div class="hero-product fourth" data-hero-slot="3"></div>
+    <div class="hero-product main" data-hero-slot="0">
+      <img class="is-active" src="/media/products/d2/d20409df3a89abae/800.webp" srcset="/media/products/d2/d20409df3a89abae/480.webp 480w, /media/products/d2/d20409df3a89abae/800.webp 800w, /media/products/d2/d20409df3a89abae/1200.webp 1200w" sizes="(max-width: 768px) 48vw, 360px" width="800" height="1066" fetchpriority="high" loading="eager" decoding="async" alt="" draggable="false"><img alt="" draggable="false" decoding="async">
+    </div>
+    <div class="hero-product side" data-hero-slot="1">
+      <img class="is-active" src="/media/products/13/13015025b8d14269/800.webp" srcset="/media/products/13/13015025b8d14269/480.webp 480w, /media/products/13/13015025b8d14269/800.webp 800w, /media/products/13/13015025b8d14269/1200.webp 1200w" sizes="(max-width: 768px) 32vw, 260px" width="800" height="1067" loading="eager" decoding="async" alt="" draggable="false"><img alt="" draggable="false" decoding="async">
+    </div>
+    <div class="hero-product mini" data-hero-slot="2">
+      <img class="is-active" src="/media/products/c7/c7f739aa438f9eeb/800.webp" srcset="/media/products/c7/c7f739aa438f9eeb/480.webp 480w, /media/products/c7/c7f739aa438f9eeb/800.webp 800w, /media/products/c7/c7f739aa438f9eeb/1200.webp 1200w" sizes="(max-width: 768px) 34vw, 280px" width="800" height="1067" loading="eager" decoding="async" alt="" draggable="false"><img alt="" draggable="false" decoding="async">
+    </div>
+    <div class="hero-product fourth" data-hero-slot="3">
+      <img class="is-active" src="/media/products/98/987ce89062aaa768/800.webp" srcset="/media/products/98/987ce89062aaa768/480.webp 480w, /media/products/98/987ce89062aaa768/800.webp 800w, /media/products/98/987ce89062aaa768/1200.webp 1200w" sizes="(max-width: 768px) 32vw, 250px" width="800" height="1067" loading="eager" decoding="async" alt="" draggable="false"><img alt="" draggable="false" decoding="async">
+    </div>
   </div>
 </section>
 
@@ -1978,11 +1987,11 @@ function initHeroProducts(){
   const slots=$$('[data-hero-slot]');
   if(!slots.length||!P.length)return;
   const popular=[
-    {offerId:'D016-TSH-PRT-WGRY-V01-XL',photoIndex:0,kind:'full'},
-    {offerId:'D004-TSH-EMB-WHT-V01-XL',photoIndex:2,kind:'close'},
-    {offerId:'D016-TSH-PRT-WGRY-V02-XL',photoIndex:1,kind:'close'},
-    {offerId:'D002-SWT-EMB-BLK-V01-2XL',photoIndex:0,kind:'close'},
-    {offerId:'D015-TSH-PRT-WHT-V01-S',photoIndex:0,kind:'full'}
+    {offerId:'D16-TSH-PRT-WGRY-XL',photoIndex:0,kind:'full'},
+    {offerId:'D4-TSH-EMB-WHT-XL',photoIndex:2,kind:'close'},
+    {offerId:'D16-TSH-PRT-WGRY-XL',photoIndex:1,kind:'close'},
+    {offerId:'D2-SWT-EMB-BLK-S',photoIndex:0,kind:'close'},
+    {offerId:'D15-TSH-PRT-WHT-S',photoIndex:0,kind:'full'}
   ];
   const offerMatch=(p,offerId)=>Array.isArray(p.offers)&&p.offers.some(o=>o.offer_id===offerId);
   const offerPhotos=(p,offerId)=>{
@@ -2025,10 +2034,13 @@ function initHeroProducts(){
   const heroItems=entries.slice(0,18);
   if(!heroItems.length)return;
   const slotState=slots.map((slot,i)=>{
-    slot.innerHTML='<img class="is-active" alt="" draggable="false"><img alt="" draggable="false">';
-    const imgs=[...slot.querySelectorAll('img')];
+    let imgs=[...slot.querySelectorAll('img')];
+    if(imgs.length<2){
+      slot.innerHTML='<img class="is-active" alt="" draggable="false" decoding="async"><img alt="" draggable="false" decoding="async">';
+      imgs=[...slot.querySelectorAll('img')];
+    }
     const item=heroItems[i]||{src:P[0].image,kind:'full',offerId:''};
-    imgs[0].src=item.src;
+    if(!imgs[0].getAttribute('src'))imgs[0].src=item.src;
     slot.dataset.heroOffer=item.offerId;
     slot.dataset.heroPhotoKind=item.kind;
     return {slot,imgs,active:0};
