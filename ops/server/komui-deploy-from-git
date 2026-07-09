@@ -4,11 +4,15 @@ set -Eeuo pipefail
 usage() {
   cat <<'USAGE'
 Usage:
-  sudo /usr/local/sbin/komui-deploy-from-git stage [branch]
-  sudo /usr/local/sbin/komui-deploy-from-git prod [branch]
+  sudo /usr/local/sbin/komui-deploy-from-git stage [branch] [--no-registry-notify]
+  sudo /usr/local/sbin/komui-deploy-from-git prod [branch] [--no-registry-notify]
 
 Builds the requested target from origin/<branch>, creates immutable backend and
 frontend releases, activates them, and runs smoke checks.
+
+By default, successful deploys are recorded in the deployment registry and sent
+to Telegram through komui-alert. Set KOMUI_DEPLOY_REGISTRY_NOTIFY=0 or pass
+--no-registry-notify when another caller already sends its own Telegram result.
 USAGE
 }
 
@@ -23,7 +27,27 @@ if [[ "${EUID}" -ne 0 ]]; then
 fi
 
 target="${1:-}"
-branch="${2:-main}"
+branch="main"
+notify_registry="${KOMUI_DEPLOY_REGISTRY_NOTIFY:-1}"
+
+shift || true
+if [[ "${1:-}" != "" && "${1:-}" != --* ]]; then
+  branch="$1"
+  shift || true
+fi
+
+while [[ "$#" -gt 0 ]]; do
+  case "$1" in
+    --no-registry-notify)
+      notify_registry=0
+      ;;
+    *)
+      usage >&2
+      exit 1
+      ;;
+  esac
+  shift
+done
 
 case "$target" in
   stage|prod) ;;
@@ -67,6 +91,7 @@ fail() {
 
   log "deploy_target=$target"
   log "branch=$branch"
+  log "registry_notify=$notify_registry"
   log "repo=$repo_url"
   log "log=$log_file"
 
@@ -276,7 +301,8 @@ fail() {
 
   registry="/usr/local/sbin/komui-deployment-registry"
   if [[ -x "$registry" ]]; then
-    "$registry" record \
+    registry_args=(
+      record
       --component backend \
       --event deploy \
       --status success \
@@ -284,12 +310,16 @@ fail() {
       --release-path "$backend_release_dir" \
       --previous-release "$(basename "$previous_backend" 2>/dev/null || true)" \
       --git-commit "$commit" \
-      --summary "Deploy ${target} from Git via Telegram bot" \
+      --summary "Deploy ${target} from Git" \
       --check "git_fetch,root_build_deps,backend_tests,backend_build,media_sync,frontend_build,static_no_ozon_urls,backend_ready,nginx_reload,public_smoke,api_no_ozon_urls" \
       --metadata "target=$target" \
       --metadata "frontendRelease=$frontend_release_dir" \
-      --metadata "mediaCacheDir=$media_cache_dir" \
-      --no-notify >/dev/null || true
+      --metadata "mediaCacheDir=$media_cache_dir"
+    )
+    if [[ "$notify_registry" == "0" || "$notify_registry" == "false" ]]; then
+      registry_args+=(--no-notify)
+    fi
+    "$registry" "${registry_args[@]}" >/dev/null || true
   fi
 
   log "DEPLOY_OK target=$target release=$release commit=$commit"

@@ -102,7 +102,12 @@ def is_allowed_chat(update: dict[str, Any]) -> bool:
 
 
 def run_command(args: list[str], timeout: int) -> tuple[int, str]:
-    proc = subprocess.run(args, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout)
+    env = os.environ.copy()
+    # The bot sends its own start/result messages. Keep deployment-registry
+    # Telegram notifications enabled for manual SSH deploys only to avoid
+    # duplicate release messages after button-triggered deploys.
+    env["KOMUI_DEPLOY_REGISTRY_NOTIFY"] = "0"
+    proc = subprocess.run(args, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout, env=env)
     return proc.returncode, proc.stdout
 
 
