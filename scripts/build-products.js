@@ -686,7 +686,7 @@ function renderHeaderPanels() {
 }
 
 function renderHeaderScript() {
-  return `<script src="/assets/shop-header.js"></script>`;
+  return `<script src="/assets/shop-header.js" defer></script>`;
 }
 
 function collectionStats(products) {
@@ -1249,7 +1249,7 @@ ${renderHeaderPanels()}
   </section>
 ${sizeChartModalHtml}
 </main>
-<script src="/data/storefront-products.js"></script>
+<script src="/data/storefront-products.js" defer></script>
 ${renderHeaderScript()}
 <footer><div class="wrap foot">
   <div><h5>KOMUI</h5><p>Аниме-мерч: футболки, худи и свитшоты с принтами и вышивкой.</p></div>
@@ -1677,7 +1677,7 @@ ${renderHeaderPanels()}
     </div>
   </section>
 </main>
-<script src="/data/storefront-products.js"></script>
+<script src="/data/storefront-products.js" defer></script>
 ${renderHeaderScript()}
 <footer><div class="wrap foot">
   <div><h5>KOMUI</h5><p>Аниме-мерч: футболки, худи и свитшоты с принтами и вышивкой.</p></div>

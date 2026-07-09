@@ -1141,7 +1141,6 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
 
 <div class="toast" id="toast"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg></span><span class="toast-msg" id="toastMsg">Добавлено в корзину</span><button class="toast-action" id="toastCart" type="button">Открыть</button></div>
 
-<script src="./data/storefront-products.js"></script>
 <script src="./data/api-config.js"></script>
 <script id="app">
 (function(){
@@ -1398,11 +1397,13 @@ function setProducts(products,stats={}){
   st.min=PMIN;st.max=PMAX;
 }
 async function loadStorefrontProducts(){
-  setProducts(window.KOMUI_PRODUCTS||[],window.KOMUI_STORE_STATS||{});
   const cfg=window.KOMUI_API||{};
   const baseUrl=String(cfg.baseUrl||'/api').replace(/\/$/,'');
   const productsUrl=cfg.productsUrl||baseUrl+'/v1/products?limit=200';
-  if(!productsUrl)return;
+  if(!productsUrl){
+    await loadStorefrontProductsFallback();
+    return;
+  }
   const ctrl=new AbortController();
   const timer=setTimeout(()=>ctrl.abort(),3000);
   try{
@@ -1411,11 +1412,34 @@ async function loadStorefrontProducts(){
     const payload=await res.json();
     const rows=Array.isArray(payload)?payload:(Array.isArray(payload?.products)?payload.products:[]);
     if(Array.isArray(rows)&&rows.length)setProducts(rows,{cards:rows.length});
+    else throw new Error('KOMUI API empty products');
   }catch(err){
-    console.warn('KOMUI: API products fallback to local data',err);
+    console.warn('KOMUI: API products unavailable, loading static fallback',err);
+    await loadStorefrontProductsFallback();
   }finally{
     clearTimeout(timer);
   }
+}
+function loadStorefrontProductsFallback(){
+  if(Array.isArray(window.KOMUI_PRODUCTS)&&window.KOMUI_PRODUCTS.length){
+    setProducts(window.KOMUI_PRODUCTS,window.KOMUI_STORE_STATS||{});
+    return Promise.resolve();
+  }
+  return new Promise(resolve=>{
+    const existing=document.querySelector('script[data-storefront-products-fallback]');
+    if(existing){
+      existing.addEventListener('load',()=>{setProducts(window.KOMUI_PRODUCTS||[],window.KOMUI_STORE_STATS||{});resolve();},{once:true});
+      existing.addEventListener('error',()=>resolve(),{once:true});
+      return;
+    }
+    const script=document.createElement('script');
+    script.src='./data/storefront-products.js';
+    script.async=true;
+    script.dataset.storefrontProductsFallback='true';
+    script.onload=()=>{setProducts(window.KOMUI_PRODUCTS||[],window.KOMUI_STORE_STATS||{});resolve();};
+    script.onerror=()=>resolve();
+    document.head.appendChild(script);
+  });
 }
 
 /* ---------------- state ---------------- */
