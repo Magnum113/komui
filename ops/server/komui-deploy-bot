@@ -13,6 +13,9 @@ from typing import Any
 ENV_PATH = Path(os.environ.get("KOMUI_TELEGRAM_ENV", "/etc/komui/telegram-alerts.env"))
 DEPLOY_BIN = Path(os.environ.get("KOMUI_DEPLOY_BIN", "/usr/local/sbin/komui-deploy-from-git"))
 STATUS_BIN = Path(os.environ.get("KOMUI_DEPLOY_STATUS_BIN", "/usr/local/sbin/komui-deploy-status"))
+ADMIN_DEPLOY_BIN = Path(os.environ.get("GETOMERCH_DEPLOY_BIN", "/usr/local/sbin/getomerch-deploy-from-git"))
+ADMIN_STATUS_BIN = Path(os.environ.get("GETOMERCH_STATUS_BIN", "/usr/local/sbin/getomerch-deploy-status"))
+ADMIN_ROLLBACK_BIN = Path(os.environ.get("GETOMERCH_ROLLBACK_BIN", "/usr/local/sbin/getomerch-rollback"))
 
 
 def load_env(path: Path) -> dict[str, str]:
@@ -35,6 +38,9 @@ API_BASE = f"https://api.telegram.org/bot{TOKEN}"
 STAGE_BUTTON = "🚀 Deploy stage"
 PROD_BUTTON = "🚀 Deploy prod"
 STATUS_BUTTON = "📦 Status"
+ADMIN_DEPLOY_BUTTON = "Deploy admin prod"
+ADMIN_STATUS_BUTTON = "Status admin prod"
+ADMIN_ROLLBACK_BUTTON = "Rollback admin prod"
 
 
 def curl_api(method: str, fields: dict[str, Any], max_time: int | None = None) -> dict[str, Any]:
@@ -73,6 +79,8 @@ def keyboard() -> dict[str, Any]:
         "keyboard": [
             [{"text": STAGE_BUTTON}, {"text": PROD_BUTTON}],
             [{"text": STATUS_BUTTON}],
+            [{"text": ADMIN_DEPLOY_BUTTON}, {"text": ADMIN_STATUS_BUTTON}],
+            [{"text": ADMIN_ROLLBACK_BUTTON}],
         ],
         "resize_keyboard": True,
         "one_time_keyboard": False,
@@ -89,6 +97,11 @@ def inline_keyboard() -> dict[str, Any]:
                 {"text": PROD_BUTTON, "callback_data": "deploy:prod"},
             ],
             [{"text": STATUS_BUTTON, "callback_data": "status"}],
+            [
+                {"text": ADMIN_DEPLOY_BUTTON, "callback_data": "admin:deploy:prod"},
+                {"text": ADMIN_STATUS_BUTTON, "callback_data": "admin:status:prod"},
+            ],
+            [{"text": ADMIN_ROLLBACK_BUTTON, "callback_data": "admin:rollback:prod"}],
         ]
     }
 
@@ -257,14 +270,49 @@ def handle_deploy(target: str) -> None:
     elapsed = int(time.time() - started)
     tail = "\n".join(output.splitlines()[-80:])
     if code == 0:
-        send_message(f"✅ Deploy `{label}` завершён за {elapsed}s.\n\nПоследние строки:\n{tail}", keyboard())
+        send_message(f"✅ Deploy `{label}` завершён за {elapsed}s.\n\nПоследние строки:\n{tail}", inline_keyboard())
     else:
-        send_message(f"❌ Deploy `{label}` упал за {elapsed}s, exit={code}.\n\nПоследние строки:\n{tail}", keyboard())
+        send_message(f"❌ Deploy `{label}` упал за {elapsed}s, exit={code}.\n\nПоследние строки:\n{tail}", inline_keyboard())
 
 
 def handle_status() -> None:
     code, output = run_command([str(STATUS_BIN)], timeout=60)
-    send_message(format_status_message(output, code), keyboard())
+    send_message(format_status_message(output, code), inline_keyboard())
+
+
+def format_admin_status_message(output: str, code: int) -> str:
+    prefix = "📦 Статус GetoMerch admin" if code == 0 else f"⚠️ GetoMerch admin status failed exit={code}"
+    body = output.strip() or "Нет вывода."
+    return f"{prefix}\n\n{body}"
+
+
+def handle_admin_deploy() -> None:
+    send_message("⏳ Начинаю deploy `admin prod` из `origin/main`.")
+    started = time.time()
+    code, output = run_command([str(ADMIN_DEPLOY_BIN), "prod", "main"], timeout=1800)
+    elapsed = int(time.time() - started)
+    tail = "\n".join(output.splitlines()[-80:])
+    if code == 0:
+        send_message(f"✅ Deploy `admin prod` завершён за {elapsed}s.\n\nПоследние строки:\n{tail}", inline_keyboard())
+    else:
+        send_message(f"❌ Deploy `admin prod` упал за {elapsed}s, exit={code}.\n\nПоследние строки:\n{tail}", inline_keyboard())
+
+
+def handle_admin_status() -> None:
+    code, output = run_command([str(ADMIN_STATUS_BIN)], timeout=60)
+    send_message(format_admin_status_message(output, code), inline_keyboard())
+
+
+def handle_admin_rollback() -> None:
+    send_message("⏳ Начинаю rollback `admin prod` на предыдущий успешный release.")
+    started = time.time()
+    code, output = run_command([str(ADMIN_ROLLBACK_BIN), "prod"], timeout=900)
+    elapsed = int(time.time() - started)
+    tail = "\n".join(output.splitlines()[-80:])
+    if code == 0:
+        send_message(f"✅ Rollback `admin prod` завершён за {elapsed}s.\n\nПоследние строки:\n{tail}", inline_keyboard())
+    else:
+        send_message(f"❌ Rollback `admin prod` упал за {elapsed}s, exit={code}.\n\nПоследние строки:\n{tail}", inline_keyboard())
 
 
 def handle_update(update: dict[str, Any]) -> None:
@@ -277,13 +325,19 @@ def handle_update(update: dict[str, Any]) -> None:
     if "message" in update:
         text = str(update["message"].get("text") or "").strip()
         if text in ("/start", "/deploy", "/menu"):
-            send_message("KOMUI deploy bot. Выбери действие:", keyboard())
+            send_message("KOMUI deploy bot. Выбери действие:", inline_keyboard())
         elif text in ("/status", STATUS_BUTTON):
             handle_status()
         elif text == STAGE_BUTTON:
             handle_deploy("stage")
         elif text == PROD_BUTTON:
             handle_deploy("prod")
+        elif text == ADMIN_DEPLOY_BUTTON:
+            handle_admin_deploy()
+        elif text == ADMIN_STATUS_BUTTON:
+            handle_admin_status()
+        elif text == ADMIN_ROLLBACK_BUTTON:
+            handle_admin_rollback()
         return
 
     callback = update.get("callback_query") or {}
@@ -298,6 +352,15 @@ def handle_update(update: dict[str, Any]) -> None:
     elif data == "deploy:prod":
         answer_callback(callback_id, "Prod deploy started")
         handle_deploy("prod")
+    elif data == "admin:deploy:prod":
+        answer_callback(callback_id, "Admin prod deploy started")
+        handle_admin_deploy()
+    elif data == "admin:status:prod":
+        answer_callback(callback_id, "Checking admin prod status")
+        handle_admin_status()
+    elif data == "admin:rollback:prod":
+        answer_callback(callback_id, "Admin prod rollback started")
+        handle_admin_rollback()
 
 
 def get_updates(offset: int) -> list[dict[str, Any]]:
@@ -311,7 +374,7 @@ def get_updates(offset: int) -> list[dict[str, Any]]:
 
 
 def main() -> int:
-    send_message("✅ KOMUI deploy bot запущен.", keyboard())
+    send_message("✅ KOMUI deploy bot запущен.", inline_keyboard())
     offset = 0
     while True:
         try:
