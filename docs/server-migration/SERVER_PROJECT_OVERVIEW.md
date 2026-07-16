@@ -1614,16 +1614,23 @@ sudo journalctl -u komui-deploy-bot -n 100 --no-pager
 
 Telegram controls:
 
-- `Deploy stage` pulls `origin/main`, builds the project and switches staging
+- `🧪 Релиз магазина: stage` pulls `origin/main`, builds the project and switches staging
   backend/frontend releases;
-- `Deploy prod` pulls `origin/main`, builds the project and switches production
-  backend/frontend releases;
-- `Status` shows current Git revision, active releases, core services and
+- `🚀 Релиз магазина: prod` does the same for production after a separate
+  confirmation;
+- `📦 Статус магазина` shows current Git revision, active releases, core services and
   public smoke checks in a human-readable Russian summary.
+- the same persistent menu contains status, deploy and rollback actions for the
+  GetoMerch admin; admin production deploy and rollback also require confirmation.
 
 The bot uses a persistent Telegram reply keyboard, so the deploy controls are
 shown above the text input field. Callback handling for old inline-keyboard
 messages is kept for backwards compatibility.
+
+Telegram commands (`/menu`, `/status`, `/deploy_stage`, `/deploy_prod`,
+`/admin_status`, `/admin_deploy`, `/admin_rollback`) are registered through the
+Bot API on startup. The Telegram token and proxy URL are passed to curl through
+stdin config rather than process arguments, so they are not exposed in `ps`.
 
 The bot reads Telegram token, allowed chat id and proxy from:
 
@@ -1637,7 +1644,7 @@ configured as `TELEGRAM_PROXY_URL=socks5h://127.0.0.1:10808`.
 The release flow is intentionally manual:
 
 1. changes are committed and pushed from the Mac to `origin/main`;
-2. the owner presses `Deploy stage` or `Deploy prod` in Telegram;
+2. the owner presses the stage or prod release button in Telegram;
 3. the server fetches `origin/main`, runs tests/build, creates immutable
    backend and frontend releases, switches symlinks, restarts the service and
    runs smoke checks;

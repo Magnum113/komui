@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import signal
 import subprocess
 import sys
 import time
@@ -35,25 +36,51 @@ ALLOWED_CHAT_ID = str(ENV["TELEGRAM_CHAT_ID"])
 PROXY_URL = ENV.get("TELEGRAM_PROXY_URL", "")
 TIMEOUT_SECONDS = str(int(ENV.get("TELEGRAM_TIMEOUT_SECONDS", "15")))
 API_BASE = f"https://api.telegram.org/bot{TOKEN}"
-STAGE_BUTTON = "🚀 Deploy stage"
-PROD_BUTTON = "🚀 Deploy prod"
-STATUS_BUTTON = "📦 Status"
-ADMIN_DEPLOY_BUTTON = "Deploy admin prod"
-ADMIN_STATUS_BUTTON = "Status admin prod"
-ADMIN_ROLLBACK_BUTTON = "Rollback admin prod"
+STAGE_BUTTON = "🧪 Релиз магазина: stage"
+PROD_BUTTON = "🚀 Релиз магазина: prod"
+STATUS_BUTTON = "📦 Статус магазина"
+ADMIN_DEPLOY_BUTTON = "🛠 Релиз админки: prod"
+ADMIN_STATUS_BUTTON = "📋 Статус админки"
+ADMIN_ROLLBACK_BUTTON = "↩️ Откат админки"
+BOT_COMMANDS = [
+    {"command": "start", "description": "Открыть постоянное меню"},
+    {"command": "menu", "description": "Показать кнопки управления"},
+    {"command": "status", "description": "Проверить магазин и сервер"},
+    {"command": "deploy_stage", "description": "Развернуть магазин на stage"},
+    {"command": "deploy_prod", "description": "Развернуть магазин на prod"},
+    {"command": "admin_status", "description": "Проверить админку"},
+    {"command": "admin_deploy", "description": "Развернуть админку на prod"},
+    {"command": "admin_rollback", "description": "Откатить админку"},
+]
+
+
+def curl_config_value(value: str) -> str:
+    return value.replace("\\", "\\\\").replace('"', '\\"')
 
 
 def curl_api(method: str, fields: dict[str, Any], max_time: int | None = None) -> dict[str, Any]:
-    args = ["curl", "-fsS", "--max-time", str(max_time or int(TIMEOUT_SECONDS))]
+    # Keep the Telegram token and optional proxy credentials out of argv so
+    # they are not visible to local users through `ps` or /proc/*/cmdline.
+    config = [f'url = "{curl_config_value(f"{API_BASE}/{method}")}"']
     if PROXY_URL:
-        args += ["--proxy", PROXY_URL]
-    args += [f"{API_BASE}/{method}"]
+        config.append(f'proxy = "{curl_config_value(PROXY_URL)}"')
+    args = ["curl", "-fsS", "--max-time", str(max_time or int(TIMEOUT_SECONDS)), "--config", "-"]
     for key, value in fields.items():
         if isinstance(value, (dict, list)):
             value = json.dumps(value, ensure_ascii=False)
         args += ["-d", f"{key}={value}"]
-    raw = subprocess.check_output(args, text=True)
-    return json.loads(raw)
+    proc = subprocess.run(
+        args,
+        input="\n".join(config) + "\n",
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=True,
+    )
+    response = json.loads(proc.stdout)
+    if response.get("ok") is not True:
+        raise RuntimeError(f"Telegram API {method} failed: {response.get('description', 'unknown error')}")
+    return response
 
 
 def send_message(text: str, reply_markup: dict[str, Any] | None = None) -> None:
@@ -74,6 +101,11 @@ def answer_callback(callback_id: str, text: str) -> None:
     curl_api("answerCallbackQuery", {"callback_query_id": callback_id, "text": text, "show_alert": "false"})
 
 
+def configure_bot_ui() -> None:
+    curl_api("setMyCommands", {"commands": BOT_COMMANDS})
+    curl_api("setChatMenuButton", {"menu_button": {"type": "commands"}})
+
+
 def keyboard() -> dict[str, Any]:
     return {
         "keyboard": [
@@ -85,25 +117,57 @@ def keyboard() -> dict[str, Any]:
         "resize_keyboard": True,
         "one_time_keyboard": False,
         "is_persistent": True,
-        "input_field_placeholder": "Выбери deploy-действие",
+        "input_field_placeholder": "Выберите действие",
     }
 
 
-def inline_keyboard() -> dict[str, Any]:
+def confirmation_keyboard(action: str) -> dict[str, Any]:
     return {
         "inline_keyboard": [
             [
-                {"text": STAGE_BUTTON, "callback_data": "deploy:stage"},
-                {"text": PROD_BUTTON, "callback_data": "deploy:prod"},
+                {"text": "✅ Подтвердить", "callback_data": f"confirm:{action}"},
+                {"text": "❌ Отмена", "callback_data": "confirm:cancel"},
             ],
-            [{"text": STATUS_BUTTON, "callback_data": "status"}],
-            [
-                {"text": ADMIN_DEPLOY_BUTTON, "callback_data": "admin:deploy:prod"},
-                {"text": ADMIN_STATUS_BUTTON, "callback_data": "admin:status:prod"},
-            ],
-            [{"text": ADMIN_ROLLBACK_BUTTON, "callback_data": "admin:rollback:prod"}],
         ]
     }
+
+
+def clear_callback_keyboard(callback: dict[str, Any]) -> None:
+    message = callback.get("message") or {}
+    chat = message.get("chat") or {}
+    if not chat.get("id") or not message.get("message_id"):
+        return
+    try:
+        curl_api(
+            "editMessageReplyMarkup",
+            {
+                "chat_id": str(chat["id"]),
+                "message_id": str(message["message_id"]),
+                "reply_markup": {"inline_keyboard": []},
+            },
+        )
+    except Exception as exc:
+        # The action remains safe even if Telegram can no longer edit an old
+        # confirmation message. Log the UI cleanup problem and continue.
+        print(f"callback_cleanup_error {type(exc).__name__}: {exc}", file=sys.stderr, flush=True)
+
+
+def request_confirmation(action: str) -> None:
+    prompts = {
+        "deploy:prod": (
+            "⚠️ Подтвердите релиз магазина на PROD\n\n"
+            "Будет загружен origin/main и перезапущен production-контур магазина."
+        ),
+        "admin:deploy:prod": (
+            "⚠️ Подтвердите релиз админки на PROD\n\n"
+            "Будет загружен origin/main репозитория GetoMerchV3 и перезапущена только админка."
+        ),
+        "admin:rollback:prod": (
+            "⚠️ Подтвердите откат админки\n\n"
+            "Админка будет переключена на предыдущий рабочий release. Магазин не затрагивается."
+        ),
+    }
+    send_message(prompts[action], confirmation_keyboard(action))
 
 
 def is_allowed_chat(update: dict[str, Any]) -> bool:
@@ -120,8 +184,25 @@ def run_command(args: list[str], timeout: int) -> tuple[int, str]:
     # Telegram notifications enabled for manual SSH deploys only to avoid
     # duplicate release messages after button-triggered deploys.
     env["KOMUI_DEPLOY_REGISTRY_NOTIFY"] = "0"
-    proc = subprocess.run(args, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout, env=env)
-    return proc.returncode, proc.stdout
+    proc = subprocess.Popen(
+        args,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        env=env,
+        start_new_session=True,
+    )
+    try:
+        output, _ = proc.communicate(timeout=timeout)
+        return proc.returncode, output
+    except subprocess.TimeoutExpired:
+        os.killpg(proc.pid, signal.SIGTERM)
+        try:
+            output, _ = proc.communicate(timeout=10)
+        except subprocess.TimeoutExpired:
+            os.killpg(proc.pid, signal.SIGKILL)
+            output, _ = proc.communicate()
+        return 124, f"Команда остановлена: превышен лимит {timeout} секунд.\n{output}"
 
 
 def parse_status_output(output: str) -> dict[str, dict[str, str]]:
@@ -264,20 +345,24 @@ def format_status_message(output: str, code: int) -> str:
 
 def handle_deploy(target: str) -> None:
     label = "stage" if target == "stage" else "prod"
-    send_message(f"⏳ Начинаю deploy `{label}` из `origin/main`.")
+    send_message(f"⏳ Начинаю релиз магазина: {label}\nИсточник: origin/main", keyboard())
     started = time.time()
     code, output = run_command([str(DEPLOY_BIN), target, "main"], timeout=1800)
     elapsed = int(time.time() - started)
     tail = "\n".join(output.splitlines()[-80:])
     if code == 0:
-        send_message(f"✅ Deploy `{label}` завершён за {elapsed}s.\n\nПоследние строки:\n{tail}", inline_keyboard())
+        send_message(f"✅ Релиз магазина {label} завершён за {elapsed} сек.\n\nПоследние строки:\n{tail}", keyboard())
     else:
-        send_message(f"❌ Deploy `{label}` упал за {elapsed}s, exit={code}.\n\nПоследние строки:\n{tail}", inline_keyboard())
+        send_message(
+            f"❌ Релиз магазина {label} завершился ошибкой за {elapsed} сек.\n"
+            f"Код выхода: {code}\n\nПоследние строки:\n{tail}",
+            keyboard(),
+        )
 
 
 def handle_status() -> None:
     code, output = run_command([str(STATUS_BIN)], timeout=60)
-    send_message(format_status_message(output, code), inline_keyboard())
+    send_message(format_status_message(output, code), keyboard())
 
 
 def format_admin_status_message(output: str, code: int) -> str:
@@ -287,32 +372,40 @@ def format_admin_status_message(output: str, code: int) -> str:
 
 
 def handle_admin_deploy() -> None:
-    send_message("⏳ Начинаю deploy `admin prod` из `origin/main`.")
+    send_message("⏳ Начинаю релиз админки на prod\nИсточник: origin/main", keyboard())
     started = time.time()
     code, output = run_command([str(ADMIN_DEPLOY_BIN), "prod", "main"], timeout=1800)
     elapsed = int(time.time() - started)
     tail = "\n".join(output.splitlines()[-80:])
     if code == 0:
-        send_message(f"✅ Deploy `admin prod` завершён за {elapsed}s.\n\nПоследние строки:\n{tail}", inline_keyboard())
+        send_message(f"✅ Релиз админки завершён за {elapsed} сек.\n\nПоследние строки:\n{tail}", keyboard())
     else:
-        send_message(f"❌ Deploy `admin prod` упал за {elapsed}s, exit={code}.\n\nПоследние строки:\n{tail}", inline_keyboard())
+        send_message(
+            f"❌ Релиз админки завершился ошибкой за {elapsed} сек.\n"
+            f"Код выхода: {code}\n\nПоследние строки:\n{tail}",
+            keyboard(),
+        )
 
 
 def handle_admin_status() -> None:
     code, output = run_command([str(ADMIN_STATUS_BIN)], timeout=60)
-    send_message(format_admin_status_message(output, code), inline_keyboard())
+    send_message(format_admin_status_message(output, code), keyboard())
 
 
 def handle_admin_rollback() -> None:
-    send_message("⏳ Начинаю rollback `admin prod` на предыдущий успешный release.")
+    send_message("⏳ Начинаю откат админки на предыдущий рабочий release.", keyboard())
     started = time.time()
     code, output = run_command([str(ADMIN_ROLLBACK_BIN), "prod"], timeout=900)
     elapsed = int(time.time() - started)
     tail = "\n".join(output.splitlines()[-80:])
     if code == 0:
-        send_message(f"✅ Rollback `admin prod` завершён за {elapsed}s.\n\nПоследние строки:\n{tail}", inline_keyboard())
+        send_message(f"✅ Откат админки завершён за {elapsed} сек.\n\nПоследние строки:\n{tail}", keyboard())
     else:
-        send_message(f"❌ Rollback `admin prod` упал за {elapsed}s, exit={code}.\n\nПоследние строки:\n{tail}", inline_keyboard())
+        send_message(
+            f"❌ Откат админки завершился ошибкой за {elapsed} сек.\n"
+            f"Код выхода: {code}\n\nПоследние строки:\n{tail}",
+            keyboard(),
+        )
 
 
 def handle_update(update: dict[str, Any]) -> None:
@@ -324,43 +417,62 @@ def handle_update(update: dict[str, Any]) -> None:
 
     if "message" in update:
         text = str(update["message"].get("text") or "").strip()
-        if text in ("/start", "/deploy", "/menu"):
-            send_message("KOMUI deploy bot. Выбери действие:", inline_keyboard())
-        elif text in ("/status", STATUS_BUTTON):
+        command = text.split("@", 1)[0] if text.startswith("/") else text
+        if command in ("/start", "/deploy", "/menu"):
+            send_message("Управление релизами KOMUI и GetoMerch. Выберите действие:", keyboard())
+        elif command in ("/status", STATUS_BUTTON):
             handle_status()
-        elif text == STAGE_BUTTON:
+        elif command in ("/deploy_stage", STAGE_BUTTON):
             handle_deploy("stage")
-        elif text == PROD_BUTTON:
-            handle_deploy("prod")
-        elif text == ADMIN_DEPLOY_BUTTON:
-            handle_admin_deploy()
-        elif text == ADMIN_STATUS_BUTTON:
+        elif command in ("/deploy_prod", PROD_BUTTON):
+            request_confirmation("deploy:prod")
+        elif command in ("/admin_deploy", ADMIN_DEPLOY_BUTTON):
+            request_confirmation("admin:deploy:prod")
+        elif command in ("/admin_status", ADMIN_STATUS_BUTTON):
             handle_admin_status()
-        elif text == ADMIN_ROLLBACK_BUTTON:
-            handle_admin_rollback()
+        elif command in ("/admin_rollback", ADMIN_ROLLBACK_BUTTON):
+            request_confirmation("admin:rollback:prod")
         return
 
     callback = update.get("callback_query") or {}
     data = str(callback.get("data") or "")
     callback_id = str(callback.get("id") or "")
     if data == "status":
-        answer_callback(callback_id, "Checking status")
+        answer_callback(callback_id, "Проверяю статус")
         handle_status()
     elif data == "deploy:stage":
-        answer_callback(callback_id, "Stage deploy started")
+        answer_callback(callback_id, "Релиз stage запущен")
         handle_deploy("stage")
     elif data == "deploy:prod":
-        answer_callback(callback_id, "Prod deploy started")
-        handle_deploy("prod")
+        answer_callback(callback_id, "Требуется подтверждение")
+        request_confirmation("deploy:prod")
     elif data == "admin:deploy:prod":
-        answer_callback(callback_id, "Admin prod deploy started")
-        handle_admin_deploy()
+        answer_callback(callback_id, "Требуется подтверждение")
+        request_confirmation("admin:deploy:prod")
     elif data == "admin:status:prod":
-        answer_callback(callback_id, "Checking admin prod status")
+        answer_callback(callback_id, "Проверяю админку")
         handle_admin_status()
     elif data == "admin:rollback:prod":
-        answer_callback(callback_id, "Admin prod rollback started")
-        handle_admin_rollback()
+        answer_callback(callback_id, "Требуется подтверждение")
+        request_confirmation("admin:rollback:prod")
+    elif data == "confirm:cancel":
+        answer_callback(callback_id, "Действие отменено")
+        clear_callback_keyboard(callback)
+        send_message("Действие отменено.", keyboard())
+    elif data.startswith("confirm:"):
+        action = data.removeprefix("confirm:")
+        allowed_actions = {"deploy:prod", "admin:deploy:prod", "admin:rollback:prod"}
+        if action not in allowed_actions:
+            answer_callback(callback_id, "Неизвестное действие")
+            return
+        answer_callback(callback_id, "Подтверждение принято")
+        clear_callback_keyboard(callback)
+        if action == "deploy:prod":
+            handle_deploy("prod")
+        elif action == "admin:deploy:prod":
+            handle_admin_deploy()
+        else:
+            handle_admin_rollback()
 
 
 def get_updates(offset: int) -> list[dict[str, Any]]:
@@ -374,7 +486,14 @@ def get_updates(offset: int) -> list[dict[str, Any]]:
 
 
 def main() -> int:
-    send_message("✅ KOMUI deploy bot запущен.", inline_keyboard())
+    while True:
+        try:
+            configure_bot_ui()
+            send_message("✅ Бот управления релизами запущен. Кнопки доступны над строкой ввода.", keyboard())
+            break
+        except Exception as exc:
+            print(f"bot_init_error {type(exc).__name__}: {exc}", file=sys.stderr, flush=True)
+            time.sleep(5)
     offset = 0
     while True:
         try:
