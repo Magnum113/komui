@@ -2,6 +2,7 @@
   "private": true,
   "scripts": {
     "build:products": "node scripts/build-products.js",
+    "test:metrika": "node scripts/test-metrika.js",
     "sync:media": "node scripts/sync-product-media.js",
     "sync:media:dry-run": "node scripts/sync-product-media.js --dry-run"
   },

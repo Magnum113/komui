@@ -3,6 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- komui:metrika:start -->
+<!-- Yandex.Metrika counter -->
+<script type="text/javascript">
+    window.dataLayer = window.dataLayer || [];
+    if (/^(?:www\.)?komui\.ru$/i.test(location.hostname)) {
+      (function(m,e,t,r,i,k,a){
+          m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+          m[i].l=1*new Date();
+          for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+          k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+      })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=110916310', 'ym');
+
+      ym(110916310, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
+    }
+</script>
+<script src="/assets/metrika.js" defer></script>
+<!-- /Yandex.Metrika counter -->
+<!-- komui:metrika:end -->
 <meta name="robots" content="noindex, follow">
 <title>Статус оплаты — KOMUI</title>
 <meta name="description" content="Статус оплаты заказа KOMUI.">
@@ -52,6 +70,9 @@ h1{font:800 clamp(26px,5vw,38px)/1.12 'Unbounded',sans-serif;letter-spacing:-.03
 </style>
 </head>
 <body>
+<!-- komui:metrika-noscript:start -->
+<noscript><div><img src="https://mc.yandex.ru/watch/110916310" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- komui:metrika-noscript:end -->
 <div class="announce">
   <div class="announce-track">
     <div class="announce-inner">
@@ -120,8 +141,8 @@ h1{font:800 clamp(26px,5vw,38px)/1.12 'Unbounded',sans-serif;letter-spacing:-.03
       <div class="icon" id="statusIcon"><div class="spinner"></div></div>
       <h1 id="statusTitle">Проверяем оплату</h1>
       <p class="lead" id="statusText">Ждём защищённое подтверждение от Т‑Банка. Обычно это занимает несколько секунд.</p>
-      <div class="order"><span>Заказ</span><b id="orderNumber">—</b></div>
-      <div class="order" id="cdekOrder" style="display:none"><span>СДЭК</span><b id="cdekStatus">—</b></div>
+      <div class="order"><span>Заказ</span><b class="ym-hide-content" id="orderNumber">—</b></div>
+      <div class="order" id="cdekOrder" style="display:none"><span>СДЭК</span><b class="ym-hide-content" id="cdekStatus">—</b></div>
       <div class="actions" id="actions">
         <a class="button" href="/">Вернуться в магазин</a>
       </div>
@@ -138,6 +159,10 @@ const CHECKOUT_KEY='komui-checkout-cart-v1';
 const FORM_KEY='komui-checkout-form-v1';
 const PAYMENT_DRAFT_KEY='komui-payment-draft-v1';
 const $=selector=>document.querySelector(selector);
+function withAnalytics(callback){
+  if(window.KomuiAnalytics){callback(window.KomuiAnalytics);return;}
+  document.addEventListener('komui:analytics-ready',()=>callback(window.KomuiAnalytics),{once:true});
+}
 const params=new URLSearchParams(location.search);
 const order=params.get('order')||'';
 const returnStatus=params.get('status')||'';
@@ -208,8 +233,15 @@ function clearFailedPaymentState(){
   }
 }
 
-function paid(result){
+function paid(result,session){
   paidConfirmed=true;
+  const purchase=session?.analytics||{};
+  withAnalytics(analytics=>analytics.ecommerce.purchaseOnce(order,{
+    products:Array.isArray(purchase.products)?purchase.products:[],
+    revenue:Number(purchase.revenue)||Math.round(Number(session?.amount)||0)/100,
+    delivery:Number(purchase.delivery)||0,
+    coupon:purchase.coupon||''
+  }));
   localStorage.removeItem(CART_KEY);
   localStorage.removeItem(CHECKOUT_KEY);
   sessionStorage.removeItem(FORM_KEY);
@@ -221,12 +253,18 @@ function paid(result){
 }
 
 function failed(message){
+  withAnalytics(analytics=>analytics.goalOnce('payment_failed',order||'unknown',{
+    order_id:order||'',payment_provider:'tbank'
+  },'session'));
   clearFailedPaymentState();
   render('failed','Оплата не завершена',message||'Платёж отменён или банк не смог его провести. Деньги не списаны.','Корзина и введённые данные сохранены.',
     '<a class="button primary" href="/checkout">Попробовать снова</a><a class="button" href="/">Вернуться в магазин</a>');
 }
 
 function pending(review=false){
+  if(review)withAnalytics(analytics=>analytics.goalOnce('payment_review',order||'unknown',{
+    order_id:order||'',payment_provider:'tbank'
+  },'session'));
   const box=$('#statusIcon');
   box.className='icon'+(review?' review':'');
   box.innerHTML=review?icon('review'):'<div class="spinner"></div>';
@@ -258,7 +296,7 @@ async function check(){
     });
     const result=await response.json();
     if(!response.ok)throw new Error(result.error||'Не удалось проверить заказ');
-    if(result.status==='paid'){paid(result);return}
+    if(result.status==='paid'){paid(result,session);return}
     if(result.status==='payment_review'){pending(true);return}
     if(['payment_failed','canceled','refunded'].includes(result.status)){failed(result.errorMessage);return}
     pending(false);

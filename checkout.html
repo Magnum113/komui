@@ -3,6 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- komui:metrika:start -->
+<!-- Yandex.Metrika counter -->
+<script type="text/javascript">
+    window.dataLayer = window.dataLayer || [];
+    if (/^(?:www\.)?komui\.ru$/i.test(location.hostname)) {
+      (function(m,e,t,r,i,k,a){
+          m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+          m[i].l=1*new Date();
+          for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+          k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+      })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=110916310', 'ym');
+
+      ym(110916310, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
+    }
+</script>
+<script src="/assets/metrika.js" defer></script>
+<!-- /Yandex.Metrika counter -->
+<!-- komui:metrika:end -->
 <meta name="robots" content="noindex, follow">
 <title>Оформление заказа — KOMUI</title>
 <meta name="description" content="Оформление заказа KOMUI: контактные данные, выбор пункта СДЭК и онлайн-оплата.">
@@ -349,6 +367,9 @@ img,svg{display:block}
 </style>
 </head>
 <body>
+<!-- komui:metrika-noscript:start -->
+<noscript><div><img src="https://mc.yandex.ru/watch/110916310" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- komui:metrika-noscript:end -->
 <div class="announce">
   <div class="announce-track">
     <div class="announce-inner">
@@ -434,22 +455,22 @@ img,svg{display:block}
           <div class="field-grid">
             <div class="field" data-field="lastName">
               <label for="lastName">Фамилия</label>
-              <div class="input-wrap"><input id="lastName" name="lastName" type="text" autocomplete="family-name" placeholder="Иванов" required></div>
+              <div class="input-wrap"><input class="ym-disable-keys" id="lastName" name="lastName" type="text" autocomplete="family-name" placeholder="Иванов" required></div>
               <div class="field-error">Укажите фамилию</div>
             </div>
             <div class="field" data-field="firstName">
               <label for="firstName">Имя</label>
-              <div class="input-wrap"><input id="firstName" name="firstName" type="text" autocomplete="given-name" placeholder="Иван" required></div>
+              <div class="input-wrap"><input class="ym-disable-keys" id="firstName" name="firstName" type="text" autocomplete="given-name" placeholder="Иван" required></div>
               <div class="field-error">Укажите имя</div>
             </div>
             <div class="field field-wide" data-field="phone">
               <label for="phone">Номер телефона</label>
-              <div class="input-wrap"><input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (999) 123-45-67" required></div>
+              <div class="input-wrap"><input class="ym-disable-keys" id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (999) 123-45-67" required></div>
               <div class="field-error">Введите российский номер телефона полностью</div>
             </div>
             <div class="field field-wide" data-field="email">
               <label for="email">Email для электронного чека</label>
-              <div class="input-wrap"><input id="email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="name@example.com" required></div>
+              <div class="input-wrap"><input class="ym-disable-keys" id="email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="name@example.com" required></div>
               <div class="field-error">Введите корректный email для чека</div>
             </div>
           </div>
@@ -591,8 +612,8 @@ img,svg{display:block}
     <div class="pickup-layout">
       <div class="point-panel">
         <div class="point-search">
-          <input id="citySearch" type="search" placeholder="Город получения" autocomplete="address-level2">
-          <input id="pointSearch" type="search" placeholder="Метро, улица или код пункта" autocomplete="off">
+          <input class="ym-disable-keys" id="citySearch" type="search" placeholder="Город получения" autocomplete="address-level2">
+          <input class="ym-disable-keys" id="pointSearch" type="search" placeholder="Метро, улица или код пункта" autocomplete="off">
           <p class="point-demo-note">Пункты и стоимость доставки загружаются из СДЭК.</p>
         </div>
         <div class="point-list" id="pointList"></div>
@@ -623,6 +644,32 @@ const PAYMENT_DRAFT_KEY='komui-payment-draft-v1';
 const $=s=>document.querySelector(s);
 const money=n=>Math.round(Number(n)||0).toLocaleString('ru-RU')+' ₽';
 const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function withAnalytics(callback){
+  if(window.KomuiAnalytics){callback(window.KomuiAnalytics);return;}
+  document.addEventListener('komui:analytics-ready',()=>callback(window.KomuiAnalytics),{once:true});
+}
+
+function analyticsReady(timeoutMs=500){
+  if(window.KomuiAnalytics)return Promise.resolve(window.KomuiAnalytics);
+  return new Promise(resolve=>{
+    let settled=false;
+    const finish=analytics=>{
+      if(settled)return;
+      settled=true;
+      clearTimeout(timer);
+      resolve(analytics||null);
+    };
+    const timer=setTimeout(()=>finish(null),timeoutMs);
+    document.addEventListener('komui:analytics-ready',()=>finish(window.KomuiAnalytics),{once:true});
+  });
+}
+
+async function goalBeforeNavigation(id,params){
+  const analytics=await analyticsReady();
+  if(!analytics)return false;
+  if(typeof analytics.goalAndWait==='function')return analytics.goalAndWait(id,params,800);
+  return analytics.goal(id,params);
+}
 
 function readJson(key,fallback){
   try{const value=JSON.parse(localStorage.getItem(key)||'null');return value??fallback;}catch(e){return fallback;}
@@ -634,6 +681,7 @@ const localProducts=(window.KOMUI_PRODUCTS||[]).map(p=>({
   price:Number(p.price??p.price_min??p.price_max)||0,
   priceOld:Number(p.priceOld??p.compare_at_price)||null,
   image:p.image||p.main_image_path||p.primary_image_url||(Array.isArray(p.image_urls)?p.image_urls[0]:''),
+  category:p.category||p.cat||p.product_type||'',
   collection:p.col||p.collection_name||p.title_name||p.design_name,
   type:p.type||p.product_type||p.decoration_type,
   color:p.color||p.color_name||''
@@ -720,6 +768,12 @@ function deliveryDiscount(){return selectedPoint?Math.min(deliveryCost(),Math.ro
 function chargedDeliveryCost(){return Math.max(0,deliveryCost()-deliveryDiscount())}
 function totalPromoDiscount(){return discount()+deliveryDiscount()}
 function orderTotal(){return Math.max(0,itemsSubtotal()-discount()+chargedDeliveryCost())}
+function analyticsItems(){
+  return items.map(item=>({
+    id:String(item.id),name:item.name,price:Number(item.price)||0,category:item.category||'',collection:item.collection||'',
+    color:item.color||'',size:item.size,quantity:Number(item.qty)||1,qty:Number(item.qty)||1
+  }));
+}
 
 function renderItems(){
   $('#orderItems').innerHTML=items.map(item=>`
@@ -996,6 +1050,10 @@ async function choosePendingPoint(){
     selectedCity=selectedCity||{code:selectedPoint.cityCode||null,name:selectedPoint.city||''};
     if(appliedPromo?.code)await validateAppliedPromo({silent:true});
     saveForm();renderSelectedPoint();closePickup();showToast('Пункт СДЭК выбран');
+    withAnalytics(analytics=>analytics.goal('cdek_point_selected',{
+      point_code:selectedPoint.code||'',city_code:selectedPoint.cityCode||'',tariff_code:selectedPoint.tariffCode||'',
+      delivery_amount:Number(selectedPoint.price)||0
+    }));
   }catch(error){
     showToast(error?.message||'Не удалось рассчитать доставку СДЭК');
   }finally{
@@ -1012,6 +1070,7 @@ async function choosePointByCode(code){
 }
 
 function openPickup(){
+  withAnalytics(analytics=>analytics.goal('cdek_picker_open',{has_selected_point:!!selectedPoint}));
   pendingPoint=selectedPoint||null;
   if(selectedCity?.name)$('#citySearch').value=selectedCity.name;
   if(!$('#citySearch').value.trim())$('#citySearch').value=selectedPoint?.city||'Москва';
@@ -1192,6 +1251,14 @@ async function submitCheckout(){
       }
     }
 
+    withAnalytics(analytics=>analytics.goal('checkout_submit',{
+      items_count:items.reduce((sum,item)=>sum+Number(item.qty||0),0),
+      order_value:orderTotal(),
+      delivery_amount:chargedDeliveryCost(),
+      promo_code:appliedPromo?.code||'',
+      cdek_point_code:selectedPoint?.code||''
+    }));
+
     const identity=paymentIdentity();
     const response=await fetch(apiEndpoint(config,'tbank-create-payment'),{
       method:'POST',
@@ -1230,8 +1297,8 @@ async function submitCheckout(){
       error.code=apiErrorCode(result);
       error.retryAllowed=apiRetryAllowed(result);
       if(error.retryAllowed){
-        // Prepare a fresh id only for the user's next explicit click. Never
-        // create a second order automatically after an upstream failure.
+        // A fresh request id is prepared only for the next explicit click.
+        // Never create a second order automatically after an upstream error.
         clearPaymentDraft();
       }
       throw error;
@@ -1241,12 +1308,28 @@ async function submitCheckout(){
         accessToken:identity.accessToken,
         paymentId:result.paymentId||null,
         amount:result.amount||null,
+        analytics:{
+          products:analyticsItems(),
+          revenue:orderTotal(),
+          delivery:chargedDeliveryCost(),
+          coupon:appliedPromo?.code||'',
+          discount:totalPromoDiscount()
+        },
         createdAt:new Date().toISOString()
       }));
     }catch(e){}
+    await goalBeforeNavigation('payment_redirect',{
+      order_id:String(result.orderNumber),
+      order_value:orderTotal(),
+      items_count:items.reduce((sum,item)=>sum+Number(item.qty||0),0),
+      payment_provider:'tbank'
+    });
     redirecting=true;
     location.assign(result.paymentUrl);
   }catch(error){
+    withAnalytics(analytics=>analytics.goal('payment_create_failed',{
+      error_type:error?.code||error?.name||'payment_create_error',payment_provider:'tbank'
+    }));
     showToast(error?.message||'Не удалось перейти к оплате');
   }finally{
     paymentSubmissionInFlight=false;
@@ -1346,6 +1429,11 @@ async function applyPromo(){
     message.classList.add('success');
     message.textContent=result.message||'Промокод применён';
     renderTotals();
+    withAnalytics(analytics=>analytics.goal('promo_applied',{
+      promo_code:result.code||code,
+      discount_amount:totalPromoDiscount(),
+      order_value:orderTotal()
+    }));
   }catch(error){
     appliedPromo=null;
     savePromoState();
@@ -1365,6 +1453,11 @@ function init(){
     document.querySelector('.mobile-action').style.display='none';
     return;
   }
+  withAnalytics(analytics=>analytics.goalOnce('begin_checkout','checkout_session',{
+    items_count:items.reduce((sum,item)=>sum+Number(item.qty||0),0),
+    cart_value:itemsSubtotal(),
+    source:'checkout_page'
+  },'session'));
   restoreForm();
   renderItems();
   renderSelectedPoint();

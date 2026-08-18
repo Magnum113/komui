@@ -38,6 +38,7 @@ const MEDIA_PUBLIC_PREFIX = '/media/products/';
 const INDEXNOW_ENABLED = process.env.KOMUI_INDEXNOW_PING === '1';
 const INDEXNOW_ENDPOINT = process.env.KOMUI_INDEXNOW_ENDPOINT || 'https://api.indexnow.org/indexnow';
 const INDEXNOW_KEY_FILE = process.env.KOMUI_INDEXNOW_KEY_FILE || '';
+const YANDEX_METRIKA_COUNTER_ID = 110916310;
 const STATIC_PAGES = [
   { url: '/', file: 'index.html', changefreq: 'weekly', priority: '1.0' },
   { url: '/delivery', file: 'delivery.html', changefreq: 'monthly', priority: '0.5' },
@@ -48,6 +49,65 @@ const STATIC_PAGES = [
   { url: '/privacy', file: 'privacy.html', changefreq: 'yearly', priority: '0.2' },
   { url: '/seller', file: 'seller.html', changefreq: 'yearly', priority: '0.2' },
 ];
+const METRIKA_STATIC_FILES = [
+  '404.html',
+  'care.html',
+  'checkout.html',
+  'delivery.html',
+  'index.html',
+  'marketing-consent.html',
+  'offer.html',
+  'payment-result.html',
+  'personal-data-consent.html',
+  'privacy.html',
+  'returns.html',
+  'seller.html',
+  'sizes.html',
+];
+
+function renderMetrikaHead() {
+  return `<!-- komui:metrika:start -->
+<!-- Yandex.Metrika counter -->
+<script type="text/javascript">
+    window.dataLayer = window.dataLayer || [];
+    if (/^(?:www\\.)?komui\\.ru$/i.test(location.hostname)) {
+      (function(m,e,t,r,i,k,a){
+          m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+          m[i].l=1*new Date();
+          for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+          k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+      })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=${YANDEX_METRIKA_COUNTER_ID}', 'ym');
+
+      ym(${YANDEX_METRIKA_COUNTER_ID}, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
+    }
+</script>
+<script src="/assets/metrika.js" defer></script>
+<!-- /Yandex.Metrika counter -->
+<!-- komui:metrika:end -->`;
+}
+
+function renderMetrikaNoScript() {
+  return `<!-- komui:metrika-noscript:start -->
+<noscript><div><img src="https://mc.yandex.ru/watch/${YANDEX_METRIKA_COUNTER_ID}" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- komui:metrika-noscript:end -->`;
+}
+
+function stripMetrika(html) {
+  return String(html)
+    .replace(/\s*<!-- komui:metrika:start -->[\s\S]*?<!-- komui:metrika:end -->\s*/g, '\n')
+    .replace(/\s*<!-- komui:metrika-noscript:start -->[\s\S]*?<!-- komui:metrika-noscript:end -->\s*/g, '\n');
+}
+
+function injectMetrika(html) {
+  let patched = stripMetrika(html);
+  const head = renderMetrikaHead();
+  const noScript = renderMetrikaNoScript();
+  const viewport = /<meta\s+name=["']viewport["'][^>]*>/i;
+  if (viewport.test(patched)) patched = patched.replace(viewport, match => `${match}\n${head}`);
+  else patched = patched.replace(/<head([^>]*)>/i, `<head$1>\n${head}`);
+  patched = patched.replace(/<body([^>]*)>/i, `<body$1>\n${noScript}`);
+  return patched;
+}
 
 function readJsonIfExists(filePath) {
   try {
@@ -1055,6 +1115,22 @@ function buildTitle(product) {
   return base;
 }
 
+function analyticsProduct(product, extra = {}) {
+  return {
+    id: String(product.id),
+    name: product.name,
+    price: Number(product.price_min || product.price_max || 0),
+    category: product.category || '',
+    collection: product.collection_name || product.title_name || product.design_name || '',
+    color: product.color_name || '',
+    ...extra,
+  };
+}
+
+function scriptJson(value) {
+  return JSON.stringify(value).replace(/</g, '\\u003c').replace(/-->/g, '--\\u003e');
+}
+
 function productRecommendationCard(product) {
   const images = productImages(product);
   const img = images[0] || '';
@@ -1066,7 +1142,7 @@ function productRecommendationCard(product) {
   const collection = product.collection_name || product.anime_title || '';
   const sizes = catalogSizesHtml(product.sizes || []);
   return `<article class="p-reco-card">
-    <a class="p-reco-media" href="/p/${escapeAttr(product.slug)}" aria-label="${escapeAttr(product.name)}">
+    <a class="p-reco-media" href="/p/${escapeAttr(product.slug)}" aria-label="${escapeAttr(product.name)}" data-metrika-product-id="${escapeAttr(product.id)}" data-metrika-list="product_recommendations">
       ${img ? renderResponsiveImage(img, {
         alt: product.name,
         loading: 'lazy',
@@ -1075,7 +1151,7 @@ function productRecommendationCard(product) {
     </a>
     <div class="p-reco-body">
       ${collection ? `<div class="p-reco-col">${escapeHtml(collection)}</div>` : ''}
-      <h3><a href="/p/${escapeAttr(product.slug)}">${escapeHtml(product.name)}</a></h3>
+      <h3><a href="/p/${escapeAttr(product.slug)}" data-metrika-product-id="${escapeAttr(product.id)}" data-metrika-list="product_recommendations">${escapeHtml(product.name)}</a></h3>
       <div class="p-reco-meta">
         ${price ? `<span class="p-reco-price">${escapeHtml(price)}${oldPriceHtml}</span>` : ''}
         ${sizes}
@@ -1168,12 +1244,14 @@ function renderProductPage(product, products = []) {
     .filter(Boolean)
     .filter(v => { const k = v.toLowerCase(); if (badgeSeen.has(k)) return false; badgeSeen.add(k); return true; });
   const badgesHtml = badgePool.map(v => `<span>${escapeHtml(v)}</span>`).join('');
+  const analyticsProductJson = scriptJson(analyticsProduct(product));
 
   return `<!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+${renderMetrikaHead()}
 <title>${escapeHtml(title)}</title>
 <meta name="description" content="${escapeAttr(description)}" />
 <link rel="canonical" href="${canonical}" />
@@ -1195,6 +1273,7 @@ function renderProductPage(product, products = []) {
 <script type="application/ld+json">${buildBreadcrumbLd(product)}</script>
 </head>
 <body>
+${renderMetrikaNoScript()}
 ${renderPromoBar()}
 <header class="site-header">
   <div class="wrap nav">
@@ -1267,6 +1346,19 @@ ${renderHeaderScript()}
   var chartModal = document.getElementById('pSizeChartModal');
   var chartClose = document.getElementById('pSizeChartClose');
   var lastChartFocus = null;
+  var analyticsProduct = ${analyticsProductJson};
+  function withAnalytics(callback){
+    if (window.KomuiAnalytics) { callback(window.KomuiAnalytics); return; }
+    document.addEventListener('komui:analytics-ready', function(){ callback(window.KomuiAnalytics); }, { once: true });
+  }
+  withAnalytics(function(analytics){
+    analytics.ecommerce.detail(analyticsProduct, { list: 'product_page' });
+    analytics.goalOnce('product_view', analyticsProduct.id, {
+      product_id: analyticsProduct.id,
+      category: analyticsProduct.category,
+      collection: analyticsProduct.collection
+    }, 'session');
+  });
   function openSizeChart(){
     if (!chartModal) return;
     lastChartFocus = document.activeElement;
@@ -1401,6 +1493,15 @@ ${renderHeaderScript()}
       else cart.push({ key: key, id: id, size: size, qty: 1 });
       try { localStorage.setItem(CART_KEY, JSON.stringify(cart)); } catch(e){}
       document.dispatchEvent(new CustomEvent('komui:cart-updated'));
+      withAnalytics(function(analytics){
+        analytics.ecommerce.add(analyticsProduct, { size: size, quantity: 1, list: 'product_page' });
+        analytics.goal('add_to_cart', {
+          product_id: analyticsProduct.id,
+          variant: size,
+          quantity: 1,
+          source: 'product_page'
+        });
+      });
       add.textContent = 'Добавлено · перейти в корзину';
       if (addFloat) addFloat.textContent = 'Добавлено · перейти в корзину';
       add.classList.add('is-added');
@@ -1426,7 +1527,7 @@ ${renderHeaderScript()}
 `;
 }
 
-function collectionProductCard(product) {
+function collectionProductCard(product, analyticsList = 'collection') {
   const images = productImages(product);
   const img = images[0] || '';
   const price = formatPriceRange(product.price_min, product.price_max);
@@ -1438,7 +1539,7 @@ function collectionProductCard(product) {
     .map(value => `<span>${escapeHtml(value)}</span>`)
     .join('');
   return `<article class="c-card">
-    <a class="c-card-media" href="/p/${escapeAttr(product.slug)}" aria-label="${escapeAttr(product.name)}">
+    <a class="c-card-media" href="/p/${escapeAttr(product.slug)}" aria-label="${escapeAttr(product.name)}" data-metrika-product-id="${escapeAttr(product.id)}" data-metrika-list="${escapeAttr(analyticsList)}">
       ${img ? renderResponsiveImage(img, {
         alt: product.name,
         loading: 'lazy',
@@ -1447,11 +1548,11 @@ function collectionProductCard(product) {
     </a>
     <div class="c-card-body">
       ${badges ? `<div class="c-card-badges">${badges}</div>` : ''}
-      <h3><a href="/p/${escapeAttr(product.slug)}">${escapeHtml(product.name)}</a></h3>
+      <h3><a href="/p/${escapeAttr(product.slug)}" data-metrika-product-id="${escapeAttr(product.id)}" data-metrika-list="${escapeAttr(analyticsList)}">${escapeHtml(product.name)}</a></h3>
       ${details ? `<p>${escapeHtml(details)}</p>` : ''}
       <div class="c-card-bottom">
         ${price ? `<strong>${escapeHtml(price)}</strong>` : '<strong>Цена в карточке</strong>'}
-        <a href="/p/${escapeAttr(product.slug)}">Смотреть</a>
+        <a href="/p/${escapeAttr(product.slug)}" data-metrika-product-id="${escapeAttr(product.id)}" data-metrika-list="${escapeAttr(analyticsList)}">Смотреть</a>
       </div>
     </div>
   </article>`;
@@ -1567,7 +1668,7 @@ function renderCollectionPage(landing) {
   const techniques = [...stats.techniques.entries()]
     .map(([name, count]) => `<span>${escapeHtml(name)} · ${count}</span>`)
     .join('');
-  const cards = landing.products.map(collectionProductCard).join('');
+  const cards = landing.products.map(product => collectionProductCard(product, `collection_${landing.slug}`)).join('');
   const related = COLLECTION_LANDINGS
     .filter(item => item.slug !== landing.slug)
     .map(item => `<a href="/collections/${escapeAttr(item.slug)}">${escapeHtml(item.name)}</a>`)
@@ -1587,12 +1688,14 @@ function renderCollectionPage(landing) {
       </section>`)
     .join('');
   const title = `${landing.title} — KOMUI`;
+  const analyticsProductsJson = scriptJson(landing.products.map(product => analyticsProduct(product)));
 
   return `<!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+${renderMetrikaHead()}
 <title>${escapeHtml(title)}</title>
 <meta name="description" content="${escapeAttr(landing.metaDescription)}" />
 <link rel="canonical" href="${canonical}" />
@@ -1615,6 +1718,7 @@ function renderCollectionPage(landing) {
 <script type="application/ld+json">${buildCollectionFaqLd(landing, stats)}</script>
 </head>
 <body>
+${renderMetrikaNoScript()}
 ${renderPromoBar()}
 <header class="site-header">
   <div class="wrap nav">
@@ -1673,6 +1777,18 @@ ${renderHeaderPanels()}
     </div>
   </section>
 </main>
+<script>
+(function(){
+  var items = ${analyticsProductsJson};
+  var list = 'collection_${escapeAttr(landing.slug)}';
+  function track(analytics){
+    analytics.ecommerce.impressions(items, list);
+    analytics.goalOnce('catalog_view', list, { catalog_list: list, products_count: items.length }, 'session');
+  }
+  if (window.KomuiAnalytics) track(window.KomuiAnalytics);
+  else document.addEventListener('komui:analytics-ready', function(){ track(window.KomuiAnalytics); }, { once: true });
+})();
+</script>
 <script src="/data/storefront-products.js" defer></script>
 ${renderHeaderScript()}
 <footer><div class="wrap foot">
@@ -1801,6 +1917,14 @@ function updateStaticPagesWithDates(tracker) {
     const clean = stripGeneratedPageMeta(fs.readFileSync(filePath, 'utf8'));
     const meta = tracker.track(page.url, clean, gitDateForPath(page.file));
     fs.writeFileSync(filePath, injectStaticPageMeta(clean, meta), 'utf8');
+  }
+}
+
+function updateStaticPagesWithMetrika() {
+  for (const file of METRIKA_STATIC_FILES) {
+    const filePath = path.join(ROOT, file);
+    if (!fs.existsSync(filePath)) continue;
+    fs.writeFileSync(filePath, injectMetrika(fs.readFileSync(filePath, 'utf8')), 'utf8');
   }
 }
 
@@ -2043,6 +2167,7 @@ async function main() {
   console.log('✓ Wrote llms-full.txt');
 
   updateStaticPagesWithDates(tracker);
+  updateStaticPagesWithMetrika();
 
   fs.writeFileSync(path.join(ROOT, 'sitemap.xml'), renderSitemap(products, collectionLandings, tracker), 'utf8');
   tracker.save();
