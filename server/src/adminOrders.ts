@@ -139,6 +139,14 @@ type OrderRow = QueryResultRow & {
 type OrderListRow = OrderRow & {
   item_count: string | number | null;
   line_count: string | number | null;
+  first_item_id: string | number | null;
+  first_product_id: string | null;
+  first_offer_id: string | null;
+  first_sku: string | null;
+  first_product_name: string | null;
+  first_size: string | null;
+  first_quantity: string | number | null;
+  first_image_url: string | null;
   latest_provider_status: string | null;
   latest_payment_error_code: string | null;
   latest_payment_error_message: string | null;
@@ -246,6 +254,17 @@ export type AdminOrderSummary = {
   source: string;
   itemCount: number;
   lineCount: number;
+  firstItem: {
+    id: number;
+    productId: string | null;
+    offerId: string | null;
+    sku: string | null;
+    productName: string;
+    name: string;
+    size: string | null;
+    quantity: number;
+    imageUrl: string | null;
+  } | null;
   latestPayment: {
     providerStatus: string | null;
     errorCode: string | null;
@@ -329,6 +348,19 @@ export function toAdminOrderSummary(row: OrderListRow): AdminOrderSummary {
     source: row.source,
     itemCount: numberValue(row.item_count),
     lineCount: numberValue(row.line_count),
+    firstItem: row.first_product_name
+      ? {
+          id: numberValue(row.first_item_id),
+          productId: row.first_product_id,
+          offerId: row.first_offer_id,
+          sku: row.first_sku,
+          productName: row.first_product_name,
+          name: row.first_product_name,
+          size: row.first_size,
+          quantity: numberValue(row.first_quantity),
+          imageUrl: row.first_image_url,
+        }
+      : null,
     latestPayment: {
       providerStatus: row.latest_provider_status,
       errorCode: row.latest_payment_error_code,
@@ -349,18 +381,24 @@ export function toAdminOrderSummary(row: OrderListRow): AdminOrderSummary {
 }
 
 function toAdminOrderItem(row: OrderItemRow) {
+  const productSnapshot = metadataObject(row.product_snapshot);
+  const snapshotSlug = productSnapshot.slug;
   return {
     id: Number(row.id),
     productId: row.product_id,
     offerId: row.offer_id,
     sku: row.sku,
     productName: row.product_name,
+    name: row.product_name,
+    slug: typeof snapshotSlug === "string" ? snapshotSlug : null,
     size: row.size,
     quantity: Number(row.quantity),
     unitPriceAmount: Number(row.unit_price_amount),
+    unitPrice: Number(row.unit_price_amount),
     lineTotalAmount: Number(row.line_total_amount),
+    totalPrice: Number(row.line_total_amount),
     imageUrl: row.image_url,
-    productSnapshot: metadataObject(row.product_snapshot),
+    productSnapshot,
     createdAt: isoDate(row.created_at),
   };
 }
@@ -433,6 +471,14 @@ function orderSelectSql() {
       o.${ORDER_COLUMNS.trim().replaceAll("\n  ", "\n      o.")},
       coalesce(items.item_count, 0)::text as item_count,
       coalesce(items.line_count, 0)::text as line_count,
+      items.first_item_id,
+      items.first_product_id,
+      items.first_offer_id,
+      items.first_sku,
+      items.first_product_name,
+      items.first_size,
+      items.first_quantity,
+      items.first_image_url,
       payment.provider_status as latest_provider_status,
       payment.error_code as latest_payment_error_code,
       payment.error_message as latest_payment_error_message,
@@ -444,7 +490,15 @@ function orderSelectSql() {
     left join lateral (
       select
         coalesce(sum(quantity), 0)::integer as item_count,
-        count(*)::integer as line_count
+        count(*)::integer as line_count,
+        (array_agg(id order by id))[1] as first_item_id,
+        (array_agg(product_id order by id))[1] as first_product_id,
+        (array_agg(offer_id order by id))[1] as first_offer_id,
+        (array_agg(sku order by id))[1] as first_sku,
+        (array_agg(product_name order by id))[1] as first_product_name,
+        (array_agg(size order by id))[1] as first_size,
+        (array_agg(quantity order by id))[1] as first_quantity,
+        (array_agg(image_url order by id))[1] as first_image_url
       from public.merch_customer_order_items
       where order_id = o.id
     ) items on true

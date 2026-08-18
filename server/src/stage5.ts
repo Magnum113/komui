@@ -23,7 +23,7 @@ import {
   type OrderItemInput,
 } from "./checkout";
 import { createTbankToken, safeEqual, sanitizedTbankPayload, sha256Hex } from "./crypto";
-import { HttpError, errorMessage } from "./errors";
+import { HttpError, errorDiagnostic } from "./errors";
 import {
   markPromoRedemptionRedeemed,
   promoPhoneHash,
@@ -724,14 +724,29 @@ export async function handleTbankCreatePayment(
     const providerText = await providerRequest.text();
     providerResponse = JSON.parse(providerText) as Record<string, unknown>;
   } catch (error) {
+    const diagnostic = errorDiagnostic(error);
+    request.log.error(
+      {
+        err: error,
+        provider: "tbank",
+        operation: "Init",
+        orderId,
+        orderNumber: number,
+        paymentAttemptId: attemptId,
+        upstreamErrorCode: diagnostic.code,
+        upstreamErrorMessage: diagnostic.message,
+      },
+      "T-Bank payment initialization failed before a provider response",
+    );
     await db.query(
       `
         update public.merch_payment_attempts
         set provider_status = 'NETWORK_ERROR',
-            error_message = $2
+            error_code = $2,
+            error_message = $3
         where id = $1
       `,
-      [attemptId, errorMessage(error).slice(0, 500)],
+      [attemptId, diagnostic.code, diagnostic.message],
     );
     await db.query(
       `update public.merch_customer_orders set status = 'payment_failed' where id = $1::uuid`,
@@ -742,7 +757,7 @@ export async function handleTbankCreatePayment(
       502,
       "tbank_network_error",
       "Т‑Банк временно не отвечает. Попробуйте ещё раз.",
-      { retryAllowed: true },
+      { retryAllowed: true, retryMode: "manual" },
     );
   }
 

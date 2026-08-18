@@ -1129,6 +1129,10 @@ function apiRetryAllowed(result){
   return result?.retryAllowed===true||result?.error?.details?.retryAllowed===true;
 }
 
+function apiErrorCode(result){
+  return typeof result?.error?.code==='string'?result.error.code:'';
+}
+
 function clearPaymentDraft(){
   try{sessionStorage.removeItem(PAYMENT_DRAFT_KEY)}catch(e){}
 }
@@ -1161,7 +1165,10 @@ function setPaymentLoading(loading){
   $('#mobilePayText').textContent=label;
 }
 
+let paymentSubmissionInFlight=false;
+
 async function submitCheckout(){
+  if(paymentSubmissionInFlight)return;
   saveForm();
   if(!validate())return;
   if(previewMode){
@@ -1173,81 +1180,77 @@ async function submitCheckout(){
     showToast('Платёжный сервис не настроен');
     return;
   }
-  if(appliedPromo?.code){
-    try{
+  paymentSubmissionInFlight=true;
+  setPaymentLoading(true);
+  let redirecting=false;
+  try{
+    if(appliedPromo?.code){
       const promoResult=await validateAppliedPromo({silent:true});
       if(!promoResult){
         showToast('Промокод не применён. Проверьте итог заказа');
         return;
       }
-    }catch(error){
-      showToast(error?.message||'Не удалось проверить промокод');
-      return;
     }
-  }
 
-  let identity=paymentIdentity();
-  let refreshedPaymentDraft=false;
-  setPaymentLoading(true);
-  try{
-    while(true){
-      const response=await fetch(apiEndpoint(config,'tbank-create-payment'),{
-        method:'POST',
-        headers:{
-          'Content-Type':'application/json'
+    const identity=paymentIdentity();
+    const response=await fetch(apiEndpoint(config,'tbank-create-payment'),{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json'
+      },
+      body:JSON.stringify({
+        clientRequestId:identity.clientRequestId,
+        accessToken:identity.accessToken,
+        customer:{
+          firstName:$('#firstName').value.trim(),
+          lastName:$('#lastName').value.trim(),
+          phone:$('#phone').value,
+          email:$('#email').value.trim(),
+          legalConsent:$('#legalConsent').checked,
+          marketingConsent:$('#marketingConsent').checked
         },
-        body:JSON.stringify({
-          clientRequestId:identity.clientRequestId,
-          accessToken:identity.accessToken,
-          customer:{
-            firstName:$('#firstName').value.trim(),
-            lastName:$('#lastName').value.trim(),
-            phone:$('#phone').value,
-            email:$('#email').value.trim(),
-            legalConsent:$('#legalConsent').checked,
-            marketingConsent:$('#marketingConsent').checked
-          },
-          delivery:{
-            code:selectedPoint.code,
-            cityCode:selectedPoint.cityCode,
-            city:selectedPoint.city,
-            address:selectedPoint.addressFull||selectedPoint.address,
-            title:selectedPoint.title,
-            hours:selectedPoint.hours,
-            tariffCode:selectedPoint.tariffCode,
-            tariffName:selectedPoint.tariffName,
-            deliveryMode:selectedPoint.deliveryMode
-          },
-          items:items.map(item=>({id:String(item.id),size:String(item.size),qty:Number(item.qty)})),
-          promoCode:appliedPromo?.code||null
-        })
-      });
-      const result=await response.json().catch(()=>({}));
-      if(!response.ok||!result.paymentUrl||!result.orderNumber){
-        if(apiRetryAllowed(result)){
-          clearPaymentDraft();
-          if(!refreshedPaymentDraft){
-            identity=paymentIdentity(true);
-            refreshedPaymentDraft=true;
-            continue;
-          }
-        }
-        throw new Error(apiErrorMessage(result,'Не удалось создать платёж'));
+        delivery:{
+          code:selectedPoint.code,
+          cityCode:selectedPoint.cityCode,
+          city:selectedPoint.city,
+          address:selectedPoint.addressFull||selectedPoint.address,
+          title:selectedPoint.title,
+          hours:selectedPoint.hours,
+          tariffCode:selectedPoint.tariffCode,
+          tariffName:selectedPoint.tariffName,
+          deliveryMode:selectedPoint.deliveryMode
+        },
+        items:items.map(item=>({id:String(item.id),size:String(item.size),qty:Number(item.qty)})),
+        promoCode:appliedPromo?.code||null
+      })
+    });
+    const result=await response.json().catch(()=>({}));
+    if(!response.ok||!result.paymentUrl||!result.orderNumber){
+      const error=new Error(apiErrorMessage(result,'Не удалось создать платёж'));
+      error.code=apiErrorCode(result);
+      error.retryAllowed=apiRetryAllowed(result);
+      if(error.retryAllowed){
+        // Prepare a fresh id only for the user's next explicit click. Never
+        // create a second order automatically after an upstream failure.
+        clearPaymentDraft();
       }
-      try{
-        sessionStorage.setItem('komui-payment-session:'+result.orderNumber,JSON.stringify({
-          accessToken:identity.accessToken,
-          paymentId:result.paymentId||null,
-          amount:result.amount||null,
-          createdAt:new Date().toISOString()
-        }));
-      }catch(e){}
-      location.assign(result.paymentUrl);
-      return;
+      throw error;
     }
+    try{
+      sessionStorage.setItem('komui-payment-session:'+result.orderNumber,JSON.stringify({
+        accessToken:identity.accessToken,
+        paymentId:result.paymentId||null,
+        amount:result.amount||null,
+        createdAt:new Date().toISOString()
+      }));
+    }catch(e){}
+    redirecting=true;
+    location.assign(result.paymentUrl);
   }catch(error){
-    setPaymentLoading(false);
     showToast(error?.message||'Не удалось перейти к оплате');
+  }finally{
+    paymentSubmissionInFlight=false;
+    if(!redirecting)setPaymentLoading(false);
   }
 }
 

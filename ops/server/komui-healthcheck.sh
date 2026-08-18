@@ -29,9 +29,12 @@ check() {
 check postgresql_active systemctl is-active --quiet postgresql
 check nginx_active systemctl is-active --quiet nginx
 check backend_active systemctl is-active --quiet komui-backend
+check production_backend_active systemctl is-active --quiet komui-production-backend
 check backup_timer_active systemctl is-active --quiet komui-backup.timer
 
 check backend_ready curl -fsS --max-time 5 http://127.0.0.1:3000/health/ready -o /dev/null
+check production_backend_ready curl -fsS --max-time 5 http://127.0.0.1:3001/health/ready -o /dev/null
+check tbank_ca_readable runuser -u komui -- test -r /etc/komui/certs/komui-node-ca-bundle.pem
 
 check stage_root_https bash -c '
   set -euo pipefail

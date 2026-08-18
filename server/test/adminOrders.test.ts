@@ -42,6 +42,14 @@ function orderRow(overrides: Record<string, unknown> = {}) {
     updated_at: "2026-06-30T09:05:00.000Z",
     item_count: "2",
     line_count: "1",
+    first_item_id: "42",
+    first_product_id: "product-id",
+    first_offer_id: "D2-TSH-EMB-WBEG-M",
+    first_sku: "3606215601",
+    first_product_name: "Футболка-варёнка Наруто Itachi",
+    first_size: "M",
+    first_quantity: "2",
+    first_image_url: "/assets/product.jpg",
     latest_provider_status: "CONFIRMED",
     latest_payment_error_code: null,
     latest_payment_error_message: null,
@@ -72,6 +80,17 @@ test("toAdminOrderSummary keeps payment, fulfillment and CDEK statuses separate"
   assert.equal(summary.cdek.status, "created");
   assert.equal(summary.cdek.number, "10288069122");
   assert.equal(summary.amounts.total, 325000);
+  assert.deepEqual(summary.firstItem, {
+    id: 42,
+    productId: "product-id",
+    offerId: "D2-TSH-EMB-WBEG-M",
+    sku: "3606215601",
+    productName: "Футболка-варёнка Наруто Itachi",
+    name: "Футболка-варёнка Наруто Itachi",
+    size: "M",
+    quantity: 2,
+    imageUrl: "/assets/product.jpg",
+  });
 });
 
 test("POST /admin/storefront/orders/:id/mark-shipped marks paid order as shipped", async () => {
