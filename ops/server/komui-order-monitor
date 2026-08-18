@@ -1,0 +1,621 @@
+#!/usr/bin/env python3
+"""Detect production checkout incidents and notify the KOMUI Telegram bot."""
+
+from __future__ import annotations
+
+import argparse
+import fcntl
+import json
+import os
+import re
+import subprocess
+import sys
+import tempfile
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+
+DEFAULT_DB = "komui_production"
+DEFAULT_STATE_PATH = Path("/var/lib/komui/order-monitor-state.json")
+DEFAULT_ALERT_COMMAND = Path("/usr/local/sbin/komui-alert")
+DEFAULT_LOCK_PATH = Path("/run/komui-order-monitor.lock")
+STATE_VERSION = 1
+
+
+REPORT_SQL = r"""
+with params as (
+  select
+    __SINCE__::timestamptz as since_at,
+    __LAST_ATTEMPT_ID__::bigint as last_attempt_id,
+    clock_timestamp() as checked_at
+),
+network_error_rows as (
+  select
+    pa.id,
+    o.order_number,
+    coalesce(pa.error_code, 'NETWORK_ERROR') as error_code,
+    left(coalesce(pa.error_message, ''), 180) as error_message,
+    pa.created_at
+  from public.merch_payment_attempts pa
+  join public.merch_customer_orders o on o.id = pa.order_id
+  cross join params p
+  where pa.id > p.last_attempt_id
+    and pa.provider_status = 'NETWORK_ERROR'
+  order by pa.id
+),
+network_errors as (
+  select jsonb_build_object(
+    'count', count(*),
+    'items', coalesce(
+      jsonb_agg(
+        jsonb_build_object(
+          'attemptId', id,
+          'orderNumber', order_number,
+          'errorCode', error_code,
+          'errorMessage', error_message,
+          'createdAt', created_at
+        ) order by id
+      ) filter (where id in (select id from network_error_rows limit 8)),
+      '[]'::jsonb
+    )
+  ) as value
+  from network_error_rows
+),
+recent_orders as (
+  select
+    o.id,
+    o.order_number,
+    o.status,
+    o.created_at,
+    regexp_replace(coalesce(o.customer_phone, ''), '[^0-9]', '', 'g') as phone_digits,
+    lag(o.order_number) over (
+      partition by regexp_replace(coalesce(o.customer_phone, ''), '[^0-9]', '', 'g')
+      order by o.created_at, o.id
+    ) as previous_order_number,
+    lag(o.created_at) over (
+      partition by regexp_replace(coalesce(o.customer_phone, ''), '[^0-9]', '', 'g')
+      order by o.created_at, o.id
+    ) as previous_created_at
+  from public.merch_customer_orders o
+  cross join params p
+  where o.created_at >= p.since_at - interval '10 seconds'
+),
+duplicate_order_rows as (
+  select
+    order_number,
+    previous_order_number,
+    right(phone_digits, 4) as phone_tail,
+    extract(epoch from (created_at - previous_created_at))::numeric(10, 2) as seconds_apart,
+    created_at
+  from recent_orders
+  cross join params p
+  where phone_digits <> ''
+    and created_at > p.since_at
+    and previous_created_at is not null
+    and created_at - previous_created_at <= interval '5 seconds'
+  order by created_at
+),
+duplicate_orders as (
+  select jsonb_build_object(
+    'count', count(*),
+    'items', coalesce(
+      jsonb_agg(
+        jsonb_build_object(
+          'orderNumber', order_number,
+          'previousOrderNumber', previous_order_number,
+          'phoneTail', phone_tail,
+          'secondsApart', seconds_apart
+        ) order by created_at
+      ) filter (where order_number in (select order_number from duplicate_order_rows limit 8)),
+      '[]'::jsonb
+    )
+  ) as value
+  from duplicate_order_rows
+),
+rapid_customer_rows as (
+  select
+    right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 4) as phone_tail,
+    count(*) as order_count,
+    array_agg(order_number order by created_at desc) as order_numbers,
+    max(created_at) as last_created_at
+  from public.merch_customer_orders o
+  cross join params p
+  where o.created_at >= p.checked_at - interval '10 minutes'
+    and regexp_replace(customer_phone, '[^0-9]', '', 'g') <> ''
+  group by regexp_replace(customer_phone, '[^0-9]', '', 'g')
+  having count(*) >= 3 and bool_or(o.created_at > p.since_at)
+  order by max(created_at)
+),
+rapid_customers as (
+  select jsonb_build_object(
+    'count', count(*),
+    'items', coalesce(
+      jsonb_agg(
+        jsonb_build_object(
+          'phoneTail', phone_tail,
+          'orderCount', order_count,
+          'orderNumbers', to_jsonb(order_numbers[1:5])
+        ) order by last_created_at
+      ),
+      '[]'::jsonb
+    )
+  ) as value
+  from rapid_customer_rows
+),
+repeated_failure_rows as (
+  select
+    right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 4) as phone_tail,
+    count(*) as failure_count,
+    array_agg(order_number order by created_at desc) as order_numbers,
+    max(created_at) as last_created_at
+  from public.merch_customer_orders o
+  cross join params p
+  where o.status = 'payment_failed'
+    and o.created_at >= p.checked_at - interval '30 minutes'
+    and regexp_replace(customer_phone, '[^0-9]', '', 'g') <> ''
+  group by regexp_replace(customer_phone, '[^0-9]', '', 'g')
+  having count(*) >= 3 and bool_or(o.created_at > p.since_at)
+  order by max(created_at)
+),
+repeated_failures as (
+  select jsonb_build_object(
+    'count', count(*),
+    'items', coalesce(
+      jsonb_agg(
+        jsonb_build_object(
+          'phoneTail', phone_tail,
+          'failureCount', failure_count,
+          'orderNumbers', to_jsonb(order_numbers[1:5])
+        ) order by last_created_at
+      ),
+      '[]'::jsonb
+    )
+  ) as value
+  from repeated_failure_rows
+),
+failure_spike as (
+  select case
+    when count(*) >= 5
+      and count(distinct regexp_replace(customer_phone, '[^0-9]', '', 'g')) >= 2
+      and bool_or(created_at > p.since_at)
+    then jsonb_build_object(
+      'count', count(*),
+      'customerCount', count(distinct regexp_replace(customer_phone, '[^0-9]', '', 'g')),
+      'orderNumbers', to_jsonb((array_agg(order_number order by created_at desc))[1:8])
+    )
+    else null
+  end as value
+  from public.merch_customer_orders o
+  cross join params p
+  where o.status = 'payment_failed'
+    and o.created_at >= p.checked_at - interval '15 minutes'
+  group by p.since_at
+),
+missing_item_rows as (
+  select o.order_number, o.created_at
+  from public.merch_customer_orders o
+  cross join params p
+  where o.created_at > p.since_at
+    and not exists (
+      select 1 from public.merch_customer_order_items i where i.order_id = o.id
+    )
+  order by o.created_at
+),
+missing_items as (
+  select jsonb_build_object(
+    'count', count(*),
+    'items', coalesce(
+      jsonb_agg(jsonb_build_object('orderNumber', order_number) order by created_at),
+      '[]'::jsonb
+    )
+  ) as value
+  from missing_item_rows
+),
+payment_review_rows as (
+  select o.order_number, o.updated_at
+  from public.merch_customer_orders o
+  cross join params p
+  where o.status = 'payment_review' and o.updated_at > p.since_at
+  order by o.updated_at
+),
+payment_reviews as (
+  select jsonb_build_object(
+    'count', count(*),
+    'items', coalesce(
+      jsonb_agg(jsonb_build_object('orderNumber', order_number) order by updated_at),
+      '[]'::jsonb
+    )
+  ) as value
+  from payment_review_rows
+),
+cdek_failure_rows as (
+  select
+    o.order_number,
+    s.status,
+    coalesce(s.error_code, '') as error_code,
+    left(coalesce(s.error_message, ''), 180) as error_message,
+    s.updated_at
+  from public.merch_cdek_shipments s
+  join public.merch_customer_orders o on o.id = s.order_id
+  cross join params p
+  where s.status in ('failed', 'invalid') and s.updated_at > p.since_at
+  order by s.updated_at
+),
+cdek_failures as (
+  select jsonb_build_object(
+    'count', count(*),
+    'items', coalesce(
+      jsonb_agg(
+        jsonb_build_object(
+          'orderNumber', order_number,
+          'status', status,
+          'errorCode', error_code,
+          'errorMessage', error_message
+        ) order by updated_at
+      ),
+      '[]'::jsonb
+    )
+  ) as value
+  from cdek_failure_rows
+),
+paid_without_shipment as (
+  select coalesce(
+    jsonb_agg(
+      jsonb_build_object(
+        'orderNumber', o.order_number,
+        'paidAt', o.paid_at
+      ) order by o.paid_at
+    ),
+    '[]'::jsonb
+  ) as value
+  from public.merch_customer_orders o
+  cross join params p
+  where o.status in ('paid', 'authorized')
+    and coalesce(o.paid_at, o.updated_at) <= p.checked_at - interval '10 minutes'
+    and coalesce(o.paid_at, o.updated_at) >= p.checked_at - interval '7 days'
+    and not exists (
+      select 1 from public.merch_cdek_shipments s where s.order_id = o.id
+    )
+)
+select jsonb_build_object(
+  'checkedAt', to_char(p.checked_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
+  'maxPaymentAttemptId', coalesce((select max(id) from public.merch_payment_attempts), 0),
+  'networkErrors', (select value from network_errors),
+  'duplicateOrders', (select value from duplicate_orders),
+  'rapidCustomers', (select value from rapid_customers),
+  'repeatedFailures', (select value from repeated_failures),
+  'failureSpike', (select value from failure_spike),
+  'ordersWithoutItems', (select value from missing_items),
+  'paymentReviews', (select value from payment_reviews),
+  'cdekFailures', (select value from cdek_failures),
+  'paidWithoutShipment', (select value from paid_without_shipment)
+)
+from params p;
+"""
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--bootstrap", action="store_true", help="save current state without alerting")
+    parser.add_argument("--dry-run", action="store_true", help="print findings without alerting or saving state")
+    parser.add_argument("--test-alert", action="store_true", help="send a harmless monitor test message")
+    parser.add_argument("--database", default=os.environ.get("KOMUI_ORDER_MONITOR_DB", DEFAULT_DB))
+    parser.add_argument(
+        "--state-file",
+        type=Path,
+        default=Path(os.environ.get("KOMUI_ORDER_MONITOR_STATE", DEFAULT_STATE_PATH)),
+    )
+    parser.add_argument(
+        "--alert-command",
+        type=Path,
+        default=Path(os.environ.get("KOMUI_ORDER_MONITOR_ALERT_COMMAND", DEFAULT_ALERT_COMMAND)),
+    )
+    parser.add_argument(
+        "--lock-file",
+        type=Path,
+        default=Path(os.environ.get("KOMUI_ORDER_MONITOR_LOCK", DEFAULT_LOCK_PATH)),
+    )
+    return parser.parse_args()
+
+
+def utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+
+
+def valid_timestamp(value: Any) -> str:
+    if not isinstance(value, str):
+        raise ValueError("state timestamp is missing")
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        raise ValueError("state timestamp must include a timezone")
+    return parsed.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def load_state(path: Path) -> dict[str, Any] | None:
+    try:
+        state = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return None
+    if not isinstance(state, dict) or state.get("version") != STATE_VERSION:
+        raise ValueError(f"unsupported order monitor state in {path}")
+    valid_timestamp(state.get("lastCheckedAt"))
+    int(state.get("lastPaymentAttemptId", 0))
+    active = state.get("activePaidWithoutShipment", [])
+    if not isinstance(active, list) or not all(isinstance(value, str) for value in active):
+        raise ValueError("invalid activePaidWithoutShipment state")
+    return state
+
+
+def save_state(path: Path, report: dict[str, Any]) -> None:
+    active = sorted(
+        str(item.get("orderNumber"))
+        for item in report.get("paidWithoutShipment", [])
+        if isinstance(item, dict) and item.get("orderNumber")
+    )
+    state = {
+        "version": STATE_VERSION,
+        "lastCheckedAt": valid_timestamp(report["checkedAt"]),
+        "lastPaymentAttemptId": int(report.get("maxPaymentAttemptId", 0)),
+        "activePaidWithoutShipment": active,
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            json.dump(state, handle, ensure_ascii=False, indent=2)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.chmod(temporary_name, 0o600)
+        os.replace(temporary_name, path)
+    finally:
+        if os.path.exists(temporary_name):
+            os.unlink(temporary_name)
+
+
+def render_sql(since: str, last_attempt_id: int) -> str:
+    timestamp = valid_timestamp(since)
+    if not re.fullmatch(r"[0-9T:+.\-Z]+", timestamp):
+        raise ValueError("invalid state timestamp")
+    return REPORT_SQL.replace("__SINCE__", f"'{timestamp}'").replace(
+        "__LAST_ATTEMPT_ID__", str(int(last_attempt_id))
+    )
+
+
+def query_report(database: str, since: str, last_attempt_id: int) -> dict[str, Any]:
+    if not re.fullmatch(r"[A-Za-z0-9_]+", database):
+        raise ValueError("invalid database name")
+    command = [
+        "runuser",
+        "-u",
+        "postgres",
+        "--",
+        "psql",
+        "-X",
+        "-q",
+        "-t",
+        "-A",
+        "-v",
+        "ON_ERROR_STOP=1",
+        "-d",
+        database,
+        "-c",
+        render_sql(since, last_attempt_id),
+    ]
+    completed = subprocess.run(command, text=True, capture_output=True, check=False)
+    if completed.returncode != 0:
+        raise RuntimeError(f"PostgreSQL query failed: {completed.stderr.strip()}")
+    output = completed.stdout.strip()
+    if not output:
+        raise RuntimeError("PostgreSQL query returned no report")
+    report = json.loads(output)
+    if not isinstance(report, dict):
+        raise RuntimeError("PostgreSQL report is not an object")
+    return report
+
+
+def count_of(report: dict[str, Any], key: str) -> int:
+    value = report.get(key, {})
+    return int(value.get("count", 0)) if isinstance(value, dict) else 0
+
+
+def items_of(report: dict[str, Any], key: str) -> list[dict[str, Any]]:
+    value = report.get(key, {})
+    items = value.get("items", []) if isinstance(value, dict) else []
+    return [item for item in items if isinstance(item, dict)] if isinstance(items, list) else []
+
+
+def order_list(items: list[dict[str, Any]], key: str = "orderNumber") -> str:
+    values = [str(item[key]) for item in items if item.get(key)]
+    return ", ".join(values[:8]) or "не определены"
+
+
+def build_alert(
+    report: dict[str, Any], previous_active_paid_without_shipment: set[str]
+) -> tuple[str | None, set[str]]:
+    sections: list[str] = []
+
+    if count_of(report, "networkErrors"):
+        items = items_of(report, "networkErrors")
+        codes = sorted({str(item.get("errorCode") or "NETWORK_ERROR") for item in items})
+        sections.append(
+            "🚨 Т-Банк недоступен из backend\n"
+            f"• новых сетевых ошибок: {count_of(report, 'networkErrors')}\n"
+            f"• заказы: {order_list(items)}\n"
+            f"• коды: {', '.join(codes[:5])}\n"
+            "• действие: проверить production backend, сертификаты и доступ к securepay"
+        )
+
+    if count_of(report, "paymentReviews"):
+        items = items_of(report, "paymentReviews")
+        sections.append(
+            "🚨 Платёж требует ручной проверки\n"
+            f"• заказов: {count_of(report, 'paymentReviews')}\n"
+            f"• номера: {order_list(items)}\n"
+            "• действие: сверить сумму и статус платежа в Т-Бизнесе"
+        )
+
+    if count_of(report, "duplicateOrders"):
+        items = items_of(report, "duplicateOrders")
+        samples = []
+        for item in items[:5]:
+            samples.append(
+                f"{item.get('previousOrderNumber')} → {item.get('orderNumber')} "
+                f"за {item.get('secondsApart')} сек. (тел. ••••{item.get('phoneTail')})"
+            )
+        sections.append(
+            "⚠️ Подозрение на повторное создание заказов\n"
+            f"• быстрых повторов: {count_of(report, 'duplicateOrders')}\n"
+            + "\n".join(f"• {sample}" for sample in samples)
+            + "\n• действие: проверить checkout и попытки покупателя в админке"
+        )
+
+    if count_of(report, "rapidCustomers"):
+        items = items_of(report, "rapidCustomers")
+        samples = [
+            f"тел. ••••{item.get('phoneTail')}: {item.get('orderCount')} заказов; "
+            f"{', '.join(str(value) for value in item.get('orderNumbers', []))}"
+            for item in items[:5]
+        ]
+        sections.append(
+            "⚠️ Один покупатель создал много заказов\n"
+            + "\n".join(f"• {sample}" for sample in samples)
+            + "\n• порог: 3 и более заказов за 10 минут"
+        )
+
+    if count_of(report, "repeatedFailures"):
+        items = items_of(report, "repeatedFailures")
+        samples = [
+            f"тел. ••••{item.get('phoneTail')}: {item.get('failureCount')} ошибок; "
+            f"{', '.join(str(value) for value in item.get('orderNumbers', []))}"
+            for item in items[:5]
+        ]
+        sections.append(
+            "⚠️ Покупатель не может завершить оплату\n"
+            + "\n".join(f"• {sample}" for sample in samples)
+            + "\n• порог: 3 и более неудачных оплат за 30 минут"
+        )
+
+    spike = report.get("failureSpike")
+    if isinstance(spike, dict):
+        sections.append(
+            "🚨 Массовый рост неудачных оплат\n"
+            f"• ошибок за 15 минут: {spike.get('count')}\n"
+            f"• покупателей: {spike.get('customerCount')}\n"
+            f"• заказы: {', '.join(str(value) for value in spike.get('orderNumbers', []))}\n"
+            "• действие: проверить Т-Банк и checkout до появления новых заказов"
+        )
+
+    if count_of(report, "ordersWithoutItems"):
+        items = items_of(report, "ordersWithoutItems")
+        sections.append(
+            "🚨 Заказ сохранён без товаров\n"
+            f"• заказов: {count_of(report, 'ordersWithoutItems')}\n"
+            f"• номера: {order_list(items)}\n"
+            "• действие: не обрабатывать заказ до проверки содержимого корзины"
+        )
+
+    if count_of(report, "cdekFailures"):
+        items = items_of(report, "cdekFailures")
+        samples = [
+            f"{item.get('orderNumber')}: {item.get('status')} / "
+            f"{item.get('errorCode') or 'без кода'}"
+            for item in items[:8]
+        ]
+        sections.append(
+            "🚨 CDEK не создал отправление\n"
+            + "\n".join(f"• {sample}" for sample in samples)
+            + "\n• действие: открыть заказ в админке и повторить создание после проверки причины"
+        )
+
+    paid_without_shipment = report.get("paidWithoutShipment", [])
+    active_paid = {
+        str(item.get("orderNumber"))
+        for item in paid_without_shipment
+        if isinstance(item, dict) and item.get("orderNumber")
+    }
+    newly_missing = sorted(active_paid - previous_active_paid_without_shipment)
+    if newly_missing:
+        sections.append(
+            "🚨 Оплаченный заказ без отправления CDEK\n"
+            f"• заказов: {len(newly_missing)}\n"
+            f"• номера: {', '.join(newly_missing[:8])}\n"
+            "• прошло более 10 минут; проверить webhook оплаты и создание CDEK"
+        )
+
+    if not sections:
+        return None, active_paid
+    body = "\n\n".join(sections)
+    if len(body) > 3400:
+        body = body[:3360].rstrip() + "\n\n…детали сокращены; откройте заказы в админке."
+    return body, active_paid
+
+
+def send_alert(command: Path, subject: str, body: str) -> None:
+    if not command.is_file() or not os.access(command, os.X_OK):
+        raise RuntimeError(f"alert command is unavailable: {command}")
+    completed = subprocess.run([str(command), subject, body], check=False)
+    if completed.returncode != 0:
+        raise RuntimeError(f"Telegram alert failed with exit code {completed.returncode}")
+
+
+def main() -> int:
+    args = parse_args()
+    args.lock_file.parent.mkdir(parents=True, exist_ok=True)
+    with args.lock_file.open("a+", encoding="utf-8") as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+
+        if args.test_alert:
+            send_alert(
+                args.alert_command,
+                "KOMUI: монитор заказов подключён",
+                "✅ Проверка работает.\n"
+                "Контролируются: повторы заказов, ошибки оплаты, пустые заказы и отправления CDEK.\n"
+                "Это тестовое уведомление; действий не требуется.",
+            )
+            print("Test Telegram alert sent.")
+            return 0
+
+        state = load_state(args.state_file)
+        since = state["lastCheckedAt"] if state else utc_now()
+        last_attempt_id = int(state.get("lastPaymentAttemptId", 0)) if state else 0
+        previous_active = set(state.get("activePaidWithoutShipment", [])) if state else set()
+        report = query_report(args.database, since, last_attempt_id)
+        body, active_paid = build_alert(report, previous_active)
+        report["paidWithoutShipment"] = [
+            {"orderNumber": order_number} for order_number in sorted(active_paid)
+        ]
+
+        if args.bootstrap or state is None:
+            if not args.dry_run:
+                save_state(args.state_file, report)
+            print(
+                "Order monitor state bootstrapped "
+                f"at {report.get('checkedAt')} (attempt {report.get('maxPaymentAttemptId')})."
+            )
+            return 0
+
+        if args.dry_run:
+            print(body or "No order incidents detected.")
+            print(json.dumps(report, ensure_ascii=False, indent=2))
+            return 0
+
+        if body:
+            send_alert(args.alert_command, "KOMUI: проблемы с заказами", body)
+            print("Order incident alert sent.")
+        else:
+            print("No order incidents detected.")
+        save_state(args.state_file, report)
+        return 0
+
+
+if __name__ == "__main__":
+    try:
+        raise SystemExit(main())
+    except BlockingIOError:
+        print("Another order monitor run is active; skipping.")
+        raise SystemExit(0)
+    except Exception as error:  # noqa: BLE001 - system monitor must log any fatal error
+        print(f"komui-order-monitor: {error}", file=sys.stderr)
+        raise SystemExit(1)
