@@ -17,7 +17,7 @@ from typing import Any
 
 
 DEFAULT_DB = "komui_production"
-DEFAULT_STATE_PATH = Path("/var/lib/komui/order-monitor-state.json")
+DEFAULT_STATE_PATH = Path("/var/lib/komui/order-monitor/state.json")
 DEFAULT_ALERT_COMMAND = Path("/usr/local/sbin/komui-alert")
 DEFAULT_LOCK_PATH = Path("/run/komui-order-monitor.lock")
 STATE_VERSION = 1

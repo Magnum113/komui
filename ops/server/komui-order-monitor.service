@@ -12,4 +12,4 @@ UMask=0077
 PrivateTmp=true
 ProtectHome=true
 ProtectSystem=strict
-ReadWritePaths=/var/lib/komui /run
+ReadWritePaths=/var/lib/komui/order-monitor /run

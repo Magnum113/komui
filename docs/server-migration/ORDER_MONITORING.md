@@ -23,7 +23,7 @@ Production-заказы проверяет отдельный systemd-тайме
 
 ## Защита от повторных уведомлений
 
-Состояние хранится в `/var/lib/komui/order-monitor-state.json` с правами `0600`.
+Состояние хранится в `/var/lib/komui/order-monitor/state.json` с правами `0600`.
 В нём находятся время последней успешной проверки, последний ID попытки оплаты
 и список уже замеченных оплаченных заказов без CDEK. Состояние обновляется только
 после успешной отправки уведомления. При первой установке выполняется bootstrap:
@@ -42,6 +42,7 @@ sudo /usr/local/sbin/komui-order-monitor --test-alert
 ## Установка после восстановления сервера
 
 ```bash
+sudo install -d -m 0700 -o root -g root /var/lib/komui/order-monitor
 sudo install -m 0755 ops/server/komui-order-monitor /usr/local/sbin/komui-order-monitor
 sudo install -m 0644 ops/server/komui-order-monitor.service /etc/systemd/system/komui-order-monitor.service
 sudo install -m 0644 ops/server/komui-order-monitor.timer /etc/systemd/system/komui-order-monitor.timer
