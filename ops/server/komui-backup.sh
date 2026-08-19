@@ -7,6 +7,7 @@ BACKUP_ROOT="${KOMUI_BACKUP_ROOT:-/var/backups/komui}"
 DB_NAME="${KOMUI_BACKUP_DB:-komui_staging}"
 KEY_FILE="${KOMUI_BACKUP_KEY_FILE:-/etc/komui/backup.key}"
 EXTERNAL_ENV_FILE="${KOMUI_BACKUP_EXTERNAL_ENV_FILE:-/etc/komui/yandex-backup.env}"
+KEY_DIR="$(dirname "$KEY_FILE")"
 RUN_ID="$(date -u +%Y%m%dT%H%M%SZ)"
 HOSTNAME="$(hostname -f 2>/dev/null || hostname)"
 
@@ -22,7 +23,13 @@ cleanup() {
 trap cleanup EXIT
 
 install -d -m 0700 "$BACKUP_ROOT" "$DAILY_DIR" "$WEEKLY_DIR" "$MONTHLY_DIR" "$LOG_DIR"
-install -d -m 0700 "$(dirname "$KEY_FILE")"
+if [[ "$KEY_DIR" == "/etc/komui" ]]; then
+  # The backend runs as `komui` and must be able to traverse this directory to
+  # read /etc/komui/certs/komui-node-ca-bundle.pem. The key itself remains 0600.
+  install -d -o root -g komui -m 0710 "$KEY_DIR"
+else
+  install -d -m 0700 "$KEY_DIR"
+fi
 install -d -m 0700 "$BACKUP_ROOT/.gnupg"
 export GNUPGHOME="$BACKUP_ROOT/.gnupg"
 
