@@ -39,6 +39,18 @@ const INDEXNOW_ENABLED = process.env.KOMUI_INDEXNOW_PING === '1';
 const INDEXNOW_ENDPOINT = process.env.KOMUI_INDEXNOW_ENDPOINT || 'https://api.indexnow.org/indexnow';
 const INDEXNOW_KEY_FILE = process.env.KOMUI_INDEXNOW_KEY_FILE || '';
 const YANDEX_METRIKA_COUNTER_ID = 110916310;
+const RETIRED_PRODUCT_IDS = new Set([
+  'e82f9e2a-9eb7-4680-8916-7252ad8e0861',
+]);
+const RETIRED_PRODUCT_SLUGS = new Set([
+  'futbolka-star-wars-darth-vader-naruto-vyshivka-belaya',
+]);
+const RETIRED_PRODUCT_REDIRECT_SLUGS = new Set([
+  'var12-embroidery-tshirt-white',
+]);
+const RETIRED_COLLECTION_SLUGS = new Set([
+  'star-wars',
+]);
 const STATIC_PAGES = [
   { url: '/', file: 'index.html', changefreq: 'weekly', priority: '1.0' },
   { url: '/delivery', file: 'delivery.html', changefreq: 'monthly', priority: '0.5' },
@@ -446,20 +458,6 @@ const COLLECTION_LANDINGS = [
       'На этой странице товары отфильтрованы по теме GTA, чтобы не смешивать их с аниме-коллекциями. В карточках можно посмотреть цену, фото, доступные размеры и тип нанесения. Для правильного выбора размера сравните замеры с вещью, которая уже хорошо сидит. Заказ оформляется онлайн, доставку можно выбрать через СДЭК по России. При уходе не используйте агрессивный отбеливатель и гладьте вышивку аккуратно с изнаночной стороны.'
     ],
   },
-  {
-    slug: 'star-wars',
-    name: 'Star Wars',
-    title: 'Мерч Star Wars',
-    h1: 'Мерч Star Wars: футболки с Дартом Вейдером',
-    metaDescription: 'Футболки KOMUI по Star Wars и Darth Vader: вышивка, базовые цвета, фанатский streetwear и доставка СДЭК по России.',
-    aliases: ['star wars', 'darth', 'vader', 'дарт', 'вейдер'],
-    lead: 'Фанатская подборка KOMUI по Star Wars и Darth Vader: акцентная футболка с вышивкой для повседневного образа.',
-    copy: [
-      'Страница Star Wars в KOMUI создана для точечных запросов вроде футболка Дарт Вейдер, мерч Star Wars или Darth Vader футболка. Вместо перегруженного сувенирного вида здесь акцент сделан на носимую вещь: базовая футболка, узнаваемая вышивка и спокойная посадка, которую можно сочетать с джинсами, карго, худи или курткой. Такой формат подходит и для фанатов саги, и для тех, кто любит поп-культурные детали без лишней яркости.',
-      'Вышивка выглядит аккуратнее крупного принта и лучше переносит повседневные сочетания. Она не требует сложной стилизации: достаточно базового низа и нейтральной обуви. Если выбираете подарок, такой вариант обычно безопаснее, чем вещь с огромной иллюстрацией: отсылка считывается, но не превращает весь образ в костюм. Перед покупкой проверьте размер, цвет и фото в карточке товара.',
-      'Лендинг показывает только товары, связанные со Star Wars и Darth Vader, поэтому можно быстро перейти к нужной карточке и оформить заказ. Доставка доступна СДЭК по России, пункт выдачи выбирается на этапе оформления. Чтобы вещь дольше сохраняла форму, стирайте ее наизнанку при температуре до 30 градусов, не используйте отбеливатель и не прижимайте утюг напрямую к вышивке.'
-    ],
-  },
 ];
 
 function loadFromLocalFile() {
@@ -518,7 +516,14 @@ async function loadProducts() {
     products = loadFromLocalFile();
     console.log(`✓ Loaded ${products.length} product(s) from local file`);
   }
-  return products.filter(p => p && p.slug && Array.isArray(p.sizes) && p.sizes.length);
+  return products.filter(p =>
+    p &&
+    p.slug &&
+    Array.isArray(p.sizes) &&
+    p.sizes.length &&
+    !RETIRED_PRODUCT_IDS.has(String(p.id || '')) &&
+    !RETIRED_PRODUCT_SLUGS.has(String(p.slug || ''))
+  );
 }
 
 function escapeHtml(value) {
@@ -591,6 +596,20 @@ function renderNginxProductRedirects(redirects) {
     lines.push(`location = ${from} { return 301 ${to}; }`);
     lines.push(`location = ${from}/ { return 301 ${to}; }`);
     lines.push(`location = ${from}.html { return 301 ${to}; }`);
+  }
+
+  lines.push('# Retired catalog URLs intentionally return 410 Gone.');
+  for (const slug of [...RETIRED_PRODUCT_SLUGS, ...RETIRED_PRODUCT_REDIRECT_SLUGS]) {
+    const retiredPath = `/p/${slug}`;
+    lines.push(`location = ${retiredPath} { return 410; }`);
+    lines.push(`location = ${retiredPath}/ { return 410; }`);
+    lines.push(`location = ${retiredPath}.html { return 410; }`);
+  }
+  for (const slug of RETIRED_COLLECTION_SLUGS) {
+    const retiredPath = `/collections/${slug}`;
+    lines.push(`location = ${retiredPath} { return 410; }`);
+    lines.push(`location = ${retiredPath}/ { return 410; }`);
+    lines.push(`location = ${retiredPath}.html { return 410; }`);
   }
 
   lines.push('');

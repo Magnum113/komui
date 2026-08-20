@@ -1,6 +1,6 @@
 # KOMUI — полный каталог для AI-систем
 
-> Все товары интернет-магазина KOMUI (https://komui.ru) с актуальными ценами, размерами, цветами и типом нанесения. Обновлено: 2026-07-08. Краткая версия: https://komui.ru/llms.txt
+> Все товары интернет-магазина KOMUI (https://komui.ru) с актуальными ценами, размерами, цветами и типом нанесения. Обновлено: 2026-08-18. Краткая версия: https://komui.ru/llms.txt
 
 ## Jujutsu Kaisen (10 тов.)
 
@@ -46,10 +46,6 @@
 - [Футболка Gravity](https://komui.ru/p/futbolka-gravity-print-chernaya): 2 900 ₽; нанесение: принт; цвет: черный; размеры: S, M, L, XL, XXL; категория: футболки
 - [Худи Gravity](https://komui.ru/p/hudi-gravity-vyshivka-chernaya): 3 900 ₽; нанесение: вышивка; цвет: черный; размеры: S, M, L; категория: худи
 - [Футболка-варёнка Gravity](https://komui.ru/p/futbolka-varenka-gravity-print-seraya): 2 900 ₽; нанесение: принт; цвет: вареный серый; размеры: S, M, L, XL, XXL; категория: футболки
-
-## Darth Vader (1 тов.)
-
-- [Футболка Наруто × Дарт Вейдер](https://komui.ru/p/futbolka-star-wars-darth-vader-naruto-vyshivka-belaya): 2 900 ₽; нанесение: вышивка; цвет: белый; размеры: S, M; категория: футболки; персонаж: Darth Vader
 
 ## Покупателям
 
