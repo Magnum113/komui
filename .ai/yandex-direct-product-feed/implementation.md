@@ -80,3 +80,34 @@ Active production nginx snippet не изменялся: backend с новым r
 - Единственное изображение, не прошедшее техническую политику, имеет размер 750×437 и корректно исключено.
 - 33 oldprice, 150 size params, 4 collections, 0 Ozon URLs.
 - `xmllint` — успешно; итоговый XML на текущих данных 58 607 bytes.
+
+## Реализация этапа 5
+
+Git commit с реализацией: `4374d42c960e63236148772734fd1362800f264a`.
+
+### Staging
+
+- Immutable release: `20260820T141050Z-stage-4374d42c960e`.
+- Серверный deploy выполнил 54/54 backend tests, TypeScript build, media sync, frontend build, Nginx reload и общий healthcheck.
+- Прямой endpoint `127.0.0.1:3000/v1/feeds/yandex-direct.yml` и staging URL `/api/v1/feeds/yandex-direct.yml` отвечают HTTP 200 с `application/xml; charset=utf-8`.
+- Staging: 30 active products = 30 offers, у всех `available="true"`, 135 pictures, 0 Ozon URLs.
+- Для всех 30 offers цены, oldprice и размеры сравнены с staging catalog API.
+- Проверены страницы-примеры трёх категорий: футболка, худи и свитшот — HTTP 200.
+
+### Production
+
+- Immutable release: `20260820T141237Z-prod-4374d42c960e`.
+- До публикации внешний route был проверен внутренний endpoint `127.0.0.1:3001/v1/feeds/yandex-direct.yml`.
+- В production установлены source-controlled `komui-traffic-switch-apply` и `komui-healthcheck`.
+- Nginx route применён штатным traffic switch в режиме `server`; `nginx -t` успешно, status `applied`.
+- Резервные копии предыдущих runtime config и скриптов сохранены в `/var/backups/komui/config/yandex-direct-feed-20260820T1414Z`.
+- Публичный URL `https://komui.ru/feeds/yandex-direct.yml` отвечает без авторизации.
+- Headers: HTTP 200, `application/xml; charset=utf-8`, inline filename, `Cache-Control: no-cache`.
+- Production feed: 33 offers, 33 `available="true"`, 161 pictures, 33 oldprice, 150 size params, 0 Ozon URLs.
+- Все 33 offers сравнены с catalog API по ID, price, oldprice и sizes.
+- Проверены 33 product pages и 122 уникальных изображения фактического публичного feed; все URL отвечают, изображения соответствуют требованиям по dimensions/type/size.
+- `robots.txt` содержит `Allow: /feeds/yandex-direct.yml` перед `Disallow: /api/`.
+- Новый `production_yandex_feed` healthcheck проверяет HTTP/content type, XML, непустой feed, уникальность ID, availability, совпадение count с active products и отсутствие Ozon URL.
+- Ручной полный healthcheck после установки: `SUMMARY OK`.
+
+На сервере не установлен `xmllint`, поэтому серверная XML-проверка выполняется стандартным Python `ElementTree`. Независимая проверка публичного ответа локальным `xmllint` прошла успешно.

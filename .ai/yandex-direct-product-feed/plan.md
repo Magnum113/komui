@@ -6,7 +6,8 @@
 - Этап 2 — реализован локально: добавлены feed query, YML-генератор и внутренний backend endpoint.
 - Этап 3 — реализован в source-controlled конфигурации: добавлены внешний nginx route и robots allow. Применение active production snippet отложено до этапа 5, чтобы не публиковать 404 до деплоя backend.
 - Этап 4 — реализован: добавлены автоматические тесты и повторяемый live-аудит production-каталога.
-- Этапы 5–7 — не выполнялись.
+- Этап 5 — реализован: staging и production задеплоены, публичный URL и постоянный healthcheck активированы.
+- Этапы 6–7 — не выполнялись.
 
 ## Целевой результат
 
@@ -116,6 +117,8 @@ Feed должен включать:
 7. Сравнение offer IDs с e-commerce payload Метрики.
 
 ## Этап 5. Staging и production
+
+Статус: выполнено 2026-08-20.
 
 1. Деплой на staging существующим `komui-deploy-from-git stage`.
 2. Проверить endpoint напрямую на backend и через staging nginx.
