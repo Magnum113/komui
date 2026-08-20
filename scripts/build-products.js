@@ -36,7 +36,7 @@ const MEDIA_MANIFEST_PATH = process.env.KOMUI_MEDIA_MANIFEST_PATH || DEFAULT_MED
 const MEDIA_STRICT = process.env.KOMUI_MEDIA_STRICT === '1';
 const MEDIA_PUBLIC_PREFIX = '/media/products/';
 const INDEXNOW_ENABLED = process.env.KOMUI_INDEXNOW_PING === '1';
-const INDEXNOW_ENDPOINT = process.env.KOMUI_INDEXNOW_ENDPOINT || 'https://api.indexnow.org/indexnow';
+const INDEXNOW_ENDPOINT = process.env.KOMUI_INDEXNOW_ENDPOINT || 'https://yandex.com/indexnow';
 const INDEXNOW_KEY_FILE = process.env.KOMUI_INDEXNOW_KEY_FILE || '';
 const YANDEX_METRIKA_COUNTER_ID = 110916310;
 const RETIRED_PRODUCT_IDS = new Set([
