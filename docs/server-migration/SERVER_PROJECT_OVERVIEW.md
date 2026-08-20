@@ -1623,6 +1623,13 @@ Telegram controls:
 - the same persistent menu contains status, deploy and rollback actions for the
   GetoMerch admin; admin production deploy and rollback also require confirmation.
 
+`📋 Статус админки` does not forward raw shell output. It returns a Russian
+operator summary with one overall verdict and named checks for public/login/auth
+availability, GetoMerch web and worker services, PostgreSQL, nginx, the hourly
+database-backup timer, failed systemd units, the latest off-site backup, Git and
+release state, and root-disk usage. The raw diagnostic output remains available
+through `/usr/local/sbin/getomerch-deploy-status` over SSH.
+
 The bot uses a persistent Telegram reply keyboard, so the deploy controls are
 shown above the text input field. Callback handling for old inline-keyboard
 messages is kept for backwards compatibility.

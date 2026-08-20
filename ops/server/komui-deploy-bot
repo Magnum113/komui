@@ -3,10 +3,12 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import signal
 import subprocess
 import sys
 import time
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -365,10 +367,229 @@ def handle_status() -> None:
     send_message(format_status_message(output, code), keyboard())
 
 
+def parse_admin_status_output(output: str) -> dict[str, dict[str, str]]:
+    sections: dict[str, dict[str, str]] = {"root": {}}
+    section = "root"
+    known_sections = {
+        "disk": "disk",
+        "services": "services",
+        "health": "health",
+        "smoke": "smoke",
+        "database backup": "backup",
+        "registry": "registry",
+        "last events": "events",
+    }
+    for raw_line in output.splitlines():
+        line = raw_line.strip()
+        if not line or line == "GetoMerch admin deploy status":
+            continue
+        lower = line.rstrip(":").lower()
+        if lower in known_sections and line.endswith(":"):
+            section = known_sections[lower]
+            sections.setdefault(section, {})
+            continue
+        if ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        sections.setdefault(section, {})[key.strip()] = value.strip()
+    return sections
+
+
+def first_status_token(value: str) -> str:
+    return value.split(maxsplit=1)[0] if value else "unknown"
+
+
+def format_msk_timestamp(value: str) -> str:
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        return parsed.astimezone(timezone(timedelta(hours=3))).strftime("%d.%m.%Y, %H:%M МСК")
+    except (TypeError, ValueError):
+        return "время неизвестно"
+
+
+def timestamp_age_seconds(value: str) -> float | None:
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return (datetime.now(timezone.utc) - parsed.astimezone(timezone.utc)).total_seconds()
+    except (TypeError, ValueError):
+        return None
+
+
+def format_admin_service_status(name: str, value: str) -> str:
+    labels = {
+        "getomerch-admin.service": "Веб-приложение",
+        "getomerch-worker.service": "Фоновые задачи и синхронизации",
+        "getomerch-database-backup.timer": "Автоматические резервные копии",
+        "postgresql": "База PostgreSQL",
+        "nginx": "HTTPS и прокси",
+    }
+    states = {
+        "failed": "ошибка",
+        "inactive": "не запущен",
+        "unknown": "статус неизвестен",
+    }
+    label = labels.get(name, name)
+    if value == "active":
+        return f"✅ {label}"
+    return f"❌ {label}: {states.get(value, value or 'статус неизвестен')}"
+
+
+def format_admin_access_status(label: str, value: str, expected: set[str]) -> str:
+    status = first_status_token(value)
+    if status in expected:
+        return f"✅ {label}"
+    return f"❌ {label}: HTTP {status}"
+
+
 def format_admin_status_message(output: str, code: int) -> str:
-    prefix = "📦 Статус GetoMerch admin" if code == 0 else f"⚠️ GetoMerch admin status failed exit={code}"
-    body = output.strip() or "Нет вывода."
-    return f"{prefix}\n\n{body}"
+    try:
+        data = parse_admin_status_output(output)
+        root = data.get("root", {})
+        disk = data.get("disk", {})
+        services = data.get("services", {})
+        health = data.get("health", {})
+        smoke = data.get("smoke", {})
+        backup = data.get("backup", {})
+        registry = data.get("registry", {})
+
+        required_services = [
+            "getomerch-admin.service",
+            "getomerch-worker.service",
+            "getomerch-database-backup.timer",
+            "postgresql",
+            "nginx",
+        ]
+        service_lines = [
+            format_admin_service_status(name, services.get(name, "unknown"))
+            for name in required_services
+        ]
+        services_ok = all(services.get(name) == "active" for name in required_services)
+
+        access_checks = [
+            ("Сайт отвечает", smoke.get("admin /", ""), {"302", "303", "307", "308"}),
+            ("Страница входа открывается", smoke.get("admin /login", ""), {"200"}),
+            (
+                "Закрытые данные защищены авторизацией",
+                smoke.get("admin protected API without cookie", ""),
+                {"401"},
+            ),
+        ]
+        access_lines = [format_admin_access_status(label, value, expected) for label, value, expected in access_checks]
+        access_ok = all(first_status_token(value) in expected for _, value, expected in access_checks)
+
+        failed_units = health.get("failed units", "unknown")
+        failed_units_ok = failed_units == "0"
+        if failed_units_ok:
+            failed_units_line = "✅ Упавших системных сервисов нет"
+        elif failed_units == "unknown":
+            failed_units_line = "❌ Не удалось проверить системные сервисы"
+        else:
+            failed_units_line = f"❌ Упавшие системные сервисы: {failed_units}"
+
+        backup_status = backup.get("status", "unknown")
+        backup_external = backup.get("external status", "unknown")
+        backup_updated_at = backup.get("updatedAt", "")
+        backup_age = timestamp_age_seconds(backup_updated_at)
+        backup_fresh = backup_age is not None and -300 <= backup_age <= 3 * 60 * 60
+        backup_ok = backup_status == "success" and backup_external == "ok" and backup_fresh
+        if backup_ok:
+            backup_line = f"✅ Последняя копия: {format_msk_timestamp(backup_updated_at)}, загружена в облако"
+        elif backup_status == "success" and backup_external == "ok":
+            backup_line = f"⚠️ Последняя копия устарела: {format_msk_timestamp(backup_updated_at)}"
+        elif backup_status == "success":
+            backup_line = f"⚠️ Копия создана {format_msk_timestamp(backup_updated_at)}, но облачная выгрузка не подтверждена"
+        else:
+            backup_line = "❌ Нет подтверждённой успешной резервной копии"
+
+        local = root.get("local", "unknown")
+        origin = root.get("origin/main", "unknown")
+        git_known = local not in ("", "unknown") and origin not in ("", "unknown")
+        git_synced = git_known and local == origin
+        if git_synced:
+            git_line = f"✅ Код совпадает с GitHub: {local[:8]}"
+        elif git_known:
+            git_line = f"⚠️ На сервере {local[:8]}, в GitHub {origin[:8]} — есть неразвёрнутые изменения"
+        else:
+            git_line = "⚠️ Не удалось сравнить версию сервера с GitHub"
+
+        last_deploy_status = registry.get("last status", "unknown")
+        last_deploy_at = registry.get("updatedAt", "")
+        if last_deploy_status == "success":
+            deploy_line = f"✅ Последний релиз: {format_msk_timestamp(last_deploy_at)}"
+        else:
+            deploy_line = f"❌ Последний релиз завершился со статусом: {last_deploy_status}"
+
+        disk_root = disk.get("root", "")
+        disk_match = re.search(r"\S+\s+\S+\s+\S+\s+(\S+)\s+(\d+)%\s+/\s*$", disk_root)
+        disk_percent = int(disk_match.group(2)) if disk_match else None
+        disk_available = disk_match.group(1) if disk_match else "неизвестно"
+        if disk_percent is None:
+            disk_line = "⚠️ Свободное место на диске определить не удалось"
+            disk_critical = False
+            disk_warning = True
+        elif disk_percent >= 90:
+            disk_line = f"❌ Диск заполнен на {disk_percent}%, свободно {disk_available}"
+            disk_critical = True
+            disk_warning = True
+        elif disk_percent >= 80:
+            disk_line = f"⚠️ Диск заполнен на {disk_percent}%, свободно {disk_available}"
+            disk_critical = False
+            disk_warning = True
+        else:
+            disk_line = f"✅ Диск: занято {disk_percent}%, свободно {disk_available}"
+            disk_critical = False
+            disk_warning = False
+
+        core_ok = code == 0 and services_ok and access_ok and failed_units_ok and not disk_critical
+        has_warning = not backup_ok or not git_synced or disk_warning
+        if core_ok and not has_warning:
+            verdict = "✅ Админка работает штатно."
+            next_step = "Действий не требуется."
+        elif core_ok:
+            verdict = "⚠️ Админка работает, но есть предупреждения."
+            next_step = "Проверь строки с предупреждениями выше."
+        else:
+            verdict = "❌ В работе админки или серверных сервисов есть проблема."
+            next_step = "Не запускай релиз или откат, пока не будут проверены строки с ошибками."
+
+        if code != 0:
+            next_step = f"Команда проверки завершилась с ошибкой {code}. Нужна проверка сервера."
+
+        return "\n".join(
+            [
+                "📋 Статус админки",
+                "",
+                verdict,
+                "",
+                "Доступность:",
+                *access_lines,
+                "",
+                "Сервисы:",
+                *service_lines,
+                failed_units_line,
+                "",
+                "Резервирование:",
+                backup_line,
+                "",
+                "Версия:",
+                git_line,
+                deploy_line,
+                "",
+                "Сервер:",
+                disk_line,
+                "",
+                next_step,
+            ]
+        )
+    except Exception as exc:
+        status = f"код ошибки {code}" if code else "неизвестный формат ответа"
+        return (
+            "⚠️ Не удалось сформировать понятный статус админки.\n\n"
+            f"Причина: {status}; {type(exc).__name__}.\n"
+            "Нужно проверить getomerch-deploy-status на сервере."
+        )
 
 
 def handle_admin_deploy() -> None:

@@ -2,6 +2,7 @@
 .env
 .env*.local
 node_modules/
+__pycache__/
 .komui/
 generated/
 .ai/**/runtime/
