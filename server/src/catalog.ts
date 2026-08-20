@@ -57,6 +57,31 @@ const PUBLIC_PRODUCT_COLUMNS = `
   ) as slug_redirects
 `;
 
+const YANDEX_FEED_PRODUCT_COLUMNS = `
+  p.id,
+  p.name,
+  p.slug,
+  p.category,
+  p.category_slug,
+  p.product_type,
+  p.decoration_type,
+  p.color_name,
+  p.title_name,
+  p.title_slug,
+  p.collection_name,
+  p.collection_slug,
+  p.design_name,
+  p.sizes,
+  p.price_min,
+  p.currency,
+  p.primary_image_url,
+  p.main_image_path,
+  p.image_urls,
+  p.is_active,
+  p.sort_order,
+  p.compare_at_price
+`;
+
 export type PublicOffer = {
   sku?: string | number;
   offer_id?: string;
@@ -115,9 +140,42 @@ export type PublicProduct = {
   slug_redirects?: string[];
 };
 
+export type YandexFeedProduct = {
+  id: string;
+  name: string;
+  slug: string;
+  category: string;
+  category_slug: string;
+  product_type: string;
+  decoration_type: string;
+  color_name?: string | null;
+  title_name?: string | null;
+  title_slug?: string | null;
+  collection_name?: string | null;
+  collection_slug?: string | null;
+  design_name?: string | null;
+  sizes: string[];
+  price_min?: string | number | null;
+  currency: string;
+  primary_image_url?: string | null;
+  main_image_path?: string | null;
+  image_urls: string[];
+  is_active: boolean;
+  sort_order: number;
+  compare_at_price?: string | number | null;
+};
+
 type ProductRow = PublicProduct & {
   offers: unknown;
   slug_redirects?: unknown;
+};
+
+type YandexFeedProductRow = Omit<
+  YandexFeedProduct,
+  "sizes" | "image_urls"
+> & {
+  sizes: unknown;
+  image_urls: unknown;
 };
 
 export function sanitizeOffer(value: unknown): PublicOffer | null {
@@ -191,6 +249,26 @@ export function sanitizeProduct(row: ProductRow): PublicProduct {
   };
 }
 
+export function sanitizeYandexFeedProduct(
+  row: YandexFeedProductRow,
+): YandexFeedProduct {
+  return {
+    ...row,
+    sizes: Array.isArray(row.sizes)
+      ? row.sizes.filter((item): item is string => typeof item === "string")
+      : [],
+    primary_image_url: resolvePublicMediaUrl(row.primary_image_url) as
+      | string
+      | null
+      | undefined,
+    main_image_path: resolvePublicMediaUrl(row.main_image_path) as
+      | string
+      | null
+      | undefined,
+    image_urls: resolvePublicMediaUrls(row.image_urls),
+  };
+}
+
 export function normalizeLimit(value: unknown, fallback = 200, max = 200) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return fallback;
@@ -213,6 +291,19 @@ export class CatalogRepository {
     );
 
     return result.rows.map(sanitizeProduct);
+  }
+
+  async listActiveProductsForYandexFeed(): Promise<YandexFeedProduct[]> {
+    const result = await this.db.query<YandexFeedProductRow>(
+      `
+        select ${YANDEX_FEED_PRODUCT_COLUMNS}
+        from public.merch_storefront_products p
+        where p.is_active is true
+        order by p.sort_order asc, p.id asc
+      `,
+    );
+
+    return result.rows.map(sanitizeYandexFeedProduct);
   }
 
   async findActiveProductBySlug(slug: string): Promise<PublicProduct | null> {

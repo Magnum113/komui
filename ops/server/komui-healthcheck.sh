@@ -5,6 +5,9 @@ LOG_FILE="${KOMUI_HEALTHCHECK_LOG:-/var/log/komui/healthcheck.log}"
 DB_NAME="${KOMUI_HEALTHCHECK_DB:-komui_staging}"
 DISK_WARN_PERCENT="${KOMUI_HEALTHCHECK_DISK_WARN_PERCENT:-80}"
 BACKUP_MAX_AGE_HOURS="${KOMUI_HEALTHCHECK_BACKUP_MAX_AGE_HOURS:-36}"
+YANDEX_FEED_URL="${KOMUI_HEALTHCHECK_YANDEX_FEED_URL:-https://komui.ru/feeds/yandex-direct.yml}"
+
+export YANDEX_FEED_URL
 
 mkdir -p "$(dirname "$LOG_FILE")"
 
@@ -49,6 +52,50 @@ check stage_products_https bash -c '
   . /etc/komui/staging-access.env
   code=$(curl -sS --max-time 8 -o /dev/null -w "%{http_code}" -u "$STAGING_USER:$STAGING_PASSWORD" "https://stage.komui.ru/api/v1/products?limit=1")
   test "$code" = "200"
+'
+
+check production_yandex_feed bash -c '
+  set -euo pipefail
+  feed_file=$(mktemp)
+  headers_file=$(mktemp)
+  stats_file=$(mktemp)
+  trap '\''rm -f "$feed_file" "$headers_file" "$stats_file"'\'' EXIT
+
+  code=$(curl -sS --max-time 15 -D "$headers_file" -o "$feed_file" -w "%{http_code}" "$YANDEX_FEED_URL")
+  test "$code" = "200"
+  grep -Eiq '\''^content-type:[[:space:]]*application/xml([;[:space:]]|$)'\'' "$headers_file"
+  curl -fsS --max-time 8 http://127.0.0.1:3001/v1/catalog/stats -o "$stats_file"
+
+  python3 - "$feed_file" "$stats_file" <<'\''PY'\''
+import json
+import sys
+import xml.etree.ElementTree as ET
+
+feed_path, stats_path = sys.argv[1:]
+root = ET.parse(feed_path).getroot()
+if root.tag != "yml_catalog":
+    raise SystemExit("unexpected feed root")
+
+offers = root.findall("./shop/offers/offer")
+if not offers:
+    raise SystemExit("feed has no offers")
+ids = [offer.get("id", "") for offer in offers]
+if any(not offer_id for offer_id in ids) or len(ids) != len(set(ids)):
+    raise SystemExit("feed contains missing or duplicate offer IDs")
+if any(offer.get("available") != "true" for offer in offers):
+    raise SystemExit("feed contains an unavailable offer")
+
+with open(stats_path, encoding="utf-8") as source:
+    active_products = int(json.load(source).get("activeProducts", 0))
+if len(offers) != active_products:
+    raise SystemExit(
+        f"feed offer count {len(offers)} differs from active products {active_products}"
+    )
+
+with open(feed_path, encoding="utf-8") as source:
+    if "ir.ozone.ru" in source.read().lower():
+        raise SystemExit("feed contains an external Ozon URL")
+PY
 '
 
 check disk_under_threshold bash -c '

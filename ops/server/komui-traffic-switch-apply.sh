@@ -151,6 +151,18 @@ location = /api/v1/webhooks/tbank {
     proxy_send_timeout 30s;
 }
 
+location = /feeds/yandex-direct.yml {
+    proxy_pass http://127.0.0.1:3001/v1/feeds/yandex-direct.yml;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_connect_timeout 3s;
+    proxy_read_timeout 30s;
+    proxy_send_timeout 30s;
+}
+
 location /api/ {
     proxy_pass http://127.0.0.1:3001/;
     proxy_http_version 1.1;

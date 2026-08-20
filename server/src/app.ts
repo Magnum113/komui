@@ -12,6 +12,10 @@ import { CatalogRepository, normalizeLimit } from "./catalog";
 import { HttpError } from "./errors";
 import { mediaManifestStatus } from "./mediaManifest";
 import {
+  buildYandexDirectFeed,
+  YandexDirectFeedError,
+} from "./yandexDirectFeed";
+import {
   handleCdekDeliveryPoints,
   handleCdekDeliveryQuote,
   handleCompatibilityFunction,
@@ -216,6 +220,38 @@ export function buildApp({ config, db = createDb(config) }: AppOptions) {
   });
 
   app.get("/v1/catalog/stats", async () => catalog.stats());
+
+  app.get("/v1/feeds/yandex-direct.yml", async (request, reply) => {
+    try {
+      const products = await catalog.listActiveProductsForYandexFeed();
+      const feed = buildYandexDirectFeed(products, {
+        siteUrl: config.SITE_URL,
+      });
+      return reply
+        .header("Content-Type", "application/xml; charset=utf-8")
+        .header(
+          "Content-Disposition",
+          'inline; filename="yandex-direct.yml"',
+        )
+        .header("Cache-Control", "no-cache")
+        .send(feed);
+    } catch (error) {
+      if (error instanceof YandexDirectFeedError) {
+        request.log.error(
+          { issues: error.issues },
+          "Yandex Direct feed validation failed",
+        );
+        return jsonError(
+          reply,
+          503,
+          "yandex_feed_invalid",
+          "Yandex Direct feed data is invalid",
+          { issues: error.issues.slice(0, 50) },
+        );
+      }
+      throw error;
+    }
+  });
 
   app.get("/delivery-config", async (_request, reply) => {
     const configured = Boolean(yandexMapsApiKey(config));

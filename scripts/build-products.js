@@ -2030,6 +2030,7 @@ function renderRobots() {
   return `# https://komui.ru/robots.txt
 User-agent: *
 Allow: /
+Allow: /feeds/yandex-direct.yml
 Disallow: /api/
 Disallow: /checkout
 Disallow: /payment-result

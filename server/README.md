@@ -34,7 +34,25 @@ GET /health/ready
 GET /v1/products
 GET /v1/products/:slug
 GET /v1/catalog/stats
+GET /v1/feeds/yandex-direct.yml
 ```
+
+`/v1/feeds/yandex-direct.yml` формирует YML-фид из всех активных товаров без
+лимита публичного catalog API. Каждый товар, отображаемый на витрине, получает
+`available="true"`; идентификатор offer совпадает с UUID товара в e-commerce
+Метрики. Source-controlled production nginx публикует endpoint по внешнему URL
+`/feeds/yandex-direct.yml`; активный server snippet обновляется при production
+применении конфигурации.
+
+Проверки фида:
+
+```bash
+npm --prefix server test
+npm run audit:yandex-feed
+```
+
+Вторая команда собирает backend, генерирует YML на данных публичного production
+каталога и проверяет XML, product pages, изображения и соответствие offer UUID.
 
 When exposed through the staging Nginx config, these routes are available under
 `/api/...` because Nginx strips the `/api/` prefix.

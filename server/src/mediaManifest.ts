@@ -31,6 +31,14 @@ type MediaManifest = {
   images?: Record<string, MediaManifestEntry>;
 };
 
+export type PublicMediaMetadata = {
+  width?: number;
+  height?: number;
+  format?: string;
+  mime?: string;
+  bytes?: number;
+};
+
 type ManifestCache = {
   path: string;
   mtimeMs: number;
@@ -168,6 +176,67 @@ export function resolvePublicMediaUrls(
     .filter(
       (value): value is string => typeof value === "string" && value.length > 0,
     );
+}
+
+function publicMediaPath(value: string) {
+  if (value.startsWith(PUBLIC_PRODUCTS_PREFIX)) return value;
+  try {
+    const parsed = new URL(value);
+    return parsed.pathname.startsWith(PUBLIC_PRODUCTS_PREFIX)
+      ? parsed.pathname
+      : "";
+  } catch {
+    return "";
+  }
+}
+
+function mediaFileSize(publicUrl: string, manifestPath: string) {
+  const filePath = mediaFilePathFromPublicUrl(
+    publicUrl,
+    path.dirname(manifestPath),
+  );
+  if (!filePath) return undefined;
+  try {
+    return fs.statSync(filePath).size;
+  } catch {
+    return undefined;
+  }
+}
+
+export function mediaMetadataForPublicUrl(
+  value: string,
+  env: NodeJS.ProcessEnv = process.env,
+): PublicMediaMetadata | undefined {
+  const publicUrl = publicMediaPath(value);
+  if (!publicUrl) return undefined;
+
+  const manifest = loadManifest(mediaManifestPath(env));
+  const entry = manifest.byPublicUrl.get(publicUrl);
+  if (!entry) return undefined;
+
+  const bytes = mediaFileSize(publicUrl, manifest.path);
+  const variant = entry.variants?.find((item) => item?.url === publicUrl);
+  if (variant) {
+    return {
+      width: variant.width,
+      height: variant.height,
+      format: variant.format,
+      mime: variant.format ? `image/${variant.format}` : undefined,
+      bytes,
+    };
+  }
+
+  if (entry.original === publicUrl || entry.fallback === publicUrl) {
+    return {
+      width: entry.width,
+      height: entry.height,
+      format: entry.mime?.split("/").at(-1),
+      mime: entry.mime,
+      bytes,
+    };
+  }
+
+  return undefined;
 }
 
 export function mediaFilePathFromPublicUrl(
