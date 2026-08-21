@@ -19,6 +19,11 @@ const { execFileSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..');
 const SITE_ORIGIN = 'https://komui.ru';
+const PRODUCT_CSS_VERSION = crypto
+  .createHash('sha256')
+  .update(fs.readFileSync(path.join(ROOT, 'assets', 'product.css')))
+  .digest('hex')
+  .slice(0, 12);
 const API_BASE_URL = String(process.env.KOMUI_API_BASE_URL || '').replace(/\/$/, '');
 const API_PRODUCTS_PATH = process.env.KOMUI_API_PRODUCTS_PATH || '/v1/products?limit=200';
 const API_TIMEOUT_MS = 10_000;
@@ -1776,7 +1781,7 @@ ${renderMetrikaHead()}
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="stylesheet" href="/assets/fonts/komui-fonts.css">
 <link rel="stylesheet" href="/legal.css" />
-<link rel="stylesheet" href="/assets/product.css" />
+<link rel="stylesheet" href="/assets/product.css?v=${PRODUCT_CSS_VERSION}" />
 <script type="application/ld+json">${buildJsonLd(product)}</script>
 <script type="application/ld+json">${buildBreadcrumbLd(product)}</script>
 </head>
@@ -2225,7 +2230,7 @@ ${renderMetrikaHead()}
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="stylesheet" href="/assets/fonts/komui-fonts.css">
 <link rel="stylesheet" href="/legal.css" />
-<link rel="stylesheet" href="/assets/product.css" />
+<link rel="stylesheet" href="/assets/product.css?v=${PRODUCT_CSS_VERSION}" />
 <script type="application/ld+json">${buildCollectionPageLd(landing)}</script>
 <script type="application/ld+json">${buildCollectionBreadcrumbLd(landing)}</script>
 <script type="application/ld+json">${buildCollectionFaqLd(landing, stats)}</script>
