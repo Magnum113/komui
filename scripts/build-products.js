@@ -1232,6 +1232,14 @@ function reviewCountText(count) {
   return `${value} ${word}`;
 }
 
+function reviewRatingText(value) {
+  const rating = Math.max(0, Math.min(5, Number(value) || 0));
+  return rating.toLocaleString('ru-RU', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
+}
+
 function reviewStarsHtml(averageRating, className = '') {
   const average = Math.max(0, Math.min(5, Number(averageRating) || 0));
   const width = Math.round((average / 5) * 1000) / 10;
@@ -1243,7 +1251,8 @@ function reviewCompactHtml(product, className = '', href = '') {
   if (!summary.count || !summary.averageRating) return '';
   const tag = href ? 'a' : 'div';
   const hrefAttr = href ? ` href="${escapeAttr(href)}"` : '';
-  return `<${tag} class="p-rating-compact${className ? ` ${className}` : ''}"${hrefAttr} aria-label="Рейтинг ${summary.averageRating.toLocaleString('ru-RU')} из 5, ${reviewCountText(summary.count)}">${reviewStarsHtml(summary.averageRating)}<strong>${summary.averageRating.toLocaleString('ru-RU')}</strong><span>${reviewCountText(summary.count)}</span></${tag}>`;
+  const ratingText = reviewRatingText(summary.averageRating);
+  return `<${tag} class="p-rating-compact${className ? ` ${className}` : ''}"${hrefAttr} aria-label="Рейтинг ${ratingText} из 5, ${reviewCountText(summary.count)}">${reviewStarsHtml(summary.averageRating)}<strong>${ratingText}</strong><span>${reviewCountText(summary.count)}</span></${tag}>`;
 }
 
 function initialReviewSummaryHtml(product) {
@@ -1252,7 +1261,7 @@ function initialReviewSummaryHtml(product) {
     return '<div class="p-review-summary-empty">Проверяем отзывы покупателей…</div>';
   }
   return `<div class="p-review-score">
-      <strong>${summary.averageRating.toLocaleString('ru-RU')}</strong>
+      <strong>${reviewRatingText(summary.averageRating)}</strong>
       ${reviewStarsHtml(summary.averageRating)}
       <span>${reviewCountText(summary.count)}</span>
     </div>
@@ -1366,6 +1375,11 @@ function renderProductReviewsScript(product) {
     return count + ' ' + word;
   }
 
+  function ratingText(value){
+    var rating = Math.max(0, Math.min(5, Number(value) || 0));
+    return rating.toLocaleString('ru-RU', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  }
+
   function starMarkup(rating, className){
     var value = Math.max(0, Math.min(5, Number(rating) || 0));
     var width = Math.round((value / 5) * 1000) / 10;
@@ -1395,7 +1409,7 @@ function renderProductReviewsScript(product) {
         '<span class="p-review-hist-track"><i style="width:' + width + '%"></i></span>' +
         '<span>' + ratingCount + '</span></div>';
     }).join('');
-    return '<div class="p-review-score"><strong>' + average.toLocaleString('ru-RU') + '</strong>' +
+    return '<div class="p-review-score"><strong>' + ratingText(average) + '</strong>' +
       starMarkup(average) + '<span>' + reviewCountText(count) + '</span></div>' +
       '<div class="p-review-hist" aria-label="Распределение оценок">' + rows + '</div>' +
       '<div class="p-review-summary-copy"><strong>Отзывы реальных покупателей</strong><span>' +
@@ -1455,8 +1469,8 @@ function renderProductReviewsScript(product) {
       var average = Number(summary && summary.averageRating) || 0;
       if (count && average) {
         topRating.hidden = false;
-        topRating.innerHTML = starMarkup(average) + '<strong>' + average.toLocaleString('ru-RU') + '</strong><span>' + reviewCountText(count) + '</span>';
-        topRating.setAttribute('aria-label', 'Рейтинг ' + average.toLocaleString('ru-RU') + ' из 5, ' + reviewCountText(count));
+        topRating.innerHTML = starMarkup(average) + '<strong>' + ratingText(average) + '</strong><span>' + reviewCountText(count) + '</span>';
+        topRating.setAttribute('aria-label', 'Рейтинг ' + ratingText(average) + ' из 5, ' + reviewCountText(count));
       } else {
         topRating.hidden = true;
       }
