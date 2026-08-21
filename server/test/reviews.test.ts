@@ -89,4 +89,40 @@ test("ReviewsRepository returns only public review and media fields", async () =
   assert.equal(result.nextCursor, null);
   assert.equal(queries.every((sql) => sql.includes("r.is_published")), true);
   assert.equal(queries.every((sql) => sql.includes("r.moderation_status = 'approved'")), true);
+  assert.equal(queries.some((sql) => sql.includes("not $5::boolean")), true);
+  assert.equal(queries.every((sql) => sql.includes("nullif(m.public_url, '') is not null")), true);
+});
+
+test("ReviewsRepository can filter the list to reviews with public media", async () => {
+  const calls: Array<{ sql: string; values?: unknown[] }> = [];
+  const db = {
+    query: async (sql: string, values?: unknown[]) => {
+      calls.push({ sql, values });
+      if (sql.includes("round(avg(r.rating)")) {
+        return {
+          rows: [{
+            review_count: "2",
+            average_rating: "4.50",
+            rating_1: "0",
+            rating_2: "0",
+            rating_3: "0",
+            rating_4: "1",
+            rating_5: "1",
+            reviews_with_media: "1",
+          }],
+        };
+      }
+      return { rows: [] };
+    },
+  } as unknown as Db;
+
+  await new ReviewsRepository(db).listPublicProductReviews(
+    "6218f78d-65ac-4832-a23d-b29f9ef91b32",
+    12,
+    null,
+    true,
+  );
+
+  const listCall = calls.find((call) => call.sql.includes("order by r.published_at"));
+  assert.equal(listCall?.values?.[4], true);
 });

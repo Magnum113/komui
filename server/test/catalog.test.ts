@@ -52,11 +52,17 @@ test("sanitizeProduct does not leak raw offer fields", () => {
     is_active: true,
     sort_order: 1,
     badges: [],
+    review_summary: { count: 3, averageRating: 4.67, withMedia: 1 },
   });
 
   assert.equal(product.offers[0]?.offer_id, "x");
   assert.equal("attributes" in product.offers[0]!, false);
   assert.deepEqual(product.size_chart_json, { rows: [["M", "75"]] });
+  assert.deepEqual(product.review_summary, {
+    count: 3,
+    averageRating: 4.67,
+    withMedia: 1,
+  });
 });
 
 test("normalizeLimit clamps unsafe values", () => {
@@ -121,6 +127,7 @@ test("sanitizeProduct maps Ozon image URLs through media manifest", () => {
       is_active: true,
       sort_order: 1,
       badges: [],
+      review_summary: { count: 0, averageRating: null, withMedia: 0 },
     });
 
     assert.equal(

@@ -793,6 +793,7 @@ GET /readyz
 GET /v1/products?limit=200
 GET /v1/products/:slug
 GET /v1/products/:slug/reviews?limit=20&cursor=...
+GET /v1/products/:slug/reviews?limit=20&mediaOnly=1
 GET /v1/catalog/stats
 ```
 
@@ -806,6 +807,11 @@ The reviews route returns only approved, published, matched reviews and locally
 served media. Source URLs, raw Ozon order references and internal mapping data
 are never exposed. See `docs/server-migration/OZON_REVIEWS_IMPORT.md` for the
 import, validation and future refresh workflow.
+
+Catalog product responses include a sanitized `review_summary` object used by
+catalog, collection and recommendation cards. Full reviews are loaded only on
+the canonical product page; `mediaOnly=1` filters the paginated list without
+changing the overall rating summary.
 
 ### Delivery / CDEK
 

@@ -506,6 +506,50 @@ async function loadFromApi() {
   }
 }
 
+async function loadReviewSummaryFromApi(slug) {
+  const url = `${API_BASE_URL}/v1/products/${encodeURIComponent(slug)}/reviews?limit=1`;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), API_TIMEOUT_MS);
+  try {
+    const authorization = apiBasicAuthHeader();
+    const res = await fetch(url, {
+      headers: authorization ? { Authorization: authorization } : {},
+      signal: ctrl.signal,
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (!data || !data.summary || typeof data.summary !== 'object') {
+      throw new Error('unexpected response shape');
+    }
+    return data.summary;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function enrichMissingReviewSummaries(products) {
+  if (!API_BASE_URL) return;
+  const missing = products.filter(product =>
+    !Object.prototype.hasOwnProperty.call(product, 'review_summary')
+  );
+  if (!missing.length) return;
+
+  let enriched = 0;
+  const concurrency = 6;
+  for (let offset = 0; offset < missing.length; offset += concurrency) {
+    const batch = missing.slice(offset, offset + concurrency);
+    await Promise.all(batch.map(async product => {
+      try {
+        product.review_summary = await loadReviewSummaryFromApi(product.slug);
+        enriched += 1;
+      } catch (err) {
+        console.warn(`! Review summary fetch failed for ${product.slug}: ${err.message}`);
+      }
+    }));
+  }
+  console.log(`✓ Enriched ${enriched}/${missing.length} product review summaries`);
+}
+
 async function loadProducts() {
   let products;
   try {
@@ -516,7 +560,7 @@ async function loadProducts() {
     products = loadFromLocalFile();
     console.log(`✓ Loaded ${products.length} product(s) from local file`);
   }
-  return products.filter(p =>
+  const visibleProducts = products.filter(p =>
     p &&
     p.slug &&
     Array.isArray(p.sizes) &&
@@ -524,6 +568,8 @@ async function loadProducts() {
     !RETIRED_PRODUCT_IDS.has(String(p.id || '')) &&
     !RETIRED_PRODUCT_SLUGS.has(String(p.slug || ''))
   );
+  await enrichMissingReviewSummaries(visibleProducts);
+  return visibleProducts;
 }
 
 function escapeHtml(value) {
@@ -1089,6 +1135,16 @@ function buildJsonLd(product) {
     datePublished: DATE_PUBLISHED_PLACEHOLDER,
     dateModified: DATE_MODIFIED_PLACEHOLDER,
   };
+  const reviewSummary = normalizeReviewSummary(product);
+  if (reviewSummary.count > 0 && reviewSummary.averageRating) {
+    ld.aggregateRating = {
+      '@type': 'AggregateRating',
+      ratingValue: reviewSummary.averageRating,
+      bestRating: 5,
+      worstRating: 1,
+      reviewCount: reviewSummary.count,
+    };
+  }
   if (offers.length) {
     ld.offers = {
       '@type': 'AggregateOffer',
@@ -1146,6 +1202,420 @@ function analyticsProduct(product, extra = {}) {
   };
 }
 
+function normalizeReviewSummary(product) {
+  const raw = product && product.review_summary && typeof product.review_summary === 'object'
+    ? product.review_summary
+    : {};
+  const count = Math.max(0, Number(raw.count) || 0);
+  const average = Number(raw.averageRating);
+  const withMedia = Math.max(0, Math.min(count, Number(raw.withMedia) || 0));
+  return {
+    count,
+    averageRating: Number.isFinite(average) && count > 0
+      ? Math.max(1, Math.min(5, average))
+      : null,
+    withMedia,
+  };
+}
+
+function reviewCountText(count) {
+  const value = Math.max(0, Number(count) || 0);
+  const mod100 = value % 100;
+  const mod10 = value % 10;
+  const word = mod100 >= 11 && mod100 <= 14
+    ? 'отзывов'
+    : mod10 === 1
+      ? 'отзыв'
+      : mod10 >= 2 && mod10 <= 4
+        ? 'отзыва'
+        : 'отзывов';
+  return `${value} ${word}`;
+}
+
+function reviewStarsHtml(averageRating, className = '') {
+  const average = Math.max(0, Math.min(5, Number(averageRating) || 0));
+  const width = Math.round((average / 5) * 1000) / 10;
+  return `<span class="p-rating-stars${className ? ` ${className}` : ''}" aria-hidden="true"><span class="p-rating-stars-base">★★★★★</span><span class="p-rating-stars-fill" style="width:${width}%">★★★★★</span></span>`;
+}
+
+function reviewCompactHtml(product, className = '', href = '') {
+  const summary = normalizeReviewSummary(product);
+  if (!summary.count || !summary.averageRating) return '';
+  const tag = href ? 'a' : 'div';
+  const hrefAttr = href ? ` href="${escapeAttr(href)}"` : '';
+  return `<${tag} class="p-rating-compact${className ? ` ${className}` : ''}"${hrefAttr} aria-label="Рейтинг ${summary.averageRating.toLocaleString('ru-RU')} из 5, ${reviewCountText(summary.count)}">${reviewStarsHtml(summary.averageRating)}<strong>${summary.averageRating.toLocaleString('ru-RU')}</strong><span>${reviewCountText(summary.count)}</span></${tag}>`;
+}
+
+function initialReviewSummaryHtml(product) {
+  const summary = normalizeReviewSummary(product);
+  if (!summary.count || !summary.averageRating) {
+    return '<div class="p-review-summary-empty">Проверяем отзывы покупателей…</div>';
+  }
+  return `<div class="p-review-score">
+      <strong>${summary.averageRating.toLocaleString('ru-RU')}</strong>
+      ${reviewStarsHtml(summary.averageRating)}
+      <span>${reviewCountText(summary.count)}</span>
+    </div>
+    <div class="p-review-summary-copy">
+      <strong>Оценка покупателей</strong>
+      <span>${summary.withMedia ? `${reviewCountText(summary.withMedia)} с фото или видео` : 'Отзывы без медиа тоже учитываются в рейтинге'}</span>
+    </div>`;
+}
+
+function renderReviewSection(product) {
+  const summary = normalizeReviewSummary(product);
+  return `<section class="p-reviews" id="reviews" data-review-slug="${escapeAttr(product.slug)}" aria-labelledby="pReviewsTitle">
+    <div class="p-review-head">
+      <div>
+        <div class="p-review-kicker">Опыт покупателей</div>
+        <h2 id="pReviewsTitle">Отзывы о товаре</h2>
+        <p>Оценки и медиа покупателей, оставленные после заказов на Ozon.</p>
+      </div>
+      <div class="p-review-head-count" id="pReviewHeadCount"${summary.count ? '' : ' hidden'}>${summary.count ? reviewCountText(summary.count) : ''}</div>
+    </div>
+    <div class="p-review-summary" id="pReviewSummary">${initialReviewSummaryHtml(product)}</div>
+    <div class="p-review-media-block" id="pReviewMediaBlock" hidden>
+      <div class="p-review-subhead">
+        <h3>Фото и видео покупателей</h3>
+        <span id="pReviewMediaCount"></span>
+      </div>
+      <div class="p-review-media-strip" id="pReviewMediaStrip" aria-label="Фото и видео из отзывов"></div>
+    </div>
+    <div class="p-review-toolbar">
+      <div class="p-review-filters" role="group" aria-label="Фильтр отзывов">
+        <button type="button" class="is-active" data-review-filter="all" aria-pressed="true">Все</button>
+        <button type="button" data-review-filter="media" aria-pressed="false">С фото и видео</button>
+      </div>
+      <div class="p-review-status" id="pReviewStatus" role="status" aria-live="polite"></div>
+    </div>
+    <div class="p-review-list" id="pReviewList" aria-busy="true">
+      <div class="p-review-skeleton" aria-hidden="true"></div>
+      <div class="p-review-skeleton" aria-hidden="true"></div>
+    </div>
+    <button type="button" class="p-review-more" id="pReviewMore" hidden>Показать ещё</button>
+  </section>
+  <dialog class="p-review-viewer" id="pReviewViewer" aria-labelledby="pReviewViewerTitle">
+    <div class="p-review-viewer-card">
+      <div class="p-review-viewer-head">
+        <div>
+          <div class="p-review-kicker">Медиа покупателя</div>
+          <h2 id="pReviewViewerTitle">Фото из отзыва</h2>
+        </div>
+        <button type="button" class="p-review-viewer-close" id="pReviewViewerClose" aria-label="Закрыть просмотр">×</button>
+      </div>
+      <div class="p-review-viewer-stage" id="pReviewViewerStage"></div>
+      <div class="p-review-viewer-nav">
+        <button type="button" id="pReviewViewerPrev" aria-label="Предыдущее медиа">‹</button>
+        <span id="pReviewViewerPosition" aria-live="polite"></span>
+        <button type="button" id="pReviewViewerNext" aria-label="Следующее медиа">›</button>
+      </div>
+    </div>
+  </dialog>`;
+}
+
+function renderProductReviewsScript(product) {
+  const slugJson = scriptJson(String(product.slug || ''));
+  return `<script>
+(function(){
+  var root = document.getElementById('reviews');
+  if (!root || !window.fetch) return;
+
+  var slug = ${slugJson};
+  var apiUrl = '/api/v1/products/' + encodeURIComponent(slug) + '/reviews';
+  var summaryNode = document.getElementById('pReviewSummary');
+  var headCountNode = document.getElementById('pReviewHeadCount');
+  var mediaBlock = document.getElementById('pReviewMediaBlock');
+  var mediaStrip = document.getElementById('pReviewMediaStrip');
+  var mediaCountNode = document.getElementById('pReviewMediaCount');
+  var statusNode = document.getElementById('pReviewStatus');
+  var listNode = document.getElementById('pReviewList');
+  var moreButton = document.getElementById('pReviewMore');
+  var filterButtons = Array.prototype.slice.call(root.querySelectorAll('[data-review-filter]'));
+  var viewer = document.getElementById('pReviewViewer');
+  var viewerStage = document.getElementById('pReviewViewerStage');
+  var viewerTitle = document.getElementById('pReviewViewerTitle');
+  var viewerPosition = document.getElementById('pReviewViewerPosition');
+  var viewerPrev = document.getElementById('pReviewViewerPrev');
+  var viewerNext = document.getElementById('pReviewViewerNext');
+  var viewerClose = document.getElementById('pReviewViewerClose');
+  var state = { filter: 'all', cursor: '', loading: false, hasLoaded: false };
+  var viewerItems = [];
+  var viewerIndex = 0;
+  var lastViewerTrigger = null;
+
+  function escapeHtml(value){
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function reviewCountText(value){
+    var count = Math.max(0, Number(value) || 0);
+    var mod100 = count % 100;
+    var mod10 = count % 10;
+    var word = mod100 >= 11 && mod100 <= 14
+      ? 'отзывов'
+      : mod10 === 1
+        ? 'отзыв'
+        : mod10 >= 2 && mod10 <= 4
+          ? 'отзыва'
+          : 'отзывов';
+    return count + ' ' + word;
+  }
+
+  function starMarkup(rating, className){
+    var value = Math.max(0, Math.min(5, Number(rating) || 0));
+    var width = Math.round((value / 5) * 1000) / 10;
+    return '<span class="p-rating-stars' + (className ? ' ' + className : '') + '" aria-hidden="true">' +
+      '<span class="p-rating-stars-base">★★★★★</span>' +
+      '<span class="p-rating-stars-fill" style="width:' + width + '%">★★★★★</span>' +
+      '</span>';
+  }
+
+  function dateText(value){
+    var date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    return new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+  }
+
+  function summaryMarkup(summary){
+    var count = Math.max(0, Number(summary && summary.count) || 0);
+    var average = Number(summary && summary.averageRating) || 0;
+    if (!count || !average) {
+      return '<div class="p-review-summary-empty"><strong>Отзывов пока нет</strong><span>Станьте первым покупателем, который поделится впечатлением.</span></div>';
+    }
+    var ratingCounts = summary.ratingCounts || {};
+    var rows = [5, 4, 3, 2, 1].map(function(rating){
+      var ratingCount = Math.max(0, Number(ratingCounts[rating]) || 0);
+      var width = count ? Math.round((ratingCount / count) * 1000) / 10 : 0;
+      return '<div class="p-review-hist-row"><span>' + rating + '</span><span aria-hidden="true">★</span>' +
+        '<span class="p-review-hist-track"><i style="width:' + width + '%"></i></span>' +
+        '<span>' + ratingCount + '</span></div>';
+    }).join('');
+    return '<div class="p-review-score"><strong>' + average.toLocaleString('ru-RU') + '</strong>' +
+      starMarkup(average) + '<span>' + reviewCountText(count) + '</span></div>' +
+      '<div class="p-review-hist" aria-label="Распределение оценок">' + rows + '</div>' +
+      '<div class="p-review-summary-copy"><strong>Отзывы реальных покупателей</strong><span>' +
+      (summary.withMedia ? reviewCountText(summary.withMedia) + ' с фото или видео' : 'Все оценки учтены в общем рейтинге') +
+      '</span></div>';
+  }
+
+  function mediaButton(media, review, compact){
+    var type = media && media.type === 'video' ? 'video' : 'image';
+    var preview = media && (type === 'video' ? media.previewUrl : (media.previewUrl || media.url)) || '';
+    if (type === 'image' && !preview) return '';
+    var label = type === 'video' ? 'Открыть видео покупателя' : 'Открыть фото покупателя';
+    var inner = type === 'video'
+      ? (preview ? '<img src="' + escapeHtml(preview) + '" alt="" loading="lazy">' : '<span class="p-review-video-fallback" aria-hidden="true">Видео</span>') + '<span class="p-review-play" aria-hidden="true">▶</span>'
+      : '<img src="' + escapeHtml(preview) + '" alt="Фото из отзыва ' + escapeHtml(review.author || 'покупателя') + '" loading="lazy">';
+    return '<button type="button" class="p-review-media' + (compact ? ' is-compact' : '') + '" data-review-media-id="' +
+      escapeHtml(media.id) + '" aria-label="' + label + '">' + inner + '</button>';
+  }
+
+  function reviewMarkup(review){
+    var media = Array.isArray(review.media) ? review.media : [];
+    var verified = review.verifiedPurchase
+      ? '<span class="p-review-verified"><span aria-hidden="true">✓</span> Покупка подтверждена</span>'
+      : '';
+    var text = review.text
+      ? '<p class="p-review-text">' + escapeHtml(review.text) + '</p>'
+      : '<p class="p-review-text is-muted">Покупатель поставил оценку без комментария.</p>';
+    return '<article class="p-review-card">' +
+      '<header class="p-review-card-head"><span class="p-review-avatar" aria-hidden="true">П</span><div>' +
+      '<strong>' + escapeHtml(review.author || 'Покупатель') + '</strong>' +
+      '<span>' + escapeHtml(dateText(review.publishedAt)) + '</span></div></header>' +
+      '<div class="p-review-card-rating"><span class="sr-only">Оценка ' + escapeHtml(review.rating) + ' из 5</span>' +
+      starMarkup(review.rating) + verified + '</div>' + text +
+      (media.length ? '<div class="p-review-card-media">' + media.map(function(item){ return mediaButton(item, review, true); }).join('') + '</div>' : '') +
+      '<footer>' + escapeHtml(review.sourceLabel || 'Отзыв покупателя') + '</footer>' +
+      '</article>';
+  }
+
+  function rememberMedia(items){
+    (items || []).forEach(function(review){
+      (review.media || []).forEach(function(media){
+        if (!media || !media.id || viewerItems.some(function(item){ return item.media.id === media.id; })) return;
+        viewerItems.push({ media: media, review: review });
+      });
+    });
+  }
+
+  function setSummary(summary){
+    summaryNode.innerHTML = summaryMarkup(summary || {});
+    var count = Math.max(0, Number(summary && summary.count) || 0);
+    root.classList.toggle('has-no-reviews', !count);
+    headCountNode.hidden = !count;
+    headCountNode.textContent = count ? reviewCountText(count) : '';
+    filterButtons[1].hidden = !(summary && Number(summary.withMedia));
+    var topRating = document.querySelector('.p-top-rating');
+    if (topRating) {
+      var average = Number(summary && summary.averageRating) || 0;
+      if (count && average) {
+        topRating.hidden = false;
+        topRating.innerHTML = starMarkup(average) + '<strong>' + average.toLocaleString('ru-RU') + '</strong><span>' + reviewCountText(count) + '</span>';
+        topRating.setAttribute('aria-label', 'Рейтинг ' + average.toLocaleString('ru-RU') + ' из 5, ' + reviewCountText(count));
+      } else {
+        topRating.hidden = true;
+      }
+    }
+  }
+
+  function setLoading(append){
+    state.loading = true;
+    listNode.hidden = false;
+    listNode.setAttribute('aria-busy', 'true');
+    statusNode.textContent = append ? 'Загружаем ещё отзывы…' : 'Загружаем отзывы…';
+    moreButton.disabled = true;
+    if (!append) {
+      listNode.innerHTML = '<div class="p-review-skeleton" aria-hidden="true"></div><div class="p-review-skeleton" aria-hidden="true"></div>';
+    }
+  }
+
+  function setError(append){
+    state.loading = false;
+    listNode.setAttribute('aria-busy', 'false');
+    statusNode.textContent = 'Не удалось загрузить отзывы. Проверьте соединение и попробуйте ещё раз.';
+    moreButton.hidden = false;
+    moreButton.disabled = false;
+    moreButton.textContent = 'Повторить загрузку';
+    if (!append) listNode.innerHTML = '<div class="p-review-empty"><strong>Отзывы временно недоступны</strong><span>Это не влияет на оформление заказа.</span></div>';
+  }
+
+  function loadList(append){
+    if (state.loading) return;
+    setLoading(append);
+    var params = new URLSearchParams({ limit: '8' });
+    if (append && state.cursor) params.set('cursor', state.cursor);
+    if (state.filter === 'media') params.set('mediaOnly', '1');
+    fetch(apiUrl + '?' + params.toString(), { headers: { Accept: 'application/json' } })
+      .then(function(response){ if (!response.ok) throw new Error('reviews_http_' + response.status); return response.json(); })
+      .then(function(payload){
+        var items = Array.isArray(payload.items) ? payload.items : [];
+        setSummary(payload.summary || {});
+        var totalCount = Math.max(0, Number(payload.summary && payload.summary.count) || 0);
+        rememberMedia(items);
+        if (!append) listNode.innerHTML = '';
+        if (items.length) listNode.insertAdjacentHTML('beforeend', items.map(reviewMarkup).join(''));
+        if (!append && !items.length && (state.filter === 'media' || totalCount > 0)) {
+          listNode.innerHTML = '<div class="p-review-empty"><strong>' + (state.filter === 'media' ? 'Отзывов с медиа пока нет' : 'Отзывов пока нет') + '</strong><span>' +
+            (state.filter === 'media' ? 'Можно посмотреть все оценки и комментарии покупателей.' : 'После первых покупок они появятся здесь.') + '</span></div>';
+        }
+        listNode.hidden = !totalCount && state.filter === 'all';
+        state.cursor = payload.nextCursor || '';
+        state.loading = false;
+        state.hasLoaded = true;
+        listNode.setAttribute('aria-busy', 'false');
+        statusNode.textContent = items.length ? 'Показано ' + listNode.querySelectorAll('.p-review-card').length + ' из ' +
+          (state.filter === 'media' ? Number(payload.summary && payload.summary.withMedia || 0) : Number(payload.summary && payload.summary.count || 0)) : '';
+        moreButton.hidden = !state.cursor;
+        moreButton.disabled = false;
+        moreButton.textContent = 'Показать ещё';
+      })
+      .catch(function(){ setError(append); });
+  }
+
+  function loadMediaStrip(){
+    fetch(apiUrl + '?limit=18&mediaOnly=1', { headers: { Accept: 'application/json' } })
+      .then(function(response){ if (!response.ok) throw new Error('reviews_media_http_' + response.status); return response.json(); })
+      .then(function(payload){
+        var reviews = Array.isArray(payload.items) ? payload.items : [];
+        rememberMedia(reviews);
+        var media = [];
+        reviews.forEach(function(review){
+          (review.media || []).forEach(function(item){ media.push({ media: item, review: review }); });
+        });
+        media = media.slice(0, 18);
+        if (!media.length) return;
+        mediaStrip.innerHTML = media.map(function(item){ return mediaButton(item.media, item.review, false); }).join('');
+        mediaCountNode.textContent = media.length + (media.length === 1 ? ' файл' : media.length >= 2 && media.length <= 4 ? ' файла' : ' файлов');
+        mediaBlock.hidden = false;
+      })
+      .catch(function(){ mediaBlock.hidden = true; });
+  }
+
+  function renderViewer(){
+    var item = viewerItems[viewerIndex];
+    if (!item) return;
+    var media = item.media;
+    viewerTitle.textContent = media.type === 'video' ? 'Видео из отзыва' : 'Фото из отзыва';
+    viewerPosition.textContent = (viewerIndex + 1) + ' из ' + viewerItems.length;
+    viewerPrev.disabled = viewerItems.length < 2;
+    viewerNext.disabled = viewerItems.length < 2;
+    if (media.type === 'video') {
+      viewerStage.innerHTML = '<video controls playsinline preload="metadata"' + (media.previewUrl ? ' poster="' + escapeHtml(media.previewUrl) + '"' : '') + '><source src="' + escapeHtml(media.url) + '" type="' + escapeHtml(media.mimeType || 'video/mp4') + '">Ваш браузер не поддерживает видео.</video>';
+    } else {
+      viewerStage.innerHTML = '<img src="' + escapeHtml(media.url) + '" alt="Фото из отзыва ' + escapeHtml(item.review.author || 'покупателя') + '">';
+    }
+  }
+
+  function openViewer(mediaId, trigger){
+    var nextIndex = viewerItems.findIndex(function(item){ return item.media.id === mediaId; });
+    if (nextIndex < 0 || !viewer || typeof viewer.showModal !== 'function') return;
+    viewerIndex = nextIndex;
+    lastViewerTrigger = trigger || document.activeElement;
+    renderViewer();
+    viewer.showModal();
+    viewerClose.focus();
+  }
+
+  function closeViewer(){
+    if (!viewer || !viewer.open) return;
+    var video = viewerStage.querySelector('video');
+    if (video) video.pause();
+    viewer.close();
+    viewerStage.innerHTML = '';
+    if (lastViewerTrigger && lastViewerTrigger.focus) lastViewerTrigger.focus();
+  }
+
+  function stepViewer(direction){
+    if (viewerItems.length < 2) return;
+    var video = viewerStage.querySelector('video');
+    if (video) video.pause();
+    viewerIndex = (viewerIndex + direction + viewerItems.length) % viewerItems.length;
+    renderViewer();
+  }
+
+  root.addEventListener('click', function(event){
+    var trigger = event.target.closest('[data-review-media-id]');
+    if (trigger) openViewer(trigger.getAttribute('data-review-media-id'), trigger);
+  });
+  filterButtons.forEach(function(button){
+    button.addEventListener('click', function(){
+      var filter = button.getAttribute('data-review-filter') || 'all';
+      if (filter === state.filter && state.hasLoaded) return;
+      state.filter = filter;
+      state.cursor = '';
+      filterButtons.forEach(function(item){
+        var active = item === button;
+        item.classList.toggle('is-active', active);
+        item.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+      loadList(false);
+    });
+  });
+  moreButton.addEventListener('click', function(){ loadList(Boolean(state.cursor)); });
+  if (viewerClose) viewerClose.addEventListener('click', closeViewer);
+  if (viewerPrev) viewerPrev.addEventListener('click', function(){ stepViewer(-1); });
+  if (viewerNext) viewerNext.addEventListener('click', function(){ stepViewer(1); });
+  if (viewer) {
+    viewer.addEventListener('cancel', function(event){ event.preventDefault(); closeViewer(); });
+    viewer.addEventListener('click', function(event){ if (event.target === viewer) closeViewer(); });
+  }
+  document.addEventListener('keydown', function(event){
+    if (!viewer || !viewer.open) return;
+    if (event.key === 'ArrowLeft') { event.preventDefault(); stepViewer(-1); }
+    if (event.key === 'ArrowRight') { event.preventDefault(); stepViewer(1); }
+  });
+
+  loadList(false);
+  loadMediaStrip();
+})();
+</script>`;
+}
+
 function scriptJson(value) {
   return JSON.stringify(value).replace(/</g, '\\u003c').replace(/-->/g, '--\\u003e');
 }
@@ -1160,6 +1630,7 @@ function productRecommendationCard(product) {
     : '';
   const collection = product.collection_name || product.anime_title || '';
   const sizes = catalogSizesHtml(product.sizes || []);
+  const rating = reviewCompactHtml(product, 'p-reco-rating', `/p/${product.slug}#reviews`);
   return `<article class="p-reco-card">
     <a class="p-reco-media" href="/p/${escapeAttr(product.slug)}" aria-label="${escapeAttr(product.name)}" data-metrika-product-id="${escapeAttr(product.id)}" data-metrika-list="product_recommendations">
       ${img ? renderResponsiveImage(img, {
@@ -1170,7 +1641,8 @@ function productRecommendationCard(product) {
     </a>
     <div class="p-reco-body">
       ${collection ? `<div class="p-reco-col">${escapeHtml(collection)}</div>` : ''}
-      <h3><a href="/p/${escapeAttr(product.slug)}" data-metrika-product-id="${escapeAttr(product.id)}" data-metrika-list="product_recommendations">${escapeHtml(product.name)}</a></h3>
+      <h3><a href="/p/${escapeAttr(product.slug)}" data-metrika-product-id="${escapeAttr(product.id)}" data-metrika-list="product_recommendations">${escapeHtml(product.name)}</a></h3>${rating ? `
+      ${rating}` : ''}
       <div class="p-reco-meta">
         ${price ? `<span class="p-reco-price">${escapeHtml(price)}${oldPriceHtml}</span>` : ''}
         ${sizes}
@@ -1257,6 +1729,9 @@ function renderProductPage(product, products = []) {
        </div>`
     : '';
   const recommendationsHtml = productRecommendations(product, products);
+  const reviewsHtml = renderReviewSection(product);
+  const topRatingHtml = reviewCompactHtml(product, 'p-top-rating', '#reviews')
+    || '<a class="p-rating-compact p-top-rating" href="#reviews" hidden></a>';
   const lead = publicCopy(product.short_description);
   const badgeSeen = new Set();
   const badgePool = [product.collection_name, product.anime_title, product.character_name]
@@ -1315,6 +1790,7 @@ ${renderHeaderPanels()}
         <div class="p-info">
           ${badgesHtml ? `<div class="p-badges">${badgesHtml}</div>` : ''}
           <h1>${escapeHtml(product.name)}</h1>
+          ${topRatingHtml}
           ${lead ? `<p class="p-lead">${escapeHtml(lead)}</p>` : ''}
           <div class="p-price-row">
             <span class="p-price">${escapeHtml(priceText)}</span>
@@ -1339,8 +1815,9 @@ ${renderHeaderPanels()}
           </div>
         </div>
       </div>
-      ${recommendationsHtml}
       ${product.description ? `<section class="p-desc"><h2>Описание</h2>${descriptionHtml(product)}</section>` : ''}
+      ${reviewsHtml}
+      ${recommendationsHtml}
     </div>
   </section>
 ${sizeChartModalHtml}
@@ -1541,6 +2018,7 @@ ${renderHeaderScript()}
   }
 })();
 </script>
+${renderProductReviewsScript(product)}
 </body>
 </html>
 `;
@@ -1557,6 +2035,7 @@ function collectionProductCard(product, analyticsList = 'collection') {
     .slice(0, 2)
     .map(value => `<span>${escapeHtml(value)}</span>`)
     .join('');
+  const rating = reviewCompactHtml(product, 'c-card-rating', `/p/${product.slug}#reviews`);
   return `<article class="c-card">
     <a class="c-card-media" href="/p/${escapeAttr(product.slug)}" aria-label="${escapeAttr(product.name)}" data-metrika-product-id="${escapeAttr(product.id)}" data-metrika-list="${escapeAttr(analyticsList)}">
       ${img ? renderResponsiveImage(img, {
@@ -1567,7 +2046,8 @@ function collectionProductCard(product, analyticsList = 'collection') {
     </a>
     <div class="c-card-body">
       ${badges ? `<div class="c-card-badges">${badges}</div>` : ''}
-      <h3><a href="/p/${escapeAttr(product.slug)}" data-metrika-product-id="${escapeAttr(product.id)}" data-metrika-list="${escapeAttr(analyticsList)}">${escapeHtml(product.name)}</a></h3>
+      <h3><a href="/p/${escapeAttr(product.slug)}" data-metrika-product-id="${escapeAttr(product.id)}" data-metrika-list="${escapeAttr(analyticsList)}">${escapeHtml(product.name)}</a></h3>${rating ? `
+      ${rating}` : ''}
       ${details ? `<p>${escapeHtml(details)}</p>` : ''}
       <div class="c-card-bottom">
         ${price ? `<strong>${escapeHtml(price)}</strong>` : '<strong>Цена в карточке</strong>'}
@@ -1880,6 +2360,7 @@ function renderCatalogPrerender(products, limit = 12) {
       `<div class="info">` +
         (collection ? `<div class="col">${escapeHtml(collection)}</div>` : '') +
         `<h3><a href="/p/${escapeAttr(p.slug)}">${escapeHtml(p.name)}</a></h3>` +
+        reviewCompactHtml(p, 'card-rating', `/p/${p.slug}#reviews`) +
         `<div class="meta">` +
           (price ? `<span class="price">${escapeHtml(price)}${oldPriceHtml}</span>` : '') +
           sizes +

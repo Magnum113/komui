@@ -54,7 +54,27 @@ const PUBLIC_PRODUCT_COLUMNS = `
       where r.product_id = p.id
     ),
     '[]'::jsonb
-  ) as slug_redirects
+  ) as slug_redirects,
+  (
+    select jsonb_build_object(
+      'count', count(*)::integer,
+      'averageRating', round(avg(rv.rating)::numeric, 2),
+      'withMedia', count(*) filter (where exists (
+        select 1
+        from public.merch_storefront_review_media rm
+        where rm.review_id = rv.id
+          and rm.processing_status = 'ready'
+          and rm.moderation_status = 'approved'
+          and not rm.is_suppressed
+          and nullif(rm.public_url, '') is not null
+      ))::integer
+    )
+    from public.merch_storefront_reviews rv
+    where rv.storefront_product_id = p.id
+      and rv.is_published
+      and rv.moderation_status = 'approved'
+      and rv.mapping_status = 'matched'
+  ) as review_summary
 `;
 
 const YANDEX_FEED_PRODUCT_COLUMNS = `
@@ -138,6 +158,13 @@ export type PublicProduct = {
   badges: string[];
   compare_at_price?: string | number | null;
   slug_redirects?: string[];
+  review_summary: PublicReviewSummary;
+};
+
+export type PublicReviewSummary = {
+  count: number;
+  averageRating: number | null;
+  withMedia: number;
 };
 
 export type YandexFeedProduct = {
@@ -168,6 +195,7 @@ export type YandexFeedProduct = {
 type ProductRow = PublicProduct & {
   offers: unknown;
   slug_redirects?: unknown;
+  review_summary?: unknown;
 };
 
 type YandexFeedProductRow = Omit<
@@ -221,11 +249,24 @@ export function sanitizeProduct(row: ProductRow): PublicProduct {
   const slugRedirects = Array.isArray(row.slug_redirects)
     ? row.slug_redirects.filter((item): item is string => typeof item === "string")
     : [];
+  const rawReviewSummary = row.review_summary && typeof row.review_summary === "object"
+    ? row.review_summary as Record<string, unknown>
+    : {};
+  const reviewCount = Math.max(0, Number(rawReviewSummary.count) || 0);
+  const reviewAverage = Number(rawReviewSummary.averageRating);
+  const reviewsWithMedia = Math.max(0, Number(rawReviewSummary.withMedia) || 0);
 
   const product: PublicProduct = {
     ...row,
     offers,
     slug_redirects: slugRedirects,
+    review_summary: {
+      count: reviewCount,
+      averageRating: Number.isFinite(reviewAverage) && reviewCount > 0
+        ? Math.max(1, Math.min(5, reviewAverage))
+        : null,
+      withMedia: Math.min(reviewCount, reviewsWithMedia),
+    },
   };
 
   return {

@@ -151,6 +151,7 @@ export class ReviewsRepository {
     productId: string,
     limit: number,
     cursor: ReviewCursor | null,
+    mediaOnly = false,
   ) {
     const [summaryResult, reviewsResult] = await Promise.all([
       this.db.query<ReviewSummaryRow>(
@@ -170,6 +171,7 @@ export class ReviewsRepository {
                 and m.processing_status = 'ready'
                 and m.moderation_status = 'approved'
                 and not m.is_suppressed
+                and nullif(m.public_url, '') is not null
             ))::text as reviews_with_media
           from public.merch_storefront_reviews r
           where r.storefront_product_id = $1
@@ -212,6 +214,7 @@ export class ReviewsRepository {
                   and m.processing_status = 'ready'
                   and m.moderation_status = 'approved'
                   and not m.is_suppressed
+                  and nullif(m.public_url, '') is not null
               ),
               '[]'::jsonb
             ) as media
@@ -221,13 +224,25 @@ export class ReviewsRepository {
             and r.moderation_status = 'approved'
             and r.mapping_status = 'matched'
             and (
+              not $5::boolean
+              or exists (
+                select 1
+                from public.merch_storefront_review_media filtered_media
+                where filtered_media.review_id = r.id
+                  and filtered_media.processing_status = 'ready'
+                  and filtered_media.moderation_status = 'approved'
+                  and not filtered_media.is_suppressed
+                  and nullif(filtered_media.public_url, '') is not null
+              )
+            )
+            and (
               $2::timestamptz is null
               or (r.published_at, r.id) < ($2::timestamptz, $3::uuid)
             )
           order by r.published_at desc, r.id desc
           limit $4
         `,
-        [productId, cursor?.publishedAt ?? null, cursor?.id ?? null, limit + 1],
+        [productId, cursor?.publishedAt ?? null, cursor?.id ?? null, limit + 1, mediaOnly],
       ),
     ]);
 
