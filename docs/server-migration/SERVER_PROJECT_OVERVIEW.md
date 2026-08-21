@@ -763,7 +763,7 @@ server/test/*.test.ts
 Current test count:
 
 ```text
-28 tests passing
+60 tests passing
 ```
 
 ## 9. Backend API routes
@@ -1092,10 +1092,10 @@ komui_staging
 PostgreSQL is local only; application connects through `DATABASE_URL` in
 `/etc/komui/backend.env`.
 
-Current table count in `public`:
+Current production table count in `public` after the reviews migration:
 
 ```text
-31 tables
+35 tables
 ```
 
 Important tables:
