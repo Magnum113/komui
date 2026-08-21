@@ -227,7 +227,7 @@ export function buildApp({ config, db = createDb(config) }: AppOptions) {
 
   app.get<{
     Params: { slug: string };
-    Querystring: { limit?: string; cursor?: string; mediaOnly?: string };
+    Querystring: { limit?: string; cursor?: string; mediaOnly?: string; textOnly?: string };
   }>("/v1/products/:slug/reviews", async (request, reply) => {
     const product = await catalog.findActiveProductBySlug(request.params.slug);
     if (!product) {
@@ -242,6 +242,7 @@ export function buildApp({ config, db = createDb(config) }: AppOptions) {
       normalizeReviewsLimit(request.query.limit),
       decodeReviewCursor(request.query.cursor),
       request.query.mediaOnly === "1" || request.query.mediaOnly === "true",
+      request.query.textOnly === "1" || request.query.textOnly === "true",
     );
     return reply
       .header("Cache-Control", "public, max-age=60, s-maxage=300")

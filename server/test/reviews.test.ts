@@ -42,6 +42,7 @@ test("ReviewsRepository returns only public review and media fields", async () =
             rating_4: "0",
             rating_5: "1",
             reviews_with_media: "1",
+            reviews_with_text: "1",
           }],
         };
       }
@@ -82,6 +83,7 @@ test("ReviewsRepository returns only public review and media fields", async () =
   assert.equal(result.summary.count, 1);
   assert.equal(result.summary.averageRating, 5);
   assert.equal(result.summary.withMedia, 1);
+  assert.equal(result.summary.withText, 1);
   assert.equal(result.items[0]?.sourceLabel, "Отзыв покупателя");
   assert.equal(result.items[0]?.author, "Покупатель");
   assert.equal(result.items[0]?.media[0]?.url, "/media/reviews/ab/hash/original.webp");
@@ -91,6 +93,7 @@ test("ReviewsRepository returns only public review and media fields", async () =
   assert.equal(queries.every((sql) => sql.includes("r.is_published")), true);
   assert.equal(queries.every((sql) => sql.includes("r.moderation_status = 'approved'")), true);
   assert.equal(queries.some((sql) => sql.includes("not $5::boolean")), true);
+  assert.equal(queries.some((sql) => sql.includes("not $6::boolean")), true);
   assert.equal(queries.every((sql) => sql.includes("nullif(m.public_url, '') is not null")), true);
 });
 
@@ -110,6 +113,7 @@ test("ReviewsRepository can filter the list to reviews with public media", async
             rating_4: "1",
             rating_5: "1",
             reviews_with_media: "1",
+            reviews_with_text: "1",
           }],
         };
       }
@@ -126,4 +130,43 @@ test("ReviewsRepository can filter the list to reviews with public media", async
 
   const listCall = calls.find((call) => call.sql.includes("order by r.published_at"));
   assert.equal(listCall?.values?.[4], true);
+});
+
+test("ReviewsRepository can filter the list to reviews with non-empty text", async () => {
+  const calls: Array<{ sql: string; values?: unknown[] }> = [];
+  const db = {
+    query: async (sql: string, values?: unknown[]) => {
+      calls.push({ sql, values });
+      if (sql.includes("round(avg(r.rating)")) {
+        return {
+          rows: [{
+            review_count: "2",
+            average_rating: "4.50",
+            rating_1: "0",
+            rating_2: "0",
+            rating_3: "0",
+            rating_4: "1",
+            rating_5: "1",
+            reviews_with_media: "0",
+            reviews_with_text: "1",
+          }],
+        };
+      }
+      return { rows: [] };
+    },
+  } as unknown as Db;
+
+  const result = await new ReviewsRepository(db).listPublicProductReviews(
+    "6218f78d-65ac-4832-a23d-b29f9ef91b32",
+    12,
+    null,
+    false,
+    true,
+  );
+
+  const listCall = calls.find((call) => call.sql.includes("order by r.published_at"));
+  assert.equal(listCall?.values?.[4], false);
+  assert.equal(listCall?.values?.[5], true);
+  assert.equal(listCall?.sql.includes("nullif(btrim(r.review_text), '') is not null"), true);
+  assert.equal(result.summary.withText, 1);
 });

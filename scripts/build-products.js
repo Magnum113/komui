@@ -1296,6 +1296,7 @@ function renderReviewSection(product) {
     <div class="p-review-toolbar">
       <div class="p-review-filters" role="group" aria-label="Фильтр отзывов">
         <button type="button" class="is-active" data-review-filter="all" aria-pressed="true">Все</button>
+        <button type="button" data-review-filter="text" aria-pressed="false">С текстом</button>
         <button type="button" data-review-filter="media" aria-pressed="false">С фото и видео</button>
       </div>
       <div class="p-review-status" id="pReviewStatus" role="status" aria-live="polite"></div>
@@ -1471,7 +1472,11 @@ function renderProductReviewsScript(product) {
     root.classList.toggle('has-no-reviews', !count);
     headCountNode.hidden = !count;
     headCountNode.textContent = count ? reviewCountText(count) : '';
-    filterButtons[1].hidden = !(summary && Number(summary.withMedia));
+    filterButtons.forEach(function(button){
+      var filter = button.getAttribute('data-review-filter');
+      if (filter === 'text') button.hidden = !(summary && Number(summary.withText));
+      if (filter === 'media') button.hidden = !(summary && Number(summary.withMedia));
+    });
     var topRating = document.querySelector('.p-top-rating');
     if (topRating) {
       var average = Number(summary && summary.averageRating) || 0;
@@ -1511,6 +1516,7 @@ function renderProductReviewsScript(product) {
     setLoading(append);
     var params = new URLSearchParams({ limit: '8' });
     if (append && state.cursor) params.set('cursor', state.cursor);
+    if (state.filter === 'text') params.set('textOnly', '1');
     if (state.filter === 'media') params.set('mediaOnly', '1');
     fetch(apiUrl + '?' + params.toString(), { headers: { Accept: 'application/json' } })
       .then(function(response){ if (!response.ok) throw new Error('reviews_http_' + response.status); return response.json(); })
@@ -1521,17 +1527,28 @@ function renderProductReviewsScript(product) {
         rememberMedia(items);
         if (!append) listNode.innerHTML = '';
         if (items.length) listNode.insertAdjacentHTML('beforeend', items.map(reviewMarkup).join(''));
-        if (!append && !items.length && (state.filter === 'media' || totalCount > 0)) {
-          listNode.innerHTML = '<div class="p-review-empty"><strong>' + (state.filter === 'media' ? 'Отзывов с медиа пока нет' : 'Отзывов пока нет') + '</strong><span>' +
-            (state.filter === 'media' ? 'Можно посмотреть все оценки и комментарии покупателей.' : 'После первых покупок они появятся здесь.') + '</span></div>';
+        if (!append && !items.length && (state.filter !== 'all' || totalCount > 0)) {
+          var emptyTitle = state.filter === 'text'
+            ? 'Отзывов с текстом пока нет'
+            : state.filter === 'media'
+              ? 'Отзывов с фото или видео пока нет'
+              : 'Отзывов пока нет';
+          var emptyDescription = state.filter === 'all'
+            ? 'После первых покупок они появятся здесь.'
+            : 'Можно посмотреть все оценки покупателей.';
+          listNode.innerHTML = '<div class="p-review-empty"><strong>' + emptyTitle + '</strong><span>' + emptyDescription + '</span></div>';
         }
         listNode.hidden = !totalCount && state.filter === 'all';
         state.cursor = payload.nextCursor || '';
         state.loading = false;
         state.hasLoaded = true;
         listNode.setAttribute('aria-busy', 'false');
-        statusNode.textContent = items.length ? 'Показано ' + listNode.querySelectorAll('.p-review-card').length + ' из ' +
-          (state.filter === 'media' ? Number(payload.summary && payload.summary.withMedia || 0) : Number(payload.summary && payload.summary.count || 0)) : '';
+        var filteredTotal = state.filter === 'text'
+          ? Number(payload.summary && payload.summary.withText || 0)
+          : state.filter === 'media'
+            ? Number(payload.summary && payload.summary.withMedia || 0)
+            : Number(payload.summary && payload.summary.count || 0);
+        statusNode.textContent = items.length ? 'Показано ' + listNode.querySelectorAll('.p-review-card').length + ' из ' + filteredTotal : '';
         moreButton.hidden = !state.cursor;
         moreButton.disabled = false;
         moreButton.textContent = 'Показать ещё';

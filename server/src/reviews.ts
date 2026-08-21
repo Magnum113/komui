@@ -40,6 +40,7 @@ type ReviewSummaryRow = {
   rating_4: string;
   rating_5: string;
   reviews_with_media: string;
+  reviews_with_text: string;
 };
 
 export type PublicReviewMedia = {
@@ -134,13 +135,14 @@ function publicAuthorName(value: string): string {
 
 function sanitizeReview(row: ReviewRow): PublicReview {
   const source = row.source === "manual" || row.source === "komui" ? row.source : "ozon";
+  const text = String(row.review_text ?? "").trim();
   return {
     id: row.id,
     source,
     sourceLabel: sourceLabel(),
     author: publicAuthorName(row.author_display_name),
     rating: Number(row.rating),
-    text: row.review_text || null,
+    text: text || null,
     publishedAt: new Date(row.published_at).toISOString(),
     verifiedPurchase: Boolean(row.is_verified_purchase),
     media: sanitizeMedia(row.media),
@@ -155,6 +157,7 @@ export class ReviewsRepository {
     limit: number,
     cursor: ReviewCursor | null,
     mediaOnly = false,
+    textOnly = false,
   ) {
     const [summaryResult, reviewsResult] = await Promise.all([
       this.db.query<ReviewSummaryRow>(
@@ -175,7 +178,10 @@ export class ReviewsRepository {
                 and m.moderation_status = 'approved'
                 and not m.is_suppressed
                 and nullif(m.public_url, '') is not null
-            ))::text as reviews_with_media
+            ))::text as reviews_with_media,
+            count(*) filter (
+              where nullif(btrim(r.review_text), '') is not null
+            )::text as reviews_with_text
           from public.merch_storefront_reviews r
           where r.storefront_product_id = $1
             and r.is_published
@@ -239,13 +245,17 @@ export class ReviewsRepository {
               )
             )
             and (
+              not $6::boolean
+              or nullif(btrim(r.review_text), '') is not null
+            )
+            and (
               $2::timestamptz is null
               or (r.published_at, r.id) < ($2::timestamptz, $3::uuid)
             )
           order by r.published_at desc, r.id desc
           limit $4
         `,
-        [productId, cursor?.publishedAt ?? null, cursor?.id ?? null, limit + 1, mediaOnly],
+        [productId, cursor?.publishedAt ?? null, cursor?.id ?? null, limit + 1, mediaOnly, textOnly],
       ),
     ]);
 
@@ -259,6 +269,7 @@ export class ReviewsRepository {
         count: Number(summary?.review_count ?? 0),
         averageRating: nullableNumber(summary?.average_rating),
         withMedia: Number(summary?.reviews_with_media ?? 0),
+        withText: Number(summary?.reviews_with_text ?? 0),
         ratingCounts: {
           1: Number(summary?.rating_1 ?? 0),
           2: Number(summary?.rating_2 ?? 0),
