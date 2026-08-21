@@ -370,7 +370,7 @@ async function upsertReview(
       is_published, raw_payload, content_fingerprint_sha256, last_synced_at
     ) values (
       $1, $2, 'ozon', $3, $4, $5::bigint, $6, $7, $8, $9, $10,
-      'Покупатель Ozon', $11, nullif($12, ''), $13::timestamptz, $14,
+      'Покупатель', $11, nullif($12, ''), $13::timestamptz, $14,
       $15, $16, $17, $18, $19, 'approved', $20, $21::jsonb, $22, now()
     )
     on conflict (source, source_review_key) do update set

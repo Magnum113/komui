@@ -82,7 +82,8 @@ test("ReviewsRepository returns only public review and media fields", async () =
   assert.equal(result.summary.count, 1);
   assert.equal(result.summary.averageRating, 5);
   assert.equal(result.summary.withMedia, 1);
-  assert.equal(result.items[0]?.sourceLabel, "Отзыв с Ozon");
+  assert.equal(result.items[0]?.sourceLabel, "Отзыв покупателя");
+  assert.equal(result.items[0]?.author, "Покупатель");
   assert.equal(result.items[0]?.media[0]?.url, "/media/reviews/ab/hash/original.webp");
   assert.equal("sourceUrl" in (result.items[0]?.media[0] ?? {}), false);
   assert.equal("source_order_reference_hash" in (result.items[0] ?? {}), false);

@@ -123,10 +123,13 @@ function sanitizeMedia(value: unknown): PublicReviewMedia[] {
   });
 }
 
-function sourceLabel(source: string): string {
-  if (source === "ozon") return "Отзыв с Ozon";
-  if (source === "komui") return "Отзыв покупателя KOMUI";
+function sourceLabel(): string {
   return "Отзыв покупателя";
+}
+
+function publicAuthorName(value: string): string {
+  const name = String(value || "").trim();
+  return !name || /ozon|озон/i.test(name) ? "Покупатель" : name;
 }
 
 function sanitizeReview(row: ReviewRow): PublicReview {
@@ -134,8 +137,8 @@ function sanitizeReview(row: ReviewRow): PublicReview {
   return {
     id: row.id,
     source,
-    sourceLabel: sourceLabel(source),
-    author: row.author_display_name || "Покупатель",
+    sourceLabel: sourceLabel(),
+    author: publicAuthorName(row.author_display_name),
     rating: Number(row.rating),
     text: row.review_text || null,
     publishedAt: new Date(row.published_at).toISOString(),

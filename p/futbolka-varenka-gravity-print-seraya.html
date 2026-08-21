@@ -165,7 +165,7 @@
       <div>
         <div class="p-review-kicker">Опыт покупателей</div>
         <h2 id="pReviewsTitle">Отзывы о товаре</h2>
-        <p>Оценки и медиа покупателей, оставленные после заказов на Ozon.</p>
+        <p>Оценки, фотографии и видео покупателей.</p>
       </div>
       <div class="p-review-head-count" id="pReviewHeadCount">1 отзыв</div>
     </div>
@@ -666,9 +666,14 @@
     return '<div class="p-review-score"><strong>' + ratingText(average) + '</strong>' +
       starMarkup(average) + '<span>' + reviewCountText(count) + '</span></div>' +
       '<div class="p-review-hist" aria-label="Распределение оценок">' + rows + '</div>' +
-      '<div class="p-review-summary-copy"><strong>Отзывы реальных покупателей</strong><span>' +
+      '<div class="p-review-summary-copy"><strong>Отзывы покупателей</strong><span>' +
       (summary.withMedia ? reviewCountText(summary.withMedia) + ' с фото или видео' : 'Все оценки учтены в общем рейтинге') +
       '</span></div>';
+  }
+
+  function reviewAuthorName(value){
+    var name = String(value || '').trim();
+    return !name || /ozon|озон/i.test(name) ? 'Покупатель' : name;
   }
 
   function mediaButton(media, review, compact){
@@ -678,7 +683,7 @@
     var label = type === 'video' ? 'Открыть видео покупателя' : 'Открыть фото покупателя';
     var inner = type === 'video'
       ? (preview ? '<img src="' + escapeHtml(preview) + '" alt="" loading="lazy">' : '<span class="p-review-video-fallback" aria-hidden="true">Видео</span>') + '<span class="p-review-play" aria-hidden="true">▶</span>'
-      : '<img src="' + escapeHtml(preview) + '" alt="Фото из отзыва ' + escapeHtml(review.author || 'покупателя') + '" loading="lazy">';
+      : '<img src="' + escapeHtml(preview) + '" alt="Фото из отзыва ' + escapeHtml(reviewAuthorName(review.author).toLowerCase()) + '" loading="lazy">';
     return '<button type="button" class="p-review-media' + (compact ? ' is-compact' : '') + '" data-review-media-id="' +
       escapeHtml(media.id) + '" aria-label="' + label + '">' + inner + '</button>';
   }
@@ -693,12 +698,11 @@
       : '<p class="p-review-text is-muted">Покупатель поставил оценку без комментария.</p>';
     return '<article class="p-review-card">' +
       '<header class="p-review-card-head"><span class="p-review-avatar" aria-hidden="true">П</span><div>' +
-      '<strong>' + escapeHtml(review.author || 'Покупатель') + '</strong>' +
+      '<strong>' + escapeHtml(reviewAuthorName(review.author)) + '</strong>' +
       '<span>' + escapeHtml(dateText(review.publishedAt)) + '</span></div></header>' +
       '<div class="p-review-card-rating"><span class="sr-only">Оценка ' + escapeHtml(review.rating) + ' из 5</span>' +
       starMarkup(review.rating) + verified + '</div>' + text +
       (media.length ? '<div class="p-review-card-media">' + media.map(function(item){ return mediaButton(item, review, true); }).join('') + '</div>' : '') +
-      '<footer>' + escapeHtml(review.sourceLabel || 'Отзыв покупателя') + '</footer>' +
       '</article>';
   }
 
