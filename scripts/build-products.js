@@ -1442,9 +1442,10 @@ function renderProductReviewsScript(product) {
     var verified = review.verifiedPurchase
       ? '<span class="p-review-verified"><span aria-hidden="true">✓</span> Покупка подтверждена</span>'
       : '';
-    var text = review.text
-      ? '<p class="p-review-text">' + escapeHtml(review.text) + '</p>'
-      : '<p class="p-review-text is-muted">Покупатель поставил оценку без комментария.</p>';
+    var reviewText = String(review.text || '').trim();
+    var text = reviewText
+      ? '<p class="p-review-text">' + escapeHtml(reviewText) + '</p>'
+      : '';
     return '<article class="p-review-card">' +
       '<header class="p-review-card-head"><span class="p-review-avatar" aria-hidden="true">П</span><div>' +
       '<strong>' + escapeHtml(reviewAuthorName(review.author)) + '</strong>' +
