@@ -1240,7 +1240,7 @@ function reviewCountText(count) {
 function reviewRatingText(value) {
   const rating = Math.max(0, Math.min(5, Number(value) || 0));
   return rating.toLocaleString('ru-RU', {
-    minimumFractionDigits: 1,
+    minimumFractionDigits: 0,
     maximumFractionDigits: 1,
   });
 }
@@ -1257,7 +1257,7 @@ function reviewCompactHtml(product, className = '', href = '') {
   const tag = href ? 'a' : 'div';
   const hrefAttr = href ? ` href="${escapeAttr(href)}"` : '';
   const ratingText = reviewRatingText(summary.averageRating);
-  return `<${tag} class="p-rating-compact${className ? ` ${className}` : ''}"${hrefAttr} aria-label="Рейтинг ${ratingText} из 5, ${reviewCountText(summary.count)}">${reviewStarsHtml(summary.averageRating)}<strong>${ratingText}</strong><span>${reviewCountText(summary.count)}</span></${tag}>`;
+  return `<${tag} class="p-rating-compact${className ? ` ${className}` : ''}"${hrefAttr} aria-label="Рейтинг ${ratingText} из 5, ${reviewCountText(summary.count)}">${reviewStarsHtml(summary.averageRating)}<strong>${ratingText}</strong><span class="p-rating-count" data-count="${summary.count}">${reviewCountText(summary.count)}</span></${tag}>`;
 }
 
 function initialReviewSummaryHtml(product) {
@@ -1382,7 +1382,7 @@ function renderProductReviewsScript(product) {
 
   function ratingText(value){
     var rating = Math.max(0, Math.min(5, Number(value) || 0));
-    return rating.toLocaleString('ru-RU', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    return rating.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 1 });
   }
 
   function starMarkup(rating, className){
@@ -1478,7 +1478,7 @@ function renderProductReviewsScript(product) {
       var average = Number(summary && summary.averageRating) || 0;
       if (count && average) {
         topRating.hidden = false;
-        topRating.innerHTML = starMarkup(average) + '<strong>' + ratingText(average) + '</strong><span>' + reviewCountText(count) + '</span>';
+        topRating.innerHTML = starMarkup(average) + '<strong>' + ratingText(average) + '</strong><span class="p-rating-count" data-count="' + count + '">' + reviewCountText(count) + '</span>';
         topRating.setAttribute('aria-label', 'Рейтинг ' + ratingText(average) + ' из 5, ' + reviewCountText(count));
       } else {
         topRating.hidden = true;

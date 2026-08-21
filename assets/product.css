@@ -51,6 +51,7 @@
 .p-rating-compact{display:inline-flex;align-items:center;gap:7px;width:max-content;max-width:100%;min-height:32px;color:#52566a;font-size:13px;text-decoration:none}
 .p-rating-compact[hidden]{display:none}
 .p-rating-compact strong{color:#14151c;font-size:14px}
+.p-rating-count{white-space:nowrap}
 a.p-rating-compact:hover span:last-child{color:var(--p-mag);text-decoration:underline;text-underline-offset:3px}
 .p-top-rating{margin-top:-7px;margin-bottom:-4px}
 .p-top-rating:focus-visible,.p-review-filters button:focus-visible,.p-review-media:focus-visible,.p-review-more:focus-visible,.p-review-viewer button:focus-visible{outline:3px solid rgba(0,38,249,.25);outline-offset:3px}
@@ -332,6 +333,9 @@ body.has-size-chart{overflow:hidden}
   .p-reco h2{font-size:19px;overflow-wrap:anywhere}
   .p-reco-strip{grid-auto-columns:minmax(150px,168px);gap:10px;margin-right:0}
   .p-reco-body{padding:11px;min-height:124px}
+  .p-reco-rating,.c-card-rating{gap:4px}
+  .p-reco-rating .p-rating-count,.c-card-rating .p-rating-count{flex:0 0 auto;font-size:0;line-height:1}
+  .p-reco-rating .p-rating-count::after,.c-card-rating .p-rating-count::after{content:"(" attr(data-count) ")";font-size:10px}
   .p-reco-price{font-size:12px}
   .p-size-chart-modal{align-items:flex-end;padding:0;background:rgba(20,21,28,.54)}
   .p-size-chart-dialog{width:100%;max-height:88vh;border-radius:18px 18px 0 0}
