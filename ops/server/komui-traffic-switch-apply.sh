@@ -139,6 +139,14 @@ location ^~ /media/products/ {
     add_header X-Content-Type-Options "nosniff" always;
 }
 
+location ^~ /media/reviews/ {
+    alias /var/lib/komui/review-media-cache/public/reviews/;
+    access_log off;
+    expires 30d;
+    add_header Cache-Control "public, max-age=2592000, immutable";
+    add_header X-Content-Type-Options "nosniff" always;
+}
+
 location = /api/v1/webhooks/tbank {
     proxy_pass http://127.0.0.1:3001/v1/webhooks/tbank;
     proxy_http_version 1.1;

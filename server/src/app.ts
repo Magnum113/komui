@@ -47,6 +47,11 @@ import {
   handleRuntimeRead,
 } from "./runtimeSwitch";
 import { handleAdminCreateCdekShipment } from "./cdekShipments";
+import {
+  decodeReviewCursor,
+  normalizeReviewsLimit,
+  ReviewsRepository,
+} from "./reviews";
 
 type AppOptions = {
   config: AppConfig;
@@ -130,6 +135,7 @@ export function buildApp({ config, db = createDb(config) }: AppOptions) {
   });
 
   const catalog = new CatalogRepository(db);
+  const reviews = new ReviewsRepository(db);
   const stage5Context = { config, db };
 
   app.addHook("onClose", async () => {
@@ -217,6 +223,31 @@ export function buildApp({ config, db = createDb(config) }: AppOptions) {
       reply.header("X-Komui-Canonical-Slug", product.slug);
     }
     return product;
+  });
+
+  app.get<{
+    Params: { slug: string };
+    Querystring: { limit?: string; cursor?: string };
+  }>("/v1/products/:slug/reviews", async (request, reply) => {
+    const product = await catalog.findActiveProductBySlug(request.params.slug);
+    if (!product) {
+      return jsonError(reply, 404, "not_found", "Product not found");
+    }
+    if (product.slug !== request.params.slug) {
+      reply.header("X-Komui-Canonical-Slug", product.slug);
+    }
+
+    const result = await reviews.listPublicProductReviews(
+      product.id,
+      normalizeReviewsLimit(request.query.limit),
+      decodeReviewCursor(request.query.cursor),
+    );
+    return reply
+      .header("Cache-Control", "public, max-age=60, s-maxage=300")
+      .send({
+        product: { id: product.id, slug: product.slug },
+        ...result,
+      });
   });
 
   app.get("/v1/catalog/stats", async () => catalog.stats());

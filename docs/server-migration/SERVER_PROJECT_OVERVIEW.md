@@ -740,6 +740,8 @@ server/src/app.ts            Fastify app, routes, admin auth, error handler
 server/src/config.ts         env schema and public config
 server/src/db.ts             pg Pool and transaction helper
 server/src/catalog.ts        storefront product read API
+server/src/reviews.ts        public product reviews API
+server/src/importOzonReviews.ts  idempotent Ozon Seller CSV/media importer
 server/src/checkout.ts       order/cart validation and repository
 server/src/stage5.ts         CDEK, promo, T-Bank handlers, compatibility route
 server/src/cdek.ts           CDEK client and package calculations
@@ -790,6 +792,7 @@ GET /readyz
 ```text
 GET /v1/products?limit=200
 GET /v1/products/:slug
+GET /v1/products/:slug/reviews?limit=20&cursor=...
 GET /v1/catalog/stats
 ```
 
@@ -798,6 +801,11 @@ Uses `public.merch_storefront_products`.
 Only public storefront fields are returned. Raw/internal fields such as
 `source_payload`, `ozon_attributes`, internal costs and warehouse data are not
 returned to the browser.
+
+The reviews route returns only approved, published, matched reviews and locally
+served media. Source URLs, raw Ozon order references and internal mapping data
+are never exposed. See `docs/server-migration/OZON_REVIEWS_IMPORT.md` for the
+import, validation and future refresh workflow.
 
 ### Delivery / CDEK
 
@@ -1105,6 +1113,9 @@ public.merch_cdek_shipments            CDEK shipment records
 public.merch_cdek_events               CDEK events
 public.merch_admin_import_previews     Ozon import previews
 public.merch_admin_jobs                Ozon import jobs
+public.merch_review_sync_runs           review import audit runs
+public.merch_storefront_reviews         normalized product reviews
+public.merch_storefront_review_media    local review images/videos
 ```
 
 Current key counts:
@@ -1257,9 +1268,10 @@ Daily examples:
 
 Backup includes:
 
-- PostgreSQL custom dump;
+- PostgreSQL custom dumps for `komui_staging` and `komui_production` by default;
 - PostgreSQL globals;
 - runtime config archive;
+- local review media and private source archives;
 - Nginx/systemd relevant configs;
 - manifest;
 - checksums.

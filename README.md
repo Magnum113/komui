@@ -17,6 +17,8 @@ nginx отдаёт HTML/static, Fastify backend отдаёт API, PostgreSQL х�
 - Локальный fallback-каталог, если API недоступен.
 - SEO product pages, collection pages, sitemap, robots и LLM-файлы.
 - Локальный media-cache для товарных фото вместо hotlink на Ozon CDN.
+- Импортированные отзывы Ozon с оценками, текстами, фото и видео; публичные
+  медиа хранятся локально на сервере, а отменённые отзывы не публикуются.
 
 ## Технологии
 
@@ -156,6 +158,11 @@ node scripts/build-products.js
 
 Актуальные товарные фото production не хранятся в git. Они живут на сервере в
 `/var/lib/komui/media-cache` и отдаются nginx по `/media/products/...`.
+
+Фото и видео отзывов также не хранятся в git. Они находятся в
+`/var/lib/komui/review-media-cache` и отдаются только по локальным URL
+`/media/reviews/...`. Полный порядок повторного импорта и проверки описан в
+[`docs/server-migration/OZON_REVIEWS_IMPORT.md`](docs/server-migration/OZON_REVIEWS_IMPORT.md).
 
 ### `data/storefront-products.js`
 

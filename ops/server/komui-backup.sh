@@ -4,7 +4,25 @@ set -Eeuo pipefail
 umask 077
 
 BACKUP_ROOT="${KOMUI_BACKUP_ROOT:-/var/backups/komui}"
-DB_NAME="${KOMUI_BACKUP_DB:-komui_staging}"
+if [[ -n "${KOMUI_BACKUP_DBS:-}" ]]; then
+  DB_LIST="$KOMUI_BACKUP_DBS"
+elif [[ -n "${KOMUI_BACKUP_DB:-}" ]]; then
+  # Backward compatibility for installations that explicitly configured one DB.
+  DB_LIST="$KOMUI_BACKUP_DB"
+else
+  DB_LIST="komui_staging komui_production"
+fi
+read -r -a DB_NAMES <<< "$DB_LIST"
+if [[ "${#DB_NAMES[@]}" -eq 0 ]]; then
+  echo "No databases configured for backup." >&2
+  exit 1
+fi
+for db_name in "${DB_NAMES[@]}"; do
+  if [[ ! "$db_name" =~ ^[A-Za-z0-9_]+$ ]]; then
+    echo "Unsafe database name: $db_name" >&2
+    exit 1
+  fi
+done
 KEY_FILE="${KOMUI_BACKUP_KEY_FILE:-/etc/komui/backup.key}"
 EXTERNAL_ENV_FILE="${KOMUI_BACKUP_EXTERNAL_ENV_FILE:-/etc/komui/yandex-backup.env}"
 KEY_DIR="$(dirname "$KEY_FILE")"
@@ -42,7 +60,6 @@ run_psql() {
   runuser -u postgres -- psql -X -v ON_ERROR_STOP=1 "$@"
 }
 
-DB_DUMP="$TMP_DIR/${DB_NAME}.dump"
 GLOBALS_DUMP="$TMP_DIR/postgres-globals.sql"
 CONFIG_ARCHIVE="$TMP_DIR/runtime-config.tar.gz"
 PLAIN_ARCHIVE="$TMP_DIR/komui-backup-${RUN_ID}.tar.gz"
@@ -52,10 +69,15 @@ LOG_FILE="$LOG_DIR/komui-backup-${RUN_ID}.log"
 {
   echo "backup_id=$RUN_ID"
   echo "host=$HOSTNAME"
-  echo "database=$DB_NAME"
+  echo "databases=${DB_NAMES[*]}"
   echo "started_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-  runuser -u postgres -- pg_dump -Fc --no-owner --no-acl "$DB_NAME" > "$DB_DUMP"
+  dump_basenames=()
+  for db_name in "${DB_NAMES[@]}"; do
+    dump_basename="${db_name}.dump"
+    runuser -u postgres -- pg_dump -Fc --no-owner --no-acl "$db_name" > "$TMP_DIR/$dump_basename"
+    dump_basenames+=("$dump_basename")
+  done
   runuser -u postgres -- pg_dumpall --globals-only > "$GLOBALS_DUMP"
 
   tar -C / -czf "$CONFIG_ARCHIVE" --ignore-failed-read \
@@ -69,27 +91,37 @@ LOG_FILE="$LOG_DIR/komui-backup-${RUN_ID}.log"
     opt/komui/frontend-releases \
     var/lib/komui/deployments.jsonl \
     var/lib/komui/deployment-current.json \
+    var/lib/komui/review-media-cache \
+    var/lib/komui/review-imports \
     var/lib/komui/staging-root 2>/dev/null || true
+
+  databases_json="["
+  separator=""
+  for db_name in "${DB_NAMES[@]}"; do
+    databases_json+="${separator}\"${db_name}\""
+    separator=","
+  done
+  databases_json+="]"
 
   cat > "$TMP_DIR/manifest.json" <<MANIFEST
 {
   "backupId": "$RUN_ID",
   "host": "$HOSTNAME",
-  "database": "$DB_NAME",
+  "databases": $databases_json,
   "createdAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "frontendRelease": "$(readlink -f /var/lib/komui/staging-root 2>/dev/null || true)",
   "backendService": "$(systemctl show komui-backend -p ActiveState -p SubState --value 2>/dev/null | paste -sd ' ' - || true)",
-  "postgresVersion": "$(run_psql -d "$DB_NAME" -Atc 'select version()' | sed 's/"/\\"/g')"
+  "postgresVersion": "$(run_psql -d "${DB_NAMES[0]}" -Atc 'select version()' | sed 's/"/\\"/g')"
 }
 MANIFEST
 
   (
     cd "$TMP_DIR"
-    sha256sum "${DB_NAME}.dump" postgres-globals.sql runtime-config.tar.gz manifest.json > SHA256SUMS
+    sha256sum "${dump_basenames[@]}" postgres-globals.sql runtime-config.tar.gz manifest.json > SHA256SUMS
   )
 
   tar -C "$TMP_DIR" -czf "$PLAIN_ARCHIVE" \
-    "${DB_NAME}.dump" \
+    "${dump_basenames[@]}" \
     postgres-globals.sql \
     runtime-config.tar.gz \
     manifest.json \
