@@ -852,3 +852,39 @@ test("buildOzonPreview groups unmatched structured Ozon offers as new product ca
     true,
   );
 });
+
+test("buildOzonPreview removes a SKU size before a trailing colour from suggested names", () => {
+  const preview = buildOzonPreview(
+    [
+      {
+        offer_id: "D2-TSH-EMB-WGRY-L",
+        sku: 1001,
+        product_id: 2001,
+        name: "Вареная футболка Наруто с вышивкой Itachi L Серая",
+        price: { marketing_seller_price: "8000" },
+        primary_image: ["https://img.test/itachi-main.jpg"],
+        media_loaded: true,
+      },
+      {
+        offer_id: "D2-TSH-EMB-WGRY-XL",
+        sku: 1002,
+        product_id: 2002,
+        name: "Вареная футболка Наруто с вышивкой Itachi XL Серая",
+        price: { marketing_seller_price: "8000" },
+        primary_image: ["https://img.test/itachi-main.jpg"],
+        media_loaded: true,
+      },
+    ],
+    [],
+    [],
+    { serverPostgres: true, supabase: false },
+    { supabaseWriteEnabled: false },
+    { updatePrices: false },
+  );
+
+  assert.equal(preview.newProductGroups.length, 1);
+  assert.equal(
+    preview.newProductGroups[0]?.suggestedName,
+    "Вареная футболка Наруто с вышивкой Itachi Серая",
+  );
+});

@@ -1540,7 +1540,12 @@ function analyzeStorefrontSizeChartConflicts(
 function stripTrailingSizeFromName(value: string | undefined) {
   if (!value) return "";
   return value
-    .replace(/\s+(?:[234]\s?XL|XXXL|XXL|XL|XS|S|M|L)\s*$/i, "")
+    // Ozon may place the colour after the size (for example, "Itachi L
+    // Серая"), so limiting cleanup to the final token leaks a SKU size into
+    // the suggested storefront card name. Remove only standalone size tokens;
+    // words containing the same letters are left intact.
+    .replace(/\s+(?:[234]\s?XL|XXXL|XXL|XL|XS|S|M|L)(?=\s|$)/gi, " ")
+    .replace(/\s{2,}/g, " ")
     .trim();
 }
 
