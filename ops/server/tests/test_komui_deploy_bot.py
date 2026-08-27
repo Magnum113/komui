@@ -88,5 +88,50 @@ last status: success
         self.assertIn("❌ Фоновые задачи и синхронизации: ошибка", message)
 
 
+class CompactMenuTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.bot = load_bot_module()
+
+    def test_persistent_keyboard_contains_only_one_menu_button(self) -> None:
+        keyboard = self.bot.keyboard()
+
+        self.assertEqual(keyboard["keyboard"], [[{"text": "⚙️ Управление"}]])
+        self.assertTrue(keyboard["is_persistent"])
+
+    def test_inline_menu_groups_store_and_admin_actions(self) -> None:
+        root = self.bot.main_menu_keyboard()["inline_keyboard"]
+        store = self.bot.store_menu_keyboard()["inline_keyboard"]
+        admin = self.bot.admin_menu_keyboard()["inline_keyboard"]
+
+        self.assertEqual([button["callback_data"] for button in root[0]], ["menu:store", "menu:admin"])
+        self.assertEqual(store[-1][0]["callback_data"], "menu:root")
+        self.assertEqual(admin[-1][0]["callback_data"], "menu:root")
+        self.assertIn("deploy:prod", {button["callback_data"] for row in store for button in row})
+        self.assertIn(
+            "admin:rollback:prod",
+            {button["callback_data"] for row in admin for button in row},
+        )
+
+    def test_menu_callback_edits_existing_message(self) -> None:
+        update = {
+            "callback_query": {
+                "id": "callback-1",
+                "data": "menu:store",
+                "message": {"message_id": 44, "chat": {"id": 1}},
+            }
+        }
+
+        with patch.object(self.bot, "answer_callback") as answer, patch.object(
+            self.bot, "edit_menu"
+        ) as edit:
+            self.bot.handle_update(update)
+
+        answer.assert_called_once_with("callback-1", "Магазин")
+        edit.assert_called_once()
+        self.assertEqual(edit.call_args.args[0], update["callback_query"])
+        self.assertIn("Магазин KOMUI", edit.call_args.args[1])
+
+
 if __name__ == "__main__":
     unittest.main()

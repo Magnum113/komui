@@ -11,7 +11,7 @@ import re
 import subprocess
 import sys
 import tempfile
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -20,15 +20,72 @@ DEFAULT_DB = "komui_production"
 DEFAULT_STATE_PATH = Path("/var/lib/komui/order-monitor/state.json")
 DEFAULT_ALERT_COMMAND = Path("/usr/local/sbin/komui-alert")
 DEFAULT_LOCK_PATH = Path("/run/komui-order-monitor.lock")
-STATE_VERSION = 1
+DEFAULT_ORDERS_URL = "https://admin.komui.ru/komui/orders"
+STATE_VERSION = 2
+ORDER_OVERLAP = timedelta(minutes=2)
+MAX_NOTIFIED_ORDER_IDS = 1000
 
 
 REPORT_SQL = r"""
 with params as (
   select
     __SINCE__::timestamptz as since_at,
+    __ORDER_SINCE__::timestamptz as order_since_at,
     __LAST_ATTEMPT_ID__::bigint as last_attempt_id,
     clock_timestamp() as checked_at
+),
+new_order_rows as (
+  select
+    o.id,
+    o.order_number,
+    o.status,
+    right(regexp_replace(coalesce(o.customer_phone, ''), '[^0-9]', '', 'g'), 4) as phone_tail,
+    o.delivery_city,
+    o.delivery_point_code,
+    o.total_amount,
+    o.promo_code,
+    o.created_at,
+    coalesce(items.value, '[]'::jsonb) as items
+  from public.merch_customer_orders o
+  cross join params p
+  left join lateral (
+    select jsonb_agg(
+      jsonb_build_object(
+        'productName', i.product_name,
+        'size', i.size,
+        'quantity', i.quantity,
+        'lineTotalAmount', i.line_total_amount
+      ) order by i.id
+    ) as value
+    from public.merch_customer_order_items i
+    where i.order_id = o.id
+  ) items on true
+  where o.created_at > p.order_since_at
+    and o.created_at <= p.checked_at
+  order by o.created_at, o.id
+),
+new_orders as (
+  select jsonb_build_object(
+    'count', count(*),
+    'items', coalesce(
+      jsonb_agg(
+        jsonb_build_object(
+          'orderId', id,
+          'orderNumber', order_number,
+          'status', status,
+          'phoneTail', phone_tail,
+          'deliveryCity', delivery_city,
+          'deliveryPointCode', delivery_point_code,
+          'totalAmount', total_amount,
+          'promoCode', promo_code,
+          'createdAt', created_at,
+          'items', items
+        ) order by created_at, id
+      ),
+      '[]'::jsonb
+    )
+  ) as value
+  from new_order_rows
 ),
 network_error_rows as (
   select
@@ -281,6 +338,7 @@ paid_without_shipment as (
 select jsonb_build_object(
   'checkedAt', to_char(p.checked_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
   'maxPaymentAttemptId', coalesce((select max(id) from public.merch_payment_attempts), 0),
+  'newOrders', (select value from new_orders),
   'networkErrors', (select value from network_errors),
   'duplicateOrders', (select value from duplicate_orders),
   'rapidCustomers', (select value from rapid_customers),
@@ -316,6 +374,10 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=Path(os.environ.get("KOMUI_ORDER_MONITOR_LOCK", DEFAULT_LOCK_PATH)),
     )
+    parser.add_argument(
+        "--orders-url",
+        default=os.environ.get("KOMUI_ORDER_MONITOR_ORDERS_URL", DEFAULT_ORDERS_URL),
+    )
     return parser.parse_args()
 
 
@@ -337,17 +399,24 @@ def load_state(path: Path) -> dict[str, Any] | None:
         state = json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError:
         return None
-    if not isinstance(state, dict) or state.get("version") != STATE_VERSION:
+    if not isinstance(state, dict) or state.get("version") not in (1, STATE_VERSION):
         raise ValueError(f"unsupported order monitor state in {path}")
     valid_timestamp(state.get("lastCheckedAt"))
     int(state.get("lastPaymentAttemptId", 0))
     active = state.get("activePaidWithoutShipment", [])
     if not isinstance(active, list) or not all(isinstance(value, str) for value in active):
         raise ValueError("invalid activePaidWithoutShipment state")
+    notified = state.get("notifiedOrderIds", [])
+    if not isinstance(notified, list) or not all(isinstance(value, str) for value in notified):
+        raise ValueError("invalid notifiedOrderIds state")
     return state
 
 
-def save_state(path: Path, report: dict[str, Any]) -> None:
+def save_state(
+    path: Path,
+    report: dict[str, Any],
+    notified_order_ids: list[str] | None = None,
+) -> None:
     active = sorted(
         str(item.get("orderNumber"))
         for item in report.get("paidWithoutShipment", [])
@@ -358,6 +427,7 @@ def save_state(path: Path, report: dict[str, Any]) -> None:
         "lastCheckedAt": valid_timestamp(report["checkedAt"]),
         "lastPaymentAttemptId": int(report.get("maxPaymentAttemptId", 0)),
         "activePaidWithoutShipment": active,
+        "notifiedOrderIds": (notified_order_ids or [])[-MAX_NOTIFIED_ORDER_IDS:],
     }
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
@@ -374,16 +444,26 @@ def save_state(path: Path, report: dict[str, Any]) -> None:
             os.unlink(temporary_name)
 
 
-def render_sql(since: str, last_attempt_id: int) -> str:
+def render_sql(since: str, last_attempt_id: int, order_since: str | None = None) -> str:
     timestamp = valid_timestamp(since)
+    order_timestamp = valid_timestamp(order_since or since)
     if not re.fullmatch(r"[0-9T:+.\-Z]+", timestamp):
         raise ValueError("invalid state timestamp")
-    return REPORT_SQL.replace("__SINCE__", f"'{timestamp}'").replace(
-        "__LAST_ATTEMPT_ID__", str(int(last_attempt_id))
+    if not re.fullmatch(r"[0-9T:+.\-Z]+", order_timestamp):
+        raise ValueError("invalid order cursor timestamp")
+    return (
+        REPORT_SQL.replace("__SINCE__", f"'{timestamp}'")
+        .replace("__ORDER_SINCE__", f"'{order_timestamp}'")
+        .replace("__LAST_ATTEMPT_ID__", str(int(last_attempt_id)))
     )
 
 
-def query_report(database: str, since: str, last_attempt_id: int) -> dict[str, Any]:
+def query_report(
+    database: str,
+    since: str,
+    last_attempt_id: int,
+    order_since: str | None = None,
+) -> dict[str, Any]:
     if not re.fullmatch(r"[A-Za-z0-9_]+", database):
         raise ValueError("invalid database name")
     command = [
@@ -401,7 +481,7 @@ def query_report(database: str, since: str, last_attempt_id: int) -> dict[str, A
         "-d",
         database,
         "-c",
-        render_sql(since, last_attempt_id),
+        render_sql(since, last_attempt_id, order_since),
     ]
     completed = subprocess.run(command, text=True, capture_output=True, check=False)
     if completed.returncode != 0:
@@ -426,15 +506,135 @@ def items_of(report: dict[str, Any], key: str) -> list[dict[str, Any]]:
     return [item for item in items if isinstance(item, dict)] if isinstance(items, list) else []
 
 
+def order_cursor_since(since: str, state: dict[str, Any] | None) -> str:
+    timestamp = valid_timestamp(since)
+    if not state or state.get("version") != STATE_VERSION:
+        return timestamp
+    parsed = datetime.fromisoformat(timestamp.replace("Z", "+00:00")) - ORDER_OVERLAP
+    return parsed.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def filter_notified_orders(report: dict[str, Any], notified_order_ids: set[str]) -> list[str]:
+    value = report.get("newOrders")
+    if not isinstance(value, dict):
+        report["newOrders"] = {"count": 0, "items": []}
+        return []
+    unseen = [
+        item
+        for item in items_of(report, "newOrders")
+        if item.get("orderId") and str(item["orderId"]) not in notified_order_ids
+    ]
+    value["items"] = unseen
+    value["count"] = len(unseen)
+    return [str(item["orderId"]) for item in unseen]
+
+
+def merge_notified_order_ids(previous: list[str], new_order_ids: list[str]) -> list[str]:
+    ordered: dict[str, None] = {}
+    for order_id in [*previous, *new_order_ids]:
+        if order_id:
+            ordered[str(order_id)] = None
+    return list(ordered)[-MAX_NOTIFIED_ORDER_IDS:]
+
+
 def order_list(items: list[dict[str, Any]], key: str = "orderNumber") -> str:
     values = [str(item[key]) for item in items if item.get(key)]
     return ", ".join(values[:8]) or "не определены"
+
+
+def format_money(value: Any) -> str:
+    kopecks = int(value or 0)
+    rubles, remainder = divmod(kopecks, 100)
+    grouped = f"{rubles:,}".replace(",", " ")
+    return f"{grouped},{remainder:02d} ₽" if remainder else f"{grouped} ₽"
+
+
+def format_moscow_time(value: Any) -> str:
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone(timedelta(hours=3))).strftime("%d.%m.%Y, %H:%M МСК")
+    except (TypeError, ValueError):
+        return "время не определено"
+
+
+def order_status(value: Any) -> str:
+    statuses = {
+        "created": "🆕 создан",
+        "pending_payment": "⏳ ожидает оплаты",
+        "authorized": "✅ авторизован",
+        "paid": "✅ оплачен",
+        "payment_failed": "❌ ошибка оплаты",
+        "payment_review": "⚠️ требует проверки оплаты",
+        "canceled": "🚫 отменён",
+        "partially_refunded": "↩️ частичный возврат",
+        "refunded": "↩️ возврат",
+    }
+    status = str(value or "created")
+    return statuses.get(status, status)
+
+
+def format_new_orders(report: dict[str, Any]) -> str | None:
+    total = count_of(report, "newOrders")
+    if total < 1:
+        return None
+
+    blocks: list[str] = []
+    orders = items_of(report, "newOrders")
+    for order in orders:
+        number = str(order.get("orderNumber") or "номер не определён")
+        delivery = " · ".join(
+            value
+            for value in (
+                str(order.get("deliveryCity") or "").strip(),
+                f"ПВЗ {str(order.get('deliveryPointCode') or '').strip()}"
+                if order.get("deliveryPointCode")
+                else "",
+            )
+            if value
+        ) or "не определена"
+        lines = [
+            f"🛍 Новый заказ {number}",
+            f"• время: {format_moscow_time(order.get('createdAt'))}",
+            f"• статус: {order_status(order.get('status'))}",
+            f"• сумма: {format_money(order.get('totalAmount'))}",
+            f"• доставка: {delivery}",
+        ]
+        if order.get("phoneTail"):
+            lines.append(f"• покупатель: тел. ••••{order.get('phoneTail')}")
+        if order.get("promoCode"):
+            lines.append(f"• промокод: {order.get('promoCode')}")
+
+        order_items = order.get("items", [])
+        lines.append("• товары:")
+        if isinstance(order_items, list) and order_items:
+            for item in order_items[:6]:
+                if not isinstance(item, dict):
+                    continue
+                product = str(item.get("productName") or "Товар")
+                size = str(item.get("size") or "—")
+                quantity = int(item.get("quantity") or 0)
+                lines.append(f"  — {product} · {size} × {quantity}")
+            if len(order_items) > 6:
+                lines.append(f"  — ещё позиций: {len(order_items) - 6}")
+        else:
+            lines.append("  — позиции не найдены; требуется проверка")
+        blocks.append("\n".join(lines))
+
+    if total > len(orders):
+        blocks.append(f"Ещё новых заказов без детализации: {total - len(orders)}")
+    return "\n\n".join(blocks)
 
 
 def build_alert(
     report: dict[str, Any], previous_active_paid_without_shipment: set[str]
 ) -> tuple[str | None, set[str]]:
     sections: list[str] = []
+
+    new_orders = format_new_orders(report)
+    if new_orders:
+        sections.append(new_orders)
 
     if count_of(report, "networkErrors"):
         items = items_of(report, "networkErrors")
@@ -552,10 +752,19 @@ def build_alert(
     return body, active_paid
 
 
-def send_alert(command: Path, subject: str, body: str) -> None:
+def send_alert(
+    command: Path,
+    subject: str,
+    body: str,
+    action_url: str | None = None,
+    action_label: str = "Открыть заказы",
+) -> None:
     if not command.is_file() or not os.access(command, os.X_OK):
         raise RuntimeError(f"alert command is unavailable: {command}")
-    completed = subprocess.run([str(command), subject, body], check=False)
+    command_args = [str(command), subject, body]
+    if action_url:
+        command_args.extend([action_url, action_label])
+    completed = subprocess.run(command_args, check=False)
     if completed.returncode != 0:
         raise RuntimeError(f"Telegram alert failed with exit code {completed.returncode}")
 
@@ -581,7 +790,15 @@ def main() -> int:
         since = state["lastCheckedAt"] if state else utc_now()
         last_attempt_id = int(state.get("lastPaymentAttemptId", 0)) if state else 0
         previous_active = set(state.get("activePaidWithoutShipment", [])) if state else set()
-        report = query_report(args.database, since, last_attempt_id)
+        previous_notified = list(state.get("notifiedOrderIds", [])) if state else []
+        report = query_report(
+            args.database,
+            since,
+            last_attempt_id,
+            order_cursor_since(since, state),
+        )
+        new_order_ids = filter_notified_orders(report, set(previous_notified))
+        notified_order_ids = merge_notified_order_ids(previous_notified, new_order_ids)
         body, active_paid = build_alert(report, previous_active)
         report["paidWithoutShipment"] = [
             {"orderNumber": order_number} for order_number in sorted(active_paid)
@@ -589,7 +806,7 @@ def main() -> int:
 
         if args.bootstrap or state is None:
             if not args.dry_run:
-                save_state(args.state_file, report)
+                save_state(args.state_file, report, notified_order_ids)
             print(
                 "Order monitor state bootstrapped "
                 f"at {report.get('checkedAt')} (attempt {report.get('maxPaymentAttemptId')})."
@@ -602,11 +819,23 @@ def main() -> int:
             return 0
 
         if body:
-            send_alert(args.alert_command, "KOMUI: проблемы с заказами", body)
-            print("Order incident alert sent.")
+            new_order_count = count_of(report, "newOrders")
+            if new_order_count == 1:
+                subject = "KOMUI: новый заказ"
+            elif new_order_count > 1:
+                subject = f"KOMUI: новые заказы ({new_order_count})"
+            else:
+                subject = "KOMUI: проблемы с заказами"
+            send_alert(
+                args.alert_command,
+                subject,
+                body,
+                args.orders_url if new_order_count else None,
+            )
+            print("Order monitor alert sent.")
         else:
             print("No order incidents detected.")
-        save_state(args.state_file, report)
+        save_state(args.state_file, report, notified_order_ids)
         return 0
 
 

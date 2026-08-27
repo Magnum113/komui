@@ -1,5 +1,5 @@
 [Unit]
-Description=KOMUI production order incident monitor
+Description=KOMUI production order notifications and incident monitor
 Wants=network-online.target postgresql.service
 After=network-online.target postgresql.service
 

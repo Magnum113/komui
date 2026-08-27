@@ -1,10 +1,10 @@
 [Unit]
-Description=Check KOMUI production orders every 5 minutes
+Description=Check KOMUI production orders every minute
 
 [Timer]
-OnBootSec=2m
-OnUnitActiveSec=5m
-RandomizedDelaySec=30s
+OnBootSec=1m
+OnUnitActiveSec=1m
+RandomizedDelaySec=10s
 Persistent=true
 Unit=komui-order-monitor.service
 

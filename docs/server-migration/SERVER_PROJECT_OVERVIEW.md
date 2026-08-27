@@ -1630,16 +1630,15 @@ sudo systemctl status komui-deploy-bot
 sudo journalctl -u komui-deploy-bot -n 100 --no-pager
 ```
 
-Telegram controls:
+Telegram controls open from one persistent `⚙️ Управление` button. It shows a
+compact inline root menu with two sections:
 
-- `🧪 Релиз магазина: stage` pulls `origin/main`, builds the project and switches staging
-  backend/frontend releases;
-- `🚀 Релиз магазина: prod` does the same for production after a separate
-  confirmation;
-- `📦 Статус магазина` shows current Git revision, active releases, core services and
-  public smoke checks in a human-readable Russian summary.
-- the same persistent menu contains status, deploy and rollback actions for the
-  GetoMerch admin; admin production deploy and rollback also require confirmation.
+- `🏪 Магазин`: status, stage deploy and confirmed production deploy;
+- `🛠 Админка`: status, confirmed production deploy and confirmed rollback.
+
+Back buttons edit the same menu message instead of adding a new message for each
+navigation step. Direct Telegram commands and callback handling for old buttons
+remain available for backwards compatibility.
 
 `📋 Статус админки` does not forward raw shell output. It returns a Russian
 operator summary with one overall verdict and named checks for public/login/auth
@@ -1648,9 +1647,8 @@ database-backup timer, failed systemd units, the latest off-site backup, Git and
 release state, and root-disk usage. The raw diagnostic output remains available
 through `/usr/local/sbin/getomerch-deploy-status` over SSH.
 
-The bot uses a persistent Telegram reply keyboard, so the deploy controls are
-shown above the text input field. Callback handling for old inline-keyboard
-messages is kept for backwards compatibility.
+The persistent Telegram reply keyboard contains only the single menu button, so
+it does not occupy multiple rows above the text input field.
 
 Telegram commands (`/menu`, `/status`, `/deploy_stage`, `/deploy_prod`,
 `/admin_status`, `/admin_deploy`, `/admin_rollback`) are registered through the

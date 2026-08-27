@@ -38,6 +38,7 @@ ALLOWED_CHAT_ID = str(ENV["TELEGRAM_CHAT_ID"])
 PROXY_URL = ENV.get("TELEGRAM_PROXY_URL", "")
 TIMEOUT_SECONDS = str(int(ENV.get("TELEGRAM_TIMEOUT_SECONDS", "15")))
 API_BASE = f"https://api.telegram.org/bot{TOKEN}"
+MENU_BUTTON = "⚙️ Управление"
 STAGE_BUTTON = "🧪 Релиз магазина: stage"
 PROD_BUTTON = "🚀 Релиз магазина: prod"
 STATUS_BUTTON = "📦 Статус магазина"
@@ -45,8 +46,8 @@ ADMIN_DEPLOY_BUTTON = "🛠 Релиз админки: prod"
 ADMIN_STATUS_BUTTON = "📋 Статус админки"
 ADMIN_ROLLBACK_BUTTON = "↩️ Откат админки"
 BOT_COMMANDS = [
-    {"command": "start", "description": "Открыть постоянное меню"},
-    {"command": "menu", "description": "Показать кнопки управления"},
+    {"command": "start", "description": "Открыть компактное меню"},
+    {"command": "menu", "description": "Показать меню управления"},
     {"command": "status", "description": "Проверить магазин и сервер"},
     {"command": "deploy_stage", "description": "Развернуть магазин на stage"},
     {"command": "deploy_prod", "description": "Развернуть магазин на prod"},
@@ -110,17 +111,75 @@ def configure_bot_ui() -> None:
 
 def keyboard() -> dict[str, Any]:
     return {
-        "keyboard": [
-            [{"text": STAGE_BUTTON}, {"text": PROD_BUTTON}],
-            [{"text": STATUS_BUTTON}],
-            [{"text": ADMIN_DEPLOY_BUTTON}, {"text": ADMIN_STATUS_BUTTON}],
-            [{"text": ADMIN_ROLLBACK_BUTTON}],
-        ],
+        "keyboard": [[{"text": MENU_BUTTON}]],
         "resize_keyboard": True,
         "one_time_keyboard": False,
         "is_persistent": True,
-        "input_field_placeholder": "Выберите действие",
+        "input_field_placeholder": "Откройте меню управления",
     }
+
+
+def main_menu_keyboard() -> dict[str, Any]:
+    return {
+        "inline_keyboard": [
+            [
+                {"text": "🏪 Магазин", "callback_data": "menu:store"},
+                {"text": "🛠 Админка", "callback_data": "menu:admin"},
+            ]
+        ]
+    }
+
+
+def store_menu_keyboard() -> dict[str, Any]:
+    return {
+        "inline_keyboard": [
+            [{"text": "📦 Проверить статус", "callback_data": "status"}],
+            [
+                {"text": "🧪 Релиз stage", "callback_data": "deploy:stage"},
+                {"text": "🚀 Релиз prod", "callback_data": "deploy:prod"},
+            ],
+            [{"text": "⬅️ Назад", "callback_data": "menu:root"}],
+        ]
+    }
+
+
+def admin_menu_keyboard() -> dict[str, Any]:
+    return {
+        "inline_keyboard": [
+            [{"text": "📋 Проверить статус", "callback_data": "admin:status:prod"}],
+            [{"text": "🛠 Релиз prod", "callback_data": "admin:deploy:prod"}],
+            [{"text": "↩️ Откатить релиз", "callback_data": "admin:rollback:prod"}],
+            [{"text": "⬅️ Назад", "callback_data": "menu:root"}],
+        ]
+    }
+
+
+def send_menu() -> None:
+    send_message("⚙️ Управление KOMUI\n\nВыберите раздел:", main_menu_keyboard())
+
+
+def edit_menu(callback: dict[str, Any], text: str, reply_markup: dict[str, Any]) -> None:
+    message = callback.get("message") or {}
+    chat = message.get("chat") or {}
+    chat_id = chat.get("id")
+    message_id = message.get("message_id")
+    if not chat_id or not message_id:
+        send_message(text, reply_markup)
+        return
+    try:
+        curl_api(
+            "editMessageText",
+            {
+                "chat_id": str(chat_id),
+                "message_id": str(message_id),
+                "text": text,
+                "disable_web_page_preview": "true",
+                "reply_markup": reply_markup,
+            },
+        )
+    except Exception as exc:
+        print(f"menu_edit_error {type(exc).__name__}: {exc}", file=sys.stderr, flush=True)
+        send_message(text, reply_markup)
 
 
 def confirmation_keyboard(action: str) -> dict[str, Any]:
@@ -347,24 +406,27 @@ def format_status_message(output: str, code: int) -> str:
 
 def handle_deploy(target: str) -> None:
     label = "stage" if target == "stage" else "prod"
-    send_message(f"⏳ Начинаю релиз магазина: {label}\nИсточник: origin/main", keyboard())
+    send_message(f"⏳ Начинаю релиз магазина: {label}\nИсточник: origin/main", main_menu_keyboard())
     started = time.time()
     code, output = run_command([str(DEPLOY_BIN), target, "main"], timeout=1800)
     elapsed = int(time.time() - started)
     tail = "\n".join(output.splitlines()[-80:])
     if code == 0:
-        send_message(f"✅ Релиз магазина {label} завершён за {elapsed} сек.\n\nПоследние строки:\n{tail}", keyboard())
+        send_message(
+            f"✅ Релиз магазина {label} завершён за {elapsed} сек.\n\nПоследние строки:\n{tail}",
+            main_menu_keyboard(),
+        )
     else:
         send_message(
             f"❌ Релиз магазина {label} завершился ошибкой за {elapsed} сек.\n"
             f"Код выхода: {code}\n\nПоследние строки:\n{tail}",
-            keyboard(),
+            main_menu_keyboard(),
         )
 
 
 def handle_status() -> None:
     code, output = run_command([str(STATUS_BIN)], timeout=60)
-    send_message(format_status_message(output, code), keyboard())
+    send_message(format_status_message(output, code), main_menu_keyboard())
 
 
 def parse_admin_status_output(output: str) -> dict[str, dict[str, str]]:
@@ -593,39 +655,45 @@ def format_admin_status_message(output: str, code: int) -> str:
 
 
 def handle_admin_deploy() -> None:
-    send_message("⏳ Начинаю релиз админки на prod\nИсточник: origin/main", keyboard())
+    send_message("⏳ Начинаю релиз админки на prod\nИсточник: origin/main", main_menu_keyboard())
     started = time.time()
     code, output = run_command([str(ADMIN_DEPLOY_BIN), "prod", "main"], timeout=1800)
     elapsed = int(time.time() - started)
     tail = "\n".join(output.splitlines()[-80:])
     if code == 0:
-        send_message(f"✅ Релиз админки завершён за {elapsed} сек.\n\nПоследние строки:\n{tail}", keyboard())
+        send_message(
+            f"✅ Релиз админки завершён за {elapsed} сек.\n\nПоследние строки:\n{tail}",
+            main_menu_keyboard(),
+        )
     else:
         send_message(
             f"❌ Релиз админки завершился ошибкой за {elapsed} сек.\n"
             f"Код выхода: {code}\n\nПоследние строки:\n{tail}",
-            keyboard(),
+            main_menu_keyboard(),
         )
 
 
 def handle_admin_status() -> None:
     code, output = run_command([str(ADMIN_STATUS_BIN)], timeout=60)
-    send_message(format_admin_status_message(output, code), keyboard())
+    send_message(format_admin_status_message(output, code), main_menu_keyboard())
 
 
 def handle_admin_rollback() -> None:
-    send_message("⏳ Начинаю откат админки на предыдущий рабочий release.", keyboard())
+    send_message("⏳ Начинаю откат админки на предыдущий рабочий release.", main_menu_keyboard())
     started = time.time()
     code, output = run_command([str(ADMIN_ROLLBACK_BIN), "prod"], timeout=900)
     elapsed = int(time.time() - started)
     tail = "\n".join(output.splitlines()[-80:])
     if code == 0:
-        send_message(f"✅ Откат админки завершён за {elapsed} сек.\n\nПоследние строки:\n{tail}", keyboard())
+        send_message(
+            f"✅ Откат админки завершён за {elapsed} сек.\n\nПоследние строки:\n{tail}",
+            main_menu_keyboard(),
+        )
     else:
         send_message(
             f"❌ Откат админки завершился ошибкой за {elapsed} сек.\n"
             f"Код выхода: {code}\n\nПоследние строки:\n{tail}",
-            keyboard(),
+            main_menu_keyboard(),
         )
 
 
@@ -639,8 +707,8 @@ def handle_update(update: dict[str, Any]) -> None:
     if "message" in update:
         text = str(update["message"].get("text") or "").strip()
         command = text.split("@", 1)[0] if text.startswith("/") else text
-        if command in ("/start", "/deploy", "/menu"):
-            send_message("Управление релизами KOMUI и GetoMerch. Выберите действие:", keyboard())
+        if command in ("/start", "/deploy", "/menu", MENU_BUTTON):
+            send_menu()
         elif command in ("/status", STATUS_BUTTON):
             handle_status()
         elif command in ("/deploy_stage", STAGE_BUTTON):
@@ -658,7 +726,16 @@ def handle_update(update: dict[str, Any]) -> None:
     callback = update.get("callback_query") or {}
     data = str(callback.get("data") or "")
     callback_id = str(callback.get("id") or "")
-    if data == "status":
+    if data == "menu:root":
+        answer_callback(callback_id, "Главное меню")
+        edit_menu(callback, "⚙️ Управление KOMUI\n\nВыберите раздел:", main_menu_keyboard())
+    elif data == "menu:store":
+        answer_callback(callback_id, "Магазин")
+        edit_menu(callback, "🏪 Магазин KOMUI\n\nВыберите действие:", store_menu_keyboard())
+    elif data == "menu:admin":
+        answer_callback(callback_id, "Админка")
+        edit_menu(callback, "🛠 Админка GetoMerch\n\nВыберите действие:", admin_menu_keyboard())
+    elif data == "status":
         answer_callback(callback_id, "Проверяю статус")
         handle_status()
     elif data == "deploy:stage":
@@ -679,7 +756,7 @@ def handle_update(update: dict[str, Any]) -> None:
     elif data == "confirm:cancel":
         answer_callback(callback_id, "Действие отменено")
         clear_callback_keyboard(callback)
-        send_message("Действие отменено.", keyboard())
+        send_message("Действие отменено.", main_menu_keyboard())
     elif data.startswith("confirm:"):
         action = data.removeprefix("confirm:")
         allowed_actions = {"deploy:prod", "admin:deploy:prod", "admin:rollback:prod"}
@@ -710,7 +787,10 @@ def main() -> int:
     while True:
         try:
             configure_bot_ui()
-            send_message("✅ Бот управления релизами запущен. Кнопки доступны над строкой ввода.", keyboard())
+            send_message(
+                "✅ Komui Alert запущен. Для действий нажмите «⚙️ Управление».",
+                keyboard(),
+            )
             break
         except Exception as exc:
             print(f"bot_init_error {type(exc).__name__}: {exc}", file=sys.stderr, flush=True)
