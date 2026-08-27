@@ -49,9 +49,11 @@ const RETIRED_PRODUCT_IDS = new Set([
 ]);
 const RETIRED_PRODUCT_SLUGS = new Set([
   'futbolka-star-wars-darth-vader-naruto-vyshivka-belaya',
+  'futbolka-varenka-jujutsu-kaisen-satoru-gojo-print-sinyaya',
 ]);
 const RETIRED_PRODUCT_REDIRECT_SLUGS = new Set([
   'var12-embroidery-tshirt-white',
+  'var17-print-tshirt-blue',
 ]);
 const RETIRED_COLLECTION_SLUGS = new Set([
   'star-wars',

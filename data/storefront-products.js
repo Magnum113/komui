@@ -249,6 +249,7 @@ window.KOMUI_PRODUCTS = [
       "count": 42,
       "averageRating": 4.95,
       "withMedia": 6,
+      "withText": 11,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -504,6 +505,7 @@ window.KOMUI_PRODUCTS = [
       "count": 11,
       "averageRating": 4.91,
       "withMedia": 0,
+      "withText": 2,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -744,6 +746,7 @@ window.KOMUI_PRODUCTS = [
       "count": 8,
       "averageRating": 4.63,
       "withMedia": 0,
+      "withText": 3,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -994,243 +997,13 @@ window.KOMUI_PRODUCTS = [
       "count": 31,
       "averageRating": 4.84,
       "withMedia": 0,
+      "withText": 11,
       "ratingCounts": {
         "1": 0,
         "2": 0,
         "3": 0,
         "4": 5,
         "5": 26
-      }
-    }
-  },
-  {
-    "id": "c5f5244c-33b1-4c83-8179-f0d18f91b99b",
-    "design_key": "var2|embroidery|hoodie|black",
-    "ozon_variant": "var2",
-    "name": "Худи Итачи",
-    "slug": "hudi-naruto-itachi-uchiha-vyshivka-chernaya",
-    "description": "Чёрное худи унисекс с вышивкой персонажа Итачи Учиха из аниме «Наруто» — стильный и удобный выбор для повседневной носки, прогулок и фотосессий. Этот модный худи идеально подойдёт для мужчин и женщин, ценящих уличную моду, японскую культуру и оригинальный дизайн.\nХуди выполнено из 100% хлопка (футер 2-х нитка, петля) плотностью 220 г/м², что обеспечивает комфорт, мягкость и долговечность. Свободный крой и глубокий капюшон делают модель практичной и удобной в любое время года.\nВышивка с изображением Итачи Учихи из культового аниме «Naruto» выполнена качественно — не выгорает и не теряет форму после стирки.\nОсобенности и преимущества:\nуниверсальное чёрное худи оверсайз унисекс; стильная вышивка аниме-персонаж Итачи Учиха; 100% хлопок, футер 2-х нитка (петля), плотность 220 г/м²; подходит мужчинам и женщинам; сохраняет форму и цвет после стирки; отлично сочетается с джинсами, спортивными штанами, кроссовками; идеальный подарок фанатам аниме «Наруто» и любителям streetwear. Материал: 100% хлопок\nПлотность: 220 г/м²\nСезон: всесезонный\nЭто чёрное худи с вышивкой — идеальный выбор для тех, кто ищет качественную и стильную одежду в стиле аниме и уличной моды.",
-    "ozon_description": "Чёрное худи унисекс с вышивкой персонажа Итачи Учиха из аниме «Наруто» — стильный и удобный выбор для повседневной носки, прогулок и фотосессий. Этот модный худи идеально подойдёт для мужчин и женщин, ценящих уличную моду, японскую культуру и оригинальный дизайн.\nХуди выполнено из 100% хлопка (футер 2-х нитка, петля) плотностью 220 г/м², что обеспечивает комфорт, мягкость и долговечность. Свободный крой и глубокий капюшон делают модель практичной и удобной в любое время года.\nВышивка с изображением Итачи Учихи из культового аниме «Naruto» выполнена качественно — не выгорает и не теряет форму после стирки.\nОсобенности и преимущества:\nуниверсальное чёрное худи оверсайз унисекс; стильная вышивка аниме-персонаж Итачи Учиха; 100% хлопок, футер 2-х нитка (петля), плотность 220 г/м²; подходит мужчинам и женщинам; сохраняет форму и цвет после стирки; отлично сочетается с джинсами, спортивными штанами, кроссовками; идеальный подарок фанатам аниме «Наруто» и любителям streetwear. Материал: 100% хлопок\nПлотность: 220 г/м²\nСезон: всесезонный\nЭто чёрное худи с вышивкой — идеальный выбор для тех, кто ищет качественную и стильную одежду в стиле аниме и уличной моды.",
-    "category": "Худи",
-    "category_slug": "hoodies",
-    "product_type": "Худи",
-    "product_type_slug": "hoodie",
-    "decoration_type": "Вышивка",
-    "decoration_slug": "embroidery",
-    "color_name": "Черный",
-    "color_slug": "black",
-    "color_hex": "#111111",
-    "franchise_type": "anime",
-    "title_name": "Naruto",
-    "title_slug": "naruto",
-    "anime_title": "Naruto",
-    "anime_slug": "naruto",
-    "character_name": "Itachi Uchiha",
-    "character_slug": "itachi-uchiha",
-    "collection_name": "Itachi",
-    "collection_slug": "itachi",
-    "design_name": "Itachi",
-    "design_slug": "itachi",
-    "tags": [
-      "anime",
-      "black",
-      "embroidery",
-      "hoodie",
-      "itachi",
-      "naruto",
-      "hit"
-    ],
-    "sizes": [
-      "S",
-      "M",
-      "L",
-      "XL"
-    ],
-    "price_min": "3500.00",
-    "price_max": "3500.00",
-    "currency": "RUB",
-    "primary_image_url": "/media/products/12/12685d780d99dd30/800.webp",
-    "main_image_path": "./assets/ozon-main/18-худи-с-вышивкой-итачи.jpg",
-    "image_urls": [
-      "/media/products/12/12685d780d99dd30/800.webp",
-      "/media/products/2e/2e21599b035f859c/800.webp",
-      "/media/products/ae/aedd63716cc202c1/800.webp",
-      "/media/products/89/8982c07e537ac289/800.webp",
-      "/media/products/c1/c193c2d5f7defb03/800.webp",
-      "/media/products/3d/3ddc56f369ff027d/800.webp",
-      "/media/products/eb/eb63be4e7c210c93/800.webp"
-    ],
-    "size_chart_json": {
-      "content": [
-        {
-          "table": {
-            "body": [
-              {
-                "data": [
-                  [
-                    "INT",
-                    "Международный размер"
-                  ],
-                  "S",
-                  "M",
-                  "L",
-                  "XL"
-                ]
-              },
-              {
-                "data": [
-                  [
-                    "RU",
-                    "Российский размер"
-                  ],
-                  "44-46",
-                  "46-48",
-                  "48-50",
-                  "50-52"
-                ]
-              },
-              {
-                "data": [
-                  [
-                    "A",
-                    "Ширина изделия, см"
-                  ],
-                  "58",
-                  "61",
-                  "63",
-                  "66"
-                ]
-              },
-              {
-                "data": [
-                  [
-                    "B",
-                    "Длина изделия, см"
-                  ],
-                  "71",
-                  "73",
-                  "75",
-                  "79"
-                ]
-              },
-              {
-                "data": [
-                  [
-                    "C",
-                    "Длина рукава, см"
-                  ],
-                  "53",
-                  "55",
-                  "57",
-                  "59"
-                ]
-              }
-            ],
-            "title": "Таблица размеров"
-          },
-          "widgetName": "tcTable"
-        }
-      ],
-      "version": 0.1
-    },
-    "offers": [
-      {
-        "sku": 3134088397,
-        "offer_id": "D2-HDY-EMB-BLK-REG-FLC-S",
-        "name": "Толстовка с вышивкой Итачи Черная S",
-        "size": "S",
-        "price": 3500,
-        "images": [
-          "/media/products/12/12685d780d99dd30/800.webp",
-          "/media/products/2e/2e21599b035f859c/800.webp",
-          "/media/products/ae/aedd63716cc202c1/800.webp",
-          "/media/products/89/8982c07e537ac289/800.webp",
-          "/media/products/c1/c193c2d5f7defb03/800.webp",
-          "/media/products/3d/3ddc56f369ff027d/800.webp",
-          "/media/products/eb/eb63be4e7c210c93/800.webp"
-        ],
-        "primary_image": "/media/products/12/12685d780d99dd30/800.webp",
-        "archived": false,
-        "visible": null
-      },
-      {
-        "sku": 3134088463,
-        "offer_id": "D2-HDY-EMB-BLK-REG-FLC-M",
-        "name": "Худи с вышивкой Итачи Черная M",
-        "size": "M",
-        "price": 3500,
-        "images": [
-          "/media/products/12/12685d780d99dd30/800.webp",
-          "/media/products/2e/2e21599b035f859c/800.webp",
-          "/media/products/ae/aedd63716cc202c1/800.webp",
-          "/media/products/89/8982c07e537ac289/800.webp",
-          "/media/products/c1/c193c2d5f7defb03/800.webp",
-          "/media/products/3d/3ddc56f369ff027d/800.webp",
-          "/media/products/eb/eb63be4e7c210c93/800.webp"
-        ],
-        "primary_image": "/media/products/12/12685d780d99dd30/800.webp",
-        "archived": false,
-        "visible": null
-      },
-      {
-        "sku": 3134088740,
-        "offer_id": "D2-HDY-EMB-BLK-REG-FLC-XL",
-        "name": "Худи с вышивкой Итачи Черная XL",
-        "size": "XL",
-        "price": 3500,
-        "images": [
-          "/media/products/12/12685d780d99dd30/800.webp",
-          "/media/products/2e/2e21599b035f859c/800.webp",
-          "/media/products/ae/aedd63716cc202c1/800.webp",
-          "/media/products/89/8982c07e537ac289/800.webp",
-          "/media/products/c1/c193c2d5f7defb03/800.webp",
-          "/media/products/3d/3ddc56f369ff027d/800.webp",
-          "/media/products/eb/eb63be4e7c210c93/800.webp"
-        ],
-        "primary_image": "/media/products/12/12685d780d99dd30/800.webp",
-        "archived": false,
-        "visible": null
-      },
-      {
-        "sku": 3134088920,
-        "offer_id": "D2-HDY-EMB-BLK-REG-FLC-L",
-        "name": "Худи с вышивкой Итачи Черная L",
-        "size": "L",
-        "price": 3500,
-        "images": [
-          "/media/products/12/12685d780d99dd30/800.webp",
-          "/media/products/2e/2e21599b035f859c/800.webp",
-          "/media/products/ae/aedd63716cc202c1/800.webp",
-          "/media/products/89/8982c07e537ac289/800.webp",
-          "/media/products/c1/c193c2d5f7defb03/800.webp",
-          "/media/products/3d/3ddc56f369ff027d/800.webp",
-          "/media/products/eb/eb63be4e7c210c93/800.webp"
-        ],
-        "primary_image": "/media/products/12/12685d780d99dd30/800.webp",
-        "archived": false,
-        "visible": null
-      }
-    ],
-    "is_active": true,
-    "sort_order": 5,
-    "short_description": "Мягкое чёрное худи с вышивкой Итачи — тепло, плотно, по делу. Капюшон и спокойный крой для дней, когда хочется спрятаться в ткань.",
-    "badges": [
-      "hit"
-    ],
-    "compare_at_price": "6000",
-    "slug_redirects": [
-      "var2-embroidery-hoodie-black"
-    ],
-    "review_summary": {
-      "count": 3,
-      "averageRating": 4.67,
-      "withMedia": 0,
-      "ratingCounts": {
-        "1": 0,
-        "2": 0,
-        "3": 0,
-        "4": 1,
-        "5": 2
       }
     }
   },
@@ -1466,12 +1239,851 @@ window.KOMUI_PRODUCTS = [
       "count": 10,
       "averageRating": 5,
       "withMedia": 2,
+      "withText": 4,
       "ratingCounts": {
         "1": 0,
         "2": 0,
         "3": 0,
         "4": 0,
         "5": 10
+      }
+    }
+  },
+  {
+    "id": "6943623f-4560-4815-8899-b1df7cdd44a3",
+    "design_key": "var26|print|tshirt|black",
+    "ozon_variant": "var26",
+    "name": "Футболка Сатору Годжо с принтом на спине",
+    "slug": "futbolka-jujutsu-kaisen-satoru-gojo-print-na-spine-chernaya",
+    "description": "Чёрная футболка оверсайз из 100% хлопка пенье плотностью 240 г/м². Свободная посадка и плотная ткань хорошо держат форму и подходят для повседневной носки.\n\nДвусторонний дизайн посвящён Сатору Годжо: небольшой принт с персонажем и надписью спереди, крупная контрастная графика на спине. Рекомендуется деликатная стирка с изнаночной стороны при температуре до 30 °C.",
+    "ozon_description": "Чёрная оверсайз-футболка из 100% хлопка пенье плотностью 240 г/м² с двусторонним принтом Сатору Годжо. Спереди расположен лаконичный рисунок, на спине — крупная контрастная графика. Свободная посадка унисекс.",
+    "category": "Футболки",
+    "category_slug": "tshirts",
+    "product_type": "Футболка",
+    "product_type_slug": "tshirt",
+    "decoration_type": "Принт",
+    "decoration_slug": "print",
+    "color_name": "Черный",
+    "color_slug": "black",
+    "color_hex": "#111111",
+    "franchise_type": "anime",
+    "title_name": "Jujutsu Kaisen",
+    "title_slug": "jujutsu-kaisen",
+    "anime_title": "Jujutsu Kaisen",
+    "anime_slug": "jujutsu-kaisen",
+    "character_name": "Satoru Gojo",
+    "character_slug": "satoru-gojo",
+    "collection_name": "Satoru Gojo",
+    "collection_slug": "satoru-gojo",
+    "design_name": "Satoru Gojo Back Print",
+    "design_slug": "satoru-gojo-back-print",
+    "tags": [
+      "tshirt",
+      "print",
+      "black",
+      "anime",
+      "jujutsu-kaisen",
+      "satoru-gojo"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "price_min": "2900.00",
+    "price_max": "2900.00",
+    "currency": "RUB",
+    "primary_image_url": "/media/products/ff/ffd9d4a941c00dd1/800.webp",
+    "main_image_path": "/media/products/ff/ffd9d4a941c00dd1/800.webp",
+    "image_urls": [
+      "/media/products/ff/ffd9d4a941c00dd1/800.webp",
+      "/media/products/68/684d83978350e2f8/800.webp",
+      "/media/products/7a/7ab53b0f6d794822/800.webp",
+      "/media/products/55/55b15556544eb114/800.webp",
+      "/media/products/f4/f420a57867f2f84c/800.webp",
+      "/media/products/82/820747f2fe2d8d00/800.webp",
+      "/media/products/6c/6c3fc824634921e4/800.webp",
+      "/media/products/93/932601cd10b4adcb/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp"
+    ],
+    "size_chart_json": {
+      "content": [
+        {
+          "table": {
+            "body": [
+              {
+                "data": [
+                  [
+                    "RU",
+                    "Российский размер"
+                  ],
+                  "    46",
+                  "    48",
+                  "    50",
+                  "52",
+                  "54"
+                ]
+              },
+              {
+                "data": [
+                  [
+                    "Размер указанный на этикетке",
+                    ""
+                  ],
+                  "    48",
+                  "    50",
+                  "    52",
+                  "54",
+                  "56"
+                ]
+              },
+              {
+                "data": [
+                  [
+                    "INT",
+                    "Международный размер"
+                  ],
+                  "    S",
+                  "    M",
+                  "    L",
+                  "XL",
+                  "XXL"
+                ]
+              },
+              {
+                "data": [
+                  [
+                    "Длина, см",
+                    ""
+                  ],
+                  "    70",
+                  "    72",
+                  "    74",
+                  "76",
+                  "78"
+                ]
+              },
+              {
+                "data": [
+                  [
+                    "Ширина, см",
+                    ""
+                  ],
+                  "    51",
+                  "    53",
+                  "    57",
+                  "59",
+                  "61"
+                ]
+              }
+            ],
+            "title": "Размеры"
+          },
+          "widgetName": "tcTable"
+        }
+      ],
+      "version": 0.1
+    },
+    "offers": [
+      {
+        "sku": 5295306224,
+        "offer_id": "D26-TSH-PRT-BLK-XXL",
+        "name": "Черная футболка с принтом Сатору Годжо на спине XXL",
+        "size": "XXL",
+        "price": 2900,
+        "images": [
+          "/media/products/ff/ffd9d4a941c00dd1/800.webp",
+          "/media/products/68/684d83978350e2f8/800.webp",
+          "/media/products/7a/7ab53b0f6d794822/800.webp",
+          "/media/products/55/55b15556544eb114/800.webp",
+          "/media/products/f4/f420a57867f2f84c/800.webp",
+          "/media/products/82/820747f2fe2d8d00/800.webp",
+          "/media/products/6c/6c3fc824634921e4/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp"
+        ],
+        "primary_image": "/media/products/ff/ffd9d4a941c00dd1/800.webp"
+      },
+      {
+        "sku": 5296810784,
+        "offer_id": "D26-TSH-PRT-BLK-XL",
+        "name": "Черная футболка с принтом Сатору Годжо на спине XL",
+        "size": "XL",
+        "price": 2900,
+        "images": [
+          "/media/products/ff/ffd9d4a941c00dd1/800.webp",
+          "/media/products/68/684d83978350e2f8/800.webp",
+          "/media/products/7a/7ab53b0f6d794822/800.webp",
+          "/media/products/55/55b15556544eb114/800.webp",
+          "/media/products/f4/f420a57867f2f84c/800.webp",
+          "/media/products/82/820747f2fe2d8d00/800.webp",
+          "/media/products/6c/6c3fc824634921e4/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp"
+        ],
+        "primary_image": "/media/products/ff/ffd9d4a941c00dd1/800.webp"
+      },
+      {
+        "sku": 5296811985,
+        "offer_id": "D26-TSH-PRT-BLK-L",
+        "name": "Черная футболка с принтом Сатору Годжо на спине L",
+        "size": "L",
+        "price": 2900,
+        "images": [
+          "/media/products/ff/ffd9d4a941c00dd1/800.webp",
+          "/media/products/68/684d83978350e2f8/800.webp",
+          "/media/products/7a/7ab53b0f6d794822/800.webp",
+          "/media/products/55/55b15556544eb114/800.webp",
+          "/media/products/f4/f420a57867f2f84c/800.webp",
+          "/media/products/82/820747f2fe2d8d00/800.webp",
+          "/media/products/6c/6c3fc824634921e4/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp"
+        ],
+        "primary_image": "/media/products/ff/ffd9d4a941c00dd1/800.webp"
+      },
+      {
+        "sku": 5296813976,
+        "offer_id": "D26-TSH-PRT-BLK-M",
+        "name": "Черная футболка с принтом Сатору Годжо на спине M",
+        "size": "M",
+        "price": 2900,
+        "images": [
+          "/media/products/ff/ffd9d4a941c00dd1/800.webp",
+          "/media/products/68/684d83978350e2f8/800.webp",
+          "/media/products/7a/7ab53b0f6d794822/800.webp",
+          "/media/products/55/55b15556544eb114/800.webp",
+          "/media/products/f4/f420a57867f2f84c/800.webp",
+          "/media/products/82/820747f2fe2d8d00/800.webp",
+          "/media/products/6c/6c3fc824634921e4/800.webp",
+          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp"
+        ],
+        "primary_image": "/media/products/ff/ffd9d4a941c00dd1/800.webp"
+      }
+    ],
+    "is_active": true,
+    "sort_order": 7,
+    "short_description": "Чёрная оверсайз-футболка из плотного хлопка с двусторонним принтом Сатору Годжо: лаконичная графика спереди и крупный рисунок на спине.",
+    "badges": [
+      "new"
+    ],
+    "compare_at_price": "4500",
+    "slug_redirects": [],
+    "review_summary": {
+      "count": 0,
+      "averageRating": null,
+      "withMedia": 0,
+      "withText": 0,
+      "ratingCounts": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0
+      }
+    }
+  },
+  {
+    "id": "de2dc98e-9e50-40c4-ae0e-422f129f6195",
+    "design_key": "var2|embroidery|tshirt|washed-grey",
+    "ozon_variant": "var2",
+    "name": "Футболка-варёнка Итачи с вышивкой",
+    "slug": "futbolka-varenka-naruto-itachi-uchiha-vyshivka-seraya",
+    "description": "Серая футболка-варёнка оверсайз из 100% хлопка плотностью 250 г/м². Варёный эффект делает оттенок и фактуру выразительнее, а свободная посадка подходит для повседневных образов.\n\nНа груди расположена аккуратная вышивка с Итачи Учихой. Вышивка долговечна и сохраняет форму при бережном уходе. Рекомендуется деликатная стирка с изнаночной стороны при температуре до 30 °C.",
+    "ozon_description": "Серая варёная футболка оверсайз из 100% хлопка плотностью 250 г/м² с вышивкой Итачи Учихи. Винтажная обработка ткани, свободная посадка унисекс и сдержанный дизайн.",
+    "category": "Футболки",
+    "category_slug": "tshirts",
+    "product_type": "Футболка",
+    "product_type_slug": "tshirt",
+    "decoration_type": "Вышивка",
+    "decoration_slug": "embroidery",
+    "color_name": "Вареный серый",
+    "color_slug": "washed-grey",
+    "color_hex": "#9ca3af",
+    "franchise_type": "anime",
+    "title_name": "Naruto",
+    "title_slug": "naruto",
+    "anime_title": "Naruto",
+    "anime_slug": "naruto",
+    "character_name": "Itachi Uchiha",
+    "character_slug": "itachi-uchiha",
+    "collection_name": "Itachi",
+    "collection_slug": "itachi",
+    "design_name": "Itachi Embroidery",
+    "design_slug": "itachi-embroidery",
+    "tags": [
+      "tshirt",
+      "embroidery",
+      "washed-grey",
+      "anime",
+      "naruto",
+      "itachi-uchiha"
+    ],
+    "sizes": [
+      "L",
+      "XL"
+    ],
+    "price_min": "2900.00",
+    "price_max": "2900.00",
+    "currency": "RUB",
+    "primary_image_url": "/media/products/c2/c2cd6cd5894c2e6d/800.webp",
+    "main_image_path": "/media/products/c2/c2cd6cd5894c2e6d/800.webp",
+    "image_urls": [
+      "/media/products/c2/c2cd6cd5894c2e6d/800.webp",
+      "/media/products/c6/c63d5164caabd362/800.webp",
+      "/media/products/df/df1330d24c7807ac/800.webp",
+      "/media/products/f1/f17ec7c55e7c3715/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp"
+    ],
+    "size_chart_json": {
+      "content": [
+        {
+          "table": {
+            "body": [
+              {
+                "data": [
+                  [
+                    "RU",
+                    "Российский размер"
+                  ],
+                  "    46",
+                  "    48",
+                  "    50",
+                  "52",
+                  "54"
+                ]
+              },
+              {
+                "data": [
+                  [
+                    "INT",
+                    "Международный размер"
+                  ],
+                  "    S",
+                  "    M",
+                  "    L",
+                  "XL",
+                  "XXL"
+                ]
+              },
+              {
+                "data": [
+                  [
+                    "Длина, см",
+                    ""
+                  ],
+                  "    69",
+                  "    71",
+                  "    73",
+                  "75",
+                  "77"
+                ]
+              },
+              {
+                "data": [
+                  [
+                    "Ширина, см",
+                    ""
+                  ],
+                  "    53",
+                  "    56",
+                  "    58",
+                  "62",
+                  "65"
+                ]
+              }
+            ],
+            "title": "Размеры"
+          },
+          "widgetName": "tcTable"
+        }
+      ],
+      "version": 0.1
+    },
+    "offers": [
+      {
+        "sku": 5481658059,
+        "offer_id": "D2-TSH-EMB-WGRY-L",
+        "name": "Вареная футболка Наруто с вышивкой Itachi L Серая",
+        "size": "L",
+        "price": 2900,
+        "images": [
+          "/media/products/c2/c2cd6cd5894c2e6d/800.webp",
+          "/media/products/c6/c63d5164caabd362/800.webp",
+          "/media/products/df/df1330d24c7807ac/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp"
+        ],
+        "primary_image": "/media/products/c2/c2cd6cd5894c2e6d/800.webp"
+      },
+      {
+        "sku": 5481707806,
+        "offer_id": "D2-TSH-EMB-WGRY-XL",
+        "name": "Вареная футболка Наруто с вышивкой Itachi XL Серая",
+        "size": "XL",
+        "price": 2900,
+        "images": [
+          "/media/products/c2/c2cd6cd5894c2e6d/800.webp",
+          "/media/products/c6/c63d5164caabd362/800.webp",
+          "/media/products/df/df1330d24c7807ac/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp"
+        ],
+        "primary_image": "/media/products/c2/c2cd6cd5894c2e6d/800.webp"
+      }
+    ],
+    "is_active": true,
+    "sort_order": 8,
+    "short_description": "Серая футболка-варёнка оверсайз со сдержанной вышивкой Итачи Учихи. Винтажная фактура, плотный хлопок и свободная посадка.",
+    "badges": [
+      "new"
+    ],
+    "compare_at_price": "4500",
+    "slug_redirects": [],
+    "review_summary": {
+      "count": 0,
+      "averageRating": null,
+      "withMedia": 0,
+      "withText": 0,
+      "ratingCounts": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0
+      }
+    }
+  },
+  {
+    "id": "1c108724-be3b-499b-b155-f37a0a730d27",
+    "design_key": "var27|print|tshirt|washed-grey",
+    "ozon_variant": "var27",
+    "name": "Футболка-варёнка Мадара Учиха ЧБ",
+    "slug": "futbolka-varenka-naruto-madara-uchiha-chb-print-seraya",
+    "description": "Серая футболка-варёнка оверсайз из 100% хлопка пенье плотностью 240 г/м². Винтажная обработка подчёркивает фактуру ткани, а свободный крой обеспечивает комфортную посадку.\n\nКрупный принт с Мадарой Учихой выполнен в чёрно-серой гамме с красными акцентами. Рекомендуется деликатная стирка с изнаночной стороны при температуре до 30 °C.",
+    "ozon_description": "Серая варёная футболка оверсайз из 100% хлопка пенье плотностью 240 г/м² с крупным принтом Мадары Учихи в боевой броне. Чёрно-серая графика дополнена красными акцентами.",
+    "category": "Футболки",
+    "category_slug": "tshirts",
+    "product_type": "Футболка",
+    "product_type_slug": "tshirt",
+    "decoration_type": "Принт",
+    "decoration_slug": "print",
+    "color_name": "Вареный серый",
+    "color_slug": "washed-grey",
+    "color_hex": "#9ca3af",
+    "franchise_type": "anime",
+    "title_name": "Naruto",
+    "title_slug": "naruto",
+    "anime_title": "Naruto",
+    "anime_slug": "naruto",
+    "character_name": "Madara Uchiha",
+    "character_slug": "madara-uchiha",
+    "collection_name": "Madara Uchiha",
+    "collection_slug": "madara-uchiha",
+    "design_name": "Madara Uchiha Monochrome",
+    "design_slug": "madara-uchiha-monochrome",
+    "tags": [
+      "tshirt",
+      "print",
+      "washed-grey",
+      "anime",
+      "naruto",
+      "madara-uchiha"
+    ],
+    "sizes": [
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "price_min": "2900.00",
+    "price_max": "2900.00",
+    "currency": "RUB",
+    "primary_image_url": "/media/products/01/0104d49115848412/800.webp",
+    "main_image_path": "/media/products/01/0104d49115848412/800.webp",
+    "image_urls": [
+      "/media/products/01/0104d49115848412/800.webp",
+      "/media/products/46/464b038e311fc384/800.webp",
+      "/media/products/b0/b026b3cc16dbdbda/800.webp",
+      "/media/products/2e/2e2b2912df3b0a9d/800.webp",
+      "/media/products/9f/9f414eff972830ce/800.webp",
+      "/media/products/f1/f17ec7c55e7c3715/800.webp",
+      "/media/products/49/4911f91ac320dfc3/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp"
+    ],
+    "size_chart_json": {
+      "content": [
+        {
+          "table": {
+            "body": [
+              {
+                "data": [
+                  [
+                    "RU",
+                    "Российский размер"
+                  ],
+                  "    46",
+                  "    48",
+                  "    50",
+                  "52",
+                  "54"
+                ]
+              },
+              {
+                "data": [
+                  [
+                    "INT",
+                    "Международный размер"
+                  ],
+                  "    S",
+                  "    M",
+                  "    L",
+                  "XL",
+                  "XXL"
+                ]
+              },
+              {
+                "data": [
+                  [
+                    "Длина, см",
+                    ""
+                  ],
+                  "    69",
+                  "    71",
+                  "    73",
+                  "75",
+                  "77"
+                ]
+              },
+              {
+                "data": [
+                  [
+                    "Ширина, см",
+                    ""
+                  ],
+                  "    53",
+                  "    56",
+                  "    58",
+                  "62",
+                  "65"
+                ]
+              }
+            ],
+            "title": "Размеры"
+          },
+          "widgetName": "tcTable"
+        }
+      ],
+      "version": 0.1
+    },
+    "offers": [
+      {
+        "sku": 5295470962,
+        "offer_id": "D27-TSH-PRT-WGRY-XL",
+        "name": "Вареная футболка с принтом Мадара Учиха ЧБ XL",
+        "size": "XL",
+        "price": 2900,
+        "images": [
+          "/media/products/01/0104d49115848412/800.webp",
+          "/media/products/46/464b038e311fc384/800.webp",
+          "/media/products/b0/b026b3cc16dbdbda/800.webp",
+          "/media/products/2e/2e2b2912df3b0a9d/800.webp",
+          "/media/products/9f/9f414eff972830ce/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp"
+        ],
+        "primary_image": "/media/products/01/0104d49115848412/800.webp"
+      },
+      {
+        "sku": 5296815687,
+        "offer_id": "D27-TSH-PRT-WGRY-XXL",
+        "name": "Вареная футболка с принтом Мадара Учиха ЧБ XXL",
+        "size": "XXL",
+        "price": 2900,
+        "images": [
+          "/media/products/01/0104d49115848412/800.webp",
+          "/media/products/46/464b038e311fc384/800.webp",
+          "/media/products/b0/b026b3cc16dbdbda/800.webp",
+          "/media/products/2e/2e2b2912df3b0a9d/800.webp",
+          "/media/products/9f/9f414eff972830ce/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp"
+        ],
+        "primary_image": "/media/products/01/0104d49115848412/800.webp"
+      },
+      {
+        "sku": 5296817452,
+        "offer_id": "D27-TSH-PRT-WGRY-L",
+        "name": "Вареная футболка с принтом Мадара Учиха ЧБ L",
+        "size": "L",
+        "price": 2900,
+        "images": [
+          "/media/products/01/0104d49115848412/800.webp",
+          "/media/products/46/464b038e311fc384/800.webp",
+          "/media/products/b0/b026b3cc16dbdbda/800.webp",
+          "/media/products/2e/2e2b2912df3b0a9d/800.webp",
+          "/media/products/9f/9f414eff972830ce/800.webp",
+          "/media/products/f1/f17ec7c55e7c3715/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp"
+        ],
+        "primary_image": "/media/products/01/0104d49115848412/800.webp"
+      }
+    ],
+    "is_active": true,
+    "sort_order": 9,
+    "short_description": "Серая футболка-варёнка оверсайз с крупным чёрно-белым принтом Мадары Учихи и красными акцентами. Плотный хлопок и свободная посадка.",
+    "badges": [
+      "new"
+    ],
+    "compare_at_price": "4500",
+    "slug_redirects": [],
+    "review_summary": {
+      "count": 0,
+      "averageRating": null,
+      "withMedia": 0,
+      "withText": 0,
+      "ratingCounts": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0
+      }
+    }
+  },
+  {
+    "id": "c5f5244c-33b1-4c83-8179-f0d18f91b99b",
+    "design_key": "var2|embroidery|hoodie|black",
+    "ozon_variant": "var2",
+    "name": "Худи Итачи",
+    "slug": "hudi-naruto-itachi-uchiha-vyshivka-chernaya",
+    "description": "Чёрное худи унисекс с вышивкой персонажа Итачи Учиха из аниме «Наруто» — стильный и удобный выбор для повседневной носки, прогулок и фотосессий. Этот модный худи идеально подойдёт для мужчин и женщин, ценящих уличную моду, японскую культуру и оригинальный дизайн.\nХуди выполнено из 100% хлопка (футер 2-х нитка, петля) плотностью 220 г/м², что обеспечивает комфорт, мягкость и долговечность. Свободный крой и глубокий капюшон делают модель практичной и удобной в любое время года.\nВышивка с изображением Итачи Учихи из культового аниме «Naruto» выполнена качественно — не выгорает и не теряет форму после стирки.\nОсобенности и преимущества:\nуниверсальное чёрное худи оверсайз унисекс; стильная вышивка аниме-персонаж Итачи Учиха; 100% хлопок, футер 2-х нитка (петля), плотность 220 г/м²; подходит мужчинам и женщинам; сохраняет форму и цвет после стирки; отлично сочетается с джинсами, спортивными штанами, кроссовками; идеальный подарок фанатам аниме «Наруто» и любителям streetwear. Материал: 100% хлопок\nПлотность: 220 г/м²\nСезон: всесезонный\nЭто чёрное худи с вышивкой — идеальный выбор для тех, кто ищет качественную и стильную одежду в стиле аниме и уличной моды.",
+    "ozon_description": "Чёрное худи унисекс с вышивкой персонажа Итачи Учиха из аниме «Наруто» — стильный и удобный выбор для повседневной носки, прогулок и фотосессий. Этот модный худи идеально подойдёт для мужчин и женщин, ценящих уличную моду, японскую культуру и оригинальный дизайн.\nХуди выполнено из 100% хлопка (футер 2-х нитка, петля) плотностью 220 г/м², что обеспечивает комфорт, мягкость и долговечность. Свободный крой и глубокий капюшон делают модель практичной и удобной в любое время года.\nВышивка с изображением Итачи Учихи из культового аниме «Naruto» выполнена качественно — не выгорает и не теряет форму после стирки.\nОсобенности и преимущества:\nуниверсальное чёрное худи оверсайз унисекс; стильная вышивка аниме-персонаж Итачи Учиха; 100% хлопок, футер 2-х нитка (петля), плотность 220 г/м²; подходит мужчинам и женщинам; сохраняет форму и цвет после стирки; отлично сочетается с джинсами, спортивными штанами, кроссовками; идеальный подарок фанатам аниме «Наруто» и любителям streetwear. Материал: 100% хлопок\nПлотность: 220 г/м²\nСезон: всесезонный\nЭто чёрное худи с вышивкой — идеальный выбор для тех, кто ищет качественную и стильную одежду в стиле аниме и уличной моды.",
+    "category": "Худи",
+    "category_slug": "hoodies",
+    "product_type": "Худи",
+    "product_type_slug": "hoodie",
+    "decoration_type": "Вышивка",
+    "decoration_slug": "embroidery",
+    "color_name": "Черный",
+    "color_slug": "black",
+    "color_hex": "#111111",
+    "franchise_type": "anime",
+    "title_name": "Naruto",
+    "title_slug": "naruto",
+    "anime_title": "Naruto",
+    "anime_slug": "naruto",
+    "character_name": "Itachi Uchiha",
+    "character_slug": "itachi-uchiha",
+    "collection_name": "Itachi",
+    "collection_slug": "itachi",
+    "design_name": "Itachi",
+    "design_slug": "itachi",
+    "tags": [
+      "anime",
+      "black",
+      "embroidery",
+      "hoodie",
+      "itachi",
+      "naruto",
+      "hit"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "price_min": "3500.00",
+    "price_max": "3500.00",
+    "currency": "RUB",
+    "primary_image_url": "/media/products/12/12685d780d99dd30/800.webp",
+    "main_image_path": "./assets/ozon-main/18-худи-с-вышивкой-итачи.jpg",
+    "image_urls": [
+      "/media/products/12/12685d780d99dd30/800.webp",
+      "/media/products/2e/2e21599b035f859c/800.webp",
+      "/media/products/ae/aedd63716cc202c1/800.webp",
+      "/media/products/89/8982c07e537ac289/800.webp",
+      "/media/products/c1/c193c2d5f7defb03/800.webp",
+      "/media/products/3d/3ddc56f369ff027d/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp"
+    ],
+    "size_chart_json": {
+      "content": [
+        {
+          "table": {
+            "body": [
+              {
+                "data": [
+                  [
+                    "INT",
+                    "Международный размер"
+                  ],
+                  "S",
+                  "M",
+                  "L",
+                  "XL"
+                ]
+              },
+              {
+                "data": [
+                  [
+                    "RU",
+                    "Российский размер"
+                  ],
+                  "44-46",
+                  "46-48",
+                  "48-50",
+                  "50-52"
+                ]
+              },
+              {
+                "data": [
+                  [
+                    "A",
+                    "Ширина изделия, см"
+                  ],
+                  "58",
+                  "61",
+                  "63",
+                  "66"
+                ]
+              },
+              {
+                "data": [
+                  [
+                    "B",
+                    "Длина изделия, см"
+                  ],
+                  "71",
+                  "73",
+                  "75",
+                  "79"
+                ]
+              },
+              {
+                "data": [
+                  [
+                    "C",
+                    "Длина рукава, см"
+                  ],
+                  "53",
+                  "55",
+                  "57",
+                  "59"
+                ]
+              }
+            ],
+            "title": "Таблица размеров"
+          },
+          "widgetName": "tcTable"
+        }
+      ],
+      "version": 0.1
+    },
+    "offers": [
+      {
+        "sku": 3134088397,
+        "offer_id": "D2-HDY-EMB-BLK-REG-FLC-S",
+        "name": "Толстовка с вышивкой Итачи Черная S",
+        "size": "S",
+        "price": 3500,
+        "images": [
+          "/media/products/12/12685d780d99dd30/800.webp",
+          "/media/products/2e/2e21599b035f859c/800.webp",
+          "/media/products/ae/aedd63716cc202c1/800.webp",
+          "/media/products/89/8982c07e537ac289/800.webp",
+          "/media/products/c1/c193c2d5f7defb03/800.webp",
+          "/media/products/3d/3ddc56f369ff027d/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp"
+        ],
+        "primary_image": "/media/products/12/12685d780d99dd30/800.webp",
+        "archived": false,
+        "visible": null
+      },
+      {
+        "sku": 3134088463,
+        "offer_id": "D2-HDY-EMB-BLK-REG-FLC-M",
+        "name": "Худи с вышивкой Итачи Черная M",
+        "size": "M",
+        "price": 3500,
+        "images": [
+          "/media/products/12/12685d780d99dd30/800.webp",
+          "/media/products/2e/2e21599b035f859c/800.webp",
+          "/media/products/ae/aedd63716cc202c1/800.webp",
+          "/media/products/89/8982c07e537ac289/800.webp",
+          "/media/products/c1/c193c2d5f7defb03/800.webp",
+          "/media/products/3d/3ddc56f369ff027d/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp"
+        ],
+        "primary_image": "/media/products/12/12685d780d99dd30/800.webp",
+        "archived": false,
+        "visible": null
+      },
+      {
+        "sku": 3134088740,
+        "offer_id": "D2-HDY-EMB-BLK-REG-FLC-XL",
+        "name": "Худи с вышивкой Итачи Черная XL",
+        "size": "XL",
+        "price": 3500,
+        "images": [
+          "/media/products/12/12685d780d99dd30/800.webp",
+          "/media/products/2e/2e21599b035f859c/800.webp",
+          "/media/products/ae/aedd63716cc202c1/800.webp",
+          "/media/products/89/8982c07e537ac289/800.webp",
+          "/media/products/c1/c193c2d5f7defb03/800.webp",
+          "/media/products/3d/3ddc56f369ff027d/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp"
+        ],
+        "primary_image": "/media/products/12/12685d780d99dd30/800.webp",
+        "archived": false,
+        "visible": null
+      },
+      {
+        "sku": 3134088920,
+        "offer_id": "D2-HDY-EMB-BLK-REG-FLC-L",
+        "name": "Худи с вышивкой Итачи Черная L",
+        "size": "L",
+        "price": 3500,
+        "images": [
+          "/media/products/12/12685d780d99dd30/800.webp",
+          "/media/products/2e/2e21599b035f859c/800.webp",
+          "/media/products/ae/aedd63716cc202c1/800.webp",
+          "/media/products/89/8982c07e537ac289/800.webp",
+          "/media/products/c1/c193c2d5f7defb03/800.webp",
+          "/media/products/3d/3ddc56f369ff027d/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp"
+        ],
+        "primary_image": "/media/products/12/12685d780d99dd30/800.webp",
+        "archived": false,
+        "visible": null
+      }
+    ],
+    "is_active": true,
+    "sort_order": 9,
+    "short_description": "Мягкое чёрное худи с вышивкой Итачи — тепло, плотно, по делу. Капюшон и спокойный крой для дней, когда хочется спрятаться в ткань.",
+    "badges": [
+      "hit"
+    ],
+    "compare_at_price": "6000",
+    "slug_redirects": [
+      "var2-embroidery-hoodie-black"
+    ],
+    "review_summary": {
+      "count": 3,
+      "averageRating": 4.67,
+      "withMedia": 0,
+      "withText": 1,
+      "ratingCounts": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 1,
+        "5": 2
       }
     }
   },
@@ -1692,7 +2304,7 @@ window.KOMUI_PRODUCTS = [
       }
     ],
     "is_active": true,
-    "sort_order": 7,
+    "sort_order": 10,
     "short_description": "Серая футболка-варёнка оверсайз с дерзким принтом языка Сукуны из Jujutsu Kaisen. Плотный хлопок, свободная посадка и винтажный эффект кислотной стирки для streetwear-образов.",
     "badges": [],
     "compare_at_price": "4500",
@@ -1701,6 +2313,7 @@ window.KOMUI_PRODUCTS = [
       "count": 1,
       "averageRating": 5,
       "withMedia": 0,
+      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -1909,7 +2522,7 @@ window.KOMUI_PRODUCTS = [
       }
     ],
     "is_active": true,
-    "sort_order": 8,
+    "sort_order": 11,
     "short_description": "Серая футболка-варёнка оверсайз с принтом Мадары Учихи из Naruto. Плотный 100% хлопок, свободная посадка и выразительная графика для аниме- и streetwear-луков.",
     "badges": [],
     "compare_at_price": "4500",
@@ -1918,6 +2531,7 @@ window.KOMUI_PRODUCTS = [
       "count": 2,
       "averageRating": 5,
       "withMedia": 0,
+      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -2126,7 +2740,7 @@ window.KOMUI_PRODUCTS = [
       }
     ],
     "is_active": true,
-    "sort_order": 9,
+    "sort_order": 12,
     "short_description": "Серая футболка-варёнка оверсайз с крупным принтом языка и глаза Сукуны из Jujutsu Kaisen. Плотный хлопок, свободный силуэт и эффект кислотной стирки.",
     "badges": [],
     "compare_at_price": "4500",
@@ -2135,6 +2749,7 @@ window.KOMUI_PRODUCTS = [
       "count": 3,
       "averageRating": 5,
       "withMedia": 1,
+      "withText": 2,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -2343,7 +2958,7 @@ window.KOMUI_PRODUCTS = [
       }
     ],
     "is_active": true,
-    "sort_order": 10,
+    "sort_order": 13,
     "short_description": "Серая футболка-варёнка оверсайз с двусторонним принтом татуировок Сукуны из Jujutsu Kaisen. Плотный хлопок, свободная посадка и акцентная красная графика.",
     "badges": [],
     "compare_at_price": "4500",
@@ -2352,6 +2967,7 @@ window.KOMUI_PRODUCTS = [
       "count": 1,
       "averageRating": 5,
       "withMedia": 1,
+      "withText": 1,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -2587,7 +3203,7 @@ window.KOMUI_PRODUCTS = [
       }
     ],
     "is_active": true,
-    "sort_order": 11,
+    "sort_order": 14,
     "short_description": "Тёплый бежевый с эффектом варёнки — спокойная база, на которой Годжо смотрится мягко, без крика. Для образов в нюдовой и пастельной гамме.",
     "badges": [],
     "compare_at_price": "4500",
@@ -2598,6 +3214,7 @@ window.KOMUI_PRODUCTS = [
       "count": 2,
       "averageRating": 4.5,
       "withMedia": 0,
+      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -2883,7 +3500,7 @@ window.KOMUI_PRODUCTS = [
       }
     ],
     "is_active": true,
-    "sort_order": 12,
+    "sort_order": 15,
     "short_description": "Худи без начёса: не парит летом и держит форму к осени. Аккуратная вышивка в духе GTA вместо громких принтов — тот случай, когда решает деталь.",
     "badges": [],
     "compare_at_price": "6000",
@@ -2894,6 +3511,7 @@ window.KOMUI_PRODUCTS = [
       "count": 1,
       "averageRating": 5,
       "withMedia": 0,
+      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -3158,7 +3776,7 @@ window.KOMUI_PRODUCTS = [
       }
     ],
     "is_active": true,
-    "sort_order": 13,
+    "sort_order": 16,
     "short_description": "Белое худи из авторской линейки Gravity: чистый силуэт и вышитый логотип, который проявляется только вблизи. Минимализм, который дружит с чем угодно.",
     "badges": [],
     "compare_at_price": "6000",
@@ -3169,6 +3787,7 @@ window.KOMUI_PRODUCTS = [
       "count": 1,
       "averageRating": 4,
       "withMedia": 0,
+      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -3390,7 +4009,7 @@ window.KOMUI_PRODUCTS = [
       }
     ],
     "is_active": true,
-    "sort_order": 14,
+    "sort_order": 17,
     "short_description": "Варёный беж и вышивка Итачи нитью в тон — деталь, которую замечают не сразу. Для тех, кто любит отсылки шёпотом, а не капслоком.",
     "badges": [],
     "compare_at_price": "4500",
@@ -3401,6 +4020,7 @@ window.KOMUI_PRODUCTS = [
       "count": 5,
       "averageRating": 5,
       "withMedia": 0,
+      "withText": 2,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -3637,7 +4257,7 @@ window.KOMUI_PRODUCTS = [
       }
     ],
     "is_active": true,
-    "sort_order": 15,
+    "sort_order": 18,
     "short_description": "Белая база и контрастный принт Годжо — максимум читаемости, ноль лишнего. Та самая футболка, когда собрать образ нужно за минуту.",
     "badges": [],
     "compare_at_price": "4500",
@@ -3648,6 +4268,7 @@ window.KOMUI_PRODUCTS = [
       "count": 1,
       "averageRating": 5,
       "withMedia": 0,
+      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -3878,7 +4499,7 @@ window.KOMUI_PRODUCTS = [
       }
     ],
     "is_active": true,
-    "sort_order": 16,
+    "sort_order": 19,
     "short_description": "Чёрный фон превращает принт Годжо в неоновую вспышку. Резкий графичный вариант для тёмных образов и вечерних выходов.",
     "badges": [],
     "compare_at_price": "4500",
@@ -3889,6 +4510,7 @@ window.KOMUI_PRODUCTS = [
       "count": 5,
       "averageRating": 5,
       "withMedia": 0,
+      "withText": 2,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -4129,7 +4751,7 @@ window.KOMUI_PRODUCTS = [
       }
     ],
     "is_active": true,
-    "sort_order": 17,
+    "sort_order": 20,
     "short_description": "Светлая футболка с Годжо для капсулы из базовых цветов. Серый, деним, белые кроссовки — принт сам достроит образ.",
     "badges": [],
     "compare_at_price": "4500",
@@ -4140,6 +4762,7 @@ window.KOMUI_PRODUCTS = [
       "count": 1,
       "averageRating": 5,
       "withMedia": 0,
+      "withText": 1,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -4370,7 +4993,7 @@ window.KOMUI_PRODUCTS = [
       }
     ],
     "is_active": true,
-    "sort_order": 18,
+    "sort_order": 21,
     "short_description": "Чёрная футболка с вышитой эмблемой Акацуки в спортивном ключе. Облака клана на груди — знак для своих, остальным просто хорошая тишка.",
     "badges": [],
     "compare_at_price": "4500",
@@ -4381,6 +5004,7 @@ window.KOMUI_PRODUCTS = [
       "count": 4,
       "averageRating": 4,
       "withMedia": 0,
+      "withText": 1,
       "ratingCounts": {
         "1": 1,
         "2": 0,
@@ -4609,7 +5233,7 @@ window.KOMUI_PRODUCTS = [
       }
     ],
     "is_active": true,
-    "sort_order": 19,
+    "sort_order": 22,
     "short_description": "Белое полотно и вышивка Мадары — холодный, властный характер в минимальной подаче. Для образов, где меньше значит дороже.",
     "badges": [],
     "compare_at_price": "4500",
@@ -4620,6 +5244,7 @@ window.KOMUI_PRODUCTS = [
       "count": 4,
       "averageRating": 5,
       "withMedia": 0,
+      "withText": 2,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -4852,7 +5477,7 @@ window.KOMUI_PRODUCTS = [
       }
     ],
     "is_active": true,
-    "sort_order": 20,
+    "sort_order": 23,
     "short_description": "Принт Акацуки на белом — крупно, контрастно, без полутонов. Алые облака читаются издалека и тянут весь образ на себя.",
     "badges": [],
     "compare_at_price": "4500",
@@ -4863,6 +5488,7 @@ window.KOMUI_PRODUCTS = [
       "count": 4,
       "averageRating": 5,
       "withMedia": 0,
+      "withText": 1,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -5091,7 +5717,7 @@ window.KOMUI_PRODUCTS = [
       }
     ],
     "is_active": true,
-    "sort_order": 21,
+    "sort_order": 24,
     "short_description": "Чёрная футболка с принтом Акацуки: облака клана горят на тёмном, как угли. База, которая дружит с карго и тяжёлой обувью.",
     "badges": [],
     "compare_at_price": "4500",
@@ -5102,6 +5728,7 @@ window.KOMUI_PRODUCTS = [
       "count": 4,
       "averageRating": 5,
       "withMedia": 0,
+      "withText": 1,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -5324,7 +5951,7 @@ window.KOMUI_PRODUCTS = [
       }
     ],
     "is_active": true,
-    "sort_order": 22,
+    "sort_order": 25,
     "short_description": "Лаконичная дань клану Акацуки: тёмная футболка с фирменным мотивом и прямым кроем. С неё удобно начинать гардероб по Naruto.",
     "badges": [],
     "compare_at_price": "4500",
@@ -5335,6 +5962,7 @@ window.KOMUI_PRODUCTS = [
       "count": 0,
       "averageRating": null,
       "withMedia": 0,
+      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -5557,7 +6185,7 @@ window.KOMUI_PRODUCTS = [
       }
     ],
     "is_active": true,
-    "sort_order": 23,
+    "sort_order": 26,
     "short_description": "Белая футболка Gravity с вышивкой собственного дизайна KOMUI. Тихий флекс: ни одного чужого логотипа — только наш почерк.",
     "badges": [],
     "compare_at_price": "4500",
@@ -5568,6 +6196,7 @@ window.KOMUI_PRODUCTS = [
       "count": 13,
       "averageRating": 4.46,
       "withMedia": 4,
+      "withText": 9,
       "ratingCounts": {
         "1": 1,
         "2": 1,
@@ -5796,7 +6425,7 @@ window.KOMUI_PRODUCTS = [
       }
     ],
     "is_active": true,
-    "sort_order": 24,
+    "sort_order": 27,
     "short_description": "Принтовая версия Gravity на белом: графика чуть смелее, посыл тот же. Авторский дизайн KOMUI для будней без компромиссов.",
     "badges": [],
     "compare_at_price": "4500",
@@ -5807,6 +6436,7 @@ window.KOMUI_PRODUCTS = [
       "count": 1,
       "averageRating": 5,
       "withMedia": 1,
+      "withText": 1,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -6035,7 +6665,7 @@ window.KOMUI_PRODUCTS = [
       }
     ],
     "is_active": true,
-    "sort_order": 25,
+    "sort_order": 28,
     "short_description": "Чёрный Gravity с принтом — графика проявляется контрастно и держит образ собранным. Универсальная тёмная база на каждый день.",
     "badges": [],
     "compare_at_price": "4500",
@@ -6046,6 +6676,7 @@ window.KOMUI_PRODUCTS = [
       "count": 1,
       "averageRating": 4,
       "withMedia": 0,
+      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -6274,7 +6905,7 @@ window.KOMUI_PRODUCTS = [
       }
     ],
     "is_active": true,
-    "sort_order": 26,
+    "sort_order": 29,
     "short_description": "Чёрная футболка с вышивкой в стилистике GTA — деталь для своих, без громких надписей. Стежок вместо принта носится дольше и выглядит дороже.",
     "badges": [],
     "compare_at_price": "4500",
@@ -6285,6 +6916,7 @@ window.KOMUI_PRODUCTS = [
       "count": 2,
       "averageRating": 5,
       "withMedia": 0,
+      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -6494,7 +7126,7 @@ window.KOMUI_PRODUCTS = [
       }
     ],
     "is_active": true,
-    "sort_order": 27,
+    "sort_order": 30,
     "short_description": "Чёрное худи Gravity с вышивкой — тёплая база авторской линейки KOMUI. Логотип проявляется только тем, кто присмотрится.",
     "badges": [],
     "compare_at_price": "6000",
@@ -6505,6 +7137,7 @@ window.KOMUI_PRODUCTS = [
       "count": 0,
       "averageRating": null,
       "withMedia": 0,
+      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -6716,7 +7349,7 @@ window.KOMUI_PRODUCTS = [
       }
     ],
     "is_active": true,
-    "sort_order": 28,
+    "sort_order": 31,
     "short_description": "Варёный серый и принт Gravity — винтажная фактура встречает авторскую графику. Та самая ношеная-любимая футболка, только новая.",
     "badges": [],
     "compare_at_price": "4500",
@@ -6727,6 +7360,7 @@ window.KOMUI_PRODUCTS = [
       "count": 1,
       "averageRating": 5,
       "withMedia": 0,
+      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -6951,7 +7585,7 @@ window.KOMUI_PRODUCTS = [
       }
     ],
     "is_active": true,
-    "sort_order": 30,
+    "sort_order": 33,
     "short_description": "Светлая версия с вышивкой Итачи: тот же характер, но в дневной, лёгкой гамме. Беспроигрышная база под джинсу и белую обувь.",
     "badges": [],
     "compare_at_price": "4500",
@@ -6962,164 +7596,7 @@ window.KOMUI_PRODUCTS = [
       "count": 0,
       "averageRating": null,
       "withMedia": 0,
-      "ratingCounts": {
-        "1": 0,
-        "2": 0,
-        "3": 0,
-        "4": 0,
-        "5": 0
-      }
-    }
-  },
-  {
-    "id": "0525b716-8586-4519-ba57-b47cc9523259",
-    "design_key": "var17|print|tshirt|blue",
-    "ozon_variant": "var17",
-    "name": "Футболка-варёнка Сатору Годжо",
-    "slug": "futbolka-varenka-jujutsu-kaisen-satoru-gojo-print-sinyaya",
-    "description": "🔹 Описание товара:\nСтильная тёмно-синяя оверсайз футболка с эффектом варёной стирки и ярким принтом Сатору Годжо из культового аниме Jujutsu Kaisen (Магическая битва) — идеальный выбор для фанатов аниме и современной уличной моды. Эффект acid wash (варёнки) придаёт ткани винтажный характер и делает каждую футболку немного уникальной. Универсальный свободный крой unisex подходит как парням, так и девушкам и отлично вписывается в стиль streetwear.\n🔹 Материалы и качество:\n100% хлопок премиум-качества\nПлотность ткани 240 г/м² — плотная, не просвечивает, хорошо держит форму и отличается высокой износостойкостью\nТкань мягкая, дышащая и комфортная для повседневной носки\nКачественный принт — не трескается, не выцветает и сохраняет яркость после множества стирок\n🔹 Особенности модели:\nТрендовый oversize силуэт — свободная посадка и современный стиль\nЭффект варёной стирки (acid wash) — стильный винтажный вид\nУниверсальный unisex дизайн — подходит мужчинам и женщинам\nТёмно-синий цвет легко сочетается с джинсами, карго, шортами и кроссовками\nОтличный подарок для фанатов Jujutsu Kaisen, аниме и японской культуры\nфутболка с принтом аниме, футболка Сатору Годжо, футболка Jujutsu Kaisen, тёмно синяя футболка оверсайз, футболка варёнка oversize, аниме одежда, хлопковая футболка 240 г/м², синяя футболка унисекс, модная футболка 2025, одежда для отаку, подарок фанату аниме, футболка для подростков, футболка для парней, футболка для девушек, уличная мода, acid wash футболка, anime t-shirt, gojo satoru shirt, streetwear футболка",
-    "ozon_description": "🔹 Описание товара:\nСтильная тёмно-синяя оверсайз футболка с эффектом варёной стирки и ярким принтом Сатору Годжо из культового аниме Jujutsu Kaisen (Магическая битва) — идеальный выбор для фанатов аниме и современной уличной моды. Эффект acid wash (варёнки) придаёт ткани винтажный характер и делает каждую футболку немного уникальной. Универсальный свободный крой unisex подходит как парням, так и девушкам и отлично вписывается в стиль streetwear.\n🔹 Материалы и качество:\n100% хлопок премиум-качества\nПлотность ткани 240 г/м² — плотная, не просвечивает, хорошо держит форму и отличается высокой износостойкостью\nТкань мягкая, дышащая и комфортная для повседневной носки\nКачественный принт — не трескается, не выцветает и сохраняет яркость после множества стирок\n🔹 Особенности модели:\nТрендовый oversize силуэт — свободная посадка и современный стиль\nЭффект варёной стирки (acid wash) — стильный винтажный вид\nУниверсальный unisex дизайн — подходит мужчинам и женщинам\nТёмно-синий цвет легко сочетается с джинсами, карго, шортами и кроссовками\nОтличный подарок для фанатов Jujutsu Kaisen, аниме и японской культуры\nфутболка с принтом аниме, футболка Сатору Годжо, футболка Jujutsu Kaisen, тёмно синяя футболка оверсайз, футболка варёнка oversize, аниме одежда, хлопковая футболка 240 г/м², синяя футболка унисекс, модная футболка 2025, одежда для отаку, подарок фанату аниме, футболка для подростков, футболка для парней, футболка для девушек, уличная мода, acid wash футболка, anime t-shirt, gojo satoru shirt, streetwear футболка",
-    "category": "Футболки",
-    "category_slug": "tshirts",
-    "product_type": "Футболка",
-    "product_type_slug": "tshirt",
-    "decoration_type": "Принт",
-    "decoration_slug": "print",
-    "color_name": "Синий",
-    "color_slug": "blue",
-    "color_hex": "#244cff",
-    "franchise_type": "anime",
-    "title_name": "Jujutsu Kaisen",
-    "title_slug": "jujutsu-kaisen",
-    "anime_title": "Jujutsu Kaisen",
-    "anime_slug": "jujutsu-kaisen",
-    "character_name": "Satoru Gojo",
-    "character_slug": "satoru-gojo",
-    "collection_name": "Satoru Gojo",
-    "collection_slug": "satoru-gojo",
-    "design_name": "Satoru Gojo",
-    "design_slug": "satoru-gojo",
-    "tags": [
-      "anime",
-      "blue",
-      "jujutsu-kaisen",
-      "print",
-      "satoru-gojo",
-      "tshirt"
-    ],
-    "sizes": [
-      "S"
-    ],
-    "price_min": "2900.00",
-    "price_max": "2900.00",
-    "currency": "RUB",
-    "primary_image_url": "/media/products/3d/3d9391b865e2b281/800.webp",
-    "main_image_path": "/media/products/3d/3d9391b865e2b281/800.webp",
-    "image_urls": [
-      "/media/products/3d/3d9391b865e2b281/800.webp",
-      "/media/products/f3/f37159eb3fcd0114/800.webp",
-      "/media/products/3c/3c1dd49c21c03bbe/800.webp",
-      "/media/products/8d/8daf2adcb0dc0d97/800.webp",
-      "/media/products/f1/f17ec7c55e7c3715/800.webp",
-      "/media/products/eb/eb63be4e7c210c93/800.webp"
-    ],
-    "size_chart_json": {
-      "content": [
-        {
-          "table": {
-            "body": [
-              {
-                "data": [
-                  [
-                    "RU",
-                    "Российский размер"
-                  ],
-                  "    46",
-                  "    48",
-                  "    50",
-                  "52",
-                  "54"
-                ]
-              },
-              {
-                "data": [
-                  [
-                    "INT",
-                    "Международный размер"
-                  ],
-                  "    S",
-                  "    M",
-                  "    L",
-                  "XL",
-                  "XXL"
-                ]
-              },
-              {
-                "data": [
-                  [
-                    "Длина, см",
-                    ""
-                  ],
-                  "    69",
-                  "    71",
-                  "    73",
-                  "75",
-                  "77"
-                ]
-              },
-              {
-                "data": [
-                  [
-                    "Ширина, см",
-                    ""
-                  ],
-                  "    53",
-                  "    56",
-                  "    58",
-                  "62",
-                  "65"
-                ]
-              }
-            ],
-            "title": "Размеры"
-          },
-          "widgetName": "tcTable"
-        }
-      ],
-      "version": 0.1
-    },
-    "offers": [
-      {
-        "sku": 3611425981,
-        "offer_id": "D17-TSH-PRT-WBLU-S",
-        "name": "Синяя вареная футболка с принтом Сатору годжо S",
-        "size": "S",
-        "price": 2900,
-        "images": [
-          "/media/products/3d/3d9391b865e2b281/800.webp",
-          "/media/products/f3/f37159eb3fcd0114/800.webp",
-          "/media/products/3c/3c1dd49c21c03bbe/800.webp",
-          "/media/products/8d/8daf2adcb0dc0d97/800.webp",
-          "/media/products/f1/f17ec7c55e7c3715/800.webp",
-          "/media/products/eb/eb63be4e7c210c93/800.webp"
-        ],
-        "primary_image": "/media/products/3d/3d9391b865e2b281/800.webp",
-        "archived": false,
-        "visible": null
-      }
-    ],
-    "is_active": true,
-    "sort_order": 31,
-    "short_description": "Синяя варёнка под цвет глаз Годжо — редкий оттенок, который выделяет из толпы. Принт и фон в одной палитре, как и задумано.",
-    "badges": [],
-    "compare_at_price": "4500",
-    "slug_redirects": [
-      "var17-print-tshirt-blue"
-    ],
-    "review_summary": {
-      "count": 0,
-      "averageRating": null,
-      "withMedia": 0,
+      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -7336,7 +7813,7 @@ window.KOMUI_PRODUCTS = [
       }
     ],
     "is_active": true,
-    "sort_order": 33,
+    "sort_order": 36,
     "short_description": "Принт Акацуки с текстовым блоком — больше графики, больше характера. Сделайте её смысловым центром, остальное держите спокойным.",
     "badges": [],
     "compare_at_price": "4500",
@@ -7347,6 +7824,7 @@ window.KOMUI_PRODUCTS = [
       "count": 0,
       "averageRating": null,
       "withMedia": 0,
+      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -7502,7 +7980,7 @@ window.KOMUI_PRODUCTS = [
       }
     ],
     "is_active": true,
-    "sort_order": 34,
+    "sort_order": 37,
     "short_description": "Синее худи с вышивкой Итачи — мягкий уход от привычного чёрного. Глубокий цвет, тёплый футер и деталь, ради которой и берут.",
     "badges": [],
     "compare_at_price": "6000",
@@ -7513,6 +7991,7 @@ window.KOMUI_PRODUCTS = [
       "count": 1,
       "averageRating": 5,
       "withMedia": 1,
+      "withText": 1,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -7596,7 +8075,7 @@ window.KOMUI_PRODUCTS = [
       }
     ],
     "is_active": true,
-    "sort_order": 35,
+    "sort_order": 38,
     "short_description": "Чёрный свитшот с вышивкой Итачи. Отдельная карточка без смешения с футболками.",
     "badges": [],
     "compare_at_price": "5500",
@@ -7607,6 +8086,7 @@ window.KOMUI_PRODUCTS = [
       "count": 0,
       "averageRating": null,
       "withMedia": 0,
+      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
