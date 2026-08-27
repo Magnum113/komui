@@ -534,15 +534,19 @@ async function loadReviewSummaryFromApi(slug) {
 
 async function enrichMissingReviewSummaries(products) {
   if (!API_BASE_URL) return;
-  const missing = products.filter(product =>
-    !Object.prototype.hasOwnProperty.call(product, 'review_summary')
-  );
-  if (!missing.length) return;
+  const incomplete = products.filter(product => {
+    const summary = product && product.review_summary;
+    return !summary
+      || typeof summary !== 'object'
+      || !summary.ratingCounts
+      || typeof summary.ratingCounts !== 'object';
+  });
+  if (!incomplete.length) return;
 
   let enriched = 0;
   const concurrency = 6;
-  for (let offset = 0; offset < missing.length; offset += concurrency) {
-    const batch = missing.slice(offset, offset + concurrency);
+  for (let offset = 0; offset < incomplete.length; offset += concurrency) {
+    const batch = incomplete.slice(offset, offset + concurrency);
     await Promise.all(batch.map(async product => {
       try {
         product.review_summary = await loadReviewSummaryFromApi(product.slug);
@@ -552,7 +556,7 @@ async function enrichMissingReviewSummaries(products) {
       }
     }));
   }
-  console.log(`✓ Enriched ${enriched}/${missing.length} product review summaries`);
+  console.log(`✓ Enriched ${enriched}/${incomplete.length} product review summaries`);
 }
 
 async function loadProducts() {
@@ -1214,12 +1218,20 @@ function normalizeReviewSummary(product) {
   const count = Math.max(0, Number(raw.count) || 0);
   const average = Number(raw.averageRating);
   const withMedia = Math.max(0, Math.min(count, Number(raw.withMedia) || 0));
+  const rawRatingCounts = raw.ratingCounts && typeof raw.ratingCounts === 'object'
+    ? raw.ratingCounts
+    : {};
+  const ratingCounts = {};
+  for (let rating = 1; rating <= 5; rating += 1) {
+    ratingCounts[rating] = Math.max(0, Number(rawRatingCounts[rating]) || 0);
+  }
   return {
     count,
     averageRating: Number.isFinite(average) && count > 0
       ? Math.max(1, Math.min(5, average))
       : null,
     withMedia,
+    ratingCounts,
   };
 }
 

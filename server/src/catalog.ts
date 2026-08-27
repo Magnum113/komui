@@ -67,7 +67,14 @@ const PUBLIC_PRODUCT_COLUMNS = `
           and rm.moderation_status = 'approved'
           and not rm.is_suppressed
           and nullif(rm.public_url, '') is not null
-      ))::integer
+      ))::integer,
+      'ratingCounts', jsonb_build_object(
+        '1', count(*) filter (where rv.rating = 1)::integer,
+        '2', count(*) filter (where rv.rating = 2)::integer,
+        '3', count(*) filter (where rv.rating = 3)::integer,
+        '4', count(*) filter (where rv.rating = 4)::integer,
+        '5', count(*) filter (where rv.rating = 5)::integer
+      )
     )
     from public.merch_storefront_reviews rv
     where rv.storefront_product_id = p.id
@@ -165,6 +172,13 @@ export type PublicReviewSummary = {
   count: number;
   averageRating: number | null;
   withMedia: number;
+  ratingCounts: {
+    1: number;
+    2: number;
+    3: number;
+    4: number;
+    5: number;
+  };
 };
 
 export type YandexFeedProduct = {
@@ -255,6 +269,18 @@ export function sanitizeProduct(row: ProductRow): PublicProduct {
   const reviewCount = Math.max(0, Number(rawReviewSummary.count) || 0);
   const reviewAverage = Number(rawReviewSummary.averageRating);
   const reviewsWithMedia = Math.max(0, Number(rawReviewSummary.withMedia) || 0);
+  const rawRatingCounts = rawReviewSummary.ratingCounts
+    && typeof rawReviewSummary.ratingCounts === "object"
+    && !Array.isArray(rawReviewSummary.ratingCounts)
+    ? rawReviewSummary.ratingCounts as Record<string, unknown>
+    : {};
+  const ratingCounts = {
+    1: Math.max(0, Number(rawRatingCounts["1"]) || 0),
+    2: Math.max(0, Number(rawRatingCounts["2"]) || 0),
+    3: Math.max(0, Number(rawRatingCounts["3"]) || 0),
+    4: Math.max(0, Number(rawRatingCounts["4"]) || 0),
+    5: Math.max(0, Number(rawRatingCounts["5"]) || 0),
+  };
 
   const product: PublicProduct = {
     ...row,
@@ -266,6 +292,7 @@ export function sanitizeProduct(row: ProductRow): PublicProduct {
         ? Math.max(1, Math.min(5, reviewAverage))
         : null,
       withMedia: Math.min(reviewCount, reviewsWithMedia),
+      ratingCounts,
     },
   };
 
