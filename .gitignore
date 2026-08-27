@@ -7,3 +7,7 @@ __pycache__/
 generated/
 .ai/**/runtime/
 server/dist/
+.playwright-cli/
+tmp/
+assets/ads/**/*.png
+assets/ads/**/*.zip
