@@ -4,11 +4,18 @@ set -Eeuo pipefail
 usage() {
   cat <<'USAGE'
 Usage:
-  sudo /usr/local/sbin/komui-deploy-from-git stage [branch] [--no-registry-notify]
-  sudo /usr/local/sbin/komui-deploy-from-git prod [branch] [--no-registry-notify]
+  sudo /usr/local/sbin/komui-deploy-from-git stage [branch] [options]
+  sudo /usr/local/sbin/komui-deploy-from-git prod [branch] [options]
 
 Builds the requested target from origin/<branch>, creates immutable backend and
 frontend releases, activates them, and runs smoke checks.
+
+Options:
+  --check-compatibility-only
+      Fetch the requested branch and verify source/schema compatibility without
+      building or activating a release.
+  --no-registry-notify
+      Record a successful deploy without sending its registry notification.
 
 By default, successful deploys are recorded in the deployment registry and sent
 to Telegram through komui-alert. Set KOMUI_DEPLOY_REGISTRY_NOTIFY=0 or pass
@@ -29,6 +36,7 @@ fi
 target="${1:-}"
 branch="main"
 notify_registry="${KOMUI_DEPLOY_REGISTRY_NOTIFY:-1}"
+check_compatibility_only=0
 
 shift || true
 if [[ "${1:-}" != "" && "${1:-}" != --* ]]; then
@@ -38,6 +46,9 @@ fi
 
 while [[ "$#" -gt 0 ]]; do
   case "$1" in
+    --check-compatibility-only)
+      check_compatibility_only=1
+      ;;
     --no-registry-notify)
       notify_registry=0
       ;;
@@ -50,7 +61,12 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 case "$target" in
-  stage|prod) ;;
+  stage)
+    database_name="komui_staging"
+    ;;
+  prod)
+    database_name="komui_production"
+    ;;
   *)
     usage >&2
     exit 1
@@ -86,12 +102,139 @@ fail() {
   exit 1
 }
 
+payment_consistency_database_signature() {
+  runuser -u postgres -- psql -X -v ON_ERROR_STOP=1 -At -d "$database_name" <<'SQL'
+select concat_ws('|',
+  (to_regclass('public.merch_order_effects') is not null)::int,
+  ((select count(*)
+      from information_schema.columns
+     where table_schema = 'public'
+       and table_name = 'merch_payment_attempts'
+       and column_name in ('reconciliation_attempts', 'reconciliation_next_at')) = 2)::int,
+  ((select count(*)
+      from pg_class
+     where oid in (
+       to_regclass('public.merch_payment_attempts_init_reconcile_idx'),
+       to_regclass('public.merch_order_effects_due_idx'),
+       to_regclass('public.merch_order_effects_order_idx')
+     )) = 3)::int,
+  (exists (
+    select 1
+      from pg_constraint
+     where conrelid = 'public.merch_customer_orders'::regclass
+       and conname = 'merch_customer_orders_status_check'
+       and convalidated
+       and pg_get_constraintdef(oid) like '%payment_unknown%'
+  ))::int,
+  (exists (
+    select 1
+      from pg_constraint
+     where conrelid = 'public.merch_cdek_shipments'::regclass
+       and conname = 'merch_cdek_shipments_status_check'
+       and convalidated
+       and pg_get_constraintdef(oid) like '%deleting%'
+  ))::int,
+  (exists (
+    select 1
+      from pg_class c
+      join pg_namespace n on n.oid = c.relnamespace
+     where n.nspname = 'public'
+       and c.relname = 'merch_order_effects'
+       and c.relrowsecurity
+  ))::int,
+  (case
+    when to_regclass('public.merch_order_effects') is null
+      or not exists (select 1 from pg_roles where rolname = 'komui_app')
+      then false
+    else has_table_privilege('komui_app', 'public.merch_order_effects', 'SELECT')
+      and has_table_privilege('komui_app', 'public.merch_order_effects', 'INSERT')
+      and has_table_privilege('komui_app', 'public.merch_order_effects', 'UPDATE')
+  end)::int,
+  (case
+    when to_regclass('public.merch_order_effects_id_seq') is null
+      or not exists (select 1 from pg_roles where rolname = 'komui_app')
+      then false
+    else has_sequence_privilege('komui_app', 'public.merch_order_effects_id_seq', 'USAGE')
+      and has_sequence_privilege('komui_app', 'public.merch_order_effects_id_seq', 'SELECT')
+  end)::int,
+  (exists (
+    select 1
+      from pg_policies
+     where schemaname = 'public'
+       and tablename = 'merch_order_effects'
+       and policyname = 'Backend access to order effects'
+  ))::int,
+  (exists (
+    select 1
+      from pg_trigger
+     where tgrelid = to_regclass('public.merch_order_effects')
+       and tgname = 'merch_order_effects_set_updated_at'
+       and not tgisinternal
+       and tgenabled <> 'D'
+  ))::int
+);
+SQL
+}
+
+enforce_payment_consistency_compatibility() {
+  local required_source_files=(
+    "supabase/migrations/20260830143000_harden_payment_consistency.sql"
+    "server/src/cdekEffects.ts"
+    "server/src/tbankPaymentIdentity.ts"
+    "server/src/tbankReconciliation.ts"
+    "server/src/tbankWebhook.ts"
+  )
+  local present_source_files=0
+  local required_file
+  local source_state
+  local database_signature
+  local database_state
+
+  for required_file in "${required_source_files[@]}"; do
+    if [[ -f "$source_dir/$required_file" ]]; then
+      present_source_files=$((present_source_files + 1))
+    fi
+  done
+
+  if [[ "$present_source_files" -eq 0 ]]; then
+    source_state="legacy"
+  elif [[ "$present_source_files" -eq "${#required_source_files[@]}" ]]; then
+    source_state="payment-consistency-v1"
+  else
+    fail "origin/$branch has a partial payment-consistency source set ($present_source_files/${#required_source_files[@]} required files); refusing deploy"
+  fi
+
+  if ! database_signature="$(payment_consistency_database_signature)"; then
+    fail "could not verify payment-consistency schema in $database_name"
+  fi
+
+  case "$database_signature" in
+    0\|0\|0\|0\|0\|0\|0\|0\|0\|0)
+      database_state="legacy"
+      ;;
+    1\|1\|1\|1\|1\|1\|1\|1\|1\|1)
+      database_state="payment-consistency-v1"
+      ;;
+    *)
+      fail "$database_name has a partial or invalid payment-consistency schema (signature=$database_signature); refusing deploy"
+      ;;
+  esac
+
+  log "payment_consistency_source=$source_state"
+  log "payment_consistency_database=$database_state"
+  if [[ "$source_state" != "$database_state" ]]; then
+    fail "payment-consistency source/schema mismatch for $target: source=$source_state database=$database_state; use the controlled migration rollout"
+  fi
+}
+
 (
   flock -n 9 || fail "another deploy is already running"
 
   log "deploy_target=$target"
   log "branch=$branch"
   log "registry_notify=$notify_registry"
+  log "check_compatibility_only=$check_compatibility_only"
+  log "database=$database_name"
   log "repo=$repo_url"
   log "log=$log_file"
 
@@ -117,6 +260,12 @@ fail() {
   release="${run_id}-${target}-${short_commit}"
   log "git_commit=$commit"
   log "release=$release"
+
+  enforce_payment_consistency_compatibility
+  if [[ "$check_compatibility_only" -eq 1 ]]; then
+    log "COMPATIBILITY_OK target=$target branch=$branch commit=$commit database=$database_name"
+    exit 0
+  fi
 
   current_backend="/opt/komui/current/backend"
   if [[ -f "$current_backend/src/adminStorefront.ts" || -f "$current_backend/src/adminOrders.ts" ]]; then
@@ -231,6 +380,9 @@ fail() {
     --exclude '*' \
     "$source_dir/" "$frontend_release_dir/"
   chown -R root:root "$backend_release_dir" "$frontend_release_dir"
+
+  log "rechecking payment-consistency compatibility before activation"
+  enforce_payment_consistency_compatibility
 
   log "activating backend"
   ln -sfnT "$backend_release_dir" "$backend_current"
