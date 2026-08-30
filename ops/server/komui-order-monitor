@@ -119,6 +119,36 @@ network_errors as (
   ) as value
   from network_error_rows
 ),
+init_unknown_rows as (
+  select
+    o.order_number,
+    coalesce(pa.error_code, 'INIT_UNKNOWN') as error_code,
+    left(coalesce(pa.error_message, ''), 180) as error_message,
+    pa.updated_at
+  from public.merch_payment_attempts pa
+  join public.merch_customer_orders o on o.id = pa.order_id
+  cross join params p
+  where pa.provider_status = 'INIT_UNKNOWN'
+    and pa.reconciliation_attempts = 0
+    and pa.updated_at > p.since_at
+  order by pa.updated_at
+),
+init_unknowns as (
+  select jsonb_build_object(
+    'count', count(*),
+    'items', coalesce(
+      jsonb_agg(
+        jsonb_build_object(
+          'orderNumber', order_number,
+          'errorCode', error_code,
+          'errorMessage', error_message
+        ) order by updated_at
+      ),
+      '[]'::jsonb
+    )
+  ) as value
+  from init_unknown_rows
+),
 recent_orders as (
   select
     o.id,
@@ -286,6 +316,37 @@ payment_reviews as (
   ) as value
   from payment_review_rows
 ),
+cdek_effect_review_rows as (
+  select
+    o.order_number,
+    e.effect_type,
+    e.attempts,
+    left(coalesce(e.last_error, ''), 180) as last_error,
+    e.updated_at
+  from public.merch_order_effects e
+  join public.merch_customer_orders o on o.id = e.order_id
+  cross join params p
+  where e.status = 'needs_review'
+    and e.updated_at > p.since_at
+  order by e.updated_at
+),
+cdek_effect_reviews as (
+  select jsonb_build_object(
+    'count', count(*),
+    'items', coalesce(
+      jsonb_agg(
+        jsonb_build_object(
+          'orderNumber', order_number,
+          'effectType', effect_type,
+          'attempts', attempts,
+          'lastError', last_error
+        ) order by updated_at
+      ),
+      '[]'::jsonb
+    )
+  ) as value
+  from cdek_effect_review_rows
+),
 cdek_failure_rows as (
   select
     o.order_number,
@@ -328,11 +389,14 @@ paid_without_shipment as (
   ) as value
   from public.merch_customer_orders o
   cross join params p
-  where o.status in ('paid', 'authorized')
+  where o.status in ('paid', 'partially_refunded')
     and coalesce(o.paid_at, o.updated_at) <= p.checked_at - interval '10 minutes'
     and coalesce(o.paid_at, o.updated_at) >= p.checked_at - interval '7 days'
     and not exists (
-      select 1 from public.merch_cdek_shipments s where s.order_id = o.id
+      select 1
+      from public.merch_cdek_shipments s
+      where s.order_id = o.id
+        and s.status = 'created'
     )
 )
 select jsonb_build_object(
@@ -340,12 +404,14 @@ select jsonb_build_object(
   'maxPaymentAttemptId', coalesce((select max(id) from public.merch_payment_attempts), 0),
   'newOrders', (select value from new_orders),
   'networkErrors', (select value from network_errors),
+  'initUnknowns', (select value from init_unknowns),
   'duplicateOrders', (select value from duplicate_orders),
   'rapidCustomers', (select value from rapid_customers),
   'repeatedFailures', (select value from repeated_failures),
   'failureSpike', (select value from failure_spike),
   'ordersWithoutItems', (select value from missing_items),
   'paymentReviews', (select value from payment_reviews),
+  'cdekEffectReviews', (select value from cdek_effect_reviews),
   'cdekFailures', (select value from cdek_failures),
   'paidWithoutShipment', (select value from paid_without_shipment)
 )
@@ -562,6 +628,7 @@ def format_moscow_time(value: Any) -> str:
 def order_status(value: Any) -> str:
     statuses = {
         "created": "🆕 создан",
+        "payment_unknown": "⏳ сверяется с Т-Банком",
         "pending_payment": "⏳ ожидает оплаты",
         "authorized": "✅ авторизован",
         "paid": "✅ оплачен",
@@ -647,6 +714,17 @@ def build_alert(
             "• действие: проверить production backend, сертификаты и доступ к securepay"
         )
 
+    if count_of(report, "initUnknowns"):
+        items = items_of(report, "initUnknowns")
+        codes = sorted({str(item.get("errorCode") or "INIT_UNKNOWN") for item in items})
+        sections.append(
+            "⚠️ Результат создания платежа уточняется\n"
+            f"• заказов: {count_of(report, 'initUnknowns')}\n"
+            f"• номера: {order_list(items)}\n"
+            f"• коды: {', '.join(codes[:5])}\n"
+            "• новый заказ заблокирован; проверить reconciler, если статус не изменится автоматически"
+        )
+
     if count_of(report, "paymentReviews"):
         items = items_of(report, "paymentReviews")
         sections.append(
@@ -727,6 +805,19 @@ def build_alert(
             "🚨 CDEK не создал отправление\n"
             + "\n".join(f"• {sample}" for sample in samples)
             + "\n• действие: открыть заказ в админке и повторить создание после проверки причины"
+        )
+
+    if count_of(report, "cdekEffectReviews"):
+        items = items_of(report, "cdekEffectReviews")
+        samples = [
+            f"{item.get('orderNumber')}: {item.get('effectType')} / "
+            f"{item.get('attempts')} попыток"
+            for item in items[:8]
+        ]
+        sections.append(
+            "🚨 CDEK-действие требует ручной проверки\n"
+            + "\n".join(f"• {sample}" for sample in samples)
+            + "\n• действие: открыть заказ, проверить последнюю ошибку и состояние отправления в CDEK"
         )
 
     paid_without_shipment = report.get("paidWithoutShipment", [])

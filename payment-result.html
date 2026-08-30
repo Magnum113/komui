@@ -257,8 +257,19 @@ function failed(message){
     order_id:order||'',payment_provider:'tbank'
   },'session'));
   clearFailedPaymentState();
-  render('failed','Оплата не завершена',message||'Платёж отменён или банк не смог его провести. Деньги не списаны.','Корзина и введённые данные сохранены.',
+  render('failed','Оплата не завершена',message||'Банк не подтвердил успешную оплату. Если в приложении банка виден холд или списание, напишите нам — мы сверим платёж.','Корзина и введённые данные сохранены.',
     '<a class="button primary" href="/checkout">Попробовать снова</a><a class="button" href="/">Вернуться в магазин</a>');
+}
+
+function refunded(partial=false){
+  withAnalytics(analytics=>analytics.goalOnce(partial?'payment_partially_refunded':'payment_refunded',order||'unknown',{
+    order_id:order||'',payment_provider:'tbank'
+  },'session'));
+  render('review',partial?'Часть суммы возвращена':'Платёж возвращён',partial
+    ?'Банк подтвердил частичный возврат по заказу. Если сумма не совпадает с ожидаемой, напишите в поддержку.'
+    :'Банк подтвердил полный возврат по заказу. Срок зачисления денег зависит от вашего банка.',
+    'Повторно оплачивать этот заказ не нужно.',
+    '<a class="button primary" href="/">Вернуться в магазин</a><a class="button" href="mailto:smmshit@ya.ru">Написать в поддержку</a>');
 }
 
 function pending(review=false){
@@ -270,9 +281,9 @@ function pending(review=false){
   box.innerHTML=review?icon('review'):'<div class="spinner"></div>';
   $('#statusTitle').textContent=review?'Платёж требует проверки':'Платёж обрабатывается';
   $('#statusText').textContent=review
-    ?'Банк прислал подтверждение с отличающейся суммой. Заказ не отмечен оплаченным и будет проверен вручную.'
+    ?'Банк вернул неоднозначный результат. Заказ не отмечен оплаченным и будет проверен вручную.'
     :'Подтверждение от Т‑Банка ещё не пришло. Можно подождать на этой странице.';
-  $('#statusHint').textContent=review?'Мы не будем исполнять заказ до проверки суммы.':'Страница обновляет статус автоматически.';
+  $('#statusHint').textContent=review?'Не создавайте повторный платёж: сначала мы сверим текущий.':'Страница обновляет статус автоматически.';
 }
 
 async function check(){
@@ -297,8 +308,10 @@ async function check(){
     const result=await response.json();
     if(!response.ok)throw new Error(result.error||'Не удалось проверить заказ');
     if(result.status==='paid'){paid(result,session);return}
+    if(result.status==='refunded'){refunded(false);return}
+    if(result.status==='partially_refunded'){refunded(true);return}
     if(result.status==='payment_review'){pending(true);return}
-    if(['payment_failed','canceled','refunded'].includes(result.status)){failed(result.errorMessage);return}
+    if(['payment_failed','canceled'].includes(result.status)){failed(result.errorMessage);return}
     pending(false);
     polls+=1;
     if(polls<20)timer=setTimeout(check,3000);

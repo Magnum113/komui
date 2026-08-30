@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { calculateDiscount, normalizePromoCode, promoPhoneHash } from "../src/promo";
+import {
+  calculateDiscount,
+  markPromoRedemptionRedeemed,
+  normalizePromoCode,
+  promoPhoneHash,
+} from "../src/promo";
 
 test("calculateDiscount caps percent and delivery discounts safely", () => {
   assert.deepEqual(
@@ -43,4 +48,19 @@ test("calculateDiscount caps percent and delivery discounts safely", () => {
 test("promo helpers normalize code and hash phone without raw phone retention", () => {
   assert.equal(normalizePromoCode(" komui 10 "), "KOMUI10");
   assert.equal(promoPhoneHash("+7 (999) 533-00-15").length, 64);
+});
+
+test("late authoritative payment confirmation reclaims a released promo reservation", async () => {
+  let parameters: unknown[] = [];
+  await markPromoRedemptionRedeemed(
+    {
+      query: async (_sql: string, values: unknown[] = []) => {
+        parameters = values;
+        return { rows: [] };
+      },
+    },
+    "7c169f01-b459-4e25-b74f-a4909a1b4149",
+  );
+
+  assert.deepEqual(parameters[1], ["reserved", "released", "redeemed"]);
 });

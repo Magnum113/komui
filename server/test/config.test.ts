@@ -13,6 +13,13 @@ test("loadConfig parses safe defaults and hides secrets in publicConfig", () => 
   assert.equal(config.PORT, 3000);
   assert.equal(config.DATABASE_POOL_MAX, 6);
   assert.equal(config.RUNTIME_MODE, "staging");
+  assert.equal(config.TBANK_REQUEST_TIMEOUT_MS, 15_000);
+  assert.equal(config.TBANK_RECONCILIATION_ENABLED, true);
+  assert.equal(config.TBANK_RECONCILIATION_INTERVAL_MS, 30_000);
+  assert.equal(config.TBANK_RECONCILIATION_BATCH_SIZE, 5);
+  assert.equal(config.TBANK_RECONCILIATION_STALE_MS, 30_000);
+  assert.equal(config.TBANK_RECONCILIATION_LEASE_MS, 60_000);
+  assert.equal(config.TBANK_RECONCILIATION_MAX_ATTEMPTS, 20);
 
   const exposed = publicConfig(config);
   assert.equal("DATABASE_URL" in exposed, false);

@@ -26,12 +26,14 @@ class OrderMonitorAlertTest(unittest.TestCase):
         return {
             "newOrders": {"count": 0, "items": []},
             "networkErrors": {"count": 0, "items": []},
+            "initUnknowns": {"count": 0, "items": []},
             "duplicateOrders": {"count": 0, "items": []},
             "rapidCustomers": {"count": 0, "items": []},
             "repeatedFailures": {"count": 0, "items": []},
             "failureSpike": None,
             "ordersWithoutItems": {"count": 0, "items": []},
             "paymentReviews": {"count": 0, "items": []},
+            "cdekEffectReviews": {"count": 0, "items": []},
             "cdekFailures": {"count": 0, "items": []},
             "paidWithoutShipment": [],
         }
@@ -140,6 +142,65 @@ class OrderMonitorAlertTest(unittest.TestCase):
         self.assertIn("без отправления CDEK", first_body)
         self.assertIsNone(second_body)
         self.assertEqual(second_active, {"KOM-777"})
+
+    def test_paid_without_shipment_requires_terminal_created_status(self) -> None:
+        sql = self.monitor.render_sql("2026-08-30T10:00:00Z", 5)
+
+        self.assertIn("from public.merch_cdek_shipments s", sql)
+        self.assertIn("s.order_id = o.id", sql)
+        self.assertIn("s.status = 'created'", sql)
+        self.assertIn("o.status in ('paid', 'partially_refunded')", sql)
+        self.assertNotIn("o.status in ('paid', 'authorized')", sql)
+        self.assertNotIn(
+            "select 1 from public.merch_cdek_shipments s where s.order_id = o.id",
+            sql,
+        )
+
+    def test_effect_needs_review_is_visible_to_operator(self) -> None:
+        report = self.empty_report()
+        report["cdekEffectReviews"] = {
+            "count": 1,
+            "items": [
+                {
+                    "orderNumber": "KOM-778",
+                    "effectType": "cdek_cancel",
+                    "attempts": 12,
+                    "lastError": "provider rejected request",
+                }
+            ],
+        }
+
+        body, _ = self.monitor.build_alert(report, set())
+
+        self.assertIn("CDEK-действие требует ручной проверки", body)
+        self.assertIn("KOM-778: cdek_cancel / 12 попыток", body)
+
+    def test_initial_ambiguous_payment_is_visible_without_marking_it_failed(self) -> None:
+        report = self.empty_report()
+        report["initUnknowns"] = {
+            "count": 1,
+            "items": [
+                {
+                    "orderNumber": "KOM-779",
+                    "errorCode": "UND_ERR_CONNECT_TIMEOUT",
+                }
+            ],
+        }
+
+        body, _ = self.monitor.build_alert(report, set())
+
+        self.assertIn("Результат создания платежа уточняется", body)
+        self.assertIn("KOM-779", body)
+        self.assertIn("новый заказ заблокирован", body)
+
+    def test_report_sql_reads_durable_effect_review_state(self) -> None:
+        sql = self.monitor.render_sql("2026-08-30T10:00:00Z", 5)
+
+        self.assertIn("from public.merch_order_effects e", sql)
+        self.assertIn("e.status = 'needs_review'", sql)
+        self.assertIn("'cdekEffectReviews'", sql)
+        self.assertIn("pa.provider_status = 'INIT_UNKNOWN'", sql)
+        self.assertIn("'initUnknowns'", sql)
 
     def test_state_timestamp_rejects_untrusted_sql_text(self) -> None:
         with self.assertRaises(ValueError):

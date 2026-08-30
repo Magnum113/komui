@@ -50,6 +50,46 @@ const envSchema = z.object({
   TBANK_TERMINAL_KEY: z.string().min(1).optional(),
   TBANK_PASSWORD: z.string().min(1).optional(),
   TBANK_API_URL: z.string().url().default("https://securepay.tinkoff.ru/v2"),
+  TBANK_REQUEST_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .min(1_000)
+    .max(30_000)
+    .default(15_000),
+  TBANK_RECONCILIATION_ENABLED: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((value) => value === "true"),
+  TBANK_RECONCILIATION_INTERVAL_MS: z.coerce
+    .number()
+    .int()
+    .min(5_000)
+    .max(300_000)
+    .default(30_000),
+  TBANK_RECONCILIATION_BATCH_SIZE: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(25)
+    .default(5),
+  TBANK_RECONCILIATION_STALE_MS: z.coerce
+    .number()
+    .int()
+    .min(5_000)
+    .max(600_000)
+    .default(30_000),
+  TBANK_RECONCILIATION_LEASE_MS: z.coerce
+    .number()
+    .int()
+    .min(10_000)
+    .max(600_000)
+    .default(60_000),
+  TBANK_RECONCILIATION_MAX_ATTEMPTS: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .default(20),
   TBANK_TAXATION: z.string().min(1).optional(),
   TBANK_TAX: z.string().min(1).optional(),
   TBANK_MOCK_PAYMENTS: z

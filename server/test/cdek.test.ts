@@ -6,7 +6,9 @@ import {
   cdekFirstError,
   cdekNumberFromResponse,
   cdekRequestState,
+  cancelCdekOrder,
   createCdekOrder,
+  getCdekOrderByImNumber,
   quoteCdekDelivery,
 } from "../src/cdek";
 import { loadConfig } from "../src/config";
@@ -153,4 +155,158 @@ test("createCdekOrder returns deterministic mock order without network calls", a
   assert.equal(response.requests?.[0]?.state, "ACCEPTED");
   assert.equal(cdekRequestState(response), "accepted");
   assert.equal(cdekNumberFromResponse(response), "MOCK-KOM-123456789");
+});
+
+test("cancelCdekOrder calls DELETE /v2/orders/{uuid}", async (context) => {
+  const originalFetch = globalThis.fetch;
+  const calls: Array<{ url: string; method: string }> = [];
+  context.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+  globalThis.fetch = async (input, init) => {
+    const url = String(input);
+    const method = init?.method ?? "GET";
+    calls.push({ url, method });
+    if (url.endsWith("/v2/oauth/token")) {
+      return new Response(
+        JSON.stringify({ access_token: "test-token", token_type: "bearer", expires_in: 3600 }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
+    }
+    return new Response(
+      JSON.stringify({
+        entity: { uuid: "cdek-order-uuid" },
+        requests: [{ type: "DELETE", state: "ACCEPTED" }],
+      }),
+      { status: 202, headers: { "Content-Type": "application/json" } },
+    );
+  };
+  const config = loadConfig({
+    DATABASE_URL: "postgresql://komui_app:secret@127.0.0.1:5432/komui_test",
+    CDEK_API_BASE_URL: "https://cdek-delete-test.example",
+    CDEK_LOGIN: "test-login",
+    CDEK_PASSWORD: "test-password",
+  });
+
+  const response = await cancelCdekOrder(config, "cdek/order uuid");
+
+  assert.equal(response.requests?.[0]?.state, "ACCEPTED");
+  assert.deepEqual(calls, [
+    {
+      url: "https://cdek-delete-test.example/v2/oauth/token",
+      method: "POST",
+    },
+    {
+      url: "https://cdek-delete-test.example/v2/orders/cdek%2Forder%20uuid",
+      method: "DELETE",
+    },
+  ]);
+});
+
+test("cancelCdekOrder treats provider 404 as idempotent success", async (context) => {
+  const originalFetch = globalThis.fetch;
+  context.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+  globalThis.fetch = async (input) => {
+    const url = String(input);
+    if (url.endsWith("/v2/oauth/token")) {
+      return new Response(
+        JSON.stringify({ access_token: "test-token", token_type: "bearer", expires_in: 3600 }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
+    }
+    return new Response(
+      JSON.stringify({ errors: [{ code: "not_found", message: "Order not found" }] }),
+      { status: 404, headers: { "Content-Type": "application/json" } },
+    );
+  };
+  const config = loadConfig({
+    DATABASE_URL: "postgresql://komui_app:secret@127.0.0.1:5432/komui_test",
+    CDEK_API_BASE_URL: "https://cdek-delete-missing.example",
+    CDEK_LOGIN: "test-login",
+    CDEK_PASSWORD: "test-password",
+  });
+
+  const response = await cancelCdekOrder(config, "already-gone");
+
+  assert.equal(response.requests?.[0]?.type, "DELETE");
+  assert.equal(response.requests?.[0]?.state, "SUCCESSFUL");
+  assert.equal(response.requests?.[0]?.warnings?.[0]?.code, "already_absent");
+});
+
+test("getCdekOrderByImNumber uses the merchant number query", async (context) => {
+  const originalFetch = globalThis.fetch;
+  const calls: Array<{ url: string; method: string }> = [];
+  context.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+  globalThis.fetch = async (input, init) => {
+    const url = String(input);
+    calls.push({ url, method: init?.method ?? "GET" });
+    if (url.endsWith("/v2/oauth/token")) {
+      return new Response(
+        JSON.stringify({ access_token: "lookup-token", expires_in: 3600 }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
+    }
+    return new Response(
+      JSON.stringify({
+        entity: {
+          uuid: "found-uuid",
+          number: "KOM / 123",
+          cdek_number: "1234567890",
+        },
+        requests: [{ type: "GET", state: "SUCCESSFUL" }],
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } },
+    );
+  };
+  const config = loadConfig({
+    DATABASE_URL: "postgresql://komui_app:secret@127.0.0.1:5432/komui_test",
+    CDEK_API_BASE_URL: "https://cdek-lookup-test.example",
+    CDEK_LOGIN: "test-login",
+    CDEK_PASSWORD: "test-password",
+  });
+
+  const response = await getCdekOrderByImNumber(config, "KOM / 123");
+
+  assert.equal(response?.entity?.uuid, "found-uuid");
+  assert.deepEqual(calls, [
+    {
+      url: "https://cdek-lookup-test.example/v2/oauth/token",
+      method: "POST",
+    },
+    {
+      url: "https://cdek-lookup-test.example/v2/orders?im_number=KOM+%2F+123",
+      method: "GET",
+    },
+  ]);
+});
+
+test("getCdekOrderByImNumber maps provider 404 to no match", async (context) => {
+  const originalFetch = globalThis.fetch;
+  context.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+  globalThis.fetch = async (input) => {
+    if (String(input).endsWith("/v2/oauth/token")) {
+      return new Response(
+        JSON.stringify({ access_token: "lookup-token", expires_in: 3600 }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
+    }
+    return new Response(
+      JSON.stringify({ errors: [{ code: "not_found", message: "Not found" }] }),
+      { status: 404, headers: { "Content-Type": "application/json" } },
+    );
+  };
+  const config = loadConfig({
+    DATABASE_URL: "postgresql://komui_app:secret@127.0.0.1:5432/komui_test",
+    CDEK_API_BASE_URL: "https://cdek-lookup-missing.example",
+    CDEK_LOGIN: "test-login",
+    CDEK_PASSWORD: "test-password",
+  });
+
+  assert.equal(await getCdekOrderByImNumber(config, "KOM-404"), null);
 });

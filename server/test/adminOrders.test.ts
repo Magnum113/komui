@@ -2,7 +2,11 @@ import assert from "node:assert/strict";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import test from "node:test";
-import { toAdminOrderSummary } from "../src/adminOrders";
+import {
+  handleAdminGetOrder,
+  handleAdminListOrders,
+  toAdminOrderSummary,
+} from "../src/adminOrders";
 import { buildApp } from "../src/app";
 import { loadConfig } from "../src/config";
 import type { Db } from "../src/db";
@@ -91,6 +95,84 @@ test("toAdminOrderSummary keeps payment, fulfillment and CDEK statuses separate"
     quantity: 2,
     imageUrl: "/assets/product.jpg",
   });
+});
+
+test("admin list exposes and accepts payment_unknown as a payment filter", async () => {
+  const queries: Array<{ sql: string; values: unknown[] }> = [];
+  const db = {
+    query: async (sql: string, values: unknown[] = []) => {
+      queries.push({ sql, values });
+      if (sql.includes("select count(*)")) return { rows: [{ total: "1" }] };
+      return {
+        rows: [
+          orderRow({
+            status: "payment_unknown",
+            latest_provider_status: "INIT_UNKNOWN",
+            paid_at: null,
+          }),
+        ],
+      };
+    },
+  } as unknown as Db;
+
+  const response = await handleAdminListOrders(
+    { query: { paymentStatus: "payment_unknown" } } as never,
+    {} as never,
+    { db },
+  );
+
+  assert.equal(response.orders[0].paymentStatus, "payment_unknown");
+  assert.equal(response.statuses.payment.includes("payment_unknown"), true);
+  assert.equal(queries.every((query) => query.values[0] === "payment_unknown"), true);
+  assert.equal(queries.some((query) => /o\.status = \$1/.test(query.sql)), true);
+});
+
+test("admin order detail exposes safe order effect status without payload", async () => {
+  const db = {
+    query: async (sql: string) => {
+      if (sql.includes("from public.merch_customer_orders o")) {
+        return { rows: [orderRow()] };
+      }
+      if (sql.includes("from public.merch_order_effects")) {
+        return {
+          rows: [
+            {
+              id: 91,
+              effect_type: "cdek_cancel",
+              status: "needs_review",
+              attempts: 12,
+              last_error: "CDEK rejected the cancellation request",
+              available_at: "2026-08-30T12:00:00.000Z",
+              updated_at: "2026-08-30T12:05:00.000Z",
+              completed_at: "2026-08-30T12:05:00.000Z",
+              payload: { should_not_leak: true },
+            },
+          ],
+        };
+      }
+      return { rows: [] };
+    },
+  } as unknown as Db;
+
+  const response = await handleAdminGetOrder(
+    { params: { orderId } } as never,
+    {} as never,
+    { config: testConfig("e".repeat(24)), db },
+  );
+
+  assert.deepEqual(response.orderEffects, [
+    {
+      id: 91,
+      type: "cdek_cancel",
+      status: "needs_review",
+      attempts: 12,
+      lastError: "CDEK rejected the cancellation request",
+      availableAt: "2026-08-30T12:00:00.000Z",
+      updatedAt: "2026-08-30T12:05:00.000Z",
+      completedAt: "2026-08-30T12:05:00.000Z",
+    },
+  ]);
+  assert.equal("payload" in response.orderEffects[0], false);
 });
 
 test("POST /admin/storefront/orders/:id/mark-shipped marks paid order as shipped", async () => {

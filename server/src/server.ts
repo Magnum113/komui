@@ -1,12 +1,22 @@
 import { buildApp } from "./app";
+import { startCdekEffectWorker } from "./cdekEffects";
 import { loadConfig } from "./config";
+import { createDb } from "./db";
+import { startTbankInitReconciler } from "./tbankReconciliation";
 
 async function main() {
   const config = loadConfig();
-  const app = buildApp({ config });
+  const db = createDb(config);
+  const app = buildApp({ config, db });
+  let stopCdekEffectWorker: (() => Promise<void>) | null = null;
+  let stopTbankInitReconciler: (() => Promise<void>) | null = null;
 
   const shutdown = async (signal: NodeJS.Signals) => {
     app.log.info({ signal }, "shutting down");
+    await Promise.all([
+      stopCdekEffectWorker?.(),
+      stopTbankInitReconciler?.(),
+    ]);
     await app.close();
   };
 
@@ -17,6 +27,12 @@ async function main() {
     host: config.HOST,
     port: config.PORT,
   });
+  stopCdekEffectWorker = startCdekEffectWorker({
+    config,
+    db,
+    logger: app.log,
+  });
+  stopTbankInitReconciler = startTbankInitReconciler(config, db, app.log);
 }
 
 main().catch((error) => {

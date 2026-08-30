@@ -321,7 +321,10 @@ export async function markPromoRedemptionRedeemed(
       where order_id = $1::uuid
         and status = any($2::text[])
     `,
-    [orderId, ["reserved", "redeemed"]],
+    // A terminal failure notification may be followed by a more authoritative
+    // CONFIRMED event. In that case the order becomes paid and its previously
+    // released discount must be accounted as redeemed in the same transaction.
+    [orderId, ["reserved", "released", "redeemed"]],
   );
 }
 

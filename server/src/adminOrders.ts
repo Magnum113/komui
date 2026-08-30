@@ -42,6 +42,7 @@ const ORDER_COLUMNS = `
 
 const paymentStatuses = [
   "created",
+  "payment_unknown",
   "pending_payment",
   "authorized",
   "paid",
@@ -220,6 +221,17 @@ type CdekEventRow = QueryResultRow & {
   status_code: string | null;
   status_name: string | null;
   received_at: Date | string;
+};
+
+type OrderEffectRow = QueryResultRow & {
+  id: string | number;
+  effect_type: string;
+  status: string;
+  attempts: number;
+  last_error: string | null;
+  available_at: Date | string;
+  updated_at: Date | string;
+  completed_at: Date | string | null;
 };
 
 export type AdminOrderSummary = {
@@ -465,6 +477,19 @@ function toCdekEvent(row: CdekEventRow) {
   };
 }
 
+function toOrderEffect(row: OrderEffectRow) {
+  return {
+    id: Number(row.id),
+    type: row.effect_type,
+    status: row.status,
+    attempts: Number(row.attempts),
+    lastError: row.last_error,
+    availableAt: isoDate(row.available_at),
+    updatedAt: isoDate(row.updated_at),
+    completedAt: isoDate(row.completed_at),
+  };
+}
+
 function orderSelectSql() {
   return `
     select
@@ -573,7 +598,14 @@ async function loadOrderSummary(
 }
 
 async function loadOrderDetails(db: Db, orderId: string) {
-  const [items, paymentAttempts, paymentEvents, shipments, cdekEvents] =
+  const [
+    items,
+    paymentAttempts,
+    paymentEvents,
+    shipments,
+    cdekEvents,
+    orderEffects,
+  ] =
     await Promise.all([
       db.query<OrderItemRow>(
         `
@@ -663,6 +695,24 @@ async function loadOrderDetails(db: Db, orderId: string) {
         `,
         [orderId],
       ),
+      db.query<OrderEffectRow>(
+        `
+          select
+            id,
+            effect_type,
+            status,
+            attempts,
+            last_error,
+            available_at,
+            updated_at,
+            completed_at
+          from public.merch_order_effects
+          where order_id = $1::uuid
+          order by created_at desc, id desc
+          limit 50
+        `,
+        [orderId],
+      ),
     ]);
 
   return {
@@ -671,6 +721,7 @@ async function loadOrderDetails(db: Db, orderId: string) {
     paymentEvents: paymentEvents.rows.map(toPaymentEvent),
     cdekShipment: toCdekShipment(shipments.rows[0]),
     cdekEvents: cdekEvents.rows.map(toCdekEvent),
+    orderEffects: orderEffects.rows.map(toOrderEffect),
   };
 }
 

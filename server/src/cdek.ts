@@ -101,7 +101,12 @@ export type CdekOrderRequestPayload = {
 };
 
 export type CdekOrderResponse = {
-  entity?: { uuid?: string; cdek_number?: string };
+  entity?: {
+    uuid?: string;
+    number?: string;
+    im_number?: string;
+    cdek_number?: string;
+  };
   requests?: Array<{
     request_uuid?: string;
     type?: string;
@@ -233,6 +238,10 @@ async function parseJsonResponse<T>(response: Response): Promise<T> {
       response.status >= 500 ? 502 : 400,
       "cdek_request_failed",
       firstError?.message || `CDEK request failed with HTTP ${response.status}`,
+      {
+        providerStatus: response.status,
+        providerErrorCode: firstError?.code ?? null,
+      },
     );
   }
 
@@ -694,9 +703,13 @@ export async function getCdekOrder(
   }
 
   if (config.CDEK_MOCK) {
+    const mockPrefix = "mock-cdek-order-";
     return {
       entity: {
         uuid: normalized,
+        ...(normalized.startsWith(mockPrefix)
+          ? { number: normalized.slice(mockPrefix.length) }
+          : {}),
       },
       requests: [
         {
@@ -714,6 +727,126 @@ export async function getCdekOrder(
     `/v2/orders/${encodeURIComponent(normalized)}`,
     { method: "GET" },
   );
+}
+
+/**
+ * Find an order by the merchant order number before retrying an ambiguous
+ * create request. CDEK returns 404 when no matching order exists.
+ */
+export async function getCdekOrderByImNumber(
+  config: AppConfig,
+  imNumber: string,
+): Promise<CdekOrderResponse | null> {
+  const normalized = text(imNumber, 36);
+  if (!normalized) {
+    throw new HttpError(
+      400,
+      "cdek_im_number_required",
+      "CDEK merchant order number is required",
+    );
+  }
+
+  if (config.CDEK_MOCK) {
+    return {
+      entity: {
+        uuid: `mock-cdek-order-${normalized}`,
+        number: normalized,
+        cdek_number: `MOCK-${normalized}`,
+      },
+      requests: [
+        {
+          request_uuid: `mock-cdek-lookup-${normalized}`,
+          type: "GET",
+          state: "SUCCESSFUL",
+        },
+      ],
+      related_entities: [],
+    };
+  }
+
+  try {
+    return await cdekRequest<CdekOrderResponse>(
+      config,
+      `/v2/orders${queryString({ im_number: normalized })}`,
+      { method: "GET" },
+    );
+  } catch (error) {
+    if (
+      error instanceof HttpError &&
+      error.code === "cdek_request_failed" &&
+      error.details.providerStatus === 404
+    ) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Request deletion of a CDEK order by the provider UUID.
+ *
+ * CDEK processes order mutations asynchronously, so callers must inspect the
+ * request state in the returned envelope. A missing order is treated as an
+ * idempotent success: it is already in the desired "not present" state.
+ */
+export async function cancelCdekOrder(
+  config: AppConfig,
+  uuid: string,
+): Promise<CdekOrderResponse> {
+  const normalized = text(uuid, 80);
+  if (!normalized) {
+    throw new HttpError(
+      400,
+      "cdek_order_uuid_required",
+      "CDEK order uuid is required",
+    );
+  }
+
+  if (config.CDEK_MOCK) {
+    return {
+      entity: { uuid: normalized },
+      requests: [
+        {
+          request_uuid: `mock-cdek-delete-${normalized}`,
+          type: "DELETE",
+          state: "SUCCESSFUL",
+        },
+      ],
+      related_entities: [],
+    };
+  }
+
+  try {
+    return await cdekRequest<CdekOrderResponse>(
+      config,
+      `/v2/orders/${encodeURIComponent(normalized)}`,
+      { method: "DELETE" },
+    );
+  } catch (error) {
+    if (
+      error instanceof HttpError &&
+      error.code === "cdek_request_failed" &&
+      error.details.providerStatus === 404
+    ) {
+      return {
+        entity: { uuid: normalized },
+        requests: [
+          {
+            type: "DELETE",
+            state: "SUCCESSFUL",
+            warnings: [
+              {
+                code: "already_absent",
+                message: "CDEK order is already absent",
+              },
+            ],
+          },
+        ],
+        related_entities: [],
+      };
+    }
+    throw error;
+  }
 }
 
 export function cdekNumberFromResponse(

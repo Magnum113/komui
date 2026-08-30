@@ -42,6 +42,173 @@ sudo systemctl status komui-backup.service --no-pager -l
 sudo find /var/backups/komui/daily -type f -name 'komui-backup-*.tar.gz.gpg' | sort | tail -1
 ```
 
+## Обязательный gate для payment-consistency migration
+
+Migration `20260830143000_harden_payment_consistency.sql` и backend, который
+ставит durable CDEK effects для `PARTIAL_REVERSED`/amount mismatch, должны
+вводиться только в одном maintenance window. Проверенный до окна нулевой
+агрегат не заменяет повторную проверку после остановки writes: между проверкой
+и migration может прийти подписанный webhook.
+
+Порядок обязателен:
+
+1. Включить maintenance для checkout и отдельно закрыть внешний
+   `POST /api/v1/webhooks/tbank` на Nginx. Уже принятые соединения должны быть
+   дренированы; нельзя просто скрыть frontend.
+2. Проверить `nginx -t`, применить reload и убедиться снаружи, что checkout
+   writes/webhook больше не доходят до backend.
+3. Остановить **старый** backend и убедиться, что unit не active. Имена ниже
+   иллюстративны — использовать фактический production unit:
+
+```bash
+sudo nginx -t
+sudo systemctl reload nginx
+sudo systemctl stop komui-production-backend
+sudo systemctl is-active komui-production-backend
+```
+
+4. В том же закрытом окне повторить агрегатный preflight в production DB.
+   Команда не должна печатать connection string или secret values:
+
+```bash
+sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d komui_production <<'SQL'
+select count(*) as partial_reversed_attempts
+from public.merch_payment_attempts as attempts
+where attempts.provider = 'tbank'
+  and attempts.provider_status = 'PARTIAL_REVERSED';
+
+select
+  count(*) filter (
+    where events.provider_status = 'PARTIAL_REVERSED'
+  ) as signed_partial_reversed_events,
+  count(*) filter (
+    where events.provider_status = 'AUTH_FAIL'
+  ) as signed_auth_fail_events
+from public.merch_payment_events as events
+where events.provider = 'tbank'
+  and events.signature_valid = true
+  and events.provider_status in ('PARTIAL_REVERSED', 'AUTH_FAIL');
+
+select count(*) as signed_amount_mismatch_events_on_fulfillable
+from public.merch_payment_events as events
+join public.merch_customer_orders as orders
+  on orders.id = events.order_id
+left join public.merch_payment_attempts as attempts
+  on attempts.id = events.payment_attempt_id
+where events.provider = 'tbank'
+  and events.signature_valid = true
+  and (
+    events.amount is distinct from orders.total_amount
+    or (
+      attempts.id is not null
+      and attempts.amount is distinct from orders.total_amount
+    )
+  )
+  and orders.status in ('authorized', 'paid', 'partially_refunded', 'payment_review')
+  and exists (
+    select 1
+    from public.merch_cdek_shipments as shipments
+    where shipments.order_id = orders.id
+      and shipments.status <> 'deleted'
+  );
+
+select count(distinct events.order_id) as signed_full_cancel_events_on_fulfillable
+from public.merch_payment_events as events
+join public.merch_customer_orders as orders
+  on orders.id = events.order_id
+where events.provider = 'tbank'
+  and events.signature_valid = true
+  and events.provider_status in ('REVERSED', 'REFUNDED')
+  and orders.status in ('authorized', 'paid', 'partially_refunded', 'payment_review')
+  and exists (
+    select 1
+    from public.merch_cdek_shipments as shipments
+    where shipments.order_id = orders.id
+      and shipments.status <> 'deleted'
+  );
+
+select count(distinct events.order_id) as direct_partial_refunds_on_fulfillable
+from public.merch_payment_events as events
+join public.merch_customer_orders as orders
+  on orders.id = events.order_id
+where events.provider = 'tbank'
+  and events.signature_valid = true
+  and events.provider_status = 'PARTIAL_REFUNDED'
+  and not exists (
+    select 1
+    from public.merch_payment_events as confirmed
+    where confirmed.provider = 'tbank'
+      and confirmed.signature_valid = true
+      and confirmed.order_id = events.order_id
+      and confirmed.external_payment_id is not distinct from events.external_payment_id
+      and confirmed.provider_status = 'CONFIRMED'
+      and confirmed.received_at <= events.received_at
+  )
+  and orders.status in ('authorized', 'paid', 'partially_refunded', 'payment_review')
+  and exists (
+    select 1
+    from public.merch_cdek_shipments as shipments
+    where shipments.order_id = orders.id
+      and shipments.status <> 'deleted'
+  );
+
+select count(*) as auth_fail_attempts_marked_payment_failed
+from public.merch_payment_attempts as attempts
+join public.merch_customer_orders as orders
+  on orders.id = attempts.order_id
+where attempts.provider = 'tbank'
+  and attempts.provider_status = 'AUTH_FAIL'
+  and orders.status = 'payment_failed';
+SQL
+```
+
+Все семь счётчиков должны быть ровно `0`. Проверка signed events обязательна:
+текущий status попытки мог быть перезаписан более поздним webhook и сам по
+себе не доказывает отсутствие исторического `AUTH_FAIL`/`PARTIAL_REVERSED`.
+Любое ненулевое значение — **NO-GO**:
+maintenance остаётся включённым, старый backend не запускается, строки
+сверяются с T-Bank вручную; для уже отменённого финансового факта с живой
+доставкой отдельно создаётся явный causal `cdek_cancel` до продолжения.
+Preflight 30 августа 2026 года был нулевым, но во время deploy он всё равно
+повторяется.
+
+5. Снять/проверить backup и до старта нового backend отдельно посчитать:
+
+   - строки, которые migration добавит в `merch_order_effects` как historical
+     `cdek_cancel`;
+   - уже due/processing CDEK effects;
+   - T-Bank Init reconciliation candidates.
+
+   Новый backend запускает оба worker сразу после `listen`; поэтому ненулевой
+   результат может вызвать реальный CDEK `DELETE` или T-Bank reconciliation ещё
+   до readiness-проверки. Такие строки должны быть поштучно согласованы либо
+   переведены в явный operator review до старта. Временный `CDEK_MOCK=true` не
+   является безопасным gate: mock-обработка может ошибочно отметить реальную
+   доставку удалённой только в локальной БД.
+
+6. Применить migration с `ON_ERROR_STOP=1`, повторить inventory уже по новой
+   схеме и запустить именно новый backend revision:
+
+```bash
+sudo -u postgres psql -X --single-transaction -v ON_ERROR_STOP=1 -d komui_production \
+  -f /path/to/20260830143000_harden_payment_consistency.sql
+sudo systemctl start komui-production-backend
+sudo systemctl is-active komui-production-backend
+curl -fsS http://127.0.0.1:3001/health/ready
+```
+
+7. Проверить worker/effect logs и только после этого открыть webhook ingress и
+   checkout, снова выполнив `nginx -t` перед reload.
+
+Rollback rule: после применения migration старый backend нельзя
+запускать против БД, снова принимающей payment/webhook writes — он не создаёт
+новые causal effects и может потерять fulfillment cancellation. До открытия
+ingress rollback из согласованного backup допустим только если новый backend
+ещё не запускался и provider effects заведомо не выполнялись. После запуска
+workers, любых provider calls или новых writes maintenance сохраняется,
+выполняется data reconciliation/forward-fix либо отдельно согласованный restore;
+простой restart старого binary запрещён.
+
 ## Финальные проверки staging
 
 ```bash
@@ -76,15 +243,15 @@ sudo systemctl is-active komui-production-backend
 sudo awk -F= '$1 ~ /^(NODE_ENV|RUNTIME_MODE|HOST|PORT|SITE_URL|PUBLIC_API_BASE_URL|TBANK_MODE|TBANK_MOCK_PAYMENTS|CDEK_MOCK|CDEK_CREATE_SHIPMENTS)$/ {print $1"="$2}' /etc/komui/backend-production.env
 ```
 
-Текущие настройки production candidate:
+Текущие настройки production:
 
 ```text
-TBANK_MODE=demo
+TBANK_MODE=production
 CDEK_CREATE_SHIPMENTS=true
 ```
 
-T-Bank оставлен на demo/test ключах по решению владельца. CDEK auto-create
-включён; оплаченные заказы после cutover могут создавать реальные CDEK
+T-Bank работает в production mode, `TBANK_MOCK_PAYMENTS=false`. CDEK
+auto-create включён; оплаченные заказы могут создавать реальные CDEK
 отправления.
 
 Последний production snapshot:

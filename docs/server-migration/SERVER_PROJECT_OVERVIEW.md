@@ -1,6 +1,6 @@
 # KOMUI self-hosted server project overview
 
-Дата актуализации: 7 июля 2026 года.
+Дата актуализации: 30 августа 2026 года.
 
 Этот документ описывает, как устроена текущая серверная реализация KOMUI на
 `89.111.152.112`, какие компоненты уже перенесены с Supabase/Vercel, где лежит
@@ -15,19 +15,35 @@ alerting, Ozon import и production traffic fallback.
 
 ## 1. Текущий статус
 
-Сейчас проект работает в изолированном staging-контуре:
+Production cutover выполнен, а staging сохранён как отдельный тестовый контур:
 
-- production `https://komui.ru` остаётся на Vercel;
-- production Supabase остаётся текущей рабочей базой;
-- staging доступен на `https://stage.komui.ru`;
-- staging закрыт Basic Auth и `noindex`;
-- staging frontend ходит в собственный backend на сервере через `/api`;
-- backend работает на `127.0.0.1:3000`;
-- PostgreSQL работает локально на сервере и не открыт наружу;
-- Supabase/Vercel production не переключались;
-- production cutover не начат.
+- `https://komui.ru` и `https://www.komui.ru` обслуживаются self-hosted Nginx;
+- traffic switch имеет `state=applied`, `mode=server`,
+  `productionVhostEnabled=true`;
+- production backend `komui-production-backend` работает на
+  `127.0.0.1:3001` с локальной БД `komui_production`;
+- production `/api/health/ready` возвращал HTTP `200` при read-only проверке
+  30 августа 2026 года;
+- staging доступен на `https://stage.komui.ru`, закрыт Basic Auth/`noindex` и
+  использует backend `127.0.0.1:3000` с БД `komui_staging`;
+- локальный PostgreSQL не открыт наружу;
+- Vercel origin сохранён только как legacy fallback, а старый Supabase proxy —
+  для совместимости отдельных legacy путей, не как основной checkout runtime.
 
-Ключевые safe-флаги на сервере:
+Проверенные safe-флаги production (значения секретов не читались):
+
+```text
+NODE_ENV=production
+RUNTIME_MODE=server
+SITE_URL=https://komui.ru
+PUBLIC_API_BASE_URL=https://komui.ru/api
+TBANK_MODE=production
+TBANK_MOCK_PAYMENTS=false
+CDEK_MOCK=false
+CDEK_CREATE_SHIPMENTS=true
+```
+
+Проверенные safe-флаги staging:
 
 ```text
 NODE_ENV=staging
@@ -43,17 +59,137 @@ CDEK_API_BASE_URL=https://api.cdek.ru
 CDEK_MOCK=false
 CDEK_CREATE_SHIPMENTS=true
 
-OZON_IMPORT_MODE=dry_run
-OZON_IMPORT_WRITE_SUPABASE=false
-
-ENABLE_TRAFFIC_SWITCH=true
-LEGACY_ORIGIN=https://komui.vercel.app
 ```
 
-Важно: `OZON_IMPORT_WRITE_SUPABASE=false` означает, что Ozon import сейчас не
-пишет в текущую production Supabase-базу. Это сделано намеренно.
+Ozon dual-write в legacy Supabase остаётся выключенным; importer по умолчанию
+работает с локальным server PostgreSQL.
 
 ### 1.1. Последние существенные обновления
+
+#### 30 августа 2026 — payment/CDEK consistency hardening (локально, без deploy)
+
+По первым трём пунктам P1-аудита подготовлен backend candidate. На сервер он
+ещё не выкладывался, production/staging БД и процессы этой работой не менялись.
+
+Основные инварианты новой реализации:
+
+- валидный T-Bank webhook фиксирует inbox event, payment attempt, order status,
+  promo transition и CDEK intent в одной PostgreSQL-транзакции;
+- повторный `event_hash` идемпотентен, а более ранний provider status не может
+  перезаписать более окончательный финансовый факт;
+- обязательные подписанные `PaymentId`, `OrderId`, `Status` и `Amount`
+  проверяются до привязки payment id и до изменения любой state machine;
+- webhook не ждёт сетевой вызов CDEK и возвращает `200 OK` только после commit;
+- полный refund/reversal создаёт durable `cdek_cancel`, а `CONFIRMED` —
+  `cdek_create`; оба действия имеют dedupe key, lease, retry/backoff и
+  `needs_review` после исчерпания попыток или не retryable отказа провайдера;
+- автоматическое создание CDEK разрешено только для текущего order status
+  `paid` или `partially_refunded`; статус повторно читается непосредственно
+  перед provider request. `authorized` и `payment_review` fulfillment не
+  запускают;
+- после появления любой строки shipment повторный CDEK create `POST` запрещён:
+  worker только сверяет точный UUID/merchant order number. Пустой lookup
+  повторяется с backoff и в итоге переводит effect в `needs_review`, но не
+  рискует создать дубликат;
+- первичный CDEK status `accepted` не считается завершением: worker продолжает
+  reconciliation до `created` либо `needs_review`; конкурентные create/cancel
+  updates защищены compare-and-set и не могут воскресить `deleting`/`deleted`;
+- новая фактическая refund/reversal-цепочка заново активирует уже terminal
+  `cdek_cancel` с тем же dedupe key и очищенным lease/retry outcome;
+- до T-Bank `/Init` сохраняется точная очищенная request boundary. Timeout,
+  network error или ошибка сохранения ответа переводят заказ в
+  `payment_unknown` и не разрешают создавать новый заказ с тем же
+  `clientRequestId`;
+- reconciler использует подписанные `CheckOrder` и `GetState`. Поскольку эти
+  методы не возвращают opaque `PaymentURL`, найденный orphan в status `NEW`
+  сначала идемпотентно отменяется через `Cancel`; только подтверждённый
+  terminal failure разрешает пользователю создать новый заказ;
+- непосредственно перед HTTP `Cancel` короткая транзакция повторно проверяет
+  lease generation, order/amount/terminal boundary и глобального владельца
+  PaymentId, затем привязывает PaymentId, очищает `payment_url` и сохраняет
+  durable cancel-intent. Потерянный CAS запрещает сетевой вызов; crash после
+  intent или отправки `Cancel` не позволяет позднему fulfillable-статусу
+  создать доставку — заказ переходит в `payment_review`, а `cdek_cancel`
+  сохраняется причинно;
+- mismatch `TerminalKey`, `OrderId`, `PaymentId` или amount не принимается как
+  локальная истина и переводится в безопасное ожидание/operator review.
+- `AUTH_FAIL` не считается terminal failure: по контракту Т-Банка платёжная
+  форма допускает следующие попытки до `REJECTED`, поэтому существующий
+  PaymentId/URL переиспользуется либо сверяется, а новый платёж не создаётся;
+- `PARTIAL_REVERSED`, а также direct `PARTIAL_REFUNDED` без ранее
+  подтверждённого локального `paid`, блокируют fulfillment и требуют более
+  финального непротиворечивого факта либо ручной проверки; lower-rank
+  `CONFIRMED` не выводит такой заказ из review. Обычный переход
+  `paid -> partially_refunded` остаётся отдельным бизнес-сценарием и сам по себе
+  не означает автоматическую отмену уже созданной доставки.
+
+Новые основные файлы:
+
+```text
+server/src/tbankWebhook.ts
+server/src/tbankReconciliation.ts
+server/src/tbankPaymentIdentity.ts
+server/src/cdekEffects.ts
+server/src/cdekShipments.ts
+server/test/tbankWebhook.test.ts
+server/test/tbankReconciliation.test.ts
+server/test/cdekEffects.test.ts
+supabase/migrations/20260830143000_harden_payment_consistency.sql
+```
+
+Migration добавляет:
+
+- order status `payment_unknown`;
+- `reconciliation_attempts` и `reconciliation_next_at` для payment attempts;
+- CDEK shipment status `deleting`;
+- `merch_order_effects` с RLS, уникальным `dedupe_key`, due/order indexes,
+  lease/retry полями и безопасным historical cancel backfill.
+
+RLS/grants в migration условны по наличию ролей: в managed Supabase разрешён
+`service_role`, а в self-hosted PostgreSQL — backend role `komui_app` с
+`SELECT`/`INSERT`/`UPDATE` и доступом к identity sequence. Отсутствующие
+`anon`/`authenticated`/`service_role` не делают migration неисполняемой.
+
+Admin order detail показывает безопасную сводку `orderEffects` без внутреннего
+payload. `komui-order-monitor` формирует отдельный Telegram alert при переходе
+эффекта в `needs_review`, поэтому исчерпанные retries не остаются незаметными.
+
+Новые необязательные env-настройки имеют безопасные defaults:
+
+```text
+TBANK_REQUEST_TIMEOUT_MS=15000
+TBANK_RECONCILIATION_ENABLED=true
+TBANK_RECONCILIATION_INTERVAL_MS=30000
+TBANK_RECONCILIATION_BATCH_SIZE=5
+TBANK_RECONCILIATION_STALE_MS=30000
+TBANK_RECONCILIATION_LEASE_MS=60000
+TBANK_RECONCILIATION_MAX_ATTEMPTS=20
+```
+
+Обязательный порядок выкладки сначала в staging, затем тем же revision в
+production:
+
+1. Сделать backup целевой БД (`komui_staging`, затем `komui_production`) и
+   проверить текущий health соответствующего backend.
+2. Применить migration `20260830143000_harden_payment_consistency.sql` к
+   целевой БД.
+   Проверить, что у `komui_app` созданы grants и разрешающая RLS policy.
+3. Установить обновлённый `ops/server/komui-order-monitor` в
+   `/usr/local/sbin/komui-order-monitor` и выполнить его `--dry-run`.
+4. Развернуть backend и frontend одного revision.
+5. Проверить `/health/ready`, backend logs и отсутствие растущих
+   `INIT_REVIEW`/`needs_review`.
+6. Выполнить demo-платёж, duplicate webhook replay и refund/CDEK cancel smoke.
+   Для CDEK отдельно подтвердить, что `accepted` продолжает сверяться, а
+   повторная обработка неоднозначного create не отправляет второй `POST`.
+
+После начала migration старый backend нельзя возвращать к приёму payment writes:
+он не соблюдает новые transaction/outbox-инварианты, даже если schema additions
+технически ему не мешают. Выкладка выполняется только в maintenance window с
+остановкой старого backend и блокировкой checkout/webhook ingress. При ошибке
+maintenance сохраняется; допустимы forward-fix/data reconciliation либо
+восстановление согласованного backup до повторного открытия ingress. Точный
+порядок и blocking preflight приведены в `CUTOVER_RUNBOOK.md`.
 
 #### 7 июля 2026 — product media migration foundation
 
@@ -205,6 +341,11 @@ Backend release `20260630-cdek-shipments-server` добавил создание
 
 #### 30 июня 2026 — повтор оплаты после failed payment
 
+Этот раздел фиксирует поведение релиза от 30 июня и не является текущим
+контрактом. Начиная с hardening 30 августа `AUTH_FAIL` считается
+неокончательным, автоматический fresh payment запрещён, а ambiguous result
+обрабатывается через тот же `clientRequestId` и reconciliation.
+
 Исправлен сценарий, когда после отклонённого Т-Банком платежа повторная попытка
 оформления сразу возвращала пользователя на старый failed-result:
 
@@ -350,9 +491,10 @@ merch_payment_attempts: 13
 merch_cdek_shipments: 3
 ```
 
-Important: `komui_production` сейчас создана из staging и содержит staging
-тестовые transactional rows. Если перед настоящим DNS cutover нужна чистая
-история заказов, эти строки нужно удалить отдельным явно разрешённым cleanup.
+На момент snapshot 30 июня `komui_production` была создана из staging и
+содержала тестовые transactional rows. Это историческая характеристика
+snapshot, а не описание текущего cutover status; любой cleanup требует
+отдельного явного разрешения и свежего backup.
 
 #### 30 июня 2026 — DNS and TLS production cutover started
 
@@ -522,6 +664,7 @@ backend process at request time, so user `komui` needs execute permission on
 /etc/nginx/sites-enabled/komui-staging
 
 /etc/nginx/sites-available/komui-production-switch
+/etc/nginx/sites-enabled/komui-production-switch
 /etc/nginx/sites-available/komui-production-http-precutover
 /etc/nginx/sites-enabled/komui-production-http-precutover
 /etc/nginx/snippets/komui-production-runtime.conf
@@ -530,12 +673,12 @@ backend process at request time, so user `komui` needs execute permission on
 /etc/nginx/sites-enabled/api.komui.ru
 ```
 
-`komui-production-http-precutover` включён только для HTTP loopback/pre-cutover
-проверок и ACME webroot. Live `komui.ru` всё ещё не обслуживается этим сервером,
-пока DNS указывает на Vercel.
-
-`komui-production-switch` — будущий HTTPS vhost. Он сейчас не включён в
-`sites-enabled`, потому что на сервере ещё нет certificate для `komui.ru`.
+Название `komui-production-http-precutover` осталось историческим: HTTP-конфиг
+используется для служебного HTTP/ACME-пути. Активный HTTPS vhost
+`komui-production-switch` уже включён в `sites-enabled`, сертификат установлен,
+а live `komui.ru` обслуживается этим сервером. Проверенное состояние traffic
+switch — `mode=server`, `state=applied`; точные пути и ограничения описаны ниже
+в разделе **Active production switch vhost**.
 
 ## 5. Git repository layout
 
@@ -614,7 +757,7 @@ https://stage.komui.ru/api/v1/products
         -> backend receives /v1/products
 ```
 
-### Existing `api.komui.ru`
+### Legacy-compatible `api.komui.ru`
 
 `api.komui.ru` is still an existing production proxy to current Supabase:
 
@@ -622,25 +765,19 @@ https://stage.komui.ru/api/v1/products
 https://bkxpzfnglihxpbnhtjjq.supabase.co
 ```
 
-This vhost is intentionally preserved for current production compatibility.
-Do not repoint or remove it before production cutover.
+This vhost is intentionally preserved for legacy compatibility. Its изменение
+не входит в обычный backend deploy и требует отдельной проверки consumers.
 
-### Prepared production switch vhost
+### Active production switch vhost
 
-Prepared but not enabled:
+Production HTTPS vhost is enabled:
 
 ```text
 /etc/nginx/sites-available/komui-production-switch
+/etc/nginx/sites-enabled/komui-production-switch
 ```
 
-Enabled pre-cutover HTTP candidate:
-
-```text
-/etc/nginx/sites-available/komui-production-http-precutover
-/etc/nginx/sites-enabled/komui-production-http-precutover
-```
-
-It is designed for the future stage 8 production cutover. It serves:
+It serves:
 
 ```text
 komui.ru
@@ -658,16 +795,16 @@ The runtime snippet can be changed by `komui-traffic-switch` to either:
 - serve the self-hosted static frontend + backend API;
 - proxy all traffic to legacy Vercel origin.
 
-Currently:
+Read-only verification on 30 August 2026:
 
 ```text
-productionHttpPrecutoverEnabled=true
-productionTlsVhostEnabled=false
+productionVhostEnabled=true
 mode=server
-state=prepared
+state=applied
 ```
 
-So live `komui.ru` is unaffected.
+Therefore switching to `legacy` or changing this vhost affects live
+`komui.ru`; use the cutover/rollback runbook and explicit owner approval.
 
 ## 7. Backend service
 
@@ -680,7 +817,7 @@ env: /etc/komui/backend.env
 database: komui_staging
 ```
 
-Production candidate systemd unit:
+Production systemd unit:
 
 ```text
 /etc/systemd/system/komui-production-backend.service
@@ -870,7 +1007,8 @@ Content-Type: application/json
 
 The endpoint:
 
-- only works for paid/authorized orders;
+- only works for `paid`/`partially_refunded` orders; `authorized` and
+  `payment_review` are not fulfillable;
 - returns an existing non-failed shipment instead of creating duplicates;
 - retries only `failed`/`invalid` shipments;
 - stores CDEK request/response/error payload in `public.merch_cdek_shipments`.
@@ -1012,11 +1150,13 @@ The POST is asynchronous:
 Current production impact:
 
 ```text
-productionVhostEnabled=false
+productionVhostEnabled=true
+mode=server
+state=applied
 ```
 
-So switching modes does not affect live `komui.ru` until production vhost is
-enabled and DNS points to this server.
+The production vhost is live, so switching modes affects `komui.ru` after the
+asynchronous apply completes. Treat this endpoint as a production mutation.
 
 ### Admin Ozon import
 
@@ -1418,9 +1558,8 @@ Current state:
 
 ```text
 mode=server
-state=prepared
-productionHttpPrecutoverEnabled=true
-productionTlsVhostEnabled=false
+state=applied
+productionVhostEnabled=true
 legacyOriginConfigured=true
 nginxTest=passed
 LEGACY_ORIGIN=https://komui.vercel.app
@@ -1434,8 +1573,7 @@ sudo /usr/local/sbin/komui-traffic-switch legacy "reason"
 sudo python3 -m json.tool /var/lib/komui/traffic-switch/status.json
 ```
 
-TLS enable command after DNS points `komui.ru` and `www.komui.ru` to
-`89.111.152.112`:
+Certificate/vhost enable helper used during the completed cutover:
 
 ```bash
 sudo /usr/local/sbin/komui-production-issue-cert-and-enable
@@ -1446,9 +1584,9 @@ the server IP.
 
 Important limitation:
 
-This is not DNS switching. It only affects requests that already reach this
-server. Until DNS `komui.ru` points to `89.111.152.112` and production vhost is
-enabled, this does not affect live production.
+This is not DNS switching. DNS already points `komui.ru` to this server and the
+production vhost is enabled, therefore traffic-switch changes do affect live
+requests that reach the server.
 
 If the whole server is unavailable, traffic switch is also unavailable. Then the
 rollback mechanism is manual DNS rollback at the DNS provider.
@@ -1818,27 +1956,28 @@ sudo bash -c '
 '
 ```
 
-## 19. Production cutover readiness
+## 19. Post-cutover operations and release readiness
 
-Production cutover is stage 8 and must not be started without explicit owner
+DNS/TLS cutover уже выполнен. Любое переключение live traffic, cleanup данных
+или изменение production credentials по-прежнему требует явного owner
 approval.
 
-Before/after cutover:
+Перед следующим production release:
 
 1. Complete remaining Ozon import/dual-write acceptance.
-2. Accept current `komui_production` snapshot or explicitly clean staging test
-   transactional rows before DNS cutover.
-3. Run one more fresh encrypted backup immediately before cutover if cleanup or
-   any data change is made; latest production snapshot backup is
+2. Проверить актуальные production transactional rows; cleanup выполнять только
+   отдельной явно разрешённой операцией.
+3. Создать свежий encrypted backup непосредственно перед release, если были
+   cleanup или иные data changes; исторический snapshot backup:
    `komui-backup-20260630T164013Z.tar.gz.gpg`.
 4. Run or reference the latest restore drill; last successful drill:
    2026-06-30 from `komui-backup-20260630T145422Z.tar.gz.gpg`.
 5. Decide final Ozon dual-write policy.
 6. Confirm production T-Bank credentials/webhook settings.
-7. Production CDEK auto-create is currently enabled in candidate:
+7. Production CDEK auto-create включён:
    `CDEK_CREATE_SHIPMENTS=true`.
-8. DNS now points to the server and TLS vhost is enabled.
-9. Switch/confirm T-Bank webhook:
+8. DNS уже указывает на сервер и TLS vhost включён.
+9. Подтвердить T-Bank webhook:
    `https://komui.ru/api/v1/webhooks/tbank`.
 10. Run one demo payment on `https://komui.ru` and confirm order/payment/CDEK
     behavior.
@@ -1858,18 +1997,16 @@ Current known limitations:
 2. Ozon import writes only local server PostgreSQL by default; Supabase dual-write
    is disabled.
 3. Fully new Ozon products without mapping are not auto-published.
-4. T-Bank production mode/webhook is not switched; staging uses demo mode.
-5. Production candidate uses T-Bank demo mode until real production credentials
-   are provided/confirmed.
-6. CDEK real shipment creation is enabled on staging and production candidate:
+4. Production использует T-Bank production mode; staging использует demo mode.
+   Webhook URL и один безопасный payment smoke нужно подтверждать после release.
+5. CDEK real shipment creation включён на staging и production:
    `CDEK_CREATE_SHIPMENTS=true`.
-7. External product images still use Ozon CDN.
-8. Google Fonts are not fully localized.
-9. `api/supabase-function.js` remains for legacy Vercel production compatibility.
-10. Production HTTPS vhost for `komui.ru` is prepared but not enabled until DNS
-    and certificate issuance.
-11. If the self-hosted server is down after cutover, rollback requires DNS
-    change at the DNS provider.
+6. External product images still use Ozon CDN.
+7. Google Fonts are not fully localized.
+8. `api/supabase-function.js` remains for legacy Vercel compatibility.
+9. Production HTTPS vhost уже включён; traffic fallback меняет live routing и
+   требует runbook/owner approval. DNS rollback остаётся запасным вариантом,
+   если server-side fallback недоступен.
 
 ## 21. Quick orientation for a new developer
 

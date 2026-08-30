@@ -14,6 +14,7 @@
 До этой правки у заказа уже было поле `merch_customer_orders.status`, но это **payment status**, то есть состояние оплаты:
 
 - `created` - заказ создан до обращения в Т-Банк;
+- `payment_unknown` - результат `Init` неоднозначен; повторный заказ запрещён до сверки с Т-Банком;
 - `pending_payment` - платёж создан, клиент ещё не оплатил;
 - `authorized` - платёж авторизован;
 - `paid` - платёж подтверждён;
@@ -33,6 +34,7 @@
 - `created`;
 - `invalid`;
 - `failed`;
+- `deleting` - удаление принято СДЭК и ожидает подтверждения;
 - `deleted`;
 - `unknown`.
 
@@ -163,7 +165,7 @@ Query:
     "total": 13
   },
   "statuses": {
-    "payment": ["created", "pending_payment", "authorized", "paid", "payment_failed", "payment_review", "canceled", "partially_refunded", "refunded"],
+    "payment": ["created", "payment_unknown", "pending_payment", "authorized", "paid", "payment_failed", "payment_review", "canceled", "partially_refunded", "refunded"],
     "fulfillment": ["new", "processing", "shipped", "delivered", "canceled", "returned"]
   }
 }
@@ -184,7 +186,12 @@ GET /admin/storefront/orders/:orderId
 - `paymentAttempts` - попытки платежа Т-Банк;
 - `paymentEvents` - последние webhook-события оплаты;
 - `cdekShipment` - накладная/заказ СДЭК, если создана;
-- `cdekEvents` - последние события СДЭК, если есть.
+- `cdekEvents` - последние события СДЭК, если есть;
+- `orderEffects` - безопасная операционная сводка фоновых действий CDEK:
+  `type`, `status`, `attempts`, `lastError`, `availableAt`, `updatedAt` и
+  `completedAt`. Внутренний `payload` в admin API не возвращается. Статус
+  `needs_review` означает, что автоматические повторы исчерпаны или провайдер
+  отклонил действие и заказ требует проверки оператором.
 
 ### 3. Кнопка “отправил”
 

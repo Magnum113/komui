@@ -1192,6 +1192,10 @@ function apiErrorCode(result){
   return typeof result?.error?.code==='string'?result.error.code:'';
 }
 
+function apiErrorDetails(result){
+  return result?.error?.details&&typeof result.error.details==='object'?result.error.details:{};
+}
+
 function clearPaymentDraft(){
   try{sessionStorage.removeItem(PAYMENT_DRAFT_KEY)}catch(e){}
 }
@@ -1296,10 +1300,27 @@ async function submitCheckout(){
       const error=new Error(apiErrorMessage(result,'Не удалось создать платёж'));
       error.code=apiErrorCode(result);
       error.retryAllowed=apiRetryAllowed(result);
+      error.details=apiErrorDetails(result);
       if(error.retryAllowed){
         // A fresh request id is prepared only for the next explicit click.
         // Never create a second order automatically after an upstream error.
         clearPaymentDraft();
+      }else if(error.code==='payment_reconciliation_pending'){
+        const pendingOrder=String(error.details?.orderNumber||'').trim();
+        if(pendingOrder){
+          try{
+            sessionStorage.setItem('komui-payment-session:'+pendingOrder,JSON.stringify({
+              accessToken:identity.accessToken,
+              paymentId:null,
+              amount:orderTotal(),
+              reconciliationPending:true,
+              createdAt:new Date().toISOString()
+            }));
+          }catch(e){}
+          redirecting=true;
+          location.assign('/payment-result?status=pending&order='+encodeURIComponent(pendingOrder));
+          return;
+        }
       }
       throw error;
     }

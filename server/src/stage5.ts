@@ -25,14 +25,27 @@ import {
 import { createTbankToken, safeEqual, sanitizedTbankPayload, sha256Hex } from "./crypto";
 import { HttpError, errorDiagnostic } from "./errors";
 import {
-  markPromoRedemptionRedeemed,
   promoPhoneHash,
-  releasePromoRedemption,
   reservePromoRedemption,
   validatePromoCode,
   type PromoValidation,
 } from "./promo";
-import { createCdekShipmentForOrder } from "./cdekShipments";
+import { enqueueCdekEffect } from "./cdekEffects";
+import {
+  processTbankWebhookEvent,
+  TbankWebhookOrderMismatchError,
+  TbankWebhookOrderNotFoundError,
+} from "./tbankWebhook";
+import {
+  markTbankInitUnknown,
+  persistTbankInitSuccess,
+  reconcileTbankInitForOrder,
+  isResumableTbankPaymentStatus,
+  tbankInitResponseMatchesBoundary,
+  tbankRuntimeConfig,
+  validTbankPaymentUrl,
+  type PersistTbankInitSuccessResult,
+} from "./tbankReconciliation";
 
 type HandlerContext = {
   config: AppConfig;
@@ -67,41 +80,6 @@ function matchesPoint(point: ReturnType<typeof normalizePoint>, query: string) {
     .join(" ")
     .toLowerCase();
   return haystack.includes(query.toLowerCase());
-}
-
-function tbankRuntimeConfig(config: AppConfig) {
-  const terminalKey =
-    config.TBANK_MODE === "production"
-      ? config.TBANK_TERMINAL_KEY
-      : config.TBANK_DEMO_TERMINAL_KEY;
-  const password =
-    config.TBANK_MODE === "production"
-      ? config.TBANK_PASSWORD
-      : config.TBANK_DEMO_PASSWORD;
-
-  if (config.TBANK_MOCK_PAYMENTS) {
-    return {
-      terminalKey: terminalKey || "KOMUI_STAGE_MOCK",
-      password: password || "komui-stage-mock-password",
-      apiUrl: config.TBANK_API_URL,
-      mock: true,
-    };
-  }
-
-  if (!terminalKey || !password) {
-    throw new HttpError(
-      503,
-      "tbank_not_configured",
-      "T-Bank credentials are not configured",
-    );
-  }
-
-  return {
-    terminalKey,
-    password,
-    apiUrl: config.TBANK_API_URL,
-    mock: false,
-  };
 }
 
 function publicApiBaseUrl(config: AppConfig) {
@@ -276,12 +254,13 @@ export async function handlePromoValidate(
 
 async function latestPaymentAttempt(db: Db, orderId: string) {
   const result = await db.query<{
+    id: number;
     payment_url: string | null;
     external_payment_id: string | null;
     provider_status: string;
   }>(
     `
-      select payment_url, external_payment_id, provider_status
+      select id, payment_url, external_payment_id, provider_status
       from public.merch_payment_attempts
       where order_id = $1::uuid
       order by created_at desc
@@ -290,6 +269,208 @@ async function latestPaymentAttempt(db: Db, orderId: string) {
     [orderId],
   );
   return result.rows[0] ?? null;
+}
+
+function hasResumableTbankPaymentUrl(
+  attempt: Awaited<ReturnType<typeof latestPaymentAttempt>>,
+): boolean {
+  return Boolean(
+    attempt?.payment_url &&
+      isResumableTbankPaymentStatus(attempt.provider_status),
+  );
+}
+
+type ExistingPaymentOrder = {
+  id: string;
+  order_number: string;
+  access_token_hash: string;
+  total_amount: number;
+  status: string;
+};
+
+async function paymentOrderById(
+  db: Db,
+  orderId: string,
+): Promise<ExistingPaymentOrder | null> {
+  const result = await db.query<ExistingPaymentOrder>(
+    `
+      select id, order_number, access_token_hash, total_amount, status
+      from public.merch_customer_orders
+      where id = $1::uuid
+      limit 1
+    `,
+    [orderId],
+  );
+  return result.rows[0] ?? null;
+}
+
+function paymentReconciliationPending(
+  order: ExistingPaymentOrder,
+  config: AppConfig,
+  reason = "Проверяем, был ли создан платёж. Повторите через несколько секунд.",
+): HttpError {
+  return new HttpError(409, "payment_reconciliation_pending", reason, {
+    retryAllowed: false,
+    retryMode: "same_request",
+    retryAfterMs: config.TBANK_RECONCILIATION_INTERVAL_MS,
+    orderNumber: order.order_number,
+  });
+}
+
+async function resolveExistingPayment(
+  config: AppConfig,
+  db: Db,
+  tbank: ReturnType<typeof tbankRuntimeConfig>,
+  order: ExistingPaymentOrder,
+  accessToken: string,
+  accessTokenHash: string,
+) {
+  if (order.access_token_hash !== accessTokenHash) {
+    throw new HttpError(409, "request_conflict", "Request conflict");
+  }
+  if (["payment_failed", "canceled", "refunded"].includes(order.status)) {
+    throw new HttpError(
+      409,
+      "payment_retry_required",
+      "Предыдущая попытка оплаты завершилась достоверной ошибкой. Создайте новый платёж.",
+      { retryAllowed: true },
+    );
+  }
+  if (["authorized", "paid", "partially_refunded"].includes(order.status)) {
+    throw new HttpError(
+      409,
+      "payment_already_processed",
+      "Платёж уже обрабатывается или обработан банком. Новый заказ создавать не нужно.",
+      { retryAllowed: false, orderNumber: order.order_number },
+    );
+  }
+  if (order.status === "payment_review") {
+    throw new HttpError(
+      409,
+      "payment_requires_review",
+      "Платёж требует ручной проверки. Новый заказ создавать не нужно.",
+      { retryAllowed: false, orderNumber: order.order_number },
+    );
+  }
+
+  let attempt = await latestPaymentAttempt(db, order.id);
+  if (
+    attempt &&
+    ["REJECTED", "CANCELED", "REVERSED", "DEADLINE_EXPIRED"].includes(
+      attempt.provider_status,
+    )
+  ) {
+    throw new HttpError(
+      409,
+      "payment_retry_required",
+      "Предыдущая попытка оплаты завершилась достоверной ошибкой. Создайте новый платёж.",
+      { retryAllowed: true },
+    );
+  }
+  if (hasResumableTbankPaymentUrl(attempt)) {
+    return {
+      orderNumber: order.order_number,
+      accessToken,
+      paymentId: attempt.external_payment_id,
+      paymentUrl: attempt.payment_url,
+      amount: order.total_amount,
+    };
+  }
+
+  const needsReconciliation = Boolean(
+    attempt &&
+      (["created", "payment_unknown"].includes(order.status) ||
+        ["INITIATING", "INIT_UNKNOWN", "RECONCILING_INIT", "AUTH_FAIL"].includes(
+          attempt.provider_status,
+        )),
+  );
+  if (needsReconciliation && !tbank.mock) {
+    await reconcileTbankInitForOrder(db, tbank, order.id, {
+      staleMs: config.TBANK_RECONCILIATION_STALE_MS,
+      leaseMs: config.TBANK_RECONCILIATION_LEASE_MS,
+      intervalMs: config.TBANK_RECONCILIATION_INTERVAL_MS,
+      maxAttempts: config.TBANK_RECONCILIATION_MAX_ATTEMPTS,
+      createCdekShipments: config.CDEK_CREATE_SHIPMENTS,
+    });
+
+    // Provider I/O happens outside the database transaction. A webhook or a
+    // newer reconciliation lease may therefore supersede that result. Make
+    // the retry decision only from the committed order/attempt state.
+    const refreshedOrder = await paymentOrderById(db, order.id);
+    attempt = await latestPaymentAttempt(db, order.id);
+    if (!refreshedOrder) {
+      throw paymentReconciliationPending(order, config);
+    }
+    if (
+      ["authorized", "paid", "partially_refunded"].includes(
+        refreshedOrder.status,
+      )
+    ) {
+      throw new HttpError(
+        409,
+        "payment_already_processed",
+        "Платёж уже обработан банком. Новый заказ создавать не нужно.",
+        { retryAllowed: false, orderNumber: refreshedOrder.order_number },
+      );
+    }
+    if (refreshedOrder.status === "payment_review") {
+      throw new HttpError(
+        409,
+        "payment_requires_review",
+        "Платёж требует ручной проверки. Новый заказ создавать не нужно.",
+        { retryAllowed: false, orderNumber: refreshedOrder.order_number },
+      );
+    }
+    if (
+      ["payment_failed", "canceled", "refunded"].includes(
+        refreshedOrder.status,
+      ) ||
+      (attempt &&
+        ["REJECTED", "CANCELED", "REVERSED", "DEADLINE_EXPIRED"].includes(
+          attempt.provider_status,
+        ))
+    ) {
+      throw new HttpError(
+        409,
+        "payment_retry_required",
+        "Т‑Банк подтвердил, что предыдущий платёж завершился ошибкой.",
+        { retryAllowed: true },
+      );
+    }
+
+    if (hasResumableTbankPaymentUrl(attempt)) {
+      return {
+        orderNumber: refreshedOrder.order_number,
+        accessToken,
+        paymentId: attempt.external_payment_id,
+        paymentUrl: attempt.payment_url,
+        amount: refreshedOrder.total_amount,
+        recovered: true,
+      };
+    }
+    throw paymentReconciliationPending(refreshedOrder, config);
+  }
+
+  throw new HttpError(
+    409,
+    "payment_still_creating",
+    "Платёж для этого заказа ещё создаётся. Повторите через несколько секунд.",
+    {
+      retryAllowed: false,
+      retryMode: "same_request",
+      retryAfterMs: config.TBANK_RECONCILIATION_INTERVAL_MS,
+      orderNumber: order.order_number,
+    },
+  );
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  return Boolean(
+    error &&
+      typeof error === "object" &&
+      "code" in error &&
+      (error as { code?: unknown }).code === "23505",
+  );
 }
 
 async function insertCheckoutOrder(
@@ -396,6 +577,67 @@ async function insertCheckoutOrder(
   return orderId;
 }
 
+export function assertTbankInitPersistenceAllowsRedirect(
+  result: PersistTbankInitSuccessResult,
+  orderNumberValue: string,
+  retryAfterMs: number,
+): asserts result is {
+  kind: "persisted";
+  attemptStatus: string;
+  orderStatus: string;
+} {
+  if (result.kind === "persisted") return;
+  if (result.kind === "reconciling") {
+    throw new HttpError(
+      503,
+      "payment_reconciliation_pending",
+      "Проверка платежа уже выполняется. Новый заказ создавать не нужно.",
+      {
+        retryAllowed: false,
+        retryMode: "same_request",
+        retryAfterMs,
+        orderNumber: orderNumberValue,
+      },
+    );
+  }
+  if (result.kind === "processed") {
+    throw new HttpError(
+      409,
+      "payment_already_processed",
+      "Платёж уже обрабатывается или обработан банком. Новый заказ создавать не нужно.",
+      { retryAllowed: false, orderNumber: orderNumberValue },
+    );
+  }
+  if (result.kind === "retry") {
+    throw new HttpError(
+      409,
+      "payment_retry_required",
+      "Предыдущая попытка оплаты завершилась достоверной ошибкой. Создайте новый платёж.",
+      { retryAllowed: true, orderNumber: orderNumberValue },
+    );
+  }
+  throw new HttpError(
+    409,
+    "payment_requires_review",
+    "Платёж требует ручной проверки. Новый заказ создавать не нужно.",
+    { retryAllowed: false, orderNumber: orderNumberValue },
+  );
+}
+
+export function tbankInitResponseAllowsPersistence(
+  httpOk: boolean,
+  response: Record<string, unknown>,
+  expected: { terminalKey: string; orderNumber: string; amount: number },
+): boolean {
+  return Boolean(
+    httpOk &&
+      (response.Success === true || response.Success === "true") &&
+      validTbankPaymentUrl(response.PaymentURL) &&
+      text(response.PaymentId, 120) &&
+      tbankInitResponseMatchesBoundary(response, expected),
+  );
+}
+
 export async function handleTbankCreatePayment(
   request: FastifyRequest,
   _reply: FastifyReply,
@@ -445,13 +687,7 @@ export async function handleTbankCreatePayment(
 
   const tbank = tbankRuntimeConfig(config);
   const accessTokenHash = sha256Hex(accessToken);
-  const existingResult = await db.query<{
-    id: string;
-    order_number: string;
-    access_token_hash: string;
-    total_amount: number;
-    status: string;
-  }>(
+  const existingResult = await db.query<ExistingPaymentOrder>(
     `
       select id, order_number, access_token_hash, total_amount, status
       from public.merch_customer_orders
@@ -462,44 +698,13 @@ export async function handleTbankCreatePayment(
   );
   const existing = existingResult.rows[0];
   if (existing) {
-    if (existing.access_token_hash !== accessTokenHash) {
-      throw new HttpError(409, "request_conflict", "Request conflict");
-    }
-    if (["payment_failed", "canceled", "refunded"].includes(existing.status)) {
-      throw new HttpError(
-        409,
-        "payment_retry_required",
-        "Предыдущую попытку оплаты завершить не удалось. Создайте новый платёж.",
-        { retryAllowed: true },
-      );
-    }
-    const attempt = await latestPaymentAttempt(db, existing.id);
-    if (
-      attempt &&
-      ["REJECTED", "CANCELED", "DEADLINE_EXPIRED", "AUTH_FAIL"].includes(
-        attempt.provider_status,
-      )
-    ) {
-      throw new HttpError(
-        409,
-        "payment_retry_required",
-        "Предыдущую попытку оплаты завершить не удалось. Создайте новый платёж.",
-        { retryAllowed: true },
-      );
-    }
-    if (attempt?.payment_url) {
-      return {
-        orderNumber: existing.order_number,
-        accessToken,
-        paymentId: attempt.external_payment_id,
-        paymentUrl: attempt.payment_url,
-        amount: existing.total_amount,
-      };
-    }
-    throw new HttpError(
-      409,
-      "payment_still_creating",
-      "Платёж для этого заказа ещё создаётся. Повторите через минуту.",
+    return resolveExistingPayment(
+      config,
+      db,
+      tbank,
+      existing,
+      accessToken,
+      accessTokenHash,
     );
   }
 
@@ -578,98 +783,147 @@ export async function handleTbankCreatePayment(
     pointLat: Number(pointLocation.latitude) || null,
     pointLng: Number(pointLocation.longitude) || null,
   };
+  // Persist the exact signed provider boundary before the external call. If
+  // the process dies after sending Init, the reconciler still has OrderId,
+  // amount and receipt facts needed to resolve the orphan safely.
+  const initPayload: Record<string, unknown> = {
+    TerminalKey: tbank.terminalKey,
+    Amount: total,
+    OrderId: number,
+    Description: `Заказ KOMUI ${number}`.slice(0, 140),
+    PayType: "O",
+    Language: "ru",
+    NotificationURL: `${publicApiBaseUrl(config)}/v1/webhooks/tbank`,
+    SuccessURL: `${siteUrl(config)}/payment-result?status=success&order=${encodeURIComponent(number)}`,
+    FailURL: `${siteUrl(config)}/payment-result?status=fail&order=${encodeURIComponent(number)}`,
+    DATA: {
+      Phone: phone,
+      Email: email,
+      name: `${lastName} ${firstName}`.slice(0, 100),
+      order_number: number,
+    },
+  };
+  const receipt = buildReceipt(config, orderItems, discount, delivery, phone, email);
+  if (receipt) initPayload.Receipt = receipt;
+  initPayload.Token = createTbankToken(initPayload, tbank.password);
 
   let attemptId = 0;
-  const orderId = await db.withTransaction(async (client) => {
-    const createdOrderId = await insertCheckoutOrder(
-      client,
-      {
-        client_request_id: clientRequestId,
-        order_number: number,
-        access_token_hash: accessTokenHash,
-        status: "created",
-        customer_first_name: firstName,
-        customer_last_name: lastName,
-        customer_phone: phone,
-        customer_email: email,
-        marketing_consent: marketingConsent,
-        legal_accepted_at: legalAcceptedAt,
-        delivery_point_code: delivery.code,
-        delivery_city: delivery.city || "СДЭК",
-        delivery_address: delivery.address || delivery.title || delivery.code,
-        delivery_hours: delivery.hours || null,
-        delivery_eta: delivery.eta,
-        delivery_amount: delivery.amount,
-        subtotal_amount: subtotal,
-        discount_amount: discount,
-        total_amount: total,
-        promo_code: promoValidation?.valid ? promoValidation.code : null,
-        metadata: {
-          user_agent: text(request.headers["user-agent"], 300),
-          promo: promoValidation?.valid
-            ? {
-                code: promoValidation.code,
-                promo_code_id: promoValidation.promoCodeId,
-                discount_type: promoValidation.discountType,
-                discount_amount: promoValidation.discountAmount,
-                delivery_discount_amount: promoValidation.deliveryDiscountAmount,
-                original_delivery_amount: cdekQuote.amountKopecks,
-              }
-            : null,
-          cdek: {
-            mock: config.CDEK_MOCK,
-            shipment_point: config.CDEK_SHIPMENT_POINT,
-            delivery_point: delivery.code,
-            delivery_city_code: delivery.cityCode,
-            delivery_point_name: delivery.title,
-            delivery_point_type: delivery.pointType,
-            delivery_point_lat: delivery.pointLat,
-            delivery_point_lng: delivery.pointLng,
-            tariff_code: delivery.tariffCode,
-            tariff_name: delivery.tariffName,
-            delivery_mode: delivery.deliveryMode,
-            period_min: delivery.periodMin,
-            period_max: delivery.periodMax,
-            package_snapshot: cdekPackages,
-            quote: cdekQuote.raw,
+  let orderId: string;
+  try {
+    orderId = await db.withTransaction(async (client) => {
+      const createdOrderId = await insertCheckoutOrder(
+        client,
+        {
+          client_request_id: clientRequestId,
+          order_number: number,
+          access_token_hash: accessTokenHash,
+          status: "created",
+          customer_first_name: firstName,
+          customer_last_name: lastName,
+          customer_phone: phone,
+          customer_email: email,
+          marketing_consent: marketingConsent,
+          legal_accepted_at: legalAcceptedAt,
+          delivery_point_code: delivery.code,
+          delivery_city: delivery.city || "СДЭК",
+          delivery_address: delivery.address || delivery.title || delivery.code,
+          delivery_hours: delivery.hours || null,
+          delivery_eta: delivery.eta,
+          delivery_amount: delivery.amount,
+          subtotal_amount: subtotal,
+          discount_amount: discount,
+          total_amount: total,
+          promo_code: promoValidation?.valid ? promoValidation.code : null,
+          metadata: {
+            user_agent: text(request.headers["user-agent"], 300),
+            promo: promoValidation?.valid
+              ? {
+                  code: promoValidation.code,
+                  promo_code_id: promoValidation.promoCodeId,
+                  discount_type: promoValidation.discountType,
+                  discount_amount: promoValidation.discountAmount,
+                  delivery_discount_amount: promoValidation.deliveryDiscountAmount,
+                  original_delivery_amount: cdekQuote.amountKopecks,
+                }
+              : null,
+            cdek: {
+              mock: config.CDEK_MOCK,
+              shipment_point: config.CDEK_SHIPMENT_POINT,
+              delivery_point: delivery.code,
+              delivery_city_code: delivery.cityCode,
+              delivery_point_name: delivery.title,
+              delivery_point_type: delivery.pointType,
+              delivery_point_lat: delivery.pointLat,
+              delivery_point_lng: delivery.pointLng,
+              tariff_code: delivery.tariffCode,
+              tariff_name: delivery.tariffName,
+              delivery_mode: delivery.deliveryMode,
+              period_min: delivery.periodMin,
+              period_max: delivery.periodMax,
+              package_snapshot: cdekPackages,
+              quote: cdekQuote.raw,
+            },
           },
         },
-      },
-      orderItems,
-    );
+        orderItems,
+      );
 
-    await reservePromoRedemption(client, {
-      validation: promoValidation ?? invalidPromoValidation(delivery.amount),
-      orderId: createdOrderId,
-      orderNumber: number,
-      clientRequestId,
-      customerPhoneHash: phoneHash,
-      subtotalAmount: subtotal,
-      deliveryAmount: cdekQuote.amountKopecks,
+      await reservePromoRedemption(client, {
+        validation: promoValidation ?? invalidPromoValidation(delivery.amount),
+        orderId: createdOrderId,
+        orderNumber: number,
+        clientRequestId,
+        customerPhoneHash: phoneHash,
+        subtotalAmount: subtotal,
+        deliveryAmount: cdekQuote.amountKopecks,
+      });
+
+      const attempt = await client.query<{ id: number }>(
+        `
+          insert into public.merch_payment_attempts (
+            order_id,
+            terminal_key,
+            provider_status,
+            amount,
+            request_payload
+          )
+          values ($1::uuid, $2, 'INITIATING', $3, $4::jsonb)
+          returning id
+        `,
+        [
+          createdOrderId,
+          tbank.terminalKey,
+          total,
+          JSON.stringify(sanitizedTbankPayload(initPayload)),
+        ],
+      );
+      attemptId = attempt.rows[0].id;
+      return createdOrderId;
     });
-
-    const attempt = await client.query<{ id: number }>(
+  } catch (error) {
+    if (!isUniqueViolation(error)) throw error;
+    // Concurrent calls using one idempotency key converge on the committed
+    // order instead of leaking a database 500 or creating another provider call.
+    const concurrentResult = await db.query<ExistingPaymentOrder>(
       `
-        insert into public.merch_payment_attempts (
-          order_id,
-          terminal_key,
-          provider_status,
-          amount,
-          request_payload
-        )
-        values ($1::uuid, $2, 'INITIATING', $3, $4::jsonb)
-        returning id
+        select id, order_number, access_token_hash, total_amount, status
+        from public.merch_customer_orders
+        where client_request_id = $1::uuid
+        limit 1
       `,
-      [
-        createdOrderId,
-        tbank.terminalKey,
-        total,
-        JSON.stringify({ mock: tbank.mock, created_before_provider_call: true }),
-      ],
+      [clientRequestId],
     );
-    attemptId = attempt.rows[0].id;
-    return createdOrderId;
-  });
+    const concurrentOrder = concurrentResult.rows[0];
+    if (!concurrentOrder) throw error;
+    return resolveExistingPayment(
+      config,
+      db,
+      tbank,
+      concurrentOrder,
+      accessToken,
+      accessTokenHash,
+    );
+  }
 
   if (tbank.mock) {
     const paymentId = `mock-${number}`;
@@ -692,37 +946,28 @@ export async function handleTbankCreatePayment(
     return { orderNumber: number, accessToken, paymentId, paymentUrl, amount: total };
   }
 
-  const initPayload: Record<string, unknown> = {
-    TerminalKey: tbank.terminalKey,
-    Amount: total,
-    OrderId: number,
-    Description: `Заказ KOMUI ${number}`.slice(0, 140),
-    PayType: "O",
-    Language: "ru",
-    NotificationURL: `${publicApiBaseUrl(config)}/v1/webhooks/tbank`,
-    SuccessURL: `${siteUrl(config)}/payment-result?status=success&order=${encodeURIComponent(number)}`,
-    FailURL: `${siteUrl(config)}/payment-result?status=fail&order=${encodeURIComponent(number)}`,
-    DATA: {
-      Phone: phone,
-      Email: email,
-      name: `${lastName} ${firstName}`.slice(0, 100),
-      order_number: number,
-    },
-  };
-  const receipt = buildReceipt(config, orderItems, discount, delivery, phone, email);
-  if (receipt) initPayload.Receipt = receipt;
-  initPayload.Token = createTbankToken(initPayload, tbank.password);
-
   let providerResponse: Record<string, unknown>;
+  let providerHttpOk = false;
+  let providerHttpStatus = 0;
   try {
     const providerRequest = await fetch(`${tbank.apiUrl.replace(/\/$/, "")}/Init`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(initPayload),
-      signal: AbortSignal.timeout(15_000),
+      signal: AbortSignal.timeout(tbank.requestTimeoutMs),
     });
+    providerHttpOk = providerRequest.ok;
+    providerHttpStatus = providerRequest.status;
     const providerText = await providerRequest.text();
-    providerResponse = JSON.parse(providerText) as Record<string, unknown>;
+    const parsedResponse = JSON.parse(providerText) as unknown;
+    if (
+      !parsedResponse ||
+      typeof parsedResponse !== "object" ||
+      Array.isArray(parsedResponse)
+    ) {
+      throw new Error(`T-Bank Init returned an invalid payload (${providerRequest.status})`);
+    }
+    providerResponse = parsedResponse as Record<string, unknown>;
   } catch (error) {
     const diagnostic = errorDiagnostic(error);
     request.log.error(
@@ -738,78 +983,151 @@ export async function handleTbankCreatePayment(
       },
       "T-Bank payment initialization failed before a provider response",
     );
-    await db.query(
-      `
-        update public.merch_payment_attempts
-        set provider_status = 'NETWORK_ERROR',
-            error_code = $2,
-            error_message = $3
-        where id = $1
-      `,
-      [attemptId, diagnostic.code, diagnostic.message],
-    );
-    await db.query(
-      `update public.merch_customer_orders set status = 'payment_failed' where id = $1::uuid`,
-      [orderId],
-    );
-    await releasePromoRedemption(db, orderId);
+    await markTbankInitUnknown(db, {
+      orderId,
+      attemptId,
+      errorCode: diagnostic.code,
+      errorMessage: diagnostic.message,
+      retryAtMs: config.TBANK_RECONCILIATION_INTERVAL_MS,
+      requestPayload: initPayload,
+    }).catch((persistenceError) => {
+      request.log.error(
+        { err: persistenceError, orderId, orderNumber: number, paymentAttemptId: attemptId },
+        "Failed to persist ambiguous T-Bank Init state; stale INITIATING recovery remains active",
+      );
+    });
     throw new HttpError(
-      502,
-      "tbank_network_error",
-      "Т‑Банк временно не отвечает. Попробуйте ещё раз.",
-      { retryAllowed: true, retryMode: "manual" },
+      503,
+      "payment_reconciliation_pending",
+      "Банк не подтвердил создание платежа. Проверяем статус; новый заказ создавать не нужно.",
+      {
+        retryAllowed: false,
+        retryMode: "same_request",
+        retryAfterMs: config.TBANK_RECONCILIATION_INTERVAL_MS,
+        orderNumber: number,
+      },
     );
   }
 
   const providerSuccess =
     providerResponse.Success === true || providerResponse.Success === "true";
-  const paymentUrl = text(providerResponse.PaymentURL, 2000);
+  const paymentUrl = validTbankPaymentUrl(providerResponse.PaymentURL);
   const paymentId = text(providerResponse.PaymentId, 120);
-  const providerStatus = text(providerResponse.Status, 80) || "INIT_ERROR";
+  const providerStatus = text(providerResponse.Status, 80).toUpperCase() || "INIT_ERROR";
   const errorCode = text(providerResponse.ErrorCode, 80);
   const errorText = text(providerResponse.Message ?? providerResponse.Details, 500);
-
-  await db.query(
-    `
-      update public.merch_payment_attempts
-      set external_payment_id = $2,
-          provider_status = $3,
-          payment_url = $4,
-          error_code = $5,
-          error_message = $6,
-          request_payload = $7::jsonb,
-          response_payload = $8::jsonb
-      where id = $1
-    `,
-    [
-      attemptId,
-      paymentId || null,
-      providerStatus,
-      paymentUrl || null,
-      errorCode || null,
-      errorText || null,
-      JSON.stringify(sanitizedTbankPayload(initPayload)),
-      JSON.stringify(sanitizedTbankPayload(providerResponse)),
-    ],
+  const responseMatchesBoundary = tbankInitResponseMatchesBoundary(
+    providerResponse,
+    { terminalKey: tbank.terminalKey, orderNumber: number, amount: total },
+  );
+  const responseAllowsPersistence = tbankInitResponseAllowsPersistence(
+    providerHttpOk,
+    providerResponse,
+    { terminalKey: tbank.terminalKey, orderNumber: number, amount: total },
   );
 
-  if (!providerSuccess || !paymentUrl || !paymentId) {
-    await db.query(
-      `update public.merch_customer_orders set status = 'payment_failed' where id = $1::uuid`,
-      [orderId],
-    );
-    await releasePromoRedemption(db, orderId);
+  if (!responseAllowsPersistence) {
+    const ambiguousCode = !providerHttpOk
+      ? `tbank_init_http_${providerHttpStatus || "unknown"}`
+      : providerStatus !== "NEW"
+      ? "tbank_init_status_mismatch"
+      : !responseMatchesBoundary
+        ? "tbank_init_boundary_mismatch"
+      : errorCode || "tbank_init_unconfirmed";
+    const ambiguousMessage = !providerHttpOk
+      ? `T-Bank Init returned HTTP ${providerHttpStatus || "unknown"}`
+      : providerStatus !== "NEW"
+      ? "T-Bank Init response did not confirm the documented NEW status"
+      : !responseMatchesBoundary
+        ? "T-Bank Init response did not match terminal, order or amount"
+      : errorText || "T-Bank did not return a complete successful Init response";
+    await markTbankInitUnknown(db, {
+      orderId,
+      attemptId,
+      errorCode: ambiguousCode,
+      errorMessage: ambiguousMessage,
+      retryAtMs: config.TBANK_RECONCILIATION_INTERVAL_MS,
+      requestPayload: initPayload,
+      responsePayload: providerHttpOk
+        ? providerResponse
+        : {
+            ...providerResponse,
+            PaymentURL: null,
+            HttpStatus: providerHttpStatus || null,
+          },
+    });
     throw new HttpError(
-      502,
-      errorCode || "tbank_init_failed",
-      errorText || "Т‑Банк не создал платёж",
-      { retryAllowed: true },
+      503,
+      "payment_reconciliation_pending",
+      "Банк не подтвердил результат создания платежа. Проверяем статус; новый заказ создавать не нужно.",
+      {
+        retryAllowed: false,
+        retryMode: "same_request",
+        retryAfterMs: config.TBANK_RECONCILIATION_INTERVAL_MS,
+        orderNumber: number,
+        providerErrorCode: ambiguousCode,
+      },
     );
   }
 
-  await db.query(
-    `update public.merch_customer_orders set status = 'pending_payment' where id = $1::uuid`,
-    [orderId],
+  let persistenceResult: Awaited<ReturnType<typeof persistTbankInitSuccess>>;
+  try {
+    persistenceResult = await persistTbankInitSuccess(db, {
+      orderId,
+      attemptId,
+      paymentId,
+      paymentUrl,
+      providerStatus,
+      errorCode: errorCode || null,
+      errorMessage: errorText || null,
+      requestPayload: initPayload,
+      responsePayload: providerResponse,
+    });
+  } catch (error) {
+    const diagnostic = errorDiagnostic(error);
+    request.log.error(
+      { err: error, orderId, orderNumber: number, paymentAttemptId: attemptId },
+      "T-Bank Init succeeded but its response could not be persisted atomically",
+    );
+    await markTbankInitUnknown(db, {
+      orderId,
+      attemptId,
+      errorCode: diagnostic.code || "init_persistence_failed",
+      errorMessage: diagnostic.message,
+      retryAtMs: config.TBANK_RECONCILIATION_INTERVAL_MS,
+      requestPayload: initPayload,
+      responsePayload: providerResponse,
+    }).catch(() => undefined);
+    throw new HttpError(
+      503,
+      "payment_reconciliation_pending",
+      "Платёж создан, но подтверждение сохраняется. Новый заказ создавать не нужно.",
+      {
+        retryAllowed: false,
+        retryMode: "same_request",
+        retryAfterMs: config.TBANK_RECONCILIATION_INTERVAL_MS,
+        orderNumber: number,
+      },
+    );
+  }
+
+  if (persistenceResult.kind === "conflict") {
+    request.log.error(
+      {
+        orderId,
+        orderNumber: number,
+        paymentAttemptId: attemptId,
+        storedPaymentId: persistenceResult.storedPaymentId,
+        receivedPaymentId: persistenceResult.receivedPaymentId,
+      },
+      "T-Bank Init PaymentId conflicts with an earlier webhook",
+    );
+  }
+
+  assertTbankInitPersistenceAllowsRedirect(
+    persistenceResult,
+    number,
+    config.TBANK_RECONCILIATION_INTERVAL_MS,
   );
 
   return { orderNumber: number, accessToken, paymentId, paymentUrl, amount: total };
@@ -928,41 +1246,6 @@ export async function handleTbankPaymentStatus(
   };
 }
 
-function orderStatus(providerStatus: string): string | null {
-  switch (providerStatus) {
-    case "CONFIRMED":
-      return "paid";
-    case "AUTHORIZED":
-      return "authorized";
-    case "REFUNDED":
-      return "refunded";
-    case "PARTIAL_REFUNDED":
-      return "partially_refunded";
-    case "REJECTED":
-    case "CANCELED":
-    case "REVERSED":
-    case "DEADLINE_EXPIRED":
-      return "payment_failed";
-    default:
-      return null;
-  }
-}
-
-function canApplyStatus(currentStatus: string, nextStatus: string): boolean {
-  switch (currentStatus) {
-    case "paid":
-      return ["paid", "partially_refunded", "refunded"].includes(nextStatus);
-    case "partially_refunded":
-      return ["partially_refunded", "refunded"].includes(nextStatus);
-    case "refunded":
-      return nextStatus === "refunded";
-    case "payment_review":
-      return ["paid", "partially_refunded", "refunded"].includes(nextStatus);
-    default:
-      return true;
-  }
-}
-
 export async function handleTbankWebhook(
   request: FastifyRequest,
   reply: FastifyReply,
@@ -973,8 +1256,12 @@ export async function handleTbankWebhook(
   const token = text(body.Token, 128);
   const paymentId = text(body.PaymentId, 120);
   const number = text(body.OrderId, 36);
-  const providerStatus = text(body.Status, 80);
-  const amount = Number.isInteger(Number(body.Amount)) ? Number(body.Amount) : null;
+  const providerStatus = text(body.Status, 80).toUpperCase();
+  const parsedAmount = Number(body.Amount);
+  const amount =
+    Number.isSafeInteger(parsedAmount) && parsedAmount > 0
+      ? parsedAmount
+      : null;
   const tbank = tbankRuntimeConfig(config);
 
   if (text(body.TerminalKey, 80) !== tbank.terminalKey || !token) {
@@ -987,54 +1274,18 @@ export async function handleTbankWebhook(
     return reply.status(403).send("Invalid token");
   }
 
-  const attemptResult = await db.query<{
-    id: number;
-    order_id: string;
-    amount: number;
-  }>(
-    `
-      select id, order_id, amount
-      from public.merch_payment_attempts
-      where external_payment_id = $1
-      limit 1
-    `,
-    [paymentId || "__no_payment_id__"],
-  );
-  const attempt = attemptResult.rows[0] ?? null;
-
-  const orderResult = attempt?.order_id
-    ? await db.query<{
-        id: string;
-        order_number: string;
-        total_amount: number;
-        status: string;
-        paid_at: string | null;
-      }>(
-        `
-          select id, order_number, total_amount, status, paid_at
-          from public.merch_customer_orders
-          where id = $1::uuid
-          limit 1
-        `,
-        [attempt.order_id],
-      )
-    : await db.query<{
-        id: string;
-        order_number: string;
-        total_amount: number;
-        status: string;
-        paid_at: string | null;
-      }>(
-        `
-          select id, order_number, total_amount, status, paid_at
-          from public.merch_customer_orders
-          where order_number = $1
-          limit 1
-        `,
-        [number],
-      );
-  const order = orderResult.rows[0];
-  if (!order) return reply.status(404).send("Order not found");
+  if (!paymentId || !number || !providerStatus || amount === null) {
+    request.log.warn(
+      {
+        hasPaymentId: Boolean(paymentId),
+        hasOrderId: Boolean(number),
+        hasStatus: Boolean(providerStatus),
+        validAmount: amount !== null,
+      },
+      "T-Bank webhook required fields are invalid",
+    );
+    return reply.status(400).send("Invalid payload");
+  }
 
   const canonicalPayload = sanitizedTbankPayload(body);
   const sortedPayload = Object.fromEntries(
@@ -1044,180 +1295,202 @@ export async function handleTbankWebhook(
   );
   const eventHash = sha256Hex(JSON.stringify(sortedPayload));
 
-  await db.query(
-    `
-      insert into public.merch_payment_events (
-        payment_attempt_id,
-        order_id,
-        external_payment_id,
-        provider_status,
-        event_hash,
-        signature_valid,
+  let outcome: Awaited<ReturnType<typeof processTbankWebhookEvent>>;
+  try {
+    outcome = await processTbankWebhookEvent(
+      db,
+      {
+        terminalKey: tbank.terminalKey,
+        paymentId,
+        orderNumber: number,
+        providerStatus,
         amount,
-        payload
-      )
-      values ($1, $2::uuid, $3, $4, $5, true, $6, $7::jsonb)
-      on conflict (event_hash) do nothing
-    `,
-    [
-      attempt?.id ?? null,
-      order.id,
-      paymentId || null,
-      providerStatus || null,
-      eventHash,
-      amount,
-      JSON.stringify(canonicalPayload),
-    ],
-  );
-
-  if (attempt?.id) {
-    await db.query(
-      `
-        update public.merch_payment_attempts
-        set provider_status = $2,
-            confirmed_at = case when $2 = 'CONFIRMED' then coalesce(confirmed_at, now()) else confirmed_at end
-        where id = $1
-      `,
-      [attempt.id, providerStatus || "UNKNOWN"],
+        eventHash,
+        payload: canonicalPayload,
+      },
+      {
+        onTransition: async (client, transition) => {
+          const effectPayload = {
+            payment_event_id: transition.eventId,
+            payment_event_hash: transition.eventHash,
+            provider_status: transition.providerStatus,
+          };
+          if (transition.becamePaid && config.CDEK_CREATE_SHIPMENTS) {
+            await enqueueCdekEffect(
+              client,
+              "cdek_create",
+              transition.orderId,
+              effectPayload,
+            );
+          }
+          const stateActuallyChanged =
+            transition.providerStatusApplied ||
+            transition.previousOrderStatus !== transition.resultingOrderStatus ||
+            transition.paymentStateConflict;
+          let reviewCancellationReason:
+            | "payment_state_conflict"
+            | "payment_identity_conflict"
+            | "amount_mismatch"
+            | "partial_reversed"
+            | null = null;
+          const enteredPaymentReview =
+            transition.resultingOrderStatus === "payment_review" &&
+            transition.previousOrderStatus !== transition.resultingOrderStatus;
+          if (
+            transition.resultingOrderStatus === "payment_review" &&
+            (transition.paymentIdentityMismatch || transition.terminalMismatch) &&
+            (transition.paymentStateConflict ||
+              (enteredPaymentReview &&
+                ["paid", "partially_refunded", "refunded"].includes(
+                  transition.previousOrderStatus,
+                )))
+          ) {
+            reviewCancellationReason = "payment_identity_conflict";
+          } else if (
+            transition.resultingOrderStatus === "payment_review" &&
+            transition.paymentStateConflict
+          ) {
+            reviewCancellationReason = "payment_state_conflict";
+          } else if (
+            enteredPaymentReview &&
+            transition.amountMismatch &&
+            ["paid", "partially_refunded"].includes(
+              transition.previousOrderStatus,
+            )
+          ) {
+            reviewCancellationReason = "amount_mismatch";
+          } else if (
+            enteredPaymentReview &&
+            transition.providerStatus === "PARTIAL_REVERSED"
+          ) {
+            reviewCancellationReason = "partial_reversed";
+          }
+          const shouldCancelCdek =
+            stateActuallyChanged &&
+            ((transition.providerStatus === "REFUNDED" &&
+              transition.resultingOrderStatus === "refunded") ||
+              (transition.providerStatus === "REVERSED" &&
+                transition.resultingOrderStatus === "payment_failed") ||
+              reviewCancellationReason !== null);
+          if (shouldCancelCdek) {
+            await enqueueCdekEffect(
+              client,
+              "cdek_cancel",
+              transition.orderId,
+              reviewCancellationReason
+                ? { ...effectPayload, reason: reviewCancellationReason }
+                : effectPayload,
+            );
+          }
+        },
+      },
     );
+  } catch (error) {
+    if (error instanceof TbankWebhookOrderNotFoundError) {
+      return reply.status(404).send("Order not found");
+    }
+    if (error instanceof TbankWebhookOrderMismatchError) {
+      request.log.error(
+        { paymentId, orderNumber: number, providerStatus },
+        "T-Bank webhook identifiers do not match a local payment attempt",
+      );
+      return reply.status(409).send("Payment does not match order");
+    }
+    throw error;
   }
 
-  const nextStatus = orderStatus(providerStatus);
+  const transition = outcome.transition;
   request.log.info(
     {
       paymentId,
-      orderId: order.id,
-      orderNumber: order.order_number,
+      orderId: transition.orderId,
+      orderNumber: transition.orderNumber,
       providerStatus,
-      nextStatus,
-      currentOrderStatus: order.status,
+      resultingOrderStatus: transition.resultingOrderStatus,
+      previousOrderStatus: transition.previousOrderStatus,
+      duplicate: outcome.duplicate,
+      providerStatusApplied: outcome.providerStatusApplied,
+      orderStatusChanged: outcome.orderStatusChanged,
       amount,
-      expectedAmount: order.total_amount,
+      expectedAmount: transition.expectedAmount,
       cdekCreateShipments: config.CDEK_CREATE_SHIPMENTS,
       cdekMock: config.CDEK_MOCK,
     },
-    "T-Bank webhook payment status resolved",
+    "T-Bank webhook processed transactionally",
   );
-  if (nextStatus) {
-    if (
-      providerStatus === "CONFIRMED" &&
-      (amount === null || amount !== order.total_amount)
-    ) {
-      request.log.warn(
-        {
-          paymentId,
-          orderId: order.id,
-          orderNumber: order.order_number,
-          providerStatus,
-          amount,
-          expectedAmount: order.total_amount,
-          currentOrderStatus: order.status,
-        },
-        "T-Bank webhook amount mismatch; payment moved to review",
-      );
-      if (!["paid", "partially_refunded", "refunded"].includes(order.status)) {
-        await db.query(
-          `
-            update public.merch_customer_orders
-            set status = 'payment_review',
-                metadata = metadata || $2::jsonb
-            where id = $1::uuid
-          `,
-          [
-            order.id,
-            JSON.stringify({
-              payment_review_reason: "amount_mismatch",
-              expected_amount: order.total_amount,
-              received_amount: amount,
-            }),
-          ],
-        );
-      }
-    } else if (canApplyStatus(order.status, nextStatus)) {
-      request.log.info(
-        {
-          paymentId,
-          orderId: order.id,
-          orderNumber: order.order_number,
-          currentOrderStatus: order.status,
-          nextStatus,
-        },
-        "T-Bank webhook applying order status",
-      );
-      await db.query(
-        `
-          update public.merch_customer_orders
-          set status = $2,
-              paid_at = case when $2 = 'paid' then coalesce(paid_at, now()) else paid_at end
-          where id = $1::uuid
-        `,
-        [order.id, nextStatus],
-      );
 
-      if (nextStatus === "paid") {
-        await markPromoRedemptionRedeemed(db, order.id);
-        if (!config.CDEK_CREATE_SHIPMENTS) {
-          request.log.warn(
-            {
-              orderId: order.id,
-              orderNumber: order.order_number,
-              paymentId,
-              providerStatus,
-              reason: "cdek_create_shipments_disabled",
-              cdekCreateShipments: config.CDEK_CREATE_SHIPMENTS,
-              cdekMock: config.CDEK_MOCK,
-            },
-            "CDEK shipment creation skipped after paid webhook",
-          );
-        } else {
-          try {
-            request.log.info(
-              {
-                orderId: order.id,
-                orderNumber: order.order_number,
-                paymentId,
-                providerStatus,
-              },
-              "CDEK shipment creation requested after paid webhook",
-            );
-            const shipment = await createCdekShipmentForOrder({ config, db, logger: request.log }, {
-              orderId: order.id,
-            });
-            request.log.info(
-              {
-                orderId: order.id,
-                orderNumber: order.order_number,
-                cdekShipmentId: shipment?.id ?? null,
-                cdekShipmentStatus: shipment?.status ?? null,
-                cdekNumber: shipment?.cdek_number ?? null,
-              },
-              "CDEK shipment creation finished",
-            );
-          } catch (error) {
-            request.log.error(
-              { err: error, orderId: order.id, orderNumber: order.order_number },
-              "CDEK shipment creation failed",
-            );
-          }
-        }
-      } else if (nextStatus === "payment_failed") {
-        await releasePromoRedemption(db, order.id);
-      } else if (nextStatus === "refunded") {
-        await releasePromoRedemption(db, order.id, "canceled");
-      }
-    } else {
-      request.log.info(
-        {
-          paymentId,
-          orderId: order.id,
-          orderNumber: order.order_number,
-          currentOrderStatus: order.status,
-          nextStatus,
-          reason: "status_transition_not_allowed",
-        },
-        "T-Bank webhook order status transition skipped",
-      );
-    }
+  if (transition.amountMismatch) {
+    const movedToReview =
+      transition.resultingOrderStatus === "payment_review" &&
+      transition.previousOrderStatus !== transition.resultingOrderStatus;
+    request.log.warn(
+      {
+        paymentId,
+        orderId: transition.orderId,
+        orderNumber: transition.orderNumber,
+        providerStatus,
+        amount,
+        expectedAmount: transition.expectedAmount,
+        previousOrderStatus: transition.previousOrderStatus,
+        resultingOrderStatus: transition.resultingOrderStatus,
+      },
+      movedToReview
+        ? "T-Bank webhook amount mismatch; payment moved to review"
+        : "T-Bank webhook amount mismatch audited; terminal order state preserved",
+    );
+  }
+
+  if (transition.terminalMismatch) {
+    request.log.warn(
+      {
+        paymentId,
+        orderId: transition.orderId,
+        orderNumber: transition.orderNumber,
+        providerStatus,
+        previousOrderStatus: transition.previousOrderStatus,
+        resultingOrderStatus: transition.resultingOrderStatus,
+      },
+      "T-Bank webhook terminal boundary mismatch; payment kept unbound for review",
+    );
+  }
+
+  if (transition.paymentIdentityMismatch) {
+    request.log.warn(
+      {
+        paymentId,
+        orderId: transition.orderId,
+        orderNumber: transition.orderNumber,
+        providerStatus,
+        previousOrderStatus: transition.previousOrderStatus,
+        resultingOrderStatus: transition.resultingOrderStatus,
+      },
+      "T-Bank webhook PaymentId boundary mismatch; payment quarantined for review",
+    );
+  }
+
+  if (transition.becamePaid && !config.CDEK_CREATE_SHIPMENTS) {
+    request.log.warn(
+      {
+        orderId: transition.orderId,
+        orderNumber: transition.orderNumber,
+        paymentId,
+        providerStatus,
+        reason: "cdek_create_shipments_disabled",
+        cdekCreateShipments: config.CDEK_CREATE_SHIPMENTS,
+        cdekMock: config.CDEK_MOCK,
+      },
+      "CDEK shipment creation skipped after paid webhook",
+    );
+  } else if (transition.becamePaid) {
+    request.log.info(
+      {
+        orderId: transition.orderId,
+        orderNumber: transition.orderNumber,
+        paymentId,
+        providerStatus,
+      },
+      "CDEK shipment creation queued after paid webhook",
+    );
   }
 
   return reply.type("text/plain; charset=utf-8").send("OK");
