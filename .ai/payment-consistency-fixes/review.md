@@ -66,4 +66,7 @@ backend role `komui_app` без `BYPASSRLS`, отсутствие Supabase `serv
   durable effect независимо от доступности CDEK.
 
 Commit, migration apply, staging/production deploy и внешние provider mutations
-не выполнялись.
+не выполнялись в рамках этой implementation-задачи. Позднее commit `ac2567b`
+и migration были безопасно развёрнуты только на staging; evidence находится в
+`.ai/staging-payment-consistency-deploy/`. Production и внешние provider
+сущности не изменялись.

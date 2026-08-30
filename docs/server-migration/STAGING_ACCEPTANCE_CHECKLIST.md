@@ -2,6 +2,12 @@
 
 Дата актуализации: 30 июня 2026 года.
 
+> Это исторический checklist июньского pre-cutover staging. Утверждение ниже,
+> что production ещё не переключён, описывает состояние на 30 июня до DNS/TLS
+> cutover и не является текущим статусом. На 30 августа production уже
+> обслуживается self-hosted сервером; актуальный payment-consistency rollout
+> описан в `07-staging-and-verification.md`.
+
 URL:
 
 ```text
@@ -11,7 +17,7 @@ https://stage.komui.ru
 Логин/пароль staging хранятся на сервере в root-only файле и не записываются в
 Git. Если нужно показать их владельцу, передать отдельно безопасным каналом.
 
-## Важно
+## Исторические условия проверки
 
 - Production `komui.ru` не переключён.
 - Staging закрыт Basic Auth и `noindex`.

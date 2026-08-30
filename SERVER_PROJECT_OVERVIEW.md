@@ -8,8 +8,8 @@
 агентов. Все существенные изменения серверной реализации нужно описывать в
 основном документе выше.
 
-Последнее крупное обновление: 30 августа 2026 — локально подготовлено усиление
-согласованности оплаты и доставки по первым трём пунктам P1-аудита. T-Bank
+Последнее крупное обновление: 30 августа 2026 — усиление согласованности оплаты
+и доставки по первым трём пунктам P1-аудита развёрнуто на staging. T-Bank
 webhook теперь обрабатывается одной транзакцией с монотонной state machine и
 durable CDEK outbox; неоднозначный `/Init` блокирует повторный заказ до
 `CheckOrder`/`GetState` reconciliation. Перед provider `Cancel` backend
@@ -23,15 +23,27 @@ CDEK create `POST` запрещён, `accepted` сверяется до коне
 forward-only migration
 `20260830143000_harden_payment_consistency.sql`, фоновые workers, operator
 visibility и regression tests. Migration условно поддерживает managed
-Supabase roles и self-hosted backend role `komui_app` при включённом RLS. Это
-изменение пока не развёрнуто на сервере: migration должна применяться до
-запуска новой версии backend. CDEK fulfillment разрешён для актуальных статусов
+Supabase roles и self-hosted backend role `komui_app` при включённом RLS.
+Staging backend/frontend работает из release
+`20260830T175312Z-stage-ac2567bb42ae` (commit `ac2567b`), а migration применена
+только к `komui_staging`. Перед migration закрывались POST/webhook ingress и
+старый backend; post-drain encrypted backup
+`komui-backup-20260830T180555Z.tar.gz.gpg` проверен локально и загружен во
+внешнее хранилище. Две исторические отмены реальных CDEK-отправлений оставлены
+в `needs_review`, поэтому provider calls при rollout не выполнялись. CDEK
+fulfillment разрешён для актуальных статусов
 `paid` и `partially_refunded`; `authorized` и `payment_review` его не запускают.
 Выкладка требует maintenance/drain старого backend и payment ingress: после
 начала migration старую версию нельзя возвращать к приёму payment writes,
 ошибка устраняется forward-fix/data reconciliation либо восстановлением
-согласованного backup до открытия ingress. Подробности и порядок выкладки — в
-основном документе ниже.
+согласованного backup до старта workers. Штатный Git/Telegram deploy защищён
+fail-closed source/schema gate: legacy code не запускается на migrated staging,
+а новый payment-consistency code не запускается на legacy production schema.
+Guard commit `b2c7337` установлен и проверен четырьмя server-side
+non-activation probes; staging/production runtime при проверке не изменились.
+Production release
+`20260827T150442Z-prod-5a36b6c11d66`, process и schema не изменялись; production
+ещё не содержит эту migration. Подробности — в основном документе ниже.
 
 Предыдущее крупное обновление: 21 августа 2026 — добавлена self-hosted система
 отзывов Ozon: нормализованные таблицы PostgreSQL, идемпотентный CSV/media

@@ -66,10 +66,10 @@ Ozon dual-write в legacy Supabase остаётся выключенным; impo
 
 ### 1.1. Последние существенные обновления
 
-#### 30 августа 2026 — payment/CDEK consistency hardening (локально, без deploy)
+#### 30 августа 2026 — payment/CDEK consistency hardening на staging
 
-По первым трём пунктам P1-аудита подготовлен backend candidate. На сервер он
-ещё не выкладывался, production/staging БД и процессы этой работой не менялись.
+По первым трём пунктам P1-аудита backend/frontend candidate развёрнут на
+staging. Production backend, frontend, БД и process не изменялись.
 
 Основные инварианты новой реализации:
 
@@ -150,9 +150,11 @@ RLS/grants в migration условны по наличию ролей: в manage
 `SELECT`/`INSERT`/`UPDATE` и доступом к identity sequence. Отсутствующие
 `anon`/`authenticated`/`service_role` не делают migration неисполняемой.
 
-Admin order detail показывает безопасную сводку `orderEffects` без внутреннего
-payload. `komui-order-monitor` формирует отдельный Telegram alert при переходе
-эффекта в `needs_review`, поэтому исчерпанные retries не остаются незаметными.
+Admin order detail на staging показывает безопасную сводку `orderEffects` без
+внутреннего payload. Candidate `komui-order-monitor` умеет формировать отдельный
+Telegram alert при переходе эффекта в `needs_review`, но глобальный production
+timer пока использует legacy binary; новая версия устанавливается только после
+production migration.
 
 Новые необязательные env-настройки имеют безопасные defaults:
 
@@ -166,22 +168,32 @@ TBANK_RECONCILIATION_LEASE_MS=60000
 TBANK_RECONCILIATION_MAX_ATTEMPTS=20
 ```
 
-Обязательный порядок выкладки сначала в staging, затем тем же revision в
+Проверенный порядок выкладки сначала в staging, затем тем же revision в
 production:
 
-1. Сделать backup целевой БД (`komui_staging`, затем `komui_production`) и
-   проверить текущий health соответствующего backend.
-2. Применить migration `20260830143000_harden_payment_consistency.sql` к
-   целевой БД.
+1. Подготовить immutable release без активации и проверить его на временной
+   полной копии целевой БД.
+2. Закрыть payment/webhook ingress, остановить старый backend, повторить семь
+   SQL counters и снять согласованный post-drain backup.
+3. Применить migration `20260830143000_harden_payment_consistency.sql` к
+   целевой БД одной транзакцией.
    Проверить, что у `komui_app` созданы grants и разрешающая RLS policy.
-3. Установить обновлённый `ops/server/komui-order-monitor` в
-   `/usr/local/sbin/komui-order-monitor` и выполнить его `--dry-run`.
-4. Развернуть backend и frontend одного revision.
-5. Проверить `/health/ready`, backend logs и отсутствие растущих
+4. До старта workers сверить historical CDEK backfill и T-Bank reconciliation
+   candidates; любые реальные provider effects должны быть явно согласованы
+   либо помещены в operator review.
+5. Развернуть backend без auto-rollback старой версии, затем frontend одного
+   revision.
+6. Проверить `/health/ready`, backend logs и отсутствие растущих
    `INIT_REVIEW`/`needs_review`.
-6. Выполнить demo-платёж, duplicate webhook replay и refund/CDEK cancel smoke.
+7. Выполнить demo-платёж, duplicate webhook replay и refund/CDEK cancel smoke.
    Для CDEK отдельно подтвердить, что `accepted` продолжает сверяться, а
    повторная обработка неоднозначного create не отправляет второй `POST`.
+
+Обновлённый `ops/server/komui-order-monitor` нельзя глобально устанавливать на
+staging-шаге: systemd unit читает `komui_production`, где migration ещё нет.
+Во время staging rollout candidate был однократно запущен из подготовленного
+source tree с `--database komui_staging --bootstrap --dry-run` и временными
+state/lock paths; постоянного нового staging monitor пока нет.
 
 После начала migration старый backend нельзя возвращать к приёму payment writes:
 он не соблюдает новые transaction/outbox-инварианты, даже если schema additions
@@ -190,6 +202,55 @@ production:
 maintenance сохраняется; допустимы forward-fix/data reconciliation либо
 восстановление согласованного backup до повторного открытия ingress. Точный
 порядок и blocking preflight приведены в `CUTOVER_RUNBOOK.md`.
+
+Фактический staging rollout:
+
+```text
+branch: codex/payment-consistency-hardening
+commit: ac2567bb42aefcc0f75d9bb31fa915fd373954f6
+backend/frontend release: 20260830T175312Z-stage-ac2567bb42ae
+post-drain backup: komui-backup-20260830T180555Z.tar.gz.gpg
+```
+
+Результат:
+
+- server-side tests 228/228 и TypeScript build прошли;
+- migration rehearsal на временной полной БД прошёл, временная БД удалена;
+- семь counters перед migration: `0|0|0|0|0|0|0`;
+- schema, validated constraints, RLS/grants и indexes подтверждены;
+- две historical CDEK cancellation строки безопасно переведены в
+  `needs_review` до старта worker; provider calls не выполнялись;
+- non-terminal effects, T-Bank reconciliation candidates, `INIT_REVIEW` и
+  `payment_review`: 0;
+- root/checkout/payment-result/products/readiness: HTTP 200, Basic Auth и
+  `noindex` сохранены;
+- global healthcheck: `SUMMARY OK`, failed units: 0;
+- production остаётся на release `20260827T150442Z-prod-5a36b6c11d66` и не
+  содержит новую schema.
+
+Полный payment/refund/real-CDEK E2E оставлен отдельным явно разрешаемым шагом,
+потому что staging использует `CDEK_MOCK=false`.
+
+После independent review штатный `komui-deploy-from-git` дополнен fail-closed
+source/schema compatibility gate до build и activation. Он блокирует
+`origin/main` с legacy payment code на migrated staging DB и блокирует новый
+payment-consistency code на legacy production DB. Режим
+`--check-compatibility-only` проверяет branch/DB без restart или переключения
+symlink. Gate не выполняет migration и не заменяет controlled maintenance
+rollout.
+
+На сервер установлен guard commit `b2c7337`; exact file hash совпал с Git.
+Четыре check-only probe подтвердили обе разрешённые и обе запрещённые
+комбинации. Staging/production symlinks, PID, release counts и DB row counters
+до/после совпали. Registry содержит successful ops event
+`deploy-guard-b2c7337`; notification намеренно отключена из-за предыдущих
+transport timeout.
+
+Post-drain backup имеет размер `52 584 372 bytes`; checksum и external upload
+проверены. Restore drill именно этого архива не выполнялся: rehearsal migration
+на полной временной копии staging DB была отдельной проверкой. Это остаётся
+production gate вместе с provider E2E и решением по двум quarantined
+`cdek_cancel/needs_review`.
 
 #### 7 июля 2026 — product media migration foundation
 
@@ -564,15 +625,17 @@ Static frontend              Fastify backend
 
 Сервер:
 
+Ресурсный снимок после rollout 30 августа 2026 года:
+
 ```text
 IP: 89.111.152.112
 Hostname: cv6065797.novalocal
 OS: Ubuntu 24.04.4 LTS
 Virtualization: KVM / OpenStack Nova
 Architecture: x86-64
-Disk: 20G, сейчас около 12G used / 7.1G available
-RAM: около 3.8Gi total, около 3.0Gi available
-Swap: 2.0Gi, сейчас 0B used
+Disk: 20G, 14G used / 5.6G available (71%)
+RAM: 3.8Gi total, около 2.4Gi available
+Swap: 2.0Gi total, около 102Mi used
 ```
 
 Основные сервисы:
@@ -581,8 +644,11 @@ Swap: 2.0Gi, сейчас 0B used
 postgresql                 active
 nginx                      active
 komui-backend              active
+komui-production-backend   active
 komui-backup.timer         active
 komui-healthcheck.timer    active
+komui-order-monitor.timer  active
+komui-deploy-bot           active
 komui-traffic-switch.path  active
 ```
 
@@ -599,26 +665,28 @@ komui-traffic-switch.path  active
 Активный backend release на момент проверки:
 
 ```text
-/opt/komui/releases/20260628-yandex-maps-config
+/opt/komui/current -> /opt/komui/releases/20260830T175312Z-stage-ac2567bb42ae
+/opt/komui/production-current -> /opt/komui/releases/20260827T150442Z-prod-5a36b6c11d66
 ```
 
-Backend запускается из:
+Backend запускается из разных active symlink:
 
 ```text
-/opt/komui/current/backend/dist/server.js
+staging:    /opt/komui/current/backend/dist/server.js
+production: /opt/komui/production-current/backend/dist/server.js
 ```
 
 ### Frontend releases
 
 ```text
 /opt/komui/frontend-releases/
-/var/lib/komui/staging-root -> /opt/komui/frontend-releases/20260627114138-stage6-frontend
+/var/lib/komui/staging-root -> /opt/komui/frontend-releases/20260830T175312Z-stage-ac2567bb42ae
 /opt/komui/production-frontend-releases/
-/var/lib/komui/production-root -> /opt/komui/production-frontend-releases/20260630T160446Z-production-candidate
+/var/lib/komui/production-root -> /opt/komui/production-frontend-releases/20260827T150442Z-prod-5a36b6c11d66
 ```
 
 `/var/lib/komui/staging-root` — static root для Nginx staging.
-`/var/lib/komui/production-root` — static root для production candidate.
+`/var/lib/komui/production-root` — static root для production.
 
 ### Runtime state
 
@@ -826,14 +894,18 @@ env: /etc/komui/backend-production.env
 database: komui_production
 ```
 
-Runs as:
+Оба unit работают как `User=komui`, `Group=komui`, но используют разные paths:
 
 ```text
-User=komui
-Group=komui
-WorkingDirectory=/opt/komui/current/backend
-EnvironmentFile=/etc/komui/backend.env
-ExecStart=/usr/bin/node /opt/komui/current/backend/dist/server.js
+staging:
+  WorkingDirectory=/opt/komui/current/backend
+  EnvironmentFile=/etc/komui/backend.env
+  ExecStart=/usr/bin/node /opt/komui/current/backend/dist/server.js
+
+production:
+  WorkingDirectory=/opt/komui/production-current/backend
+  EnvironmentFile=/etc/komui/backend-production.env
+  ExecStart=/usr/bin/node /opt/komui/production-current/backend/dist/server.js
 ```
 
 Important hardening:
@@ -846,8 +918,8 @@ ProtectSystem=strict
 ProtectHome=true
 RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
 ReadWritePaths=/var/lib/komui /var/log/komui
-MemoryHigh=900M
-MemoryMax=1200M
+staging: MemoryHigh=900M, MemoryMax=1200M
+production: MemoryHigh=700M, MemoryMax=1000M
 ```
 
 Logs:
@@ -855,6 +927,8 @@ Logs:
 ```text
 /var/log/komui/backend.log
 /var/log/komui/backend-error.log
+/var/log/komui/backend-production.log
+/var/log/komui/backend-production-error.log
 ```
 
 Common commands:
@@ -882,7 +956,11 @@ server/src/importOzonReviews.ts  idempotent Ozon Seller CSV/media importer
 server/src/checkout.ts       order/cart validation and repository
 server/src/stage5.ts         CDEK, promo, T-Bank handlers, compatibility route
 server/src/cdek.ts           CDEK client and package calculations
+server/src/cdekEffects.ts    durable CDEK effect queue/worker/reconciliation
 server/src/cdekShipments.ts  CDEK shipment DB workflow and admin retry endpoint
+server/src/tbankWebhook.ts   transactional webhook state machine
+server/src/tbankReconciliation.ts ambiguous Init reconciliation worker
+server/src/tbankPaymentIdentity.ts provider/local payment identity checks
 server/src/promo.ts          promo code logic
 server/src/crypto.ts         T-Bank token/signature helpers
 server/src/ozonImport.ts     Ozon preview/import/job status
@@ -900,7 +978,7 @@ server/test/*.test.ts
 Current test count:
 
 ```text
-60 tests passing
+228/228 tests passing for release ac2567b
 ```
 
 ## 9. Backend API routes
@@ -1324,7 +1402,7 @@ merch_admin_jobs_idempotency_key_idx
 Static frontend is deployed to:
 
 ```text
-/opt/komui/frontend-releases/20260627114138-stage6-frontend
+/opt/komui/frontend-releases/20260830T175312Z-stage-ac2567bb42ae
 ```
 
 and exposed through:
@@ -1410,6 +1488,7 @@ Daily examples:
 /var/backups/komui/daily/komui-backup-20260627T120725Z.tar.gz.gpg
 /var/backups/komui/daily/komui-backup-20260627T143747Z.tar.gz.gpg
 /var/backups/komui/daily/komui-backup-20260630T145422Z.tar.gz.gpg
+/var/backups/komui/daily/komui-backup-20260830T180555Z.tar.gz.gpg
 ```
 
 Backup includes:
@@ -1443,12 +1522,15 @@ Credentials:
 /etc/komui/yandex-backup.env
 ```
 
-Latest verified backup/restore:
+Latest verified backup and latest restore drill:
 
 ```text
-archive: /var/backups/komui/daily/komui-backup-20260630T145422Z.tar.gz.gpg
-external: s3://komui-backups/komui/stage/komui-backup-20260630T145422Z.tar.gz.gpg
-restore drill: OK, 2026-06-30, 31 public tables, temp backend HTTP 200
+latest archive: /var/backups/komui/daily/komui-backup-20260830T180555Z.tar.gz.gpg
+latest archive size: 52,584,372 bytes
+latest archive checksum: OK
+latest archive external upload: OK
+latest archive restore drill: NOT RUN
+latest completed restore drill: OK, 2026-06-30, 31 public tables, temp backend HTTP 200
 production snapshot archive: /var/backups/komui/daily/komui-backup-20260630T164013Z.tar.gz.gpg
 production snapshot restore drill: OK, 2026-06-30, 31 public tables
 ```
@@ -1530,7 +1612,11 @@ Telegram access from the server uses Xray proxy:
 socks5h://127.0.0.1:10808
 ```
 
-Telegram alerting was tested successfully.
+Telegram alerting historically passed its test. During the 30 August staging
+rollout, two release-notification attempts timed out while the deployment
+registry still recorded both successful events. Current notification transport
+therefore requires a separate non-mutating verification; registry persistence
+is not affected.
 
 ## 14. Traffic switch / rollback foundation
 
@@ -1818,6 +1904,24 @@ currently active server release contains the admin storefront/order backend and
 blocked. This prevents an accidental release from deleting the admin backend
 routes that are already active on the server.
 
+It also enforces the payment-consistency source/schema contract before any
+build or activation:
+
+- legacy source is accepted only against a fully legacy target schema;
+- the payment-consistency source set is accepted only when the target DB has
+  the complete table/columns/indexes/constraints/RLS/grants/policy/trigger
+  signature;
+- partial schema/source and either mismatch direction fail closed;
+- `--check-compatibility-only` performs this check without building,
+  restarting a service or changing a release symlink.
+
+Consequently, while `origin/main` remains at `5a36b6c`, the Telegram stage
+button intentionally reports a blocked deploy instead of downgrading migrated
+staging. After the hardening revision reaches `main`, the production button
+will likewise remain blocked until the controlled production migration is
+complete. The guard does not apply migrations and is not a substitute for the
+maintenance/drain procedure in `CUTOVER_RUNBOOK.md`.
+
 ### Backend release pattern
 
 Backend is deployed as immutable release:
@@ -1962,16 +2066,15 @@ DNS/TLS cutover уже выполнен. Любое переключение liv
 или изменение production credentials по-прежнему требует явного owner
 approval.
 
-Перед следующим production release:
+Перед production rollout payment-consistency revision:
 
 1. Complete remaining Ozon import/dual-write acceptance.
 2. Проверить актуальные production transactional rows; cleanup выполнять только
    отдельной явно разрешённой операцией.
-3. Создать свежий encrypted backup непосредственно перед release, если были
-   cleanup или иные data changes; исторический snapshot backup:
-   `komui-backup-20260630T164013Z.tar.gz.gpg`.
-4. Run or reference the latest restore drill; last successful drill:
-   2026-06-30 from `komui-backup-20260630T145422Z.tar.gz.gpg`.
+3. В закрытом write window снять свежий согласованный encrypted backup.
+4. Выполнить restore drill актуального backup. Архив
+   `komui-backup-20260830T180555Z.tar.gz.gpg` проверен checksum/upload, но сам
+   ещё не восстанавливался; последний завершённый drill датирован 2026-06-30.
 5. Decide final Ozon dual-write policy.
 6. Confirm production T-Bank credentials/webhook settings.
 7. Production CDEK auto-create включён:
@@ -1979,8 +2082,12 @@ approval.
 8. DNS уже указывает на сервер и TLS vhost включён.
 9. Подтвердить T-Bank webhook:
    `https://komui.ru/api/v1/webhooks/tbank`.
-10. Run one demo payment on `https://komui.ru` and confirm order/payment/CDEK
-    behavior.
+10. До production выполнить явно разрешённый end-to-end provider smoke на
+    staging либо эквивалентную контролируемую приёмку; staging CDEK не mock.
+11. Применить migration и активировать backend только по closed-write
+    migration-aware runbook. Generic Telegram deploy не выполняет migration.
+12. После production migration установить новый global order monitor с
+    сохранением state и первым `--dry-run`, затем проверить alert transport.
 
 Cutover runbook:
 
@@ -1992,8 +2099,9 @@ docs/server-migration/CUTOVER_RUNBOOK.md
 
 Current known limitations:
 
-1. Checkout/payment/CDEK staging acceptance is completed; Ozon import/dual-write
-   final acceptance is still open.
+1. Deployment и non-provider-mutating acceptance revision `ac2567b` на staging
+   завершены. Полный payment/refund/real-CDEK E2E для этого revision не
+   выполнялся и требует явного разрешения.
 2. Ozon import writes only local server PostgreSQL by default; Supabase dual-write
    is disabled.
 3. Fully new Ozon products without mapping are not auto-published.
@@ -2007,6 +2115,11 @@ Current known limitations:
 9. Production HTTPS vhost уже включён; traffic fallback меняет live routing и
    требует runbook/owner approval. DNS rollback остаётся запасным вариантом,
    если server-side fallback недоступен.
+10. Два historical staging `cdek_cancel` остаются в `needs_review` до
+    operator/business решения; новый monitor пока не установлен глобально,
+    потому что его systemd unit читает legacy production schema.
+11. Последний rollout получил два Telegram timeout; registry записи сохранены,
+    но notification transport нужно перепроверить.
 
 ## 21. Quick orientation for a new developer
 

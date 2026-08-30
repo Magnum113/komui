@@ -1,8 +1,12 @@
-# KOMUI production cutover runbook draft
+# KOMUI production migration and cutover runbook
 
-Статус: черновик. Не выполнять без отдельного явного разрешения владельца.
+Статус: DNS/TLS cutover выполнен 30 июня 2026 года. Следующий controlled step —
+payment-consistency migration/release; его не выполнять без отдельного явного
+разрешения владельца.
 
-Production cutover относится к этапу 8 и не входит в staging-проверку.
+Разделы про первоначальный DNS/Vercel cutover сохранены как historical
+procedure. Они не описывают текущий live routing: production уже обслуживается
+self-hosted Nginx/backend.
 
 ## Предусловия
 
@@ -12,9 +16,9 @@ Production cutover относится к этапу 8 и не входит в st
 - [ ] External backup target работает.
 - [ ] Monitoring/alerting работает.
 - [ ] T-Bank demo payment/webhook E2E пройден.
-- [ ] Production candidate backend `komui-production-backend` active.
-- [ ] Production candidate отвечает на `127.0.0.1:3001/health/ready`.
-- [ ] Production candidate отвечает через Nginx по Host header `komui.ru`.
+- [ ] Текущий production backend `komui-production-backend` active.
+- [ ] Текущий production runtime отвечает на `127.0.0.1:3001/health/ready`.
+- [ ] Текущий production runtime отвечает через Nginx/`komui.ru`.
 - [ ] Production DB `komui_production` обновлена свежим snapshot или явно
   принята как есть.
 - [ ] Production T-Bank mode/credentials/webhook подтверждены.
@@ -24,7 +28,7 @@ Production cutover относится к этапу 8 и не входит в st
 - [ ] Подтверждены текущие DNS TTL.
 - [ ] Подтверждены production webhook настройки Т-Банка.
 
-## Freeze перед cutover
+## Pre-freeze перед migration window
 
 1. Зафиксировать время freeze.
 2. Не запускать Ozon import.
@@ -50,14 +54,37 @@ Migration `20260830143000_harden_payment_consistency.sql` и backend, котор
 агрегат не заменяет повторную проверку после остановки writes: между проверкой
 и migration может прийти подписанный webhook.
 
+Generic Telegram/Git deploy не применяет migration и не должен использоваться
+для этого cutover. Установленный `komui-deploy-from-git` проверяет
+source/schema до build/activation: legacy code блокируется на migrated DB, а
+новый code — на legacy DB. Это только аварийный fail-closed gate, а не механизм
+миграции. До controlled window можно выполнить non-activation operational
+check:
+
+```bash
+sudo /usr/local/sbin/komui-deploy-from-git prod main --check-compatibility-only
+```
+
+Этот режим не строит release, не переключает symlink и не перезапускает
+services, но fetch/reset/clean выполняются в специально disposable
+`/opt/komui/deploy-source`. Не хранить в этом checkout ручные изменения.
+
+После merge hardening в `main` эта команда обязана блокироваться до применения
+migration. Candidate release готовится отдельно до write gate; активация
+выполняется только после backup, migration и разбора provider-effect backfill.
+
 Порядок обязателен:
 
-1. Включить maintenance для checkout и отдельно закрыть внешний
+1. Взять тот же `/run/komui-deploy.lock`, который использует
+   `komui-deploy-from-git`, и удерживать его на всём migration/activation
+   window. Это исключает параллельный Telegram/Git deploy. Staging rollout
+   использовал именно этот lock.
+2. Включить maintenance для checkout и отдельно закрыть внешний
    `POST /api/v1/webhooks/tbank` на Nginx. Уже принятые соединения должны быть
    дренированы; нельзя просто скрыть frontend.
-2. Проверить `nginx -t`, применить reload и убедиться снаружи, что checkout
+3. Проверить `nginx -t`, применить reload и убедиться снаружи, что checkout
    writes/webhook больше не доходят до backend.
-3. Остановить **старый** backend и убедиться, что unit не active. Имена ниже
+4. Остановить **старый** backend и убедиться, что unit не active. Имена ниже
    иллюстративны — использовать фактический production unit:
 
 ```bash
@@ -67,7 +94,7 @@ sudo systemctl stop komui-production-backend
 sudo systemctl is-active komui-production-backend
 ```
 
-4. В том же закрытом окне повторить агрегатный preflight в production DB.
+5. В том же закрытом окне повторить агрегатный preflight в production DB.
    Команда не должна печатать connection string или secret values:
 
 ```bash
@@ -172,7 +199,7 @@ maintenance остаётся включённым, старый backend не з�
 Preflight 30 августа 2026 года был нулевым, но во время deploy он всё равно
 повторяется.
 
-5. Снять/проверить backup и до старта нового backend отдельно посчитать:
+6. Снять/проверить backup и до старта нового backend отдельно посчитать:
 
    - строки, которые migration добавит в `merch_order_effects` как historical
      `cdek_cancel`;
@@ -186,18 +213,55 @@ Preflight 30 августа 2026 года был нулевым, но во вр�
    является безопасным gate: mock-обработка может ошибочно отметить реальную
    доставку удалённой только в локальной БД.
 
-6. Применить migration с `ON_ERROR_STOP=1`, повторить inventory уже по новой
-   схеме и запустить именно новый backend revision:
+7. Применить migration с `ON_ERROR_STOP=1`, повторить inventory уже по новой
+   схеме и поштучно разрешить/quarantine все provider effects. Затем проверить
+   **точный заранее подготовленный production release**, атомарно переключить
+   `/opt/komui/production-current` и только после этого запускать unit.
+
+   Нельзя ограничиваться `systemctl start komui-production-backend`: пока
+   symlink указывает на legacy release, эта команда запустит старый backend на
+   migrated DB. Нельзя использовать staging-only `komui-release-activate` — он
+   управляет `/opt/komui/current` и `komui-backend`, а не production paths.
 
 ```bash
 sudo -u postgres psql -X --single-transaction -v ON_ERROR_STOP=1 -d komui_production \
   -f /path/to/20260830143000_harden_payment_consistency.sql
+
+# Эти два значения заранее вписываются как exact immutable release/40-char SHA.
+# Placeholder-команда должна завершиться ошибкой, пока значения не заменены.
+prod_release='/opt/komui/releases/REPLACE_WITH_EXACT_PROD_RELEASE'
+expected_commit='REPLACE_WITH_EXACT_40_CHAR_GIT_COMMIT'
+
+case "$prod_release" in
+  /opt/komui/releases/*-prod-*) ;;
+  *) echo 'invalid production release path' >&2; exit 1 ;;
+esac
+[[ "$expected_commit" =~ ^[0-9a-f]{40}$ ]] || {
+  echo 'invalid expected commit' >&2
+  exit 1
+}
+test -d "$prod_release/backend"
+test -f "$prod_release/RELEASE"
+test "$(awk -F= '$1 == "git_commit" {print $2}' "$prod_release/RELEASE")" = "$expected_commit"
+test -f "$prod_release/backend/dist/cdekEffects.js"
+test -f "$prod_release/backend/dist/tbankReconciliation.js"
+test -f "$prod_release/backend/dist/tbankWebhook.js"
+
+sudo ln -sfnT "$prod_release" /opt/komui/production-current
+test "$(sudo readlink -f /opt/komui/production-current)" = "$prod_release"
 sudo systemctl start komui-production-backend
 sudo systemctl is-active komui-production-backend
 curl -fsS http://127.0.0.1:3001/health/ready
 ```
 
-7. Проверить worker/effect logs и только после этого открыть webhook ingress и
+При неуспешном readiness старый backend автоматически не возвращать и ingress
+не открывать. Maintenance сохраняется; выполняется forward-fix/reconciliation
+либо согласованный restore по rollback rule ниже. До открытия ingress также
+проверить, что production frontend release собран из того же exact commit,
+атомарно переключить `/var/lib/komui/production-root`, выполнить `nginx -t` и
+только затем reload.
+
+8. Проверить worker/effect logs и только после этого открыть webhook ingress и
    checkout, снова выполнив `nginx -t` перед reload.
 
 Rollback rule: после применения migration старый backend нельзя
@@ -224,10 +288,10 @@ https://stage.komui.ru/checkout
 https://stage.komui.ru/api/v1/products?limit=1
 ```
 
-## Финальные проверки production candidate
+## Финальные проверки текущего production runtime перед migration
 
-Эти проверки не переключают live `komui.ru`; они используют loopback и Host
-header на сервере.
+Эти проверки не переключают live `komui.ru`; они проверяют уже работающий
+self-hosted production через loopback и публичный endpoint.
 
 ```bash
 curl -fsS http://127.0.0.1:3001/health/ready
@@ -254,7 +318,7 @@ T-Bank работает в production mode, `TBANK_MOCK_PAYMENTS=false`. CDEK
 auto-create включён; оплаченные заказы могут создавать реальные CDEK
 отправления.
 
-Последний production snapshot:
+Исторический production snapshot перед DNS cutover:
 
 ```text
 database: komui_production
@@ -270,7 +334,8 @@ restore drill: OK
 
 ## DNS cutover
 
-Выполнено 30 июня 2026 года.
+Выполнено 30 июня 2026 года. Следующий блок сохранён как historical record и не
+является инструкцией для payment-consistency release.
 
 Планируемые действия:
 
@@ -324,7 +389,7 @@ https://komui.ru/api/v1/webhooks/tbank
 - [ ] No 5xx в Nginx/backend logs.
 - [ ] RAM/disk стабильны.
 
-## Rollback
+## Исторический DNS rollback
 
 Если проблема до появления production writes:
 
@@ -339,7 +404,7 @@ https://komui.ru/api/v1/webhooks/tbank
 3. Решить, переносить эти записи в Supabase или обрабатывать вручную.
 4. Только после этого возвращать DNS/webhook.
 
-## Traffic fallback
+## Исторический traffic fallback
 
 Fallback на текущий Vercel/Supabase может работать только если:
 

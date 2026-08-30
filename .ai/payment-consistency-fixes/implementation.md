@@ -1,7 +1,10 @@
 # Implementation record
 
-Дата: 30 августа 2026. Изменения подготовлены локально; commit, migration
-apply, staging/production deploy и внешние provider mutations не выполнялись.
+Дата: 30 августа 2026. В рамках этой implementation-задачи изменения были
+подготовлены и проверены локально; commit, migration apply, deploy и внешние
+provider mutations тогда не выполнялись. Последующий staging rollout commit
+`ac2567b` зафиксирован отдельно в `.ai/staging-payment-consistency-deploy/`;
+production не мигрировалась.
 
 ## Зафиксированные инварианты
 

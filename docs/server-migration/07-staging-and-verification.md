@@ -1,5 +1,11 @@
 # Этап 7. Изолированный staging, backup и тестовая приёмка
 
+> Историческая часть этого документа до раздела
+> **Payment-consistency staging release — 30 августа 2026** описывает план и
+> факты pre-cutover периода 27–30 июня 2026 года. Утверждения о live
+> Supabase/Vercel, DNS `76.76.21.21` и «production candidate» не являются
+> текущим состоянием: production cutover на self-hosted сервер уже выполнен.
+
 ## Цель
 
 Развернуть полностью рабочую тестовую реализацию на сервере, дать владельцу
@@ -184,7 +190,7 @@ release. Production продолжает работать на Supabase/Vercel �
 После завершения этапа работа останавливается. Этап 8 начинается только после
 отдельного явного сообщения владельца о разрешении production cutover.
 
-## Фактический результат этапа 7
+## Исторический результат этапа 7 на 30 июня 2026
 
 Статус: `частично завершён — infra/external backup/restore/alerting и
 checkout/payment/CDEK GO, полный Stage 7 GO ожидает Ozon import acceptance и
@@ -432,10 +438,63 @@ Telegram API недоступен с сервера напрямую, поэто
   решением владельца.
 - Production cutover не разрешён владельцем.
 
-### Решение
+### Историческое решение на 30 июня 2026
 
-Техническая staging-инфраструктура готова. Checkout/payment/CDEK flow проверен
-на staging; backup/restore/alerting проверены после последних изменений.
+На тот момент техническая staging-инфраструктура была признана готовой, а
+checkout/payment/CDEK flow и backup/restore/alerting — проверенными для
+июньского revision. Это не означает provider E2E-приёмку нового revision
+`ac2567b` от 30 августа.
 
 Это не является разрешением на production cutover. Этап 8 остаётся
 заблокированным до отдельного явного сообщения владельца.
+
+## Payment-consistency staging release — 30 августа 2026
+
+На staging развёрнут release
+`20260830T175312Z-stage-ac2567bb42ae` из commit
+`ac2567bb42aefcc0f75d9bb31fa915fd373954f6`.
+
+Перед переключением:
+
+- release собран без активации и повторно прошёл 228/228 server tests;
+- migration исполнена на временной полной копии staging и проверена реальным
+  PostgreSQL;
+- staging POST/webhook ingress закрыт, старый backend остановлен и pool
+  connections дренированы;
+- семь payment counters равны нулю;
+- создан post-drain encrypted backup
+  `komui-backup-20260830T180555Z.tar.gz.gpg` (`52 584 372 bytes`); checksum и
+  external upload OK. Restore drill именно этого архива не выполнялся;
+  migration rehearsal на полной временной DB-копии была отдельной проверкой.
+
+Migration применена только к `komui_staging`. Две historical CDEK cancellation
+строки, которые иначе вызвали бы реальный `DELETE` сразу после запуска worker,
+переведены в `needs_review` до старта backend. Реальных T-Bank/CDEK provider
+mutations во время rollout и smoke не выполнялось.
+
+После переключения подтверждено:
+
+- backend/frontend symlinks указывают на новый release;
+- services active, failed units 0, global healthcheck `SUMMARY OK`;
+- schema/RLS/grants/constraints валидны;
+- non-terminal effects и T-Bank reconciliation candidates: 0;
+- `INIT_REVIEW` и `payment_review`: 0;
+- root, checkout, payment-result, products API и readiness: HTTP 200;
+- Basic Auth и `X-Robots-Tag: noindex` сохранены;
+- production release/process/schema не менялись.
+
+После rollout штатный Git/Telegram deploy получил fail-closed source/schema
+gate. Пока `origin/main` содержит legacy code, stage deploy намеренно
+блокируется до build/activation; после переноса hardening в `main` production
+deploy будет блокироваться до controlled production migration. Проверка
+доступна через `--check-compatibility-only` и не переключает release symlink.
+Installed guard из commit `b2c7337` прошёл все четыре legacy/hardening ×
+staging/production комбинации; symlinks, PID, release counts и DB rows до/после
+совпали.
+
+Отдельно остаётся полный demo payment/refund/real-CDEK E2E. Он требует явного
+решения владельца, потому что staging использует реальный CDEK, а не mock.
+Также остаются operator/business решение по двум quarantined
+`cdek_cancel/needs_review`, restore drill нового архива и отдельная проверка
+Telegram transport: два release notification во время rollout завершились
+timeout, хотя registry events записаны успешно.

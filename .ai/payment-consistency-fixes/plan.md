@@ -1,6 +1,9 @@
 # Implementation plan
 
-Статус: выполнено локально и проверено; migration/deploy не выполнялись.
+Статус этой implementation-задачи: выполнено локально и проверено;
+migration/deploy в её рамках не выполнялись. Последующий staging rollout
+зафиксирован в `.ai/staging-payment-consistency-deploy/`; production не
+изменялась.
 
 ## Phase 1 — freeze state-machine invariants
 
