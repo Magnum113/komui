@@ -5,6 +5,7 @@ import { z } from "zod";
 import type { AppConfig } from "../config";
 import type { Db } from "../db";
 import { renderOrderPaidEmail } from "./templates/order-paid";
+import { renderSubscriptionConfirmationEmail } from "./templates/subscription-confirmation";
 import {
   EmailProviderError,
   maskEmail,
@@ -29,6 +30,7 @@ type EmailSender = Pick<UnisenderGoClient, "send">;
 type EmailOutboxRow = QueryResultRow & {
   id: string;
   order_id: string | null;
+  contact_id: string | null;
   event_type: string;
   message_class: "transactional" | "marketing";
   recipient_email: string;
@@ -37,6 +39,12 @@ type EmailOutboxRow = QueryResultRow & {
   attempt_count: number;
   idempotency_key: string;
   locked_by: string | null;
+  created_at: string | Date;
+};
+
+type CdekTrackingState = {
+  status: string | null;
+  number: string | null;
 };
 
 export type ProcessEmailOutboxResult = {
@@ -46,6 +54,7 @@ export type ProcessEmailOutboxResult = {
   failed: number;
   deduplicated: number;
   suppressed: number;
+  deferred: number;
 };
 
 export type ProcessEmailOutboxOptions = {
@@ -65,6 +74,7 @@ const orderPaidPayloadSchema = z.object({
         size: z.string().max(20).nullable(),
         quantity: z.number().int().min(1).max(50),
         lineTotalAmount: z.number().int().min(0),
+        imageUrl: z.string().max(500).nullable().optional(),
       }),
     )
     .min(1)
@@ -79,7 +89,15 @@ const orderPaidPayloadSchema = z.object({
   deliveryEta: z.string().max(100).nullable(),
 });
 
+const subscriptionConfirmationPayloadSchema = z.object({
+  schemaVersion: z.literal(1),
+  confirmationUrl: z.string().url().max(1_000),
+  tokenFingerprint: z.string().regex(/^[0-9a-f]{24}$/),
+});
+
 const retryDelaysMs = [5 * 60_000, 30 * 60_000, 4 * 60 * 60_000];
+const cdekTrackingWaitMs = 90_000;
+const cdekTrackingPollMs = 10_000;
 
 export function emailWorkerConfigurationError(
   config: AppConfig,
@@ -146,6 +164,7 @@ async function claimNextEmail(
         returning
           outbox.id,
           outbox.order_id,
+          outbox.contact_id,
           outbox.event_type,
           outbox.message_class,
           outbox.recipient_email,
@@ -153,7 +172,8 @@ async function claimNextEmail(
           outbox.payload,
           outbox.attempt_count,
           outbox.idempotency_key,
-          outbox.locked_by
+          outbox.locked_by,
+          outbox.created_at
       `,
       [workerId, context.config.EMAIL_WORKER_LEASE_MS],
     );
@@ -165,28 +185,62 @@ async function suppressionReason(
   context: EmailWorkerContext,
   row: EmailOutboxRow,
 ): Promise<string | null> {
-  const result = await context.db.query<{ reason: string }>(
+  const result = await context.db.query<{
+    reason: string | null;
+    marketing_status: string | null;
+  }>(
     `
       /* email_outbox:suppression */
-      select reason
-      from public.merch_email_suppressions
-      where email_normalized = lower(btrim($1))
-      limit 1
+      select
+        suppressions.reason,
+        contacts.marketing_status
+      from (values (lower(btrim($1)))) as target(email_normalized)
+      left join public.merch_email_suppressions suppressions using (email_normalized)
+      left join public.merch_email_contacts contacts using (email_normalized)
     `,
     [row.recipient_email],
   );
   const reason = boundedText(result.rows[0]?.reason, 80).toLowerCase();
+  if (row.message_class === "marketing") {
+    if (reason) return reason;
+    const marketingStatus = boundedText(
+      result.rows[0]?.marketing_status,
+      40,
+    ).toLowerCase();
+    return marketingStatus === "subscribed"
+      ? null
+      : `marketing_consent_${marketingStatus || "missing"}`;
+  }
   if (!reason) return null;
-  if (row.message_class === "marketing") return reason;
   return ["hard_bounce", "spam_complaint"].includes(reason) ? reason : null;
 }
 
-function emailRequest(row: EmailOutboxRow): EmailSendRequest {
+function emailRequest(
+  row: EmailOutboxRow,
+  cdekNumber: string | null,
+): EmailSendRequest {
   if (
     row.template_key !== "order_paid" ||
     row.event_type !== "order_paid" ||
     row.message_class !== "transactional"
   ) {
+    if (
+      row.template_key === "subscription_confirmation"
+      && row.event_type === "subscription_confirmation"
+      && row.message_class === "transactional"
+    ) {
+      const input = subscriptionConfirmationPayloadSchema.parse(row.payload);
+      return {
+        recipientEmail: row.recipient_email,
+        messageClass: row.message_class,
+        templateKey: row.template_key,
+        idempotencyKey: row.idempotency_key,
+        rendered: renderSubscriptionConfirmationEmail(input),
+        metadata: {
+          contact_id: row.contact_id ?? "",
+        },
+      };
+    }
     throw new Error("Unsupported email outbox template");
   }
   const input = orderPaidPayloadSchema.parse(row.payload);
@@ -195,12 +249,77 @@ function emailRequest(row: EmailOutboxRow): EmailSendRequest {
     messageClass: row.message_class,
     templateKey: row.template_key,
     idempotencyKey: row.idempotency_key,
-    rendered: renderOrderPaidEmail(input),
+    rendered: renderOrderPaidEmail({ ...input, cdekNumber }),
     metadata: {
       order_id: row.order_id ?? "",
       order_number: input.orderNumber,
     },
   };
+}
+
+async function cdekTrackingState(
+  context: EmailWorkerContext,
+  row: EmailOutboxRow,
+): Promise<CdekTrackingState> {
+  if (!context.config.CDEK_CREATE_SHIPMENTS || !row.order_id) {
+    return { status: null, number: null };
+  }
+  const result = await context.db.query<{
+    status: string;
+    cdek_number: string | null;
+  }>(
+    `
+      /* email_outbox:cdek_tracking */
+      select status, cdek_number
+      from public.merch_cdek_shipments
+      where order_id = $1::uuid
+      limit 1
+    `,
+    [row.order_id],
+  );
+  const shipment = result.rows[0];
+  return {
+    status: boundedText(shipment?.status, 40).toLowerCase() || null,
+    number: boundedText(shipment?.cdek_number, 80) || null,
+  };
+}
+
+function shouldWaitForCdekTracking(
+  context: EmailWorkerContext,
+  row: EmailOutboxRow,
+  cdek: CdekTrackingState,
+): boolean {
+  if (!context.config.CDEK_CREATE_SHIPMENTS || cdek.number) return false;
+  if (["invalid", "failed", "deleted"].includes(cdek.status ?? "")) {
+    return false;
+  }
+  const createdAt = new Date(row.created_at).getTime();
+  if (!Number.isFinite(createdAt)) return false;
+  const ageMs = Date.now() - createdAt;
+  return ageMs >= 0 && ageMs < cdekTrackingWaitMs;
+}
+
+async function deferForCdekTracking(
+  context: EmailWorkerContext,
+  row: EmailOutboxRow,
+  workerId: string,
+) {
+  await context.db.query(
+    `
+      /* email_outbox:await_cdek_tracking */
+      update public.merch_email_outbox
+      set status = 'retry',
+          attempt_count = greatest(attempt_count - 1, 0),
+          next_attempt_at = now() + ($3::double precision * interval '1 millisecond'),
+          locked_at = null,
+          locked_by = null,
+          last_error = null
+      where id = $1::uuid
+        and status = 'processing'
+        and locked_by = $2
+    `,
+    [row.id, workerId, cdekTrackingPollMs],
+  );
 }
 
 async function markSent(
@@ -217,6 +336,11 @@ async function markSent(
       set status = 'sent',
           provider_message_id = coalesce($3, provider_message_id),
           sent_at = coalesce(sent_at, now()),
+          payload = case
+            when event_type = 'subscription_confirmation'
+              then payload - 'confirmationUrl'
+            else payload
+          end,
           failed_at = null,
           next_attempt_at = null,
           locked_at = null,
@@ -292,7 +416,13 @@ function errorCode(error: unknown): string {
   if (error instanceof Error && error.message === "Unsupported email outbox template") {
     return "email_template_unsupported";
   }
-  if (error instanceof Error && error.message.includes("Order email")) {
+  if (
+    error instanceof Error
+    && (
+      error.message.includes("Order email")
+      || error.message.includes("Subscription confirmation email")
+    )
+  ) {
     return "email_template_invalid";
   }
   return "email_worker_unexpected_error";
@@ -318,6 +448,7 @@ export async function processEmailOutbox(
     failed: 0,
     deduplicated: 0,
     suppressed: 0,
+    deferred: 0,
   };
 
   for (let index = 0; index < limit; index += 1) {
@@ -348,7 +479,22 @@ export async function processEmailOutbox(
         continue;
       }
 
-      const sent = await sender.send(emailRequest(row));
+      const cdek = await cdekTrackingState(context, row);
+      if (shouldWaitForCdekTracking(context, row, cdek)) {
+        await deferForCdekTracking(context, row, workerId);
+        result.deferred += 1;
+        context.logger?.info?.(
+          {
+            outboxId: row.id,
+            orderId: row.order_id,
+            cdekStatus: cdek.status,
+          },
+          "Email briefly deferred while CDEK tracking number is created",
+        );
+        continue;
+      }
+
+      const sent = await sender.send(emailRequest(row, cdek.number));
       await markSent(context, row, workerId, sent.providerMessageId);
       result.sent += 1;
       context.logger?.info?.(
@@ -381,7 +527,8 @@ export async function processEmailOutbox(
           : !(error instanceof z.ZodError) &&
             !(error instanceof Error &&
               (error.message === "Unsupported email outbox template" ||
-                error.message.includes("Order email")));
+                error.message.includes("Order email") ||
+                error.message.includes("Subscription confirmation email")));
       if (
         retryable &&
         row.attempt_count < context.config.EMAIL_WORKER_MAX_ATTEMPTS

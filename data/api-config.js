@@ -5,6 +5,8 @@ window.KOMUI_API = {
   "deliveryPointsUrl": "/api/v1/delivery/points",
   "deliveryQuoteUrl": "/api/v1/delivery/quote",
   "promoValidateUrl": "/api/v1/promos/validate",
+  "newsletterSubscribeUrl": "/api/v1/email/subscribe",
+  "newsletterConfirmUrl": "/api/v1/email/confirm",
   "paymentCreateUrl": "/api/v1/payments",
   "paymentStatusUrl": "/api/v1/payments/status"
 };

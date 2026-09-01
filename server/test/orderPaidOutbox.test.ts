@@ -42,6 +42,7 @@ test("order_paid intent is inserted from the paid order snapshot with a stable k
   assert.match(calls[0].sql, /orders\.status = 'paid'/);
   assert.match(calls[0].sql, /on conflict \(idempotency_key\) do nothing/);
   assert.match(calls[0].sql, /merch_customer_order_items/);
+  assert.match(calls[0].sql, /'imageUrl', nullif\(items\.image_url, ''\)/);
   assert.equal(calls[0].values[0], orderId);
   assert.deepEqual(JSON.parse(String(calls[0].values[1])), {
     source: "tbank_webhook",

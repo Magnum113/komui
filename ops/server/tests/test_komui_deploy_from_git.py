@@ -58,6 +58,31 @@ class KomuiDeployFromGitCompatibilityTest(unittest.TestCase):
         self.assertLess(build_offset, final_guard_offset)
         self.assertLess(final_guard_offset, activation_offset)
 
+    def test_email_contacts_guard_requires_schema_before_new_source(self) -> None:
+        self.assertIn("20260901170000_add_email_contacts_and_subscriptions.sql", self.script)
+        self.assertIn('"server/src/email/contacts.ts"', self.script)
+        self.assertIn('"server/src/email/subscriptions.ts"', self.script)
+        self.assertIn("to_regclass('public.merch_email_contacts')", self.script)
+        self.assertIn("to_regclass('public.merch_email_consent_events')", self.script)
+        self.assertIn("partial or invalid email-contacts schema", self.script)
+        self.assertIn("email-contacts source requires the migrated schema", self.script)
+        self.assertIn(
+            '"$source_state" == "email-contacts-v1" && "$database_state" != "email-contacts-v1"',
+            self.script,
+        )
+
+        guard_offset = self.script.index("enforce_email_contacts_compatibility\n")
+        final_guard_offset = self.script.rindex("enforce_email_contacts_compatibility\n")
+        build_offset = self.script.index('log "removing stale backend dependency/build artifacts"')
+        activation_offset = self.script.index('log "activating backend"')
+        self.assertEqual(
+            self.script.count("  enforce_email_contacts_compatibility\n"),
+            2,
+        )
+        self.assertLess(guard_offset, build_offset)
+        self.assertLess(build_offset, final_guard_offset)
+        self.assertLess(final_guard_offset, activation_offset)
+
 
 if __name__ == "__main__":
     unittest.main()

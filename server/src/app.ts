@@ -53,6 +53,7 @@ import {
   ReviewsRepository,
 } from "./reviews";
 import { registerUnisenderGoWebhook } from "./email/unisenderWebhook";
+import { registerEmailSubscriptionRoutes } from "./email/subscriptions";
 
 type AppOptions = {
   config: AppConfig;
@@ -317,6 +318,10 @@ export function buildApp({ config, db = createDb(config) }: AppOptions) {
   app.post("/v1/payments/status", async (request, reply) =>
     handleTbankPaymentStatus(request, reply, stage5Context),
   );
+
+  app.register(async (emailApp) => {
+    await registerEmailSubscriptionRoutes(emailApp, stage5Context);
+  });
 
   app.post("/v1/webhooks/tbank", async (request, reply) =>
     handleTbankWebhook(request, reply, stage5Context),

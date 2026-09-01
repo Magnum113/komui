@@ -13,6 +13,8 @@ import {
 import {
   cdekPackageInputsFromOrderItems,
   CheckoutRepository,
+  MARKETING_CONSENT_SOURCE,
+  MARKETING_CONSENT_VERSION,
   marketingConsentEvidence,
   normalizeEmail,
   normalizePhone,
@@ -38,6 +40,10 @@ import {
   TbankWebhookOrderNotFoundError,
 } from "./tbankWebhook";
 import { enqueueOrderPaidEmail } from "./email/orderPaidOutbox";
+import {
+  emailRequestEvidence,
+  upsertCheckoutEmailContact,
+} from "./email/contacts";
 import {
   markTbankInitUnknown,
   persistTbankInitSuccess,
@@ -883,6 +889,17 @@ export async function handleTbankCreatePayment(
         },
         orderItems,
       );
+
+      await upsertCheckoutEmailContact(client, {
+        orderId: createdOrderId,
+        email,
+        displayName: `${firstName} ${lastName}`,
+        marketingConsent,
+        consentAt: legalAcceptedAt,
+        consentVersion: MARKETING_CONSENT_VERSION,
+        consentSource: MARKETING_CONSENT_SOURCE,
+        evidence: emailRequestEvidence(request),
+      });
 
       await reservePromoRedemption(client, {
         validation: promoValidation ?? invalidPromoValidation(delivery.amount),

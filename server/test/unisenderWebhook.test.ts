@@ -46,6 +46,7 @@ function fakeDb() {
         status: "pending",
       },
     ],
+    consentRevocations: new Set<string>(),
     queryLog: [] as string[],
   };
 
@@ -72,6 +73,16 @@ function fakeDb() {
             providerEventId: action.provider_event_id,
           });
         }
+      }
+      return { rows: [], rowCount: actions.length };
+    }
+    if (normalized.includes("/* email_webhook:record_unsubscribe_consent */")) {
+      const actions = JSON.parse(String(values[0])) as Array<{
+        email: string;
+        provider_event_id: string;
+      }>;
+      for (const action of actions) {
+        state.consentRevocations.add(action.provider_event_id);
       }
       return { rows: [], rowCount: actions.length };
     }
@@ -313,6 +324,24 @@ test("Unisender webhook never weakens a manual suppression", async () => {
     state.outbox.slice(0, 3).map((row) => row.status),
     ["cancelled", "cancelled", "pending"],
   );
+  await app.close();
+});
+
+test("Unisender unsubscribe records immutable consent revocation evidence", async () => {
+  const { db, state } = fakeDb();
+  const app = buildApp({ config: config(), db });
+  const raw = signedBody([user([event("unsubscribed")])]);
+
+  const response = await app.inject({
+    method: "POST",
+    url: "/v1/webhooks/unisender-go",
+    headers: { "content-type": "application/json" },
+    payload: raw,
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(state.consentRevocations.size, 1);
+  assert.match([...state.consentRevocations][0] ?? "", /^unisender:[a-f0-9]{64}$/);
   await app.close();
 });
 

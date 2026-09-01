@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="color-scheme" content="light">
+  <title>Подтверждение подписки — KOMUI</title>
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;display:grid;place-items:center;padding:20px;background:#f4f5fa;color:#14151c;font-family:Arial,Helvetica,sans-serif}
+    .card{width:min(560px,100%);padding:34px;border:1px solid #dfe2ed;border-radius:26px;background:#fff;box-shadow:0 24px 80px rgba(26,31,54,.09)}
+    .brand{display:inline-flex;align-items:center;margin-bottom:42px;color:#14151c;text-decoration:none;font-size:24px;font-weight:900;letter-spacing:-.04em}.brand span{color:#1238ff}
+    .eyebrow{margin-bottom:12px;color:#1238ff;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+    h1{margin:0 0 14px;font-size:clamp(32px,8vw,48px);line-height:1.02;letter-spacing:-.045em}
+    p{margin:0;color:#63687c;font-size:16px;line-height:1.6}
+    .status{margin-top:24px;padding:16px 18px;border-radius:14px;background:#f1f3fb;color:#4f556b;font-size:14px;font-weight:700;line-height:1.45}
+    .status.success{background:#eaf8f0;color:#167344}.status.error{background:#fff0f1;color:#b73541}
+    button{display:none;width:100%;margin-top:16px;padding:15px 20px;border:0;border-radius:14px;background:#1238ff;color:#fff;font:800 15px/1.2 Arial,Helvetica,sans-serif;cursor:pointer}
+    button.show{display:block}
+    .back{display:inline-block;margin-top:28px;color:#1238ff;font-size:14px;font-weight:700;text-decoration:none}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <a class="brand" href="/">KOMUI<span>.</span></a>
+    <div class="eyebrow">Письма KOMUI</div>
+    <h1 id="title">Подтверждаем подписку</h1>
+    <p id="description">Один момент — проверяем ссылку и сохраняем ваш выбор.</p>
+    <div class="status" id="status" role="status" aria-live="polite">Проверяем…</div>
+    <button id="retry" type="button">Попробовать ещё раз</button>
+    <a class="back" href="/">Вернуться в магазин →</a>
+  </main>
+  <script src="/data/api-config.js"></script>
+  <script>
+    (function(){
+      'use strict';
+      var token=new URLSearchParams(location.hash.slice(1)).get('token')||'';
+      history.replaceState(null,'','/email-confirm');
+      var status=document.getElementById('status');
+      var title=document.getElementById('title');
+      var description=document.getElementById('description');
+      var retry=document.getElementById('retry');
+      var config=window.KOMUI_API||{};
+      var base=String(config.baseUrl||'/api').replace(/\/$/,'');
+      var endpoint=config.newsletterConfirmUrl||base+'/v1/email/confirm';
+
+      async function confirm(){
+        retry.classList.remove('show');
+        status.className='status';
+        status.textContent='Проверяем…';
+        if(token.length<32){
+          showError('Ссылка недействительна. Вернитесь на сайт и отправьте форму подписки ещё раз.');
+          return;
+        }
+        try{
+          var response=await fetch(endpoint,{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({token:token})
+          });
+          var result=await response.json().catch(function(){return {}});
+          if(!response.ok)throw new Error(result&&result.error&&result.error.message||'Не удалось подтвердить подписку.');
+          title.textContent='Подписка подтверждена';
+          description.textContent='Теперь вы будете получать новости о новых дропах и специальных предложениях KOMUI.';
+          status.className='status success';
+          status.textContent=result.message||'Готово.';
+          token='';
+        }catch(error){
+          showError(error&&error.message||'Не удалось подтвердить подписку.');
+        }
+      }
+
+      function showError(message){
+        title.textContent='Не получилось подтвердить';
+        description.textContent='Ссылка могла устареть или уже быть использована.';
+        status.className='status error';
+        status.textContent=message;
+        if(token)retry.classList.add('show');
+      }
+
+      retry.addEventListener('click',confirm);
+      confirm();
+    })();
+  </script>
+</body>
+</html>

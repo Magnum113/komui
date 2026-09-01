@@ -57,6 +57,11 @@ function fakeOutbox(options: {
   payload?: unknown;
   attemptCount?: number;
   suppression?: string | null;
+  messageClass?: "transactional" | "marketing";
+  marketingStatus?: string | null;
+  cdekNumber?: string | null;
+  cdekStatus?: string | null;
+  createdAt?: string;
 } = {}) {
   const state = {
     status: "pending",
@@ -65,6 +70,7 @@ function fakeOutbox(options: {
     providerMessageId: null as string | null,
     lastError: null as string | null,
     retryDelay: null as number | null,
+    deferred: false,
     queryLog: [] as string[],
   };
   const query = async (sql: string, values: unknown[] = []) => {
@@ -82,21 +88,46 @@ function fakeOutbox(options: {
             id: rowId,
             order_id: orderId,
             event_type: "order_paid",
-            message_class: "transactional",
+            message_class: options.messageClass ?? "transactional",
             recipient_email: "owner@example.com",
             template_key: "order_paid",
             payload: options.payload ?? payload(),
             attempt_count: state.attemptCount,
             idempotency_key: `order-paid:${orderId}`,
             locked_by: state.lockedBy,
+            created_at: options.createdAt ?? new Date(0).toISOString(),
           },
         ],
       };
     }
     if (sql.includes("email_outbox:suppression")) {
       return {
-        rows: options.suppression ? [{ reason: options.suppression }] : [],
+        rows: [{
+          reason: options.suppression ?? null,
+          marketing_status: options.marketingStatus ?? null,
+        }],
       };
+    }
+    if (sql.includes("email_outbox:cdek_tracking")) {
+      return {
+        rows: options.cdekStatus
+          ? [
+              {
+                status: options.cdekStatus,
+                cdek_number: options.cdekNumber ?? null,
+              },
+            ]
+          : [],
+      };
+    }
+    if (sql.includes("email_outbox:await_cdek_tracking")) {
+      assert.equal(values[1], state.lockedBy);
+      state.status = "retry";
+      state.attemptCount = Math.max(0, state.attemptCount - 1);
+      state.retryDelay = Number(values[2]);
+      state.deferred = true;
+      state.lockedBy = null;
+      return { rows: [] };
     }
     if (sql.includes("email_outbox:sent")) {
       assert.equal(values[1], state.lockedBy);
@@ -159,12 +190,85 @@ test("email worker claims with SKIP LOCKED and marks provider acceptance sent", 
     failed: 0,
     deduplicated: 0,
     suppressed: 0,
+    deferred: 0,
   });
   assert.equal(state.status, "sent");
   assert.equal(state.providerMessageId, "provider-job-1");
   assert.equal(requests.length, 1);
   assert.match(state.queryLog[0], /for update skip locked/i);
   assert.match(state.queryLog[0], /coalesce\(locked_at, updated_at, created_at\)/i);
+  assert.match(
+    state.queryLog.find((sql) => sql.includes("email_outbox:sent")) ?? "",
+    /subscription_confirmation[\s\S]*payload - 'confirmationUrl'/i,
+  );
+});
+
+test("email worker includes CDEK tracking created after payment", async () => {
+  const { db } = fakeOutbox({
+    cdekStatus: "created",
+    cdekNumber: "1598765432",
+  });
+  const requests: Array<{ rendered: { html: string; text: string } }> = [];
+  const result = await processEmailOutbox(
+    {
+      config: config({ CDEK_CREATE_SHIPMENTS: "true" }),
+      db,
+    },
+    {
+      limit: 1,
+      workerId: "worker-cdek-ready",
+      sender: {
+        send: async (request) => {
+          requests.push(request);
+          return {
+            provider: "unisender_go",
+            providerMessageId: "provider-job-cdek",
+            accepted: true,
+          };
+        },
+      },
+    },
+  );
+
+  assert.equal(result.sent, 1);
+  assert.equal(requests.length, 1);
+  assert.match(
+    requests[0].rendered.html,
+    /cdek\.ru\/ru\/tracking\?order_id=1598765432/,
+  );
+  assert.match(requests[0].rendered.text, /1598765432/);
+});
+
+test("email worker briefly waits for an in-flight CDEK tracking number", async () => {
+  const { db, state } = fakeOutbox({
+    cdekStatus: "creating",
+    cdekNumber: null,
+    createdAt: new Date().toISOString(),
+  });
+  let sendCalled = false;
+  const result = await processEmailOutbox(
+    {
+      config: config({ CDEK_CREATE_SHIPMENTS: "true" }),
+      db,
+    },
+    {
+      limit: 1,
+      workerId: "worker-cdek-wait",
+      sender: {
+        send: async () => {
+          sendCalled = true;
+          throw new Error("must not send while CDEK is creating");
+        },
+      },
+    },
+  );
+
+  assert.equal(sendCalled, false);
+  assert.equal(result.deferred, 1);
+  assert.equal(state.deferred, true);
+  assert.equal(state.status, "retry");
+  assert.equal(state.attemptCount, 0);
+  assert.equal(state.retryDelay, 10_000);
 });
 
 test("temporary provider failures use bounded backoff and eventually fail", async () => {
@@ -249,6 +353,29 @@ test("invalid snapshots and hard-bounced recipients never call the provider", as
       assert.equal(scenario.database.state.status, "failed");
     });
   }
+});
+
+test("marketing outbox is blocked unless the unified contact is subscribed", async () => {
+  const { db, state } = fakeOutbox({ messageClass: "marketing" });
+  let sendCalled = false;
+  const result = await processEmailOutbox(
+    { config: config(), db },
+    {
+      limit: 1,
+      workerId: "worker-marketing-consent",
+      sender: {
+        send: async () => {
+          sendCalled = true;
+          throw new Error("must not send without confirmed consent");
+        },
+      },
+    },
+  );
+
+  assert.equal(sendCalled, false);
+  assert.equal(result.suppressed, 1);
+  assert.equal(state.status, "failed");
+  assert.equal(state.lastError, "email_suppressed_marketing_consent_missing");
 });
 
 test("disabled worker does not touch the database", async () => {

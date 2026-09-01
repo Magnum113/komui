@@ -15,7 +15,9 @@ test("order_paid template renders matching HTML and plaintext order facts", () =
     "Футболка-варёнка Сатору Годжо",
     "Худи Gravity",
     "ул. Тестовая, 1",
-    "Трек-номер пришлём отдельным письмом",
+    "Отследить",
+    "https://www.cdek.ru/ru/tracking?order_id=1598765432",
+    "ИП Кадимагомедов Магомедсайгид Алиевич",
   ]) {
     assert.equal(rendered.text.includes(value), true, value);
     assert.equal(rendered.html.includes(value), true, value);
@@ -26,9 +28,32 @@ test("order_paid template renders matching HTML and plaintext order facts", () =
   assert.match(rendered.text, /Доставка: 350\s₽/);
   assert.match(rendered.html, /^<!doctype html>/);
   assert.match(rendered.html, /<meta name="viewport"/);
+  assert.match(rendered.html, /Отследить в СДЭК/);
+  assert.match(rendered.html, /assets\/ozon-main\/01-/);
+  assert.match(rendered.html, /assets\/email\/komui-wordmark-white@2x\.png/);
+  assert.match(rendered.html, /assets\/email\/komui-wordmark-dark@2x\.png/);
+  assert.match(rendered.html, /https:\/\/komui\.ru\/offer/);
+  assert.equal(rendered.html.includes("Это подтверждение оплаты"), false);
+  assert.equal(rendered.text.includes("кассовый чек"), false);
   assert.equal(rendered.text.includes("промокод"), false);
   assert.equal(rendered.text.includes("специальн"), false);
   assert.equal(rendered.text.includes("рекоменд"), false);
+});
+
+test("order_paid template omits unsafe product images and supports pending tracking", () => {
+  const rendered = renderOrderPaidEmail({
+    ...orderPaidFixture,
+    cdekNumber: null,
+    items: orderPaidFixture.items.map((item) => ({
+      ...item,
+      imageUrl: "https://attacker.example/tracker.gif",
+    })),
+  });
+
+  assert.equal(rendered.html.includes("attacker.example"), false);
+  assert.equal(rendered.html.includes("Отследить в СДЭК"), false);
+  assert.match(rendered.html, /Трек-номер создаётся/);
+  assert.match(rendered.text, /Трек-номер СДЭК создаётся/);
 });
 
 test("order_paid template escapes customer and product content", () => {

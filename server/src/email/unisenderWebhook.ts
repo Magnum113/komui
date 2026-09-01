@@ -433,6 +433,57 @@ async function cancelPendingMarketing(
   return result.rowCount ?? 0;
 }
 
+async function recordProviderUnsubscribes(
+  client: Pick<PoolClient, "query">,
+  actions: SuppressionAction[],
+) {
+  const unsubscribes = actions.filter((action) => action.reason === "unsubscribed");
+  if (!unsubscribes.length) return;
+  await client.query(
+    `
+      /* email_webhook:record_unsubscribe_consent */
+      with incoming as (
+        select email, provider_event_id
+        from jsonb_to_recordset($1::jsonb) as event(
+          email text,
+          provider_event_id text
+        )
+      )
+      insert into public.merch_email_consent_events (
+        event_key,
+        contact_id,
+        action,
+        source,
+        occurred_at,
+        consent_text_version,
+        privacy_policy_version,
+        metadata
+      )
+      select
+        'provider-revoked:' || incoming.provider_event_id,
+        contacts.id,
+        'revoked',
+        'provider',
+        now(),
+        'provider-unsubscribe-v1',
+        'privacy-2026-07-21',
+        jsonb_build_object('provider', 'unisender_go')
+      from incoming
+      join public.merch_email_contacts contacts
+        on contacts.email_normalized = incoming.email
+      on conflict (event_key) do nothing
+    `,
+    [
+      JSON.stringify(
+        unsubscribes.map((action) => ({
+          email: action.email,
+          provider_event_id: action.providerEventId,
+        })),
+      ),
+    ],
+  );
+}
+
 export async function processUnisenderWebhook(
   db: Pick<Db, "withTransaction">,
   payload: UnisenderWebhookPayload,
@@ -450,6 +501,7 @@ export async function processUnisenderWebhook(
   const cancelledMarketingJobs = actions.length
     ? await db.withTransaction(async (client) => {
         await upsertSuppressions(client, actions);
+        await recordProviderUnsubscribes(client, actions);
         return cancelPendingMarketing(client, actions);
       })
     : 0;

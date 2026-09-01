@@ -9,12 +9,16 @@ export const orderPaidFixture: OrderPaidTemplateInput = {
       size: "M",
       quantity: 1,
       lineTotalAmount: 290_000,
+      imageUrl:
+        "https://komui.ru/assets/ozon-main/01-футболка-с-принтом-сатору-годжо.jpg",
     },
     {
       name: "Худи Gravity",
       size: "XL",
       quantity: 1,
       lineTotalAmount: 390_000,
+      imageUrl:
+        "https://komui.ru/assets/ozon-main/03-худи-с-вышивкой-gravity.jpg",
     },
   ],
   subtotalAmount: 680_000,
@@ -25,4 +29,5 @@ export const orderPaidFixture: OrderPaidTemplateInput = {
   deliveryCity: "Москва",
   deliveryAddress: "ул. Тестовая, 1",
   deliveryEta: "Ориентировочно 2–3 рабочих дня",
+  cdekNumber: "1598765432",
 };

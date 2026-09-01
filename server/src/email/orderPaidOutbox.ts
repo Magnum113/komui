@@ -54,6 +54,7 @@ export async function enqueueOrderPaidEmail(
       with inserted as (
         insert into public.merch_email_outbox (
           order_id,
+          contact_id,
           event_type,
           message_class,
           recipient_email,
@@ -65,6 +66,7 @@ export async function enqueueOrderPaidEmail(
         )
         select
           orders.id,
+          contacts.id,
           'order_paid',
           'transactional',
           lower(btrim(orders.customer_email)),
@@ -80,7 +82,8 @@ export async function enqueueOrderPaidEmail(
                     'name', items.product_name,
                     'size', nullif(items.size, ''),
                     'quantity', items.quantity,
-                    'lineTotalAmount', items.line_total_amount
+                    'lineTotalAmount', items.line_total_amount,
+                    'imageUrl', nullif(items.image_url, '')
                   )
                   order by items.id
                 )
@@ -103,6 +106,8 @@ export async function enqueueOrderPaidEmail(
           'pending',
           'order-paid:' || orders.id::text
         from public.merch_customer_orders orders
+        left join public.merch_email_contacts contacts
+          on contacts.email_normalized = lower(btrim(orders.customer_email))
         where orders.id = $1::uuid
           and orders.status = 'paid'
           and exists (

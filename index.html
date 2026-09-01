@@ -497,6 +497,11 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
 .news-consents input{width:12px;height:12px;flex:0 0 auto;margin:0;padding:0;border-radius:3px;accent-color:var(--mag)}
 .news-consents a{color:var(--txt-2);text-decoration:underline;text-underline-offset:2px}
 .news-consents a:hover{color:var(--mag)}
+.news-honeypot{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;clip-path:inset(50%)!important;white-space:nowrap!important}
+.news-status{min-height:18px;margin:2px 0 0!important;font-size:12px!important;line-height:1.35!important;color:var(--txt-3)!important}
+.news-status.success{color:#17804a!important}
+.news-status.error{color:#c43f4b!important}
+.news button:disabled{cursor:wait;opacity:.65}
 .foot-bottom{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:24px;border-top:1px solid var(--line);color:var(--txt-3);font-size:13px;flex-wrap:wrap}
 .page-updated{position:absolute!important;width:1px!important;height:1px!important;margin:-1px!important;padding:0!important;border:0!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;clip-path:inset(50%)!important;white-space:nowrap!important}
 
@@ -1136,13 +1141,15 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
         <p>Расскажем о новых дропах и закрытых распродажах. Без спама.</p>
         <form id="newsForm">
           <div class="news-row">
-            <input class="ym-disable-keys" type="email" placeholder="твой email" required>
-            <button type="submit">→</button>
+            <input class="ym-disable-keys" type="email" id="newsEmail" name="email" autocomplete="email" inputmode="email" placeholder="твой email" required maxlength="254">
+            <button id="newsSubmit" type="submit" aria-label="Подписаться">→</button>
           </div>
           <div class="news-consents">
-            <label><input type="checkbox" required aria-label="Согласен на обработку персональных данных"> Согласен на <a href="/personal-data-consent">обработку персональных данных</a></label>
-            <label><input type="checkbox" required aria-label="Согласен получать письма от KOMUI"> Согласен получать <a href="/marketing-consent">письма от KOMUI</a></label>
+            <label><input id="newsPrivacyConsent" name="privacyConsent" type="checkbox" required aria-label="Согласен на обработку персональных данных"> Согласен на <a href="/personal-data-consent">обработку персональных данных</a></label>
+            <label><input id="newsMarketingConsent" name="marketingConsent" type="checkbox" required aria-label="Согласен получать письма от KOMUI"> Согласен получать <a href="/marketing-consent">письма от KOMUI</a></label>
           </div>
+          <label class="news-honeypot" aria-hidden="true">Компания<input id="newsCompany" name="company" type="text" tabindex="-1" autocomplete="off"></label>
+          <p class="news-status" id="newsStatus" role="status" aria-live="polite"></p>
         </form>
       </div>
     </div>
@@ -2165,7 +2172,40 @@ document.addEventListener('click',e=>{
   jumpToCatalog();
 });
 // newsletter
-$('#newsForm').addEventListener('submit',e=>{e.preventDefault();e.target.reset();toast('Подписка оформлена ✦');});
+$('#newsForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const form=e.currentTarget,email=$('#newsEmail'),button=$('#newsSubmit'),status=$('#newsStatus');
+  if(!form.reportValidity())return;
+  const config=window.KOMUI_API||{};
+  const baseUrl=String(config.baseUrl||'/api').replace(/\/$/,'');
+  const endpoint=config.newsletterSubscribeUrl||baseUrl+'/v1/email/subscribe';
+  button.disabled=true;
+  status.className='news-status';
+  status.textContent='Отправляем письмо…';
+  try{
+    const response=await fetch(endpoint,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        email:email.value.trim(),
+        privacyConsent:$('#newsPrivacyConsent').checked,
+        marketingConsent:$('#newsMarketingConsent').checked,
+        company:$('#newsCompany').value
+      })
+    });
+    const result=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(result?.error?.message||'Не удалось оформить подписку');
+    form.reset();
+    status.className='news-status success';
+    status.textContent='Проверь почту — отправили ссылку для подтверждения.';
+    withAnalytics(analytics=>analytics.goal('newsletter_subscribe_requested',{placement:'footer'}));
+  }catch(error){
+    status.className='news-status error';
+    status.textContent=error?.message||'Не удалось оформить подписку. Попробуй ещё раз.';
+  }finally{
+    button.disabled=false;
+  }
+});
 // header solid on scroll
 addEventListener('scroll',()=>{$('#header').classList.toggle('solid',scrollY>20);},{passive:true});
 
