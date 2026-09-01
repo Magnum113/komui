@@ -1,0 +1,17 @@
+# Public staging callback for Unisender Go. The surrounding staging vhost uses
+# Basic Auth; this exact route is public because provider callbacks cannot pass
+# that browser login. POST authentication is enforced by the backend signature.
+location = /api/v1/webhooks/unisender-go {
+    auth_basic off;
+    client_max_body_size 1m;
+
+    proxy_pass http://127.0.0.1:3000/v1/webhooks/unisender-go;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_connect_timeout 3s;
+    proxy_read_timeout 10s;
+    proxy_send_timeout 10s;
+}

@@ -17,6 +17,7 @@ import {
   findOtherTbankPaymentIdentityOwner,
   lockTbankPaymentIdentity,
 } from "./tbankPaymentIdentity";
+import { enqueueOrderPaidEmail } from "./email/orderPaidOutbox";
 
 export type TbankProviderConfig = {
   terminalKey: string;
@@ -1509,6 +1510,11 @@ async function persistReconciliationResult(
         if (updatedOrder.rows[0]) {
           if (mappedOrderStatus === "paid") {
             await markPromoRedemptionRedeemed(client, attempt.order_id);
+            await enqueueOrderPaidEmail(client, attempt.order_id, {
+              source: "tbank_init_reconciliation",
+              provider_status: result.providerStatus,
+              payment_id: result.paymentId,
+            });
             if (createCdekShipments) {
               await enqueueCdekEffect(client, "cdek_create", attempt.order_id, {
                 source: "tbank_init_reconciliation",

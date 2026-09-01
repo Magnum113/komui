@@ -20,17 +20,40 @@ test("loadConfig parses safe defaults and hides secrets in publicConfig", () => 
   assert.equal(config.TBANK_RECONCILIATION_STALE_MS, 30_000);
   assert.equal(config.TBANK_RECONCILIATION_LEASE_MS, 60_000);
   assert.equal(config.TBANK_RECONCILIATION_MAX_ATTEMPTS, 20);
+  assert.equal(config.EMAIL_ENABLED, false);
+  assert.equal(config.EMAIL_WORKER_ENABLED, false);
+  assert.equal(config.EMAIL_WORKER_INTERVAL_MS, 10_000);
+  assert.equal(config.EMAIL_WORKER_BATCH_SIZE, 10);
+  assert.equal(config.EMAIL_WORKER_LEASE_MS, 120_000);
+  assert.equal(config.EMAIL_WORKER_MAX_ATTEMPTS, 4);
+  assert.equal(config.EMAIL_TEST_MODE, false);
+  assert.equal(config.UNISENDER_GO_REQUEST_TIMEOUT_MS, 10_000);
+  assert.equal(config.UNISENDER_GO_WEBHOOK_ENABLED, false);
 
   const exposed = publicConfig(config);
   assert.equal("DATABASE_URL" in exposed, false);
+  assert.equal("UNISENDER_GO_API_KEY" in exposed, false);
   assert.equal(exposed.adminEnabled, true);
   assert.equal(exposed.yandexMapsConfigured, true);
+  assert.equal(exposed.emailEnabled, false);
+  assert.equal(exposed.emailConfigured, false);
+  assert.equal(exposed.emailWebhookEnabled, false);
+  assert.equal(exposed.emailWebhookConfigured, false);
 });
 
 test("loadConfig rejects non-postgres DATABASE_URL", () => {
   assert.throws(() =>
     loadConfig({
       DATABASE_URL: "https://example.com/database",
+    }),
+  );
+});
+
+test("loadConfig rejects a non-HTTPS email provider endpoint", () => {
+  assert.throws(() =>
+    loadConfig({
+      DATABASE_URL: "postgresql://komui_app:secret@127.0.0.1:5432/komui_test",
+      UNISENDER_GO_API_URL: "http://goapi.unisender.ru/ru/transactional/api/v1",
     }),
   );
 });

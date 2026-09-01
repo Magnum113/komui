@@ -35,6 +35,22 @@ export type OrderItemInput = {
   product_snapshot: Record<string, unknown>;
 };
 
+export const MARKETING_CONSENT_VERSION = "checkout-email-marketing-v1";
+export const MARKETING_CONSENT_SOURCE = "checkout";
+
+export function marketingConsentEvidence(
+  consent: boolean,
+  acceptedAt: string,
+) {
+  return consent
+    ? {
+        at: acceptedAt,
+        version: MARKETING_CONSENT_VERSION,
+        source: MARKETING_CONSENT_SOURCE,
+      }
+    : { at: null, version: null, source: null };
+}
+
 export function text(value: unknown, maxLength: number): string {
   return String(value ?? "").trim().slice(0, maxLength);
 }

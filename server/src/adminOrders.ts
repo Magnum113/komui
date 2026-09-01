@@ -18,6 +18,9 @@ const ORDER_COLUMNS = `
   customer_phone,
   customer_email,
   marketing_consent,
+  marketing_consent_at,
+  marketing_consent_version,
+  marketing_consent_source,
   legal_accepted_at,
   delivery_provider,
   delivery_point_code,
@@ -103,6 +106,13 @@ type Queryable = {
 
 type PaymentStatus = (typeof paymentStatuses)[number];
 type FulfillmentStatus = (typeof fulfillmentStatuses)[number];
+type EmailOutboxStatus =
+  | "pending"
+  | "processing"
+  | "retry"
+  | "sent"
+  | "failed"
+  | "cancelled";
 
 type OrderRow = QueryResultRow & {
   id: string;
@@ -115,6 +125,9 @@ type OrderRow = QueryResultRow & {
   customer_phone: string;
   customer_email: string | null;
   marketing_consent: boolean;
+  marketing_consent_at: Date | string | null;
+  marketing_consent_version: string | null;
+  marketing_consent_source: string | null;
   legal_accepted_at: Date | string;
   delivery_provider: string;
   delivery_point_code: string;
@@ -155,6 +168,12 @@ type OrderListRow = OrderRow & {
   cdek_uuid: string | null;
   cdek_number: string | null;
   cdek_error_message: string | null;
+  order_paid_email_status: EmailOutboxStatus | null;
+  order_paid_email_attempt_count: string | number | null;
+  order_paid_email_last_error: string | null;
+  order_paid_email_sent_at: Date | string | null;
+  order_paid_email_failed_at: Date | string | null;
+  order_paid_email_updated_at: Date | string | null;
 };
 
 type OrderItemRow = QueryResultRow & {
@@ -246,6 +265,9 @@ export type AdminOrderSummary = {
     phone: string;
     email: string | null;
     marketingConsent: boolean;
+    marketingConsentAt: string | null;
+    marketingConsentVersion: string | null;
+    marketingConsentSource: string | null;
   };
   delivery: {
     provider: string;
@@ -287,6 +309,16 @@ export type AdminOrderSummary = {
     uuid: string | null;
     number: string | null;
     errorMessage: string | null;
+  };
+  email: {
+    orderPaid: {
+      status: EmailOutboxStatus;
+      attemptCount: number;
+      lastError: string | null;
+      sentAt: string | null;
+      failedAt: string | null;
+      updatedAt: string;
+    } | null;
   };
   paidAt: string | null;
   shippedAt: string | null;
@@ -340,6 +372,9 @@ export function toAdminOrderSummary(row: OrderListRow): AdminOrderSummary {
       phone: row.customer_phone,
       email: row.customer_email,
       marketingConsent: row.marketing_consent,
+      marketingConsentAt: isoDate(row.marketing_consent_at),
+      marketingConsentVersion: row.marketing_consent_version,
+      marketingConsentSource: row.marketing_consent_source,
     },
     delivery: {
       provider: row.delivery_provider,
@@ -383,6 +418,18 @@ export function toAdminOrderSummary(row: OrderListRow): AdminOrderSummary {
       uuid: row.cdek_uuid,
       number: row.cdek_number,
       errorMessage: row.cdek_error_message,
+    },
+    email: {
+      orderPaid: row.order_paid_email_status
+        ? {
+            status: row.order_paid_email_status,
+            attemptCount: numberValue(row.order_paid_email_attempt_count),
+            lastError: row.order_paid_email_last_error,
+            sentAt: isoDate(row.order_paid_email_sent_at),
+            failedAt: isoDate(row.order_paid_email_failed_at),
+            updatedAt: isoDate(row.order_paid_email_updated_at) ?? "",
+          }
+        : null,
     },
     paidAt: isoDate(row.paid_at),
     shippedAt: isoDate(row.shipped_at),
@@ -510,7 +557,13 @@ function orderSelectSql() {
       shipment.status as cdek_status,
       shipment.cdek_uuid,
       shipment.cdek_number,
-      shipment.error_message as cdek_error_message
+      shipment.error_message as cdek_error_message,
+      order_paid_email.status as order_paid_email_status,
+      order_paid_email.attempt_count as order_paid_email_attempt_count,
+      order_paid_email.last_error as order_paid_email_last_error,
+      order_paid_email.sent_at as order_paid_email_sent_at,
+      order_paid_email.failed_at as order_paid_email_failed_at,
+      order_paid_email.updated_at as order_paid_email_updated_at
     from public.merch_customer_orders o
     left join lateral (
       select
@@ -536,6 +589,20 @@ function orderSelectSql() {
     ) payment on true
     left join public.merch_cdek_shipments shipment
       on shipment.order_id = o.id
+    left join lateral (
+      select
+        status,
+        attempt_count,
+        last_error,
+        sent_at,
+        failed_at,
+        updated_at
+      from public.merch_email_outbox
+      where order_id = o.id
+        and event_type = 'order_paid'
+      order by created_at desc, id desc
+      limit 1
+    ) order_paid_email on true
   `;
 }
 

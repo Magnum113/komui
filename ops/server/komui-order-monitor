@@ -17,6 +17,7 @@ from typing import Any
 
 
 DEFAULT_DB = "komui_production"
+DEFAULT_STAGING_DB = "komui_staging"
 DEFAULT_STATE_PATH = Path("/var/lib/komui/order-monitor/state.json")
 DEFAULT_ALERT_COMMAND = Path("/usr/local/sbin/komui-alert")
 DEFAULT_LOCK_PATH = Path("/run/komui-order-monitor.lock")
@@ -418,6 +419,60 @@ select jsonb_build_object(
 from params p;
 """
 
+EMAIL_FAILURE_SQL = r"""
+with params as (
+  select
+    __SINCE__::timestamptz as since_at,
+    __UNTIL__::timestamptz as checked_at
+),
+email_failure_rows as (
+  select
+    e.id,
+    o.order_number,
+    e.event_type,
+    e.attempt_count,
+    left(coalesce(e.last_error, 'email_delivery_failed'), 120) as last_error,
+    case
+      when position('@' in e.recipient_email) > 1 then
+        left(e.recipient_email, 1) || '***@' ||
+        left(split_part(e.recipient_email, '@', 2), 1) || '***' ||
+        case
+          when position('.' in split_part(e.recipient_email, '@', 2)) > 0 then
+            substring(
+              split_part(e.recipient_email, '@', 2)
+              from position('.' in split_part(e.recipient_email, '@', 2))
+            )
+          else ''
+        end
+      else '***'
+    end as recipient_mask,
+    e.updated_at
+  from public.merch_email_outbox e
+  left join public.merch_customer_orders o on o.id = e.order_id
+  cross join params p
+  where e.status = 'failed'
+    and e.updated_at > p.since_at
+    and e.updated_at <= p.checked_at
+  order by e.updated_at, e.id
+)
+select jsonb_build_object(
+  'count', count(*),
+  'items', coalesce(
+    jsonb_agg(
+      jsonb_build_object(
+        'orderNumber', order_number,
+        'eventType', event_type,
+        'attemptCount', attempt_count,
+        'lastError', last_error,
+        'recipientMask', recipient_mask
+      ) order by updated_at, id
+    ) filter (where id in (select id from email_failure_rows limit 8)),
+    '[]'::jsonb
+  )
+)
+from email_failure_rows;
+"""
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -425,6 +480,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dry-run", action="store_true", help="print findings without alerting or saving state")
     parser.add_argument("--test-alert", action="store_true", help="send a harmless monitor test message")
     parser.add_argument("--database", default=os.environ.get("KOMUI_ORDER_MONITOR_DB", DEFAULT_DB))
+    parser.add_argument(
+        "--staging-database",
+        default=os.environ.get("KOMUI_ORDER_MONITOR_STAGING_DB", DEFAULT_STAGING_DB),
+    )
     parser.add_argument(
         "--state-file",
         type=Path,
@@ -559,6 +618,79 @@ def query_report(
     if not isinstance(report, dict):
         raise RuntimeError("PostgreSQL report is not an object")
     return report
+
+
+def render_email_failure_sql(since: str, until: str) -> str:
+    timestamp = valid_timestamp(since)
+    checked_at = valid_timestamp(until)
+    if not re.fullmatch(r"[0-9T:+.\-Z]+", timestamp):
+        raise ValueError("invalid state timestamp")
+    if not re.fullmatch(r"[0-9T:+.\-Z]+", checked_at):
+        raise ValueError("invalid report timestamp")
+    return (
+        EMAIL_FAILURE_SQL.replace("__SINCE__", f"'{timestamp}'")
+        .replace("__UNTIL__", f"'{checked_at}'")
+    )
+
+
+def query_email_failures(database: str, since: str, until: str) -> dict[str, Any]:
+    if not re.fullmatch(r"[A-Za-z0-9_]+", database):
+        raise ValueError("invalid database name")
+    base_command = [
+        "runuser",
+        "-u",
+        "postgres",
+        "--",
+        "psql",
+        "-X",
+        "-q",
+        "-t",
+        "-A",
+        "-v",
+        "ON_ERROR_STOP=1",
+        "-d",
+        database,
+    ]
+    exists = subprocess.run(
+        [*base_command, "-c", "select to_regclass('public.merch_email_outbox') is not null"],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if exists.returncode != 0:
+        raise RuntimeError(f"PostgreSQL email schema check failed: {exists.stderr.strip()}")
+    if exists.stdout.strip() != "t":
+        return {"count": 0, "items": []}
+
+    completed = subprocess.run(
+        [*base_command, "-c", render_email_failure_sql(since, until)],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        raise RuntimeError(f"PostgreSQL email report failed: {completed.stderr.strip()}")
+    output = completed.stdout.strip()
+    if not output:
+        raise RuntimeError("PostgreSQL email report returned no data")
+    report = json.loads(output)
+    if not isinstance(report, dict):
+        raise RuntimeError("PostgreSQL email report is not an object")
+    return report
+
+
+def merge_email_failure_reports(
+    production: dict[str, Any],
+    staging: dict[str, Any],
+) -> dict[str, Any]:
+    items: list[dict[str, Any]] = []
+    for environment, report in (("production", production), ("staging", staging)):
+        for item in items_of({"emailFailures": report}, "emailFailures"):
+            items.append({**item, "environment": environment})
+    return {
+        "count": int(production.get("count", 0)) + int(staging.get("count", 0)),
+        "items": items[:8],
+    }
 
 
 def count_of(report: dict[str, Any], key: str) -> int:
@@ -807,6 +939,40 @@ def build_alert(
             + "\n• действие: открыть заказ в админке и повторить создание после проверки причины"
         )
 
+    if count_of(report, "emailFailures"):
+        items = items_of(report, "emailFailures")
+        samples = [
+            " · ".join(
+                value
+                for value in (
+                    str(item.get("orderNumber") or "заказ не определён"),
+                    str(item.get("environment") or "production"),
+                    str(item.get("eventType") or "email"),
+                    str(item.get("recipientMask") or "***"),
+                    f"попыток: {int(item.get('attemptCount') or 0)}",
+                    str(item.get("lastError") or "email_delivery_failed"),
+                )
+                if value
+            )
+            for item in items[:8]
+        ]
+        error_codes = {
+            str(item.get("lastError") or "")
+            for item in items
+        }
+        actions = ["открыть заказ и проверить email-очередь"]
+        if "email_provider_auth_rejected" in error_codes:
+            actions.append("проверить API-ключ Unisender Go")
+        if "email_recipient_not_allowed" in error_codes:
+            actions.append("проверить staging allowlist; реальному адресу письмо не отправлено")
+        sections.append(
+            "🚨 Email заказа не отправлен\n"
+            f"• новых ошибок: {count_of(report, 'emailFailures')}\n"
+            + "\n".join(f"• {sample}" for sample in samples)
+            + "\n• действие: "
+            + "; ".join(actions)
+        )
+
     if count_of(report, "cdekEffectReviews"):
         items = items_of(report, "cdekEffectReviews")
         samples = [
@@ -887,6 +1053,24 @@ def main() -> int:
             since,
             last_attempt_id,
             order_cursor_since(since, state),
+        )
+        production_email_failures = query_email_failures(
+            args.database,
+            since,
+            str(report["checkedAt"]),
+        )
+        staging_email_failures = (
+            {"count": 0, "items": []}
+            if args.staging_database == args.database
+            else query_email_failures(
+                args.staging_database,
+                since,
+                str(report["checkedAt"]),
+            )
+        )
+        report["emailFailures"] = merge_email_failure_reports(
+            production_email_failures,
+            staging_email_failures,
         )
         new_order_ids = filter_notified_orders(report, set(previous_notified))
         notified_order_ids = merge_notified_order_ids(previous_notified, new_order_ids)

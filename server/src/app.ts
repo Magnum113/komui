@@ -52,6 +52,7 @@ import {
   normalizeReviewsLimit,
   ReviewsRepository,
 } from "./reviews";
+import { registerUnisenderGoWebhook } from "./email/unisenderWebhook";
 
 type AppOptions = {
   config: AppConfig;
@@ -320,6 +321,10 @@ export function buildApp({ config, db = createDb(config) }: AppOptions) {
   app.post("/v1/webhooks/tbank", async (request, reply) =>
     handleTbankWebhook(request, reply, stage5Context),
   );
+
+  app.register(async (webhookApp) => {
+    await registerUnisenderGoWebhook(webhookApp, stage5Context);
+  });
 
   app.post("/supabase-function", async (request, reply) =>
     handleCompatibilityFunction(request, reply, stage5Context),

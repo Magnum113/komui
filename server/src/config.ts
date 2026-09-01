@@ -136,6 +136,64 @@ const envSchema = z.object({
     .min(1)
     .max(10_000)
     .default(2_000),
+  EMAIL_PROVIDER: z.enum(["unisender_go"]).default("unisender_go"),
+  EMAIL_ENABLED: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
+  EMAIL_WORKER_ENABLED: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
+  EMAIL_WORKER_INTERVAL_MS: z.coerce
+    .number()
+    .int()
+    .min(1_000)
+    .max(300_000)
+    .default(10_000),
+  EMAIL_WORKER_BATCH_SIZE: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .default(10),
+  EMAIL_WORKER_LEASE_MS: z.coerce
+    .number()
+    .int()
+    .min(10_000)
+    .max(900_000)
+    .default(120_000),
+  EMAIL_WORKER_MAX_ATTEMPTS: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(10)
+    .default(4),
+  EMAIL_FROM: z.string().email().optional(),
+  EMAIL_FROM_NAME: z.string().trim().min(1).max(100).default("KOMUI"),
+  EMAIL_REPLY_TO: z.string().email().optional(),
+  EMAIL_TEST_MODE: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
+  EMAIL_ALLOWED_RECIPIENTS: z.string().default(""),
+  EMAIL_SUBJECT_PREFIX: z.string().trim().max(40).default(""),
+  UNISENDER_GO_API_URL: z
+    .string()
+    .url()
+    .startsWith("https://")
+    .default("https://goapi.unisender.ru/ru/transactional/api/v1"),
+  UNISENDER_GO_API_KEY: z.string().min(16).optional(),
+  UNISENDER_GO_WEBHOOK_ENABLED: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
+  UNISENDER_GO_REQUEST_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .min(1_000)
+    .max(30_000)
+    .default(10_000),
 });
 
 export type AppConfig = z.infer<typeof envSchema>;
@@ -172,6 +230,20 @@ export function publicConfig(config: AppConfig) {
     cdekMock: config.CDEK_MOCK,
     cdekCreateShipments: config.CDEK_CREATE_SHIPMENTS,
     ozonImportEnvFileConfigured: Boolean(config.OZON_IMPORT_ENV_FILE),
+    emailProvider: config.EMAIL_PROVIDER,
+    emailEnabled: config.EMAIL_ENABLED,
+    emailWorkerEnabled: config.EMAIL_WORKER_ENABLED,
+    emailConfigured: Boolean(
+      config.EMAIL_FROM &&
+        config.EMAIL_REPLY_TO &&
+        config.UNISENDER_GO_API_KEY,
+    ),
+    emailTestMode: config.EMAIL_TEST_MODE,
+    emailAllowlistConfigured: Boolean(
+      config.EMAIL_ALLOWED_RECIPIENTS.trim(),
+    ),
+    emailWebhookEnabled: config.UNISENDER_GO_WEBHOOK_ENABLED,
+    emailWebhookConfigured: Boolean(config.UNISENDER_GO_API_KEY),
   };
 }
 

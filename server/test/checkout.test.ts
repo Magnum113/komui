@@ -1,11 +1,29 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  MARKETING_CONSENT_SOURCE,
+  MARKETING_CONSENT_VERSION,
+  marketingConsentEvidence,
   normalizePhone,
   orderNumber,
   validateClientIdentity,
   validatedCart,
 } from "../src/checkout";
+
+test("marketing consent evidence records an explicit version and source", () => {
+  const acceptedAt = "2026-08-31T18:30:00.000Z";
+
+  assert.deepEqual(marketingConsentEvidence(true, acceptedAt), {
+    at: acceptedAt,
+    version: MARKETING_CONSENT_VERSION,
+    source: MARKETING_CONSENT_SOURCE,
+  });
+  assert.deepEqual(marketingConsentEvidence(false, acceptedAt), {
+    at: null,
+    version: null,
+    source: null,
+  });
+});
 
 test("orderNumber uses compact numeric format", () => {
   assert.match(orderNumber(), /^KOM-\d{9}$/);

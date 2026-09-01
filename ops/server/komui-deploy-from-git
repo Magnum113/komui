@@ -227,6 +227,123 @@ enforce_payment_consistency_compatibility() {
   fi
 }
 
+email_mvp_database_signature() {
+  runuser -u postgres -- psql -X -v ON_ERROR_STOP=1 -At -d "$database_name" <<'SQL'
+select concat_ws('|',
+  ((select count(*)
+      from information_schema.columns
+     where table_schema = 'public'
+       and table_name = 'merch_customer_orders'
+       and column_name in (
+         'marketing_consent_at',
+         'marketing_consent_version',
+         'marketing_consent_source'
+       )) = 3)::int,
+  (to_regclass('public.merch_email_outbox') is not null)::int,
+  (to_regclass('public.merch_email_suppressions') is not null)::int,
+  (exists (
+    select 1
+      from pg_constraint
+     where conrelid = to_regclass('public.merch_email_outbox')
+       and contype = 'u'
+       and pg_get_constraintdef(oid) like '%idempotency_key%'
+  ))::int,
+  (to_regclass('public.merch_email_outbox_due_idx') is not null)::int,
+  (exists (
+    select 1
+      from pg_class c
+      join pg_namespace n on n.oid = c.relnamespace
+     where n.nspname = 'public'
+       and c.relname = 'merch_email_outbox'
+       and c.relrowsecurity
+  ))::int,
+  (exists (
+    select 1
+      from pg_class c
+      join pg_namespace n on n.oid = c.relnamespace
+     where n.nspname = 'public'
+       and c.relname = 'merch_email_suppressions'
+       and c.relrowsecurity
+  ))::int,
+  (case
+    when to_regclass('public.merch_email_outbox') is null
+      or not exists (select 1 from pg_roles where rolname = 'komui_app')
+      then false
+    else has_table_privilege('komui_app', 'public.merch_email_outbox', 'SELECT')
+      and has_table_privilege('komui_app', 'public.merch_email_outbox', 'INSERT')
+      and has_table_privilege('komui_app', 'public.merch_email_outbox', 'UPDATE')
+  end)::int,
+  (exists (
+    select 1
+      from pg_policies
+     where schemaname = 'public'
+       and tablename = 'merch_email_outbox'
+       and policyname = 'Backend access to email outbox'
+  ))::int,
+  (exists (
+    select 1
+      from pg_constraint
+     where conrelid = to_regclass('public.merch_customer_orders')
+       and conname = 'merch_customer_orders_marketing_consent_evidence_check'
+       and convalidated
+  ))::int
+);
+SQL
+}
+
+enforce_email_mvp_compatibility() {
+  local required_source_files=(
+    "supabase/migrations/20260831193000_add_email_mvp_foundation.sql"
+    "server/src/email/orderPaidOutbox.ts"
+    "server/src/email/outboxWorker.ts"
+    "server/src/email/unisenderGo.ts"
+    "server/src/email/unisenderWebhook.ts"
+    "server/src/emailWorker.ts"
+    "server/src/email/templates/order-paid/index.ts"
+  )
+  local present_source_files=0
+  local required_file
+  local source_state
+  local database_signature
+  local database_state
+
+  for required_file in "${required_source_files[@]}"; do
+    if [[ -f "$source_dir/$required_file" ]]; then
+      present_source_files=$((present_source_files + 1))
+    fi
+  done
+
+  if [[ "$present_source_files" -eq 0 ]]; then
+    source_state="legacy"
+  elif [[ "$present_source_files" -eq "${#required_source_files[@]}" ]]; then
+    source_state="email-mvp-v1"
+  else
+    fail "origin/$branch has a partial email-MVP source set ($present_source_files/${#required_source_files[@]} required files); refusing deploy"
+  fi
+
+  if ! database_signature="$(email_mvp_database_signature)"; then
+    fail "could not verify email-MVP schema in $database_name"
+  fi
+
+  case "$database_signature" in
+    0\|0\|0\|0\|0\|0\|0\|0\|0\|0)
+      database_state="legacy"
+      ;;
+    1\|1\|1\|1\|1\|1\|1\|1\|1\|1)
+      database_state="email-mvp-v1"
+      ;;
+    *)
+      fail "$database_name has a partial or invalid email-MVP schema (signature=$database_signature); refusing deploy"
+      ;;
+  esac
+
+  log "email_mvp_source=$source_state"
+  log "email_mvp_database=$database_state"
+  if [[ "$source_state" != "$database_state" ]]; then
+    fail "email-MVP source/schema mismatch for $target: source=$source_state database=$database_state; use the controlled migration rollout"
+  fi
+}
+
 (
   flock -n 9 || fail "another deploy is already running"
 
@@ -262,6 +379,7 @@ enforce_payment_consistency_compatibility() {
   log "release=$release"
 
   enforce_payment_consistency_compatibility
+  enforce_email_mvp_compatibility
   if [[ "$check_compatibility_only" -eq 1 ]]; then
     log "COMPATIBILITY_OK target=$target branch=$branch commit=$commit database=$database_name"
     exit 0
@@ -306,6 +424,7 @@ enforce_payment_consistency_compatibility() {
       api_base="http://127.0.0.1:3000"
       backend_current="/opt/komui/current"
       backend_unit="komui-backend"
+      email_worker_unit="komui-email-worker"
       backend_ready_url="http://127.0.0.1:3000/health/ready"
       frontend_releases="/opt/komui/frontend-releases"
       frontend_current="/var/lib/komui/staging-root"
@@ -315,6 +434,7 @@ enforce_payment_consistency_compatibility() {
       api_base="http://127.0.0.1:3001"
       backend_current="/opt/komui/production-current"
       backend_unit="komui-production-backend"
+      email_worker_unit="komui-production-email-worker"
       backend_ready_url="http://127.0.0.1:3001/health/ready"
       frontend_releases="/opt/komui/production-frontend-releases"
       frontend_current="/var/lib/komui/production-root"
@@ -353,6 +473,11 @@ enforce_payment_consistency_compatibility() {
   frontend_release_dir="$frontend_releases/$release"
   previous_backend="$(readlink -f "$backend_current" 2>/dev/null || true)"
   previous_frontend="$(readlink -f "$frontend_current" 2>/dev/null || true)"
+  email_worker_managed=0
+  if systemctl is-active --quiet "$email_worker_unit" ||
+    systemctl is-enabled --quiet "$email_worker_unit" 2>/dev/null; then
+    email_worker_managed=1
+  fi
 
   log "creating backend release $backend_release_dir"
   rm -rf "$backend_release_dir"
@@ -383,6 +508,8 @@ enforce_payment_consistency_compatibility() {
 
   log "rechecking payment-consistency compatibility before activation"
   enforce_payment_consistency_compatibility
+  log "rechecking email-MVP compatibility before activation"
+  enforce_email_mvp_compatibility
 
   log "activating backend"
   ln -sfnT "$backend_release_dir" "$backend_current"
@@ -398,9 +525,32 @@ enforce_payment_consistency_compatibility() {
     if [[ -n "$previous_backend" && -d "$previous_backend" ]]; then
       ln -sfnT "$previous_backend" "$backend_current"
       systemctl restart "$backend_unit" || true
+      if [[ "$email_worker_managed" -eq 1 ]]; then
+        systemctl restart "$email_worker_unit" || true
+      fi
     fi
     fail "backend activation failed"
   }
+
+  if [[ "$email_worker_managed" -eq 1 ]]; then
+    log "restarting email worker"
+    systemctl restart "$email_worker_unit"
+    for _ in $(seq 1 15); do
+      if systemctl is-active --quiet "$email_worker_unit"; then
+        break
+      fi
+      sleep 1
+    done
+    if ! systemctl is-active --quiet "$email_worker_unit"; then
+      log "email worker failed, restoring previous backend"
+      if [[ -n "$previous_backend" && -d "$previous_backend" ]]; then
+        ln -sfnT "$previous_backend" "$backend_current"
+        systemctl restart "$backend_unit" || true
+        systemctl restart "$email_worker_unit" || true
+      fi
+      fail "email worker activation failed"
+    fi
+  fi
 
   log "activating frontend"
   ln -sfnT "$frontend_release_dir" "$frontend_current"

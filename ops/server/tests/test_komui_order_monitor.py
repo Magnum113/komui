@@ -35,6 +35,7 @@ class OrderMonitorAlertTest(unittest.TestCase):
             "paymentReviews": {"count": 0, "items": []},
             "cdekEffectReviews": {"count": 0, "items": []},
             "cdekFailures": {"count": 0, "items": []},
+            "emailFailures": {"count": 0, "items": []},
             "paidWithoutShipment": [],
         }
 
@@ -201,6 +202,72 @@ class OrderMonitorAlertTest(unittest.TestCase):
         self.assertIn("'cdekEffectReviews'", sql)
         self.assertIn("pa.provider_status = 'INIT_UNKNOWN'", sql)
         self.assertIn("'initUnknowns'", sql)
+
+    def test_email_failure_alert_is_masked_and_explains_auth_rejection(self) -> None:
+        report = self.empty_report()
+        report["emailFailures"] = {
+            "count": 1,
+            "items": [
+                {
+                    "orderNumber": "KOM-880",
+                    "environment": "staging",
+                    "eventType": "order_paid",
+                    "attemptCount": 1,
+                    "lastError": "email_provider_auth_rejected",
+                    "recipientMask": "b***@e***.com",
+                }
+            ],
+        }
+
+        body, _ = self.monitor.build_alert(report, set())
+
+        self.assertIn("Email заказа не отправлен", body)
+        self.assertIn("KOM-880", body)
+        self.assertIn("staging", body)
+        self.assertIn("b***@e***.com", body)
+        self.assertIn("проверить API-ключ Unisender Go", body)
+        self.assertNotIn("buyer@example.com", body)
+
+    def test_email_failure_reports_keep_environment_without_recipient_data(self) -> None:
+        merged = self.monitor.merge_email_failure_reports(
+            {
+                "count": 1,
+                "items": [
+                    {
+                        "orderNumber": "KOM-881",
+                        "recipientMask": "b***@e***.com",
+                    }
+                ],
+            },
+            {
+                "count": 1,
+                "items": [
+                    {
+                        "orderNumber": "KOM-STAGE-1",
+                        "recipientMask": "o***@e***.com",
+                    }
+                ],
+            },
+        )
+
+        self.assertEqual(merged["count"], 2)
+        self.assertEqual(merged["items"][0]["environment"], "production")
+        self.assertEqual(merged["items"][1]["environment"], "staging")
+        self.assertNotIn("recipientEmail", merged["items"][0])
+
+    def test_email_failure_query_filters_new_terminal_failures_and_masks_in_sql(self) -> None:
+        sql = self.monitor.render_email_failure_sql(
+            "2026-09-01T10:00:00Z",
+            "2026-09-01T10:01:00Z",
+        )
+
+        self.assertIn("from public.merch_email_outbox e", sql)
+        self.assertIn("e.status = 'failed'", sql)
+        self.assertIn("e.updated_at > p.since_at", sql)
+        self.assertIn("e.updated_at <= p.checked_at", sql)
+        self.assertIn("2026-09-01T10:01:00Z", sql)
+        self.assertIn("recipient_mask", sql)
+        self.assertNotIn("recipient_email'", sql)
 
     def test_state_timestamp_rejects_untrusted_sql_text(self) -> None:
         with self.assertRaises(ValueError):

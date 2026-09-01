@@ -2680,7 +2680,7 @@ test("reconciliation rechecks the locked order amount before projecting CONFIRME
   );
 });
 
-test("confirmed reconciliation updates financial state and enqueues fulfillment atomically", async () => {
+test("confirmed reconciliation atomically enqueues fulfillment and order email", async () => {
   const sqlLog: string[] = [];
   const claimed = {
     id: 51,
@@ -2774,6 +2774,10 @@ test("confirmed reconciliation updates financial state and enqueues fulfillment 
   assert.equal(result?.providerStatus, "CONFIRMED");
   assert.equal(sqlLog.some((sql) => sql.includes("set status = 'redeemed'")), true);
   assert.equal(sqlLog.some((sql) => sql.includes("cdek_effect:enqueue")), true);
+  assert.equal(
+    sqlLog.some((sql) => sql.includes("email_outbox:enqueue_order_paid")),
+    true,
+  );
 });
 
 test("direct PARTIAL_REFUNDED reconciliation keeps an unpaid order in payment_review", async () => {

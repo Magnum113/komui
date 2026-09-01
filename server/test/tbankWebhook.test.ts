@@ -51,6 +51,8 @@ type FakeState = {
   attemptUpdates: number;
   cdekEffects: string[];
   cdekEffectPayloads: Array<Record<string, unknown>>;
+  emailOutbox: string[];
+  emailOutboxContexts: Array<Record<string, unknown>>;
   queryLog: string[];
   transactionActive: boolean;
 };
@@ -99,6 +101,8 @@ function fakeDb(overrides: {
     attemptUpdates: 0,
     cdekEffects: [],
     cdekEffectPayloads: [],
+    emailOutbox: [],
+    emailOutboxContexts: [],
     queryLog: [],
     transactionActive: false,
   };
@@ -259,6 +263,24 @@ function fakeDb(overrides: {
         ],
       };
     }
+    if (normalized.includes("/* email_outbox:enqueue_order_paid */")) {
+      assert.equal(state.transactionActive, true, "email intent is in payment transaction");
+      if (state.emailOutbox.includes(state.order.id)) return { rows: [] };
+      state.emailOutbox.push(state.order.id);
+      state.emailOutboxContexts.push(
+        JSON.parse(String(values[1])) as Record<string, unknown>,
+      );
+      return {
+        rows: [
+          {
+            id: "5d703bc3-028f-4c4e-bf87-130c8294b991",
+            order_id: state.order.id,
+            idempotency_key: `order-paid:${state.order.id}`,
+            status: "pending",
+          },
+        ],
+      };
+    }
     throw new Error(`Unexpected SQL in fake DB: ${normalized}`);
   };
 
@@ -285,6 +307,10 @@ function fakeDb(overrides: {
         cdekEffectPayloads: state.cdekEffectPayloads.map((payload) => ({
           ...payload,
         })),
+        emailOutbox: [...state.emailOutbox],
+        emailOutboxContexts: state.emailOutboxContexts.map((payload) => ({
+          ...payload,
+        })),
       };
       try {
         return await callback({ query } as unknown as PoolClient);
@@ -299,6 +325,8 @@ function fakeDb(overrides: {
         state.attemptUpdates = snapshot.attemptUpdates;
         state.cdekEffects = snapshot.cdekEffects;
         state.cdekEffectPayloads = snapshot.cdekEffectPayloads;
+        state.emailOutbox = snapshot.emailOutbox;
+        state.emailOutboxContexts = snapshot.emailOutboxContexts;
         throw error;
       } finally {
         state.transactionActive = false;
@@ -1106,6 +1134,8 @@ test("HTTP webhook acknowledges after atomically queuing paid CDEK effect", asyn
   assert.equal(duplicateResponse.statusCode, 200);
   assert.equal(duplicateResponse.body, "OK");
   assert.deepEqual(state.cdekEffects, ["cdek_create"]);
+  assert.deepEqual(state.emailOutbox, [orderId]);
+  assert.equal(state.emailOutboxContexts[0]?.source, "tbank_webhook");
   assert.equal(state.order.status, "paid");
   assert.equal(
     state.queryLog.some(

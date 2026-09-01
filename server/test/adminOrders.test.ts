@@ -23,7 +23,11 @@ function orderRow(overrides: Record<string, unknown> = {}) {
     customer_first_name: "Иван",
     customer_last_name: "Иванов",
     customer_phone: "+79995330015",
+    customer_email: "ivan@example.com",
     marketing_consent: true,
+    marketing_consent_at: "2026-06-30T09:00:00.000Z",
+    marketing_consent_version: "checkout-email-marketing-v1",
+    marketing_consent_source: "checkout",
     legal_accepted_at: "2026-06-30T09:00:00.000Z",
     delivery_provider: "cdek",
     delivery_point_code: "KOMUI-STAGE-PVZ",
@@ -61,6 +65,12 @@ function orderRow(overrides: Record<string, unknown> = {}) {
     cdek_uuid: "cdek-uuid",
     cdek_number: "10288069122",
     cdek_error_message: null,
+    order_paid_email_status: "sent",
+    order_paid_email_attempt_count: "1",
+    order_paid_email_last_error: null,
+    order_paid_email_sent_at: "2026-06-30T09:06:00.000Z",
+    order_paid_email_failed_at: null,
+    order_paid_email_updated_at: "2026-06-30T09:06:00.000Z",
     ...overrides,
   };
 }
@@ -84,6 +94,26 @@ test("toAdminOrderSummary keeps payment, fulfillment and CDEK statuses separate"
   assert.equal(summary.cdek.status, "created");
   assert.equal(summary.cdek.number, "10288069122");
   assert.equal(summary.amounts.total, 325000);
+  assert.deepEqual(summary.email, {
+    orderPaid: {
+      status: "sent",
+      attemptCount: 1,
+      lastError: null,
+      sentAt: "2026-06-30T09:06:00.000Z",
+      failedAt: null,
+      updatedAt: "2026-06-30T09:06:00.000Z",
+    },
+  });
+  assert.deepEqual(summary.customer, {
+    firstName: "Иван",
+    lastName: "Иванов",
+    phone: "+79995330015",
+    email: "ivan@example.com",
+    marketingConsent: true,
+    marketingConsentAt: "2026-06-30T09:00:00.000Z",
+    marketingConsentVersion: "checkout-email-marketing-v1",
+    marketingConsentSource: "checkout",
+  });
   assert.deepEqual(summary.firstItem, {
     id: 42,
     productId: "product-id",
@@ -173,6 +203,32 @@ test("admin order detail exposes safe order effect status without payload", asyn
     },
   ]);
   assert.equal("payload" in response.orderEffects[0], false);
+  assert.deepEqual(response.order.email.orderPaid, {
+    status: "sent",
+    attemptCount: 1,
+    lastError: null,
+    sentAt: "2026-06-30T09:06:00.000Z",
+    failedAt: null,
+    updatedAt: "2026-06-30T09:06:00.000Z",
+  });
+  assert.equal("recipientEmail" in response.order.email.orderPaid, false);
+  assert.equal("providerMessageId" in response.order.email.orderPaid, false);
+  assert.equal("payload" in response.order.email.orderPaid, false);
+});
+
+test("admin order summary reports absent order_paid email without inventing delivery", () => {
+  const summary = toAdminOrderSummary(
+    orderRow({
+      order_paid_email_status: null,
+      order_paid_email_attempt_count: null,
+      order_paid_email_last_error: null,
+      order_paid_email_sent_at: null,
+      order_paid_email_failed_at: null,
+      order_paid_email_updated_at: null,
+    }),
+  );
+
+  assert.deepEqual(summary.email, { orderPaid: null });
 });
 
 test("POST /admin/storefront/orders/:id/mark-shipped marks paid order as shipped", async () => {

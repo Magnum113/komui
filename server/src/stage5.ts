@@ -13,6 +13,7 @@ import {
 import {
   cdekPackageInputsFromOrderItems,
   CheckoutRepository,
+  marketingConsentEvidence,
   normalizeEmail,
   normalizePhone,
   orderNumber,
@@ -36,6 +37,7 @@ import {
   TbankWebhookOrderMismatchError,
   TbankWebhookOrderNotFoundError,
 } from "./tbankWebhook";
+import { enqueueOrderPaidEmail } from "./email/orderPaidOutbox";
 import {
   markTbankInitUnknown,
   persistTbankInitSuccess,
@@ -490,6 +492,9 @@ async function insertCheckoutOrder(
         customer_phone,
         customer_email,
         marketing_consent,
+        marketing_consent_at,
+        marketing_consent_version,
+        marketing_consent_source,
         legal_accepted_at,
         delivery_provider,
         delivery_point_code,
@@ -507,9 +512,10 @@ async function insertCheckoutOrder(
         metadata
       )
       values (
-        $1::uuid, $2, $3, $4, $5, $6, $7, $8, $9::boolean, $10::timestamptz,
-        'cdek', $11, $12, $13, $14, $15, $16, 'RUB', $17, $18, $19, $20,
-        'storefront', $21::jsonb
+        $1::uuid, $2, $3, $4, $5, $6, $7, $8, $9::boolean,
+        $10::timestamptz, $11, $12, $13::timestamptz,
+        'cdek', $14, $15, $16, $17, $18, $19, 'RUB', $20, $21, $22, $23,
+        'storefront', $24::jsonb
       )
       returning id
     `,
@@ -523,6 +529,9 @@ async function insertCheckoutOrder(
       order.customer_phone,
       order.customer_email,
       order.marketing_consent,
+      order.marketing_consent_at,
+      order.marketing_consent_version,
+      order.marketing_consent_source,
       order.legal_accepted_at,
       order.delivery_point_code,
       order.delivery_city,
@@ -761,6 +770,10 @@ export async function handleTbankCreatePayment(
   );
   const total = subtotal - discount + chargedDeliveryAmount;
   const legalAcceptedAt = new Date().toISOString();
+  const consentEvidence = marketingConsentEvidence(
+    marketingConsent,
+    legalAcceptedAt,
+  );
   const delivery = {
     code: deliveryPoint.code,
     cityCode: deliveryCityCode,
@@ -823,6 +836,9 @@ export async function handleTbankCreatePayment(
           customer_phone: phone,
           customer_email: email,
           marketing_consent: marketingConsent,
+          marketing_consent_at: consentEvidence.at,
+          marketing_consent_version: consentEvidence.version,
+          marketing_consent_source: consentEvidence.source,
           legal_accepted_at: legalAcceptedAt,
           delivery_point_code: delivery.code,
           delivery_city: delivery.city || "СДЭК",
@@ -1315,6 +1331,14 @@ export async function handleTbankWebhook(
             payment_event_hash: transition.eventHash,
             provider_status: transition.providerStatus,
           };
+          if (transition.becamePaid) {
+            await enqueueOrderPaidEmail(client, transition.orderId, {
+              source: "tbank_webhook",
+              payment_event_id: transition.eventId,
+              payment_event_hash: transition.eventHash,
+              provider_status: transition.providerStatus,
+            });
+          }
           if (transition.becamePaid && config.CDEK_CREATE_SHIPMENTS) {
             await enqueueCdekEffect(
               client,

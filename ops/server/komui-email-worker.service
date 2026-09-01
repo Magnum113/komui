@@ -1,0 +1,47 @@
+[Unit]
+Description=KOMUI staging transactional email worker
+After=network-online.target postgresql.service komui-backend.service
+Wants=network-online.target
+ConditionPathExists=/opt/komui/current/backend/dist/emailWorker.js
+
+[Service]
+Type=simple
+User=komui
+Group=komui
+WorkingDirectory=/opt/komui/current/backend
+EnvironmentFile=/etc/komui/backend.env
+Environment=DATABASE_POOL_MAX=2
+ExecStart=/usr/bin/node /opt/komui/current/backend/dist/emailWorker.js
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=30
+TimeoutStopSec=30
+KillSignal=SIGTERM
+UMask=0027
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+ReadWritePaths=/var/lib/komui /var/log/komui
+
+MemoryHigh=300M
+MemoryMax=500M
+TasksMax=96
+LimitNOFILE=4096
+
+StandardOutput=append:/var/log/komui/email-worker-staging.log
+StandardError=append:/var/log/komui/email-worker-staging-error.log
+
+[Install]
+WantedBy=multi-user.target
