@@ -108,8 +108,8 @@ Unisender Go API
 | 4. Worker и событие оплаты | Надёжная очередь, повторы и отсутствие дублей | 10–11 | завершён на staging |
 | 5. Webhook и suppression | Отписки, bounce и жалобы блокируют отправку | 13–14 | завершён на staging |
 | 6. Наблюдаемость и Admin API | Healthcheck, Telegram и минимальный статус заказа | 16–17 | завершён на staging |
-| 7. Staging и приёмочные тесты | Безопасная отправка только на allowlist | 18–19 | техническая приёмка завершена; ожидается ручная проверка письма |
-| 8. Production и расширение | `order_paid`, затем СДЭК и маркетинговый dry-run | 12, 15, 19 | ожидает |
+| 7. Staging и приёмочные тесты | Безопасная отправка только на allowlist | 18–19 | завершён, включая Gmail и аутентификацию письма |
+| 8. Production и расширение | `order_paid`, затем СДЭК и маркетинговый dry-run | 12, 15, 19 | production `order_paid` включён; идёт наблюдение за первой реальной отправкой |
 
 ### Этап 1. Провайдер и безопасная конфигурация
 
@@ -410,12 +410,65 @@ worker и production email-флаги оставлены выключенным�
 - [x] автоматическая приёмка включает 273 backend-теста, 69 ops-тестов,
   TypeScript-сборку и `git diff --check`;
 - [x] Supabase Edge Function и Supabase checkout RPC не изменялись.
+- [x] письмо доставлено в Gmail за одну секунду; в исходных заголовках
+  подтверждены `SPF=PASS`, `DKIM=PASS` для `komui.ru` и `DMARC=PASS`;
+- [x] обнаруженный в поле получателя буквальный placeholder `${to_name}`
+  полностью удалён из API payload: клиент больше не передаёт необязательные
+  `substitutions`, а regression-тест запрещает возврат `to_name`;
+- [x] исправление развёрнуто на staging в релизе
+  `20260901T111238Z-stage-b3fdd98ca31d`, после чего второе тестовое письмо
+  `STAGE-EMAIL-7BFF502F` принято провайдером с первой попытки;
+- [x] production-сборка дополнительно проверена на отсутствие `${to_name}`,
+  `"to_name"` и `recipientName` в скомпилированном email-модуле.
 
-Для полного закрытия этапа остаётся ручная проверка полученного тестового
-письма: Gmail inbox/spam, мобильная вёрстка, ссылки и изображения, а также
-наличие `SPF=PASS`, `DKIM=PASS` и `DMARC=PASS` в исходных заголовках. Проверки
-Яндекс Почты и Mail.ru можно выполнить перед production или сразу после первой
-стабильной production-отправки на собственные тестовые адреса.
+Проверки Яндекс Почты и Mail.ru остаются полезной дополнительной проверкой
+доставляемости, но не блокируют MVP после успешной приёмки Gmail и прохождения
+SPF, DKIM и DMARC.
+
+### Этап 8. Production и расширение
+
+Production-часть `order_paid` включена 1 сентября 2026 года:
+
+- [x] перед изменением схемы создан проверенный backup
+  `/var/backups/komui/migrations/komui_production-before-payment-email-20260901T111608Z.dump`
+  и отдельный SHA-256 файл;
+- [x] миграции payment consistency и email MVP сначала успешно выполнены в
+  транзакции с `ROLLBACK`, затем применены к `komui_production` одной
+  транзакцией;
+- [x] deploy compatibility-gate подтвердил полные состояния
+  `payment-consistency-v1` и `email-mvp-v1`, частичная схема не активировалась;
+- [x] GitHub `main` обновлён fast-forward до `b3fdd98ca31d`, production backend
+  и frontend развёрнуты как релиз
+  `20260901T111912Z-prod-b3fdd98ca31d`;
+- [x] первый production deploy выполнен с `EMAIL_ENABLED=false` и
+  `EMAIL_WORKER_ENABLED=false`; до smoke-проверки письма не ставились в
+  очередь и не отправлялись;
+- [x] после ответов 200 от readiness, каталога и checkout включены только
+  `EMAIL_ENABLED=true` и `EMAIL_WORKER_ENABLED=true`; production остаётся с
+  `EMAIL_TEST_MODE=false`, без allowlist и без маркетинговых заданий;
+- [x] `komui-production-email-worker.service` включён и активен; staging и
+  production worker используют разные release/env/database;
+- [x] production callback
+  `https://komui.ru/api/v1/webhooks/unisender-go` включён и зарегистрирован в
+  Unisender как активный `json_post` webhook для `unsubscribed`,
+  `hard_bounced` и `spam`; staging callback сохранён отдельно;
+- [x] после включения обе email-очереди имеют 0 окончательных и просроченных
+  ошибок, backend и production worker не содержат ошибок уровня `err`;
+- [x] синтетический production-заказ не создавался, старые оплаченные заказы
+  намеренно не backfill-ятся: первое письмо уйдёт только при новом первом
+  переходе реального заказа в `paid`;
+- [x] Supabase Edge Function и Supabase checkout RPC не изменялись.
+
+До полного закрытия наблюдения за этапом 8 остаётся:
+
+1. проверить ровно одно письмо после первой новой реальной подтверждённой
+   оплаты: outbox должен перейти `pending -> processing -> sent` с одним
+   idempotency key;
+2. убедиться, что повтор webhook Т-Банка не создал дубль;
+3. после периода стабильной работы отдельно принять решение о включении
+   `shipment_created`;
+4. маркетинговый dry-run выполнять только отдельной read-only операцией после
+   проверки consent и suppression; он не включён текущим rollout.
 
 ## 5. Подготовка Unisender и DNS
 
