@@ -46,6 +46,7 @@ export function renderSubscriptionConfirmationEmail(
       "",
       "KOMUI",
       "https://komui.ru",
+      "Отписаться: {{UnsubscribeUrl}}",
     ].join("\n"),
     html: `<!doctype html>
 <html lang="ru">
@@ -82,7 +83,11 @@ export function renderSubscriptionConfirmationEmail(
             </td>
           </tr>
           <tr>
-            <td style="padding:20px 28px;border-top:1px solid #e8eaf2;background:#fafbfe;font-size:11px;line-height:1.5;color:#9a9fb1;">KOMUI · komui.ru</td>
+            <td style="padding:20px 28px;border-top:1px solid #e8eaf2;background:#fafbfe;font-size:11px;line-height:1.5;color:#9a9fb1;">
+              KOMUI · <a href="https://komui.ru" style="color:#73798d;text-decoration:underline;">komui.ru</a>
+              <span style="color:#c5c9d5;"> · </span>
+              <a href="{{UnsubscribeUrl}}" style="color:#9a9fb1;text-decoration:underline;">Отписаться</a>
+            </td>
           </tr>
         </table>
       </td>

@@ -101,6 +101,32 @@ test("provider idempotency key is stable, opaque and within provider limit", () 
   assert.equal(first.length <= 64, true);
 });
 
+test("subscription confirmation uses a custom compact unsubscribe link", async () => {
+  let capturedInit: RequestInit | undefined;
+  const fetchMock = async (_input: string | URL, init?: RequestInit) => {
+    capturedInit = init;
+    return new Response(
+      JSON.stringify({ status: "success", job_id: "subscription-job" }),
+      { status: 200, headers: { "Content-Type": "application/json" } },
+    );
+  };
+  await new UnisenderGoClient(emailConfig(), fetchMock).send({
+    ...request,
+    templateKey: "subscription_confirmation",
+    idempotencyKey: "subscription-confirm:test",
+    rendered: {
+      subject: "Подтвердите подписку",
+      html: '<a href="{{UnsubscribeUrl}}">Отписаться</a>',
+      text: "Отписаться: {{UnsubscribeUrl}}",
+    },
+  });
+
+  const payload = JSON.parse(String(capturedInit?.body));
+  assert.equal(payload.message.template_engine, "simple");
+  assert.match(payload.message.body.html, /\{\{UnsubscribeUrl\}\}/);
+  assert.equal("skip_unsubscribe" in payload.message, false);
+});
+
 test("test mode refuses every recipient outside the allowlist", async () => {
   let fetchCalled = false;
   const client = new UnisenderGoClient(emailConfig(), async () => {

@@ -108,7 +108,11 @@ test("subscription confirmation template contains one safe KOMUI confirmation ac
   assert.match(rendered.subject, /Подтвердите подписку/);
   assert.match(rendered.html, /komui-wordmark-white/);
   assert.match(rendered.html, /Подтвердить подписку/);
+  assert.match(rendered.html, /href="\{\{UnsubscribeUrl\}\}"/);
+  assert.match(rendered.html, />Отписаться</);
   assert.match(rendered.text, /Ссылка действует 24 часа/);
+  assert.match(rendered.text, /Отписаться: \{\{UnsubscribeUrl\}\}/);
+  assert.doesNotMatch(rendered.html, /Это сообщение было отправлено/i);
   assert.doesNotMatch(rendered.html, /акци[яи]|промокод/i);
 });
 
