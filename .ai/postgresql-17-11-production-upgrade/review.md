@@ -51,10 +51,12 @@ read-only production postflight reviews found no remaining blockers.
 
 ## Separate concurrent event
 
-After successful maintenance, restored traffic-switch automation deployed a
-new staging-only release at `14:28:44Z`. Production and GetoMerch release
-symlinks did not change. The new staging release independently passes readiness,
-queue and log checks; this was not part of the PostgreSQL package transaction.
+After successful maintenance, restored deployment automation independently
+deployed Komui commit `6c8b172aec07`: staging activated at `14:28:44Z` and
+production at `14:29:58Z`; both deploy logs end in `DEPLOY_OK`. GetoMerch did
+not change. Both new Komui releases pass readiness, queue, public endpoint and
+log checks. These deployments occurred after the PostgreSQL runner had exited
+successfully and were not part of the package transaction.
 
 ## Residual risk
 
