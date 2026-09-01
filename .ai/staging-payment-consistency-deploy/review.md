@@ -26,6 +26,8 @@
   отдельно;
 - две historical CDEK cancellation строки остаются в `needs_review` до
   отдельного operator/business решения;
-- новый post-drain backup прошёл checksum/external-upload verification, но
-  restore drill именно этого архива ещё не выполнялся;
+- exact post-drain backup прошёл restore drill обоих DB dumps, `komui_app`
+  read-check, isolated legacy-backend smokes и полную cleanup-проверку;
+- backup design всё ещё не доказывает полный production DR: owners/ACL не
+  сохранены, а runtime-config staging-centric;
 - полный demo payment/refund/real-CDEK E2E требует отдельного явного разрешения.

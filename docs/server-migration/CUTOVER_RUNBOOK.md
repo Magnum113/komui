@@ -28,6 +28,23 @@ self-hosted Nginx/backend.
 - [ ] Подтверждены текущие DNS TTL.
 - [ ] Подтверждены production webhook настройки Т-Банка.
 
+Текущий evidence для rollback archive staging rollout:
+
+```text
+archive: /var/backups/komui/daily/komui-backup-20260830T180555Z.tar.gz.gpg
+checksum/external upload: OK
+restore drill: OK, 2026-09-01, staging + production DB dumps
+app-role/legacy-runtime smoke: OK in outbound-isolated namespaces
+cleanup/live-runtime invariants: OK
+log: /var/backups/komui/logs/restore-drill-20260830T180555Z-20260901t082839z.log
+```
+
+Этот evidence не отменяет новый backup/restore gate для будущего production
+window. Текущий backup format не сохраняет owners/ACL, а runtime-config archive
+не покрывает production Nginx/systemd/frontend контур полностью. До заявления
+полного production DR исправить оба пробела, создать новый archive и проверить
+также offsite download + доступность ключа вне самого сервера.
+
 ## Pre-freeze перед migration window
 
 1. Зафиксировать время freeze.

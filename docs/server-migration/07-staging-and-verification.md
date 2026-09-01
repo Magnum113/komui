@@ -464,8 +464,8 @@ checkout/payment/CDEK flow и backup/restore/alerting — проверенным
 - семь payment counters равны нулю;
 - создан post-drain encrypted backup
   `komui-backup-20260830T180555Z.tar.gz.gpg` (`52 584 372 bytes`); checksum и
-  external upload OK. Restore drill именно этого архива не выполнялся;
-  migration rehearsal на полной временной DB-копии была отдельной проверкой.
+  external upload OK. Migration rehearsal на полной временной DB-копии была
+  отдельной проверкой.
 
 Migration применена только к `komui_staging`. Две historical CDEK cancellation
 строки, которые иначе вызвали бы реальный `DELETE` сразу после запуска worker,
@@ -492,9 +492,46 @@ Installed guard из commit `b2c7337` прошёл все четыре legacy/ha
 staging/production комбинации; symlinks, PID, release counts и DB rows до/после
 совпали.
 
+### Exact post-drain archive restore drill — 1 сентября 2026
+
+Архив
+`/var/backups/komui/daily/komui-backup-20260830T180555Z.tar.gz.gpg`
+восстановлен целиком по двум DB dumps в уникальные временные базы.
+
+Проверено:
+
+- outer и все internal SHA-256, manifest и exact six-member layout;
+- staging и production dump: по `35` public tables, invalid indexes `0`,
+  unvalidated constraints `0`;
+- staging counts: products `31`, orders `13`, attempts `13`, events `14`,
+  CDEK shipments `3`;
+- production counts: products `38`, orders `78`, attempts `78`, events `16`,
+  CDEK shipments `4`, reviews `163`, review media `29`;
+- оба snapshot соответствуют legacy schema до payment-consistency migration;
+- временный grants replay позволил читать catalog как `komui_app`;
+- соответствующие immutable legacy backends вернули `/health/ready` и один
+  товар на `/v1/products?limit=1` внутри network namespace без outbound;
+- `postgres-globals.sql` не применялся, nested runtime config не извлекался в
+  `/`, provider calls не выполнялись.
+
+Cleanup подтверждён отдельно: temporary DB/session/process/workdir — `0`, locks
+свободны, staging/production PID, symlinks и DB identity не изменились. Evidence
+log:
+
+```text
+/var/backups/komui/logs/restore-drill-20260830T180555Z-20260901t082839z.log
+RESULT restore_drill=ok cleanup=ok
+```
+
+Scope: это успешный data/schema + legacy-runtime restore точного rollback
+archive, но не полный production DR. Dumps созданы с `--no-owner --no-acl`, а
+`runtime-config.tar.gz` не включает полный production Nginx/systemd/frontend
+контур. Более свежий scheduled archive `20260901T002703Z` в этом drill не
+восстанавливался.
+
 Отдельно остаётся полный demo payment/refund/real-CDEK E2E. Он требует явного
 решения владельца, потому что staging использует реальный CDEK, а не mock.
 Также остаются operator/business решение по двум quarantined
-`cdek_cancel/needs_review`, restore drill нового архива и отдельная проверка
-Telegram transport: два release notification во время rollout завершились
-timeout, хотя registry events записаны успешно.
+`cdek_cancel/needs_review`, исправление полноты backup/ACL recovery и отдельная
+проверка Telegram transport: два release notification во время rollout
+завершились timeout, хотя registry events записаны успешно.

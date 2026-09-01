@@ -8,7 +8,20 @@
 агентов. Все существенные изменения серверной реализации нужно описывать в
 основном документе выше.
 
-Последнее крупное обновление: 30 августа 2026 — усиление согласованности оплаты
+Последнее крупное обновление: 1 сентября 2026 — exact post-drain archive
+`komui-backup-20260830T180555Z.tar.gz.gpg` успешно восстановлен по обоим DB
+dumps в уникальные временные базы. Подтверждены legacy schema и aggregate
+counts, catalog read как `komui_app`, `/health/ready` и
+`/v1/products?limit=1` на соответствующих immutable legacy backends внутри
+network namespaces без outbound. Temporary DB/session/process/workdir удалены;
+staging/production PID, symlinks и active DB identity не изменились. Evidence:
+`/var/backups/komui/logs/restore-drill-20260830T180555Z-20260901t082839z.log`.
+Это scoped data/schema + legacy-runtime recovery test, а не полный production
+DR: backup не сохраняет owners/ACL, runtime-config staging-centric, offsite
+download/key escrow и более свежий scheduled archive отдельно не
+восстанавливались. Подробности — в основном документе ниже.
+
+Предыдущее крупное обновление: 30 августа 2026 — усиление согласованности оплаты
 и доставки по первым трём пунктам P1-аудита развёрнуто на staging. T-Bank
 webhook теперь обрабатывается одной транзакцией с монотонной state machine и
 durable CDEK outbox; неоднозначный `/Init` блокирует повторный заказ до

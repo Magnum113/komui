@@ -227,6 +227,9 @@ post-drain backup: komui-backup-20260830T180555Z.tar.gz.gpg
 - global healthcheck: `SUMMARY OK`, failed units: 0;
 - production остаётся на release `20260827T150442Z-prod-5a36b6c11d66` и не
   содержит новую schema.
+- exact post-drain archive restore drill обоих DB dumps завершён 1 сентября:
+  schema/counts, `komui_app` read path, isolated legacy-backend smokes и cleanup
+  подтверждены; active staging/production runtime не изменился.
 
 Полный payment/refund/real-CDEK E2E оставлен отдельным явно разрешаемым шагом,
 потому что staging использует `CDEK_MOCK=false`.
@@ -246,11 +249,13 @@ rollout.
 `deploy-guard-b2c7337`; notification намеренно отключена из-за предыдущих
 transport timeout.
 
-Post-drain backup имеет размер `52 584 372 bytes`; checksum и external upload
-проверены. Restore drill именно этого архива не выполнялся: rehearsal migration
-на полной временной копии staging DB была отдельной проверкой. Это остаётся
-production gate вместе с provider E2E и решением по двум quarantined
-`cdek_cancel/needs_review`.
+Post-drain backup имеет размер `52 584 372 bytes`; checksum, external upload и
+restore drill обоих DB dumps проверены. Evidence log:
+`/var/backups/komui/logs/restore-drill-20260830T180555Z-20260901t082839z.log`.
+Drill доказал data/schema + legacy-runtime recovery exact rollback snapshot, но
+не полный production DR: archive не сохраняет owners/ACL, а runtime-config
+staging-centric. Provider E2E и решение по двум quarantined
+`cdek_cancel/needs_review` остаются отдельными gates.
 
 #### 7 июля 2026 — product media migration foundation
 
@@ -1495,11 +1500,15 @@ Backup includes:
 
 - PostgreSQL custom dumps for `komui_staging` and `komui_production` by default;
 - PostgreSQL globals;
-- runtime config archive;
+- staging-centric runtime config archive;
 - local review media and private source archives;
-- Nginx/systemd relevant configs;
+- staging Nginx/systemd/release/root artifacts; текущий production
+  Nginx/backend unit/frontend release/root покрыты не полностью;
 - manifest;
 - checksums.
+
+PostgreSQL dumps создаются с `--no-owner --no-acl`; grants/ownership recovery
+должен быть отдельной явно проверенной частью DR procedure.
 
 Encryption:
 
@@ -1522,15 +1531,20 @@ Credentials:
 /etc/komui/yandex-backup.env
 ```
 
-Latest verified backup and latest restore drill:
+Verified rollout backup and restore drill:
 
 ```text
-latest archive: /var/backups/komui/daily/komui-backup-20260830T180555Z.tar.gz.gpg
-latest archive size: 52,584,372 bytes
-latest archive checksum: OK
-latest archive external upload: OK
-latest archive restore drill: NOT RUN
-latest completed restore drill: OK, 2026-06-30, 31 public tables, temp backend HTTP 200
+rollout archive: /var/backups/komui/daily/komui-backup-20260830T180555Z.tar.gz.gpg
+rollout archive size: 52,584,372 bytes
+rollout archive checksum/external upload: OK
+rollout archive restore drill: OK, 2026-09-01, both DB dumps, 35 public tables each
+staging snapshot: 31 products, 13 orders, 13 attempts, 14 events, 3 shipments
+production snapshot: 38 products, 78 orders, 78 attempts, 16 events, 4 shipments
+komui_app read + isolated legacy backend smokes: OK
+cleanup/live-runtime invariants: OK
+evidence: /var/backups/komui/logs/restore-drill-20260830T180555Z-20260901t082839z.log
+latest scheduled archive observed: /var/backups/komui/daily/komui-backup-20260901T002703Z.tar.gz.gpg
+latest scheduled archive checksum/external upload: OK; restore drill NOT RUN
 production snapshot archive: /var/backups/komui/daily/komui-backup-20260630T164013Z.tar.gz.gpg
 production snapshot restore drill: OK, 2026-06-30, 31 public tables
 ```
@@ -2072,9 +2086,12 @@ approval.
 2. Проверить актуальные production transactional rows; cleanup выполнять только
    отдельной явно разрешённой операцией.
 3. В закрытом write window снять свежий согласованный encrypted backup.
-4. Выполнить restore drill актуального backup. Архив
-   `komui-backup-20260830T180555Z.tar.gz.gpg` проверен checksum/upload, но сам
-   ещё не восстанавливался; последний завершённый drill датирован 2026-06-30.
+4. Перед production window выполнить restore drill его актуального backup.
+   Точный staging post-drain rollback archive
+   `komui-backup-20260830T180555Z.tar.gz.gpg` уже восстановлен по обоим DB dumps
+   1 сентября 2026, но более свежий scheduled archive `20260901T002703Z` не
+   восстанавливался. До production DR также исправить полноту runtime-config и
+   owners/ACL recovery.
 5. Decide final Ozon dual-write policy.
 6. Confirm production T-Bank credentials/webhook settings.
 7. Production CDEK auto-create включён:
@@ -2120,6 +2137,11 @@ Current known limitations:
     потому что его systemd unit читает legacy production schema.
 11. Последний rollout получил два Telegram timeout; registry записи сохранены,
     но notification transport нужно перепроверить.
+12. Backup сохраняет оба DB dumps, но использует `--no-owner --no-acl`, а
+    `runtime-config.tar.gz` остаётся staging-centric. Exact post-drain archive
+    успешно восстановлен, однако полный production DR требует исправить эти
+    два пробела, создать новый backup и повторить drill, включая offsite
+    download/key-recovery path.
 
 ## 21. Quick orientation for a new developer
 

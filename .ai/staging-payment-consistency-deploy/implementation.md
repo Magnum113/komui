@@ -131,7 +131,14 @@ row counters; build, restart и activation не выполнялись. Ops conf
 `activated_at=2026-08-30T18:06:07Z`; исходный marker сохранён root-only в
 `/var/lib/komui/release-metadata-backups/`.
 
-Новый post-drain archive прошёл checksum и external upload verification.
-Migration rehearsal на полной временной DB-копии является отдельной проверкой;
-restore drill именно архива `komui-backup-20260830T180555Z.tar.gz.gpg` не
-выполнялся и остаётся production gate.
+Точный post-drain archive дополнительно прошёл restore drill 1 сентября 2026:
+оба dump восстановлены в отдельные временные БД, legacy schema и aggregate
+counts совпали, `komui_app` read path и два соответствующих legacy backend
+smoke прошли в network namespace без outbound. Временные БД/workdir/processes
+удалены; staging/production PID, symlinks и active DB identity не изменились.
+Permanent evidence:
+`/var/backups/komui/logs/restore-drill-20260830T180555Z-20260901t082839z.log`.
+
+Этот drill закрывает восстановимость data/schema exact rollback archive, но не
+полный production DR: dump не содержит owners/ACL, а runtime-config archive не
+покрывает production runtime полностью.
