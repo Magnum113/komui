@@ -313,6 +313,28 @@ create trigger merch_email_outbox_sync_contact_sent
 after update of status on public.merch_email_outbox
 for each row execute function private.merch_email_outbox_sync_contact_sent();
 
+create or replace function private.merch_remove_unsubscribed_email_suppression(
+  p_email_normalized text
+)
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  deleted_count integer;
+begin
+  delete from public.merch_email_suppressions
+  where email_normalized = lower(btrim(p_email_normalized))
+    and reason = 'unsubscribed';
+  get diagnostics deleted_count = row_count;
+  return deleted_count;
+end;
+$$;
+
+revoke all on function private.merch_remove_unsubscribed_email_suppression(text)
+  from public;
+
 alter table public.merch_email_contacts enable row level security;
 alter table public.merch_email_consent_events enable row level security;
 
@@ -342,10 +364,12 @@ begin
   if exists (select 1 from pg_roles where rolname = 'service_role') then
     execute 'grant select, insert, update, delete on public.merch_email_contacts to service_role';
     execute 'grant select, insert, update, delete on public.merch_email_consent_events to service_role';
+    execute 'grant execute on function private.merch_remove_unsubscribed_email_suppression(text) to service_role';
   end if;
   if exists (select 1 from pg_roles where rolname = 'komui_app') then
     execute 'grant select, insert, update on public.merch_email_contacts to komui_app';
     execute 'grant select, insert on public.merch_email_consent_events to komui_app';
+    execute 'grant execute on function private.merch_remove_unsubscribed_email_suppression(text) to komui_app';
   end if;
 end
 $role_grants$;

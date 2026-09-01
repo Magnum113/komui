@@ -29,6 +29,18 @@ test("email contacts migration backfills orders and links outbox messages", () =
 
 test("email contacts migration keeps suppressions and paid-order aggregates synchronized", () => {
   assert.match(migration, /merch_email_suppressions_sync_contact/i);
+  assert.match(
+    migration,
+    /create or replace function private\.merch_remove_unsubscribed_email_suppression[\s\S]*security definer/i,
+  );
+  assert.match(
+    migration,
+    /grant execute on function private\.merch_remove_unsubscribed_email_suppression\(text\) to komui_app/i,
+  );
+  assert.doesNotMatch(
+    migration,
+    /grant[^;]*delete[^;]*merch_email_suppressions to komui_app/i,
+  );
   assert.match(migration, /merch_customer_orders_refresh_email_contact_stats/i);
   assert.match(migration, /count\(\*\) filter \(where paid_at is not null\)/i);
   assert.match(migration, /merch_email_outbox_sync_contact_sent/i);

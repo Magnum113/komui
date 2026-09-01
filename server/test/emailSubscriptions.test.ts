@@ -92,7 +92,10 @@ test("footer confirmation activates contact, removes unsubscribe and records imm
   );
 
   assert.deepEqual(result, { confirmed: true, alreadyConfirmed: false });
-  assert.equal(queries.some((sql) => sql.includes("remove_confirmed_unsubscribe")), true);
+  assert.match(
+    queries.find((sql) => sql.includes("remove_confirmed_unsubscribe")) ?? "",
+    /private\.merch_remove_unsubscribed_email_suppression/,
+  );
   assert.equal(queries.some((sql) => sql.includes("email_contacts:confirm")), true);
   assert.equal(queries.some((sql) => sql.includes("footer_confirmed_event")), true);
   assert.equal(queries.some((sql) => sql.includes("redact_confirmation_url")), true);
