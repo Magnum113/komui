@@ -9,6 +9,13 @@ const migration = readFileSync(
   ),
   "utf8",
 );
+const singleOptInMigration = readFileSync(
+  new URL(
+    "../../docs/server-migration/sql/email-single-opt-in-forward.sql",
+    import.meta.url,
+  ),
+  "utf8",
+);
 
 test("email contacts migration creates one normalized contact and append-only consent evidence", () => {
   assert.match(migration, /create table if not exists public\.merch_email_contacts/i);
@@ -44,4 +51,17 @@ test("email contacts migration keeps suppressions and paid-order aggregates sync
   assert.match(migration, /merch_customer_orders_refresh_email_contact_stats/i);
   assert.match(migration, /count\(\*\) filter \(where paid_at is not null\)/i);
   assert.match(migration, /merch_email_outbox_sync_contact_sent/i);
+});
+
+test("single opt-in transition activates only explicit unsuppressed footer requests", () => {
+  assert.match(singleOptInMigration, /contacts\.marketing_status = 'pending'/i);
+  assert.match(singleOptInMigration, /events\.action = 'requested'/i);
+  assert.match(singleOptInMigration, /events\.source = 'footer'/i);
+  assert.match(singleOptInMigration, /not exists[\s\S]*merch_email_suppressions/i);
+  assert.match(singleOptInMigration, /'unsubscribed'[\s\S]*'hard_bounce'[\s\S]*'spam_complaint'[\s\S]*'manual'/i);
+  assert.match(singleOptInMigration, /'granted'[\s\S]*'single_opt_in', true/i);
+  assert.match(singleOptInMigration, /marketing_status = 'subscribed'/i);
+  assert.match(singleOptInMigration, /event_type = 'subscription_confirmation'/i);
+  assert.match(singleOptInMigration, /status in \('pending', 'retry', 'processing'\) then 'cancelled'/i);
+  assert.match(singleOptInMigration, /payload - 'confirmationUrl'/i);
 });

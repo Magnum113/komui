@@ -2181,7 +2181,7 @@ $('#newsForm').addEventListener('submit',async e=>{
   const endpoint=config.newsletterSubscribeUrl||baseUrl+'/v1/email/subscribe';
   button.disabled=true;
   status.className='news-status';
-  status.textContent='Отправляем письмо…';
+  status.textContent='Оформляем подписку…';
   try{
     const response=await fetch(endpoint,{
       method:'POST',
@@ -2197,7 +2197,7 @@ $('#newsForm').addEventListener('submit',async e=>{
     if(!response.ok)throw new Error(result?.error?.message||'Не удалось оформить подписку');
     form.reset();
     status.className='news-status success';
-    status.textContent='Проверь почту — отправили ссылку для подтверждения.';
+    status.textContent=result?.message||'Готово — подписка оформлена.';
     withAnalytics(analytics=>analytics.goal('newsletter_subscribe_requested',{placement:'footer'}));
   }catch(error){
     status.className='news-status error';

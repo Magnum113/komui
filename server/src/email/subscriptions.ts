@@ -5,7 +5,6 @@ import type {
   FastifyRequest,
 } from "fastify";
 import type { QueryResultRow } from "pg";
-import type { AppConfig } from "../config";
 import type { Db } from "../db";
 import { HttpError } from "../errors";
 import {
@@ -19,14 +18,12 @@ import {
 } from "./contacts";
 
 type SubscriptionContext = {
-  config: AppConfig;
   db: Db;
 };
 
 type ContactRow = QueryResultRow & {
   id: string;
   marketing_status: string;
-  confirmation_sent_at: string | Date | null;
 };
 
 type ConfirmationRow = QueryResultRow & {
@@ -36,13 +33,11 @@ type ConfirmationRow = QueryResultRow & {
 
 type SubscriptionOptions = {
   now?: Date;
-  token?: string;
+  eventNonce?: string;
 };
 
 type RateBucket = { count: number; resetAt: number };
 
-const confirmationLifetimeMs = 24 * 60 * 60_000;
-const confirmationResendCooldownMs = 5 * 60_000;
 const rateLimitWindowMs = 60 * 60_000;
 const rateLimitMax = 10;
 const rateBuckets = new Map<string, RateBucket>();
@@ -59,9 +54,9 @@ function bodyObject(request: FastifyRequest): Record<string, unknown> {
 }
 
 function acceptedReply(reply: FastifyReply) {
-  return reply.status(202).send({
+  return reply.send({
     ok: true,
-    message: "Проверьте почту и подтвердите подписку по ссылке в письме.",
+    message: "Подписка оформлена. Спасибо!",
   });
 }
 
@@ -82,20 +77,6 @@ function consumeRateLimit(key: string | null, now: number): boolean {
   return true;
 }
 
-function siteUrl(config: AppConfig): URL {
-  const url = new URL(config.SITE_URL);
-  if (url.protocol !== "https:" && config.NODE_ENV !== "development" && config.NODE_ENV !== "test") {
-    throw new Error("Email confirmation site URL must use HTTPS");
-  }
-  return url;
-}
-
-function confirmationUrl(config: AppConfig, token: string): string {
-  const url = new URL("/email-confirm", siteUrl(config));
-  url.hash = new URLSearchParams({ token }).toString();
-  return url.toString();
-}
-
 function blockedSuppression(reason: string | null): boolean {
   return ["hard_bounce", "spam_complaint", "manual"].includes(reason ?? "");
 }
@@ -104,22 +85,43 @@ function blockedStatus(status: string): boolean {
   return ["bounced", "complained", "suppressed"].includes(status);
 }
 
-export async function requestFooterEmailSubscription(
+function suppressionStatus(reason: string | null): string | null {
+  switch (reason) {
+    case "hard_bounce":
+      return "bounced";
+    case "spam_complaint":
+      return "complained";
+    case "manual":
+      return "suppressed";
+    default:
+      return null;
+  }
+}
+
+export async function subscribeFooterEmailContact(
   context: SubscriptionContext,
   input: {
     email: unknown;
     evidence: RequestEvidence;
   },
   options: SubscriptionOptions = {},
-): Promise<{ queued: boolean }> {
+): Promise<{ subscribed: boolean }> {
   const email = normalizeContactEmail(input.email);
   const now = options.now ?? new Date();
-  const token = options.token ?? randomBytes(32).toString("base64url");
-  if (token.length < 32 || token.length > 200) throw new Error("invalid_confirmation_token");
-  const tokenHash = sha256Hex(token);
-  const expiresAt = new Date(now.getTime() + confirmationLifetimeMs);
+  const eventNonce = options.eventNonce ?? randomBytes(16).toString("hex");
+  if (!/^[A-Za-z0-9_-]{16,64}$/.test(eventNonce)) {
+    throw new Error("invalid_subscription_event_nonce");
+  }
 
   return context.db.withTransaction(async (client) => {
+    await client.query(
+      `
+        /* email_contacts:remove_footer_unsubscribe */
+        select private.merch_remove_unsubscribed_email_suppression($1)
+      `,
+      [email],
+    );
+
     const suppressionResult = await client.query<{ reason: string }>(
       `
         /* email_contacts:footer_suppression */
@@ -135,13 +137,8 @@ export async function requestFooterEmailSubscription(
       80,
     ).toLowerCase() || null;
 
-    const initialStatus = blockedSuppression(suppressionReason)
-      ? suppressionReason === "hard_bounce"
-        ? "bounced"
-        : suppressionReason === "spam_complaint"
-          ? "complained"
-          : "suppressed"
-      : "pending";
+    const forcedStatus = suppressionStatus(suppressionReason);
+    const initialStatus = forcedStatus ?? "subscribed";
 
     await client.query(
       `
@@ -149,18 +146,28 @@ export async function requestFooterEmailSubscription(
         insert into public.merch_email_contacts (
           email_normalized,
           marketing_status,
+          marketing_consent_at,
+          marketing_consent_version,
+          marketing_consent_source,
           suppression_reason
         )
-        values ($1, $2, $3)
+        values ($1, $2, $3::timestamptz, $4, $5, $6)
         on conflict (email_normalized) do nothing
       `,
-      [email, initialStatus, suppressionReason],
+      [
+        email,
+        initialStatus,
+        now.toISOString(),
+        FOOTER_MARKETING_CONSENT_VERSION,
+        FOOTER_MARKETING_CONSENT_SOURCE,
+        suppressionReason,
+      ],
     );
 
     const contactResult = await client.query<ContactRow>(
       `
         /* email_contacts:footer_lock */
-        select id, marketing_status, confirmation_sent_at
+        select id, marketing_status
         from public.merch_email_contacts
         where email_normalized = $1
         for update
@@ -170,43 +177,40 @@ export async function requestFooterEmailSubscription(
     const contact = contactResult.rows[0];
     if (!contact) throw new Error("email_contact_unavailable");
 
-    if (
-      contact.marketing_status === "subscribed"
-      || blockedSuppression(suppressionReason)
-      || blockedStatus(contact.marketing_status)
-    ) {
-      return { queued: false };
-    }
-
-    const lastSentAt = contact.confirmation_sent_at
-      ? new Date(contact.confirmation_sent_at).getTime()
-      : 0;
-    if (
-      Number.isFinite(lastSentAt)
-      && lastSentAt > 0
-      && now.getTime() - lastSentAt < confirmationResendCooldownMs
-    ) {
-      return { queued: false };
-    }
+    const nextStatus = forcedStatus
+      ?? (blockedStatus(contact.marketing_status)
+        ? contact.marketing_status
+        : "subscribed");
 
     await client.query(
       `
-        /* email_contacts:footer_pending */
+        /* email_contacts:footer_subscribe */
         update public.merch_email_contacts
         set
-          marketing_status = 'pending',
-          confirmation_token_hash = $2,
-          confirmation_expires_at = $3::timestamptz,
-          confirmation_sent_at = $4::timestamptz,
-          suppression_reason = case when suppression_reason = 'unsubscribed' then suppression_reason else null end
+          marketing_status = $2,
+          marketing_consent_at = $3::timestamptz,
+          marketing_consent_version = $4,
+          marketing_consent_source = $5,
+          confirmation_token_hash = null,
+          confirmation_expires_at = null,
+          confirmation_sent_at = null,
+          unsubscribed_at = case when $2 = 'subscribed' then null else unsubscribed_at end,
+          suppression_reason = $6
         where id = $1::uuid
       `,
-      [contact.id, tokenHash, expiresAt.toISOString(), now.toISOString()],
+      [
+        contact.id,
+        nextStatus,
+        now.toISOString(),
+        FOOTER_MARKETING_CONSENT_VERSION,
+        FOOTER_MARKETING_CONSENT_SOURCE,
+        suppressionReason,
+      ],
     );
 
     await client.query(
       `
-        /* email_contacts:footer_requested_event */
+        /* email_contacts:footer_granted_event */
         insert into public.merch_email_consent_events (
           event_key,
           contact_id,
@@ -222,19 +226,19 @@ export async function requestFooterEmailSubscription(
         values (
           $1,
           $2::uuid,
-          'requested',
+          'granted',
           'footer',
           $3::timestamptz,
           $4,
           $5,
           $6,
           $7,
-          jsonb_build_object('double_opt_in', true)
+          jsonb_build_object('single_opt_in', true)
         )
         on conflict (event_key) do nothing
       `,
       [
-        `footer-requested:${contact.id}:${tokenHash.slice(0, 24)}`,
+        `footer-granted:${contact.id}:${eventNonce}`,
         contact.id,
         now.toISOString(),
         FOOTER_MARKETING_CONSENT_VERSION,
@@ -244,48 +248,7 @@ export async function requestFooterEmailSubscription(
       ],
     );
 
-    await client.query(
-      `
-        /* email_contacts:enqueue_confirmation */
-        insert into public.merch_email_outbox (
-          contact_id,
-          event_type,
-          message_class,
-          recipient_email,
-          template_key,
-          payload,
-          scheduled_at,
-          status,
-          idempotency_key
-        )
-        values (
-          $1::uuid,
-          'subscription_confirmation',
-          'transactional',
-          $2,
-          'subscription_confirmation',
-          jsonb_build_object(
-            'schemaVersion', 1,
-            'confirmationUrl', $3::text,
-            'tokenFingerprint', $4::text
-          ),
-          $5::timestamptz,
-          'pending',
-          $6
-        )
-        on conflict (idempotency_key) do nothing
-      `,
-      [
-        contact.id,
-        email,
-        confirmationUrl(context.config, token),
-        tokenHash.slice(0, 24),
-        now.toISOString(),
-        `subscription-confirm:${contact.id}:${tokenHash.slice(0, 32)}`,
-      ],
-    );
-
-    return { queued: true };
+    return { subscribed: nextStatus === "subscribed" };
   });
 }
 
@@ -479,7 +442,7 @@ export async function registerEmailSubscriptionRoutes(
     }
 
     try {
-      await requestFooterEmailSubscription(context, {
+      await subscribeFooterEmailContact(context, {
         email: body.email,
         evidence,
       });

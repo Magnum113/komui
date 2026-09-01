@@ -1,11 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { PoolClient } from "pg";
-import { loadConfig } from "../src/config";
 import type { Db } from "../src/db";
 import {
   confirmFooterEmailSubscription,
-  requestFooterEmailSubscription,
+  subscribeFooterEmailContact,
 } from "../src/email/subscriptions";
 import { renderSubscriptionConfirmationEmail } from "../src/email/templates/subscription-confirmation";
 
@@ -15,15 +14,7 @@ const evidence = {
   userAgent: "KOMUI test browser",
 };
 
-function config() {
-  return loadConfig({
-    NODE_ENV: "test",
-    DATABASE_URL: "postgresql://komui_app:secret@127.0.0.1:5432/komui_test",
-    SITE_URL: "https://komui.ru",
-  });
-}
-
-test("footer subscription creates a pending contact, evidence and confirmation outbox job", async () => {
+test("footer subscription immediately grants consent without a confirmation email", async () => {
   const queries: string[] = [];
   const payloads: unknown[][] = [];
   const query = async (sql: string, values: unknown[] = []) => {
@@ -34,8 +25,7 @@ test("footer subscription creates a pending contact, evidence and confirmation o
       return {
         rows: [{
           id: contactId,
-          marketing_status: "pending",
-          confirmation_sent_at: null,
+          marketing_status: "not_subscribed",
         }],
       };
     }
@@ -47,24 +37,25 @@ test("footer subscription creates a pending contact, evidence and confirmation o
       callback({ query } as unknown as PoolClient),
   } as unknown as Db;
 
-  const result = await requestFooterEmailSubscription(
-    { config: config(), db },
+  const result = await subscribeFooterEmailContact(
+    { db },
     { email: " Buyer@Example.COM ", evidence },
     {
       now: new Date("2026-09-01T12:00:00.000Z"),
-      token: "T".repeat(43),
+      eventNonce: "single-opt-in-event-0001",
     },
   );
 
-  assert.deepEqual(result, { queued: true });
-  assert.equal(queries.some((sql) => sql.includes("footer_pending")), true);
-  assert.equal(queries.some((sql) => sql.includes("footer_requested_event")), true);
-  const outboxIndex = queries.findIndex((sql) => sql.includes("enqueue_confirmation"));
-  assert.notEqual(outboxIndex, -1);
-  assert.match(queries[outboxIndex], /'confirmationUrl', \$3::text/);
-  assert.match(queries[outboxIndex], /'tokenFingerprint', \$4::text/);
-  assert.equal(payloads[outboxIndex][1], "buyer@example.com");
-  assert.match(String(payloads[outboxIndex][2]), /^https:\/\/komui\.ru\/email-confirm#token=/);
+  assert.deepEqual(result, { subscribed: true });
+  assert.equal(queries.some((sql) => sql.includes("remove_footer_unsubscribe")), true);
+  assert.equal(queries.some((sql) => sql.includes("footer_subscribe")), true);
+  assert.equal(queries.some((sql) => sql.includes("footer_granted_event")), true);
+  assert.equal(queries.some((sql) => sql.includes("enqueue_confirmation")), false);
+  assert.equal(queries.some((sql) => /merch_email_outbox/.test(sql)), false);
+  const eventIndex = queries.findIndex((sql) => sql.includes("footer_granted_event"));
+  assert.match(queries[eventIndex], /'granted'/);
+  assert.match(queries[eventIndex], /jsonb_build_object\('single_opt_in', true\)/);
+  assert.match(String(payloads[eventIndex][0]), /^footer-granted:/);
 });
 
 test("footer confirmation activates contact, removes unsubscribe and records immutable evidence", async () => {
@@ -86,7 +77,7 @@ test("footer confirmation activates contact, removes unsubscribe and records imm
   } as unknown as Db;
 
   const result = await confirmFooterEmailSubscription(
-    { config: config(), db },
+    { db },
     { token: "C".repeat(43), evidence },
     { now: new Date("2026-09-01T12:05:00.000Z") },
   );

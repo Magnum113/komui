@@ -2,8 +2,8 @@
 
 Дата актуализации: 1 сентября 2026 года
 
-Статус: transactional MVP, единый реестр контактов и double opt-in из футера
-работают в production; продолжаются наблюдение и последующие продуктовые этапы
+Статус: transactional MVP, единый реестр контактов и Single Opt-In в checkout
+и футере работают в production; продолжаются наблюдение и продуктовые этапы
 
 Проект: KOMUI storefront и server backend
 
@@ -17,7 +17,7 @@ Unisender Go, не связывая доступность оплаты, офо�
 
 - отправлять служебные письма по событиям заказа;
 - отправлять рекламу только при доказуемом согласии пользователя;
-- поддерживать подтверждение подписки и отписку;
+- поддерживать доказуемую активацию подписки и отписку;
 - учитывать доставку, открытия, переходы, ошибки и жалобы;
 - предотвращать повторную отправку одного письма;
 - хранить историю согласий и отправок в PostgreSQL KOMUI;
@@ -89,18 +89,18 @@ rollout 1 сентября 2026 года.
 
 - единая таблица `merch_email_contacts` с одним нормализованным контактом на
   email, текущим статусом подписки и агрегатами оплаченных заказов;
-- append-only журнал `merch_email_consent_events` для запросов, подтверждений,
-  checkout-согласий и отписок провайдера;
+- append-only журнал `merch_email_consent_events` для предоставленных согласий,
+  исторических подтверждений и отписок провайдера;
 - backfill существующих покупателей и consent evidence без подписки тех, кто
   оставлял email только для заказа;
 - связь email outbox с контактом через `contact_id`;
 - синхронизация checkout с единым контактом внутри транзакции создания заказа;
 - настоящая форма подписки в футере: валидация, два явных согласия, honeypot,
   rate limit, понятные состояния загрузки и ошибки;
-- double opt-in через `POST /api/v1/email/subscribe`, письмо подтверждения,
-  страницу `/email-confirm` и `POST /api/v1/email/confirm`;
-- одноразовый токен подтверждения: в БД контакта хранится только SHA-256, URL
-  использует fragment, после отправки письма URL удаляется из outbox payload;
+- Single Opt-In через `POST /api/v1/email/subscribe`: два отдельных чекбокса и
+  отправка формы сразу активируют подписку без дополнительного письма;
+- прежний endpoint `/api/v1/email/confirm` и страница `/email-confirm` временно
+  сохранены только для совместимости с ранее отправленными ссылками;
 - повторная подписка снимает только прежнюю добровольную отписку, но никогда не
   обходит hard bounce, complaint или ручную блокировку;
 - RLS и минимальные права: браузерные роли не имеют доступа, backend не может
@@ -115,10 +115,10 @@ rollout 1 сентября 2026 года.
 - тесты Яндекс Метрики и deployment guard проходят;
 - миграция сначала применена к staging, затем к production после проверенного
   backup `pg_dump` с SHA-256;
-- staging double opt-in проверен end-to-end: `pending`, передача письма
-  провайдеру, `confirmed`, очистка одноразового токена;
-- production-форма создаёт контакт и задание, UniSender принимает письмо с
-  первой попытки, зависших или failed email-задач после rollout нет;
+- staging Single Opt-In проверен end-to-end: контакт сразу получает
+  `subscribed`, создаётся append-only событие `granted`, outbox не используется;
+- production-форма сразу активирует доказуемое согласие без обращения к
+  UniSender; зависших или failed email-задач после rollout нет;
 - активный production-релиз:
   `20260901T140903Z-prod-5cc360e247bb`.
 
@@ -139,7 +139,7 @@ rollout 1 сентября 2026 года.
 
 ### 4.2. Маркетинговые письма
 
-Маркетинговые письма разрешены только при действующем подтверждённом согласии:
+Маркетинговые письма разрешены только при действующем доказуемом согласии:
 
 1. просьба оставить отзыв после получения заказа;
 2. новые коллекции и дропы;
@@ -228,11 +228,11 @@ Webhook Unisender Go проверяется по точному raw JSON и proj
 - `id`;
 - `email_normalized`, уникальное значение в lowercase;
 - `display_name`;
-- `marketing_status`: `not_subscribed`, `pending`, `subscribed`, `unsubscribed`,
+- `marketing_status`: `not_subscribed`, legacy `pending`, `subscribed`, `unsubscribed`,
   `bounced`, `complained`, `suppressed`;
 - `marketing_consent_at`, `marketing_consent_version`,
   `marketing_consent_source`;
-- hash и срок действия текущего confirmation token;
+- legacy hash и срок confirmation token для совместимости со старыми ссылками;
 - `first_paid_order_at`;
 - `last_paid_order_at`;
 - `paid_orders_count`;
@@ -315,7 +315,7 @@ staging и production 1 сентября 2026 года.
 
 Для первого запуска служебные шаблоны лучше хранить в Git, а не в базе.
 
-## 8. Сбор и подтверждение согласий
+## 8. Сбор и фиксация согласий
 
 ### 8.1. Checkout — реализовано
 
@@ -345,22 +345,18 @@ POST /api/v1/email/subscribe
 
 1. нормализует и проверяет email;
 2. применяет rate limit и honeypot;
-3. создаёт контакт со статусом `pending`;
-4. сохраняет событие предварительного согласия;
-5. отправляет письмо подтверждения;
-6. активирует подписку только после перехода по одноразовой ссылке.
+3. проверяет оба отдельных согласия (`privacyConsent` и `marketingConsent`);
+4. снимает только прежнюю добровольную отписку, если пользователь подписался
+   заново, но не обходит hard bounce, complaint или ручную блокировку;
+5. сразу устанавливает `marketing_status=subscribed`;
+6. сохраняет append-only событие `granted` с временем, версией текста,
+   источником `footer`, IP hash и User-Agent;
+7. не создаёт письмо подтверждения и не обращается к UniSender.
 
-Подтверждение подписки выполняется страницей без индексации. Токен передаётся в
-fragment, удаляется из адресной строки до API-вызова и не попадает в access log:
-
-```text
-GET /email-confirm#token=<one-time-token>
-POST /api/v1/email/confirm
-```
-
-Токен действует 24 часа, является одноразовым и не содержит email. В контакте
-хранится только SHA-256; полный URL удаляется из outbox сразу после успешной
-передачи письма провайдеру. Для повторной отправки действует cooldown.
+Исторические `pending`-контакты с зафиксированным footer-согласием переводятся
+в `subscribed` скриптом
+`docs/server-migration/sql/email-single-opt-in-forward.sql`. Suppression всегда
+имеет приоритет и не снимается миграцией.
 
 ## 9. Клиент Unisender Go
 
@@ -695,8 +691,8 @@ Rollback кода не должен требовать отката миграц
 ### Фаза D. Подписка и существующая аудитория
 
 16. [x] Исправить форму подписки в подвале — работает в production.
-17. [x] Реализовать double opt-in — проверено end-to-end на staging и
-    production.
+17. [x] Реализовать Single Opt-In в checkout и футере: отдельная галочка и
+    отправка формы сразу создают событие `granted` и статус `subscribed`.
 18. [x] Расширить доказательства согласия в checkout — заказ уже хранит
     evidence, синхронизация с контактом работает в production.
 19. [x] Миграционный backfill применён: email без рекламного согласия не стал
@@ -720,10 +716,10 @@ Rollback кода не должен требовать отката миграц
 2. [x] Обновлённый deployment guard установлен и проверен на несовместимой и
    совместимой схемах.
 3. [x] Миграция применена сначала к staging.
-4. [x] Staging развёрнут; footer subscribe, доставка письма и подтверждение
-   ссылки проверены end-to-end.
-5. [x] Проверены contacts, append-only consent events, outbox, очистка токена и
-   staging allowlist.
+4. [x] Первоначальный Double Opt-In был проверен end-to-end; позднее продуктовым
+   решением заменён на Single Opt-In без отправки confirmation-письма.
+5. [x] Проверены contacts, append-only consent events, отсутствие задания в
+   outbox при новой подписке и staging allowlist.
 6. [x] Перед production создан и проверен backup PostgreSQL с SHA-256:
    `/var/backups/komui/migrations/komui_production-before-email-contacts-20260901T140828Z.dump`.
 7. [x] Backward-compatible миграция применена к production одной транзакцией.
