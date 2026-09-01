@@ -61,6 +61,8 @@ test("footer subscription creates a pending contact, evidence and confirmation o
   assert.equal(queries.some((sql) => sql.includes("footer_requested_event")), true);
   const outboxIndex = queries.findIndex((sql) => sql.includes("enqueue_confirmation"));
   assert.notEqual(outboxIndex, -1);
+  assert.match(queries[outboxIndex], /'confirmationUrl', \$3::text/);
+  assert.match(queries[outboxIndex], /'tokenFingerprint', \$4::text/);
   assert.equal(payloads[outboxIndex][1], "buyer@example.com");
   assert.match(String(payloads[outboxIndex][2]), /^https:\/\/komui\.ru\/email-confirm#token=/);
 });

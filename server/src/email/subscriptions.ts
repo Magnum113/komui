@@ -266,8 +266,8 @@ export async function requestFooterEmailSubscription(
           'subscription_confirmation',
           jsonb_build_object(
             'schemaVersion', 1,
-            'confirmationUrl', $3,
-            'tokenFingerprint', $4
+            'confirmationUrl', $3::text,
+            'tokenFingerprint', $4::text
           ),
           $5::timestamptz,
           'pending',
