@@ -192,7 +192,6 @@ function emailRequest(row: EmailOutboxRow): EmailSendRequest {
   const input = orderPaidPayloadSchema.parse(row.payload);
   return {
     recipientEmail: row.recipient_email,
-    recipientName: input.customerFirstName || null,
     messageClass: row.message_class,
     templateKey: row.template_key,
     idempotencyKey: row.idempotency_key,

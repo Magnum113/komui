@@ -26,7 +26,6 @@ function emailConfig(overrides: NodeJS.ProcessEnv = {}) {
 
 const request = {
   recipientEmail: "Owner@Example.com",
-  recipientName: "Иван Иванов",
   messageClass: "transactional" as const,
   templateKey: "order_paid",
   idempotencyKey: "order-paid:7c169f01-b459-4e25-b74f-a4909a1b4149",
@@ -77,7 +76,8 @@ test("Unisender Go client sends the documented payload without leaking API key",
   const payload = JSON.parse(String(capturedInit?.body));
   assert.equal("api_key" in payload, false);
   assert.equal(payload.message.recipients[0].email, "owner@example.com");
-  assert.equal(payload.message.recipients[0].substitutions.to_name, "Иван Иванов");
+  assert.equal("substitutions" in payload.message.recipients[0], false);
+  assert.equal(JSON.stringify(payload).includes('"to_name"'), false);
   assert.equal(
     payload.message.recipients[0].metadata.message_class,
     "transactional",

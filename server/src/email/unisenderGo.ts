@@ -11,7 +11,6 @@ export type RenderedEmail = {
 
 export type EmailSendRequest = {
   recipientEmail: string;
-  recipientName?: string | null;
   messageClass: EmailMessageClass;
   templateKey: string;
   idempotencyKey: string;
@@ -267,9 +266,6 @@ export class UnisenderGoClient {
         recipients: [
           {
             email: recipientEmail,
-            substitutions: request.recipientName
-              ? { to_name: request.recipientName.trim().slice(0, 78) }
-              : {},
             metadata: safeMetadata(
               request.templateKey,
               request.messageClass,
