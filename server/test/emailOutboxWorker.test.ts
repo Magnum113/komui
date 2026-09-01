@@ -62,6 +62,7 @@ function fakeOutbox(options: {
   cdekNumber?: string | null;
   cdekStatus?: string | null;
   createdAt?: string;
+  row?: Record<string, unknown>;
 } = {}) {
   const state = {
     status: "pending",
@@ -96,6 +97,7 @@ function fakeOutbox(options: {
             idempotency_key: `order-paid:${orderId}`,
             locked_by: state.lockedBy,
             created_at: options.createdAt ?? new Date(0).toISOString(),
+            ...options.row,
           },
         ],
       };
@@ -269,6 +271,54 @@ test("email worker briefly waits for an in-flight CDEK tracking number", async (
   assert.equal(state.status, "retry");
   assert.equal(state.attemptCount, 0);
   assert.equal(state.retryDelay, 10_000);
+});
+
+test("subscription confirmation never waits for CDEK tracking", async () => {
+  const { db, state } = fakeOutbox({
+    createdAt: new Date().toISOString(),
+    row: {
+      order_id: null,
+      contact_id: "5bde76c5-5d3e-4a25-b90a-89be9878092c",
+      event_type: "subscription_confirmation",
+      template_key: "subscription_confirmation",
+      payload: {
+        schemaVersion: 1,
+        confirmationUrl: `https://komui.ru/email-confirm#token=${"A".repeat(43)}`,
+        tokenFingerprint: "b".repeat(24),
+      },
+      idempotency_key: "subscription-confirm:test",
+    },
+  });
+  let sendCalled = false;
+  const result = await processEmailOutbox(
+    {
+      config: config({ CDEK_CREATE_SHIPMENTS: "true" }),
+      db,
+    },
+    {
+      limit: 1,
+      workerId: "worker-subscription",
+      sender: {
+        send: async () => {
+          sendCalled = true;
+          return {
+            provider: "unisender_go",
+            providerMessageId: "provider-job-subscription",
+            accepted: true,
+          };
+        },
+      },
+    },
+  );
+
+  assert.equal(sendCalled, true);
+  assert.equal(result.sent, 1);
+  assert.equal(result.deferred, 0);
+  assert.equal(state.status, "sent");
+  assert.equal(
+    state.queryLog.some((sql) => sql.includes("email_outbox:await_cdek_tracking")),
+    false,
+  );
 });
 
 test("temporary provider failures use bounded backoff and eventually fail", async () => {

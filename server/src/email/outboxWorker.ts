@@ -289,6 +289,9 @@ function shouldWaitForCdekTracking(
   row: EmailOutboxRow,
   cdek: CdekTrackingState,
 ): boolean {
+  if (row.event_type !== "order_paid" || row.template_key !== "order_paid") {
+    return false;
+  }
   if (!context.config.CDEK_CREATE_SHIPMENTS || cdek.number) return false;
   if (["invalid", "failed", "deleted"].includes(cdek.status ?? "")) {
     return false;
