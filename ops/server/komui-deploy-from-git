@@ -515,7 +515,7 @@ enforce_email_contacts_compatibility() {
   if [[ ! -d "$source_dir/.git" ]]; then
     log "cloning source into $source_dir"
     rm -rf "$source_dir"
-    git -c protocol.version=1 clone --branch "$branch" "$repo_url" "$source_dir"
+    git -c protocol.version=1 -c http.version=HTTP/1.1 clone --branch "$branch" "$repo_url" "$source_dir"
   fi
 
   cd "$source_dir"
@@ -523,7 +523,7 @@ enforce_email_contacts_compatibility() {
   log "resetting disposable deploy source before checkout"
   git reset --hard
   git clean -ffdx
-  git -c protocol.version=1 fetch --prune origin "$branch"
+  git -c protocol.version=1 -c http.version=HTTP/1.1 fetch --prune origin "$branch"
   git checkout -f -B "$branch" "origin/$branch"
   git reset --hard "origin/$branch"
   log "cleaning disposable deploy source"

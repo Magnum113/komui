@@ -37,11 +37,11 @@ class KomuiDeployFromGitCompatibilityTest(unittest.TestCase):
 
     def test_github_network_operations_use_compatible_protocol(self) -> None:
         self.assertIn(
-            'git -c protocol.version=1 clone --branch "$branch"',
+            'git -c protocol.version=1 -c http.version=HTTP/1.1 clone --branch "$branch"',
             self.script,
         )
         self.assertIn(
-            'git -c protocol.version=1 fetch --prune origin "$branch"',
+            'git -c protocol.version=1 -c http.version=HTTP/1.1 fetch --prune origin "$branch"',
             self.script,
         )
 

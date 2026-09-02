@@ -33,7 +33,7 @@ class KomuiDeployStatusContractTest(unittest.TestCase):
             self.script,
         )
         self.assertIn(
-            "git -c protocol.version=1 ls-remote origin refs/heads/main",
+            "git -c protocol.version=1 -c http.version=HTTP/1.1 ls-remote origin refs/heads/main",
             self.script,
         )
         self.assertIn("refs/remotes/origin/main", self.script)

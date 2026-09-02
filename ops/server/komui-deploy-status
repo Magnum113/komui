@@ -54,7 +54,7 @@ if [[ -d "$source_dir/.git" ]]; then
   remote="$(
     HOME="$deploy_home" GIT_TERMINAL_PROMPT=0 \
       timeout --signal=TERM --kill-after=2s "${remote_timeout_seconds}s" \
-      git -c protocol.version=1 ls-remote origin refs/heads/main 2>/dev/null \
+      git -c protocol.version=1 -c http.version=HTTP/1.1 ls-remote origin refs/heads/main 2>/dev/null \
       | awk '{print substr($1,1,12)}' \
       || true
   )"
