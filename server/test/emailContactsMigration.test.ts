@@ -16,6 +16,10 @@ const singleOptInMigration = readFileSync(
   ),
   "utf8",
 );
+const checkoutContactsSource = readFileSync(
+  new URL("../src/email/contacts.ts", import.meta.url),
+  "utf8",
+);
 
 test("email contacts migration creates one normalized contact and append-only consent evidence", () => {
   assert.match(migration, /create table if not exists public\.merch_email_contacts/i);
@@ -51,6 +55,17 @@ test("email contacts migration keeps suppressions and paid-order aggregates sync
   assert.match(migration, /merch_customer_orders_refresh_email_contact_stats/i);
   assert.match(migration, /count\(\*\) filter \(where paid_at is not null\)/i);
   assert.match(migration, /merch_email_outbox_sync_contact_sent/i);
+});
+
+test("checkout contact writes honor the least-privilege suppression boundary", () => {
+  assert.match(
+    checkoutContactsSource,
+    /email_contacts:remove_checkout_unsubscribe[\s\S]*?select\s+private\.merch_remove_unsubscribed_email_suppression\(\$1\)/i,
+  );
+  assert.doesNotMatch(
+    checkoutContactsSource,
+    /delete\s+from\s+public\.merch_email_suppressions/i,
+  );
 });
 
 test("single opt-in transition activates only explicit unsuppressed footer requests", () => {

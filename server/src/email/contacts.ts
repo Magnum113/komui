@@ -90,9 +90,7 @@ export async function upsertCheckoutEmailContact(
     await queryable.query(
       `
         /* email_contacts:remove_checkout_unsubscribe */
-        delete from public.merch_email_suppressions
-        where email_normalized = $1
-          and reason = 'unsubscribed'
+        select private.merch_remove_unsubscribed_email_suppression($1)
       `,
       [email],
     );
