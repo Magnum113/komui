@@ -1,0 +1,1775 @@
+#!/usr/bin/env python3
+"""Safely refresh the KOMUI Telegram Xray proxy from a v2RayTun subscription."""
+
+from __future__ import annotations
+
+import argparse
+import base64
+import binascii
+import copy
+import fcntl
+import grp
+import hashlib
+import ipaddress
+import json
+import os
+import pwd
+import re
+import socket
+import subprocess
+import tempfile
+import time
+import uuid
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from typing import Any
+from urllib.parse import parse_qsl, unquote, urlsplit
+
+
+DEFAULT_URL_FILE = Path("/etc/komui-xray/subscription.url")
+DEFAULT_SECONDARY_URL_FILE = Path("/etc/komui-xray/subscription-secondary.url")
+DEFAULT_HWID_FILE = Path("/etc/komui-xray/subscription.hwid")
+DEFAULT_XRAY = Path("/usr/local/bin/xray")
+DEFAULT_ACTIVE_CONFIG = Path("/usr/local/etc/xray/config.json")
+DEFAULT_STATE_DIR = Path("/var/lib/komui/xray-subscription")
+DEFAULT_RUNTIME_DIR = Path("/run/komui-xray-subscription")
+DEFAULT_LOCK = DEFAULT_RUNTIME_DIR / "update.lock"
+DEFAULT_UPDATE_INTERVAL_HOURS = 2
+MAX_RESPONSE_BYTES = 5 * 1024 * 1024
+MAX_PROFILES = 32
+MAX_TOTAL_PROFILES = 32
+FAILOVER_PROFILE_RESERVE = 3
+MAX_SCAN_SECONDS = 30 * 60
+MAX_VLESS_URI_LENGTH = 16 * 1024
+MAX_VLESS_SUBSCRIPTION_BYTES = MAX_PROFILES * MAX_VLESS_URI_LENGTH
+MAX_STATE_BYTES = 64 * 1024
+ALLOWED_PROTOCOLS = {"vless", "vmess", "trojan"}
+ALLOWED_NETWORKS = {"tcp", "raw", "ws", "grpc", "httpupgrade", "xhttp"}
+ALLOWED_SECURITY = {"none", "tls", "reality", ""}
+ALLOWED_VLESS_URI_NETWORKS = {"tcp", "grpc", "xhttp"}
+ALLOWED_FINGERPRINTS = {
+    "chrome",
+    "firefox",
+    "safari",
+    "ios",
+    "android",
+    "edge",
+    "360",
+    "qq",
+    "random",
+    "randomized",
+}
+ALLOWED_XHTTP_MODES = {"auto", "packet-up", "stream-up", "stream-one"}
+TLS_CLIENT_FIELDS = {
+    "serverName",
+    "alpn",
+    "enableSessionResumption",
+    "disableSystemRoot",
+    "minVersion",
+    "maxVersion",
+    "cipherSuites",
+    "fingerprint",
+    "rejectUnknownSni",
+    "curvePreferences",
+    "pinnedPeerCertSha256",
+    "verifyPeerCertByName",
+}
+REALITY_CLIENT_FIELDS = {
+    "show",
+    "fingerprint",
+    "serverName",
+    "password",
+    "publicKey",
+    "shortId",
+    "mldsa65Verify",
+    "spiderX",
+}
+XHTTP_SIMPLE_FIELDS = {
+    "host",
+    "path",
+    "mode",
+    "headers",
+    "xPaddingBytes",
+    "xPaddingObfsMode",
+    "xPaddingKey",
+    "xPaddingHeader",
+    "xPaddingPlacement",
+    "xPaddingMethod",
+    "uplinkHTTPMethod",
+    "sessionPlacement",
+    "sessionKey",
+    "seqPlacement",
+    "seqKey",
+    "uplinkDataPlacement",
+    "uplinkDataKey",
+    "uplinkChunkSize",
+    "noGRPCHeader",
+    "noSSEHeader",
+    "scMaxEachPostBytes",
+    "scMinPostsIntervalMs",
+    "scMaxBufferedPosts",
+    "scStreamUpServerSecs",
+}
+XHTTP_EXTRA_FIELDS = XHTTP_SIMPLE_FIELDS - {"host", "path", "mode"}
+XMUX_FIELDS = {
+    "maxConcurrency",
+    "maxConnections",
+    "cMaxReuseTimes",
+    "hMaxRequestTimes",
+    "hMaxReusableSecs",
+    "hKeepAlivePeriod",
+}
+XHTTP_RANGE_LIMITS = {
+    "xPaddingBytes": (1, 8 * 1024),
+    "scMaxEachPostBytes": (0, 2 * 1024 * 1024),
+    "scMinPostsIntervalMs": (0, 60 * 1000),
+    "scStreamUpServerSecs": (0, 60 * 60),
+}
+XHTTP_INTEGER_LIMITS = {
+    "uplinkChunkSize": (0, 256 * 1024),
+    "scMaxBufferedPosts": (0, 64),
+}
+XMUX_RANGE_LIMITS = {
+    "maxConcurrency": (0, 128),
+    "maxConnections": (0, 32),
+    "cMaxReuseTimes": (0, 1_000_000),
+    "hMaxRequestTimes": (0, 1_000_000),
+    "hMaxReusableSecs": (0, 24 * 60 * 60),
+}
+TELEGRAM_PROBE_URL = "https://api.telegram.org/"
+CLOUDFLARE_PROBE_URL = "https://cp.cloudflare.com/generate_204"
+
+
+class UpdateError(RuntimeError):
+    """Expected update failure that can be logged without exposing secrets."""
+
+
+class CandidateRejected(UpdateError):
+    """A candidate failed after a safe rollback and scanning may continue."""
+
+
+CURRENT_STAGE = "startup"
+_LEGACY_STATE_MARKER = object()
+
+
+def set_stage(value: str) -> None:
+    global CURRENT_STAGE
+    CURRENT_STAGE = value
+
+
+def log(message: str) -> None:
+    print(f"komui-xray-subscription-update: {message}", flush=True)
+
+
+def utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def isoformat(value: datetime) -> str:
+    return value.astimezone(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    credentials = os.environ.get("CREDENTIALS_DIRECTORY")
+    url_default = Path(os.environ.get("KOMUI_XRAY_SUBSCRIPTION_URL_FILE", "")) if os.environ.get(
+        "KOMUI_XRAY_SUBSCRIPTION_URL_FILE"
+    ) else (Path(credentials) / "subscription.url" if credentials else DEFAULT_URL_FILE)
+    hwid_default = Path(os.environ.get("KOMUI_XRAY_SUBSCRIPTION_HWID_FILE", "")) if os.environ.get(
+        "KOMUI_XRAY_SUBSCRIPTION_HWID_FILE"
+    ) else (Path(credentials) / "subscription.hwid" if credentials else DEFAULT_HWID_FILE)
+    secondary_url_default = (
+        Path(os.environ.get("KOMUI_XRAY_SECONDARY_SUBSCRIPTION_URL_FILE", ""))
+        if os.environ.get("KOMUI_XRAY_SECONDARY_SUBSCRIPTION_URL_FILE")
+        else (
+            Path(credentials) / "subscription-secondary.url"
+            if credentials
+            else DEFAULT_SECONDARY_URL_FILE
+        )
+    )
+    parser.add_argument("--force", action="store_true", help="ignore the saved next-update time")
+    parser.add_argument("--url-file", type=Path, default=url_default)
+    parser.add_argument("--secondary-url-file", type=Path, default=secondary_url_default)
+    parser.add_argument("--hwid-file", type=Path, default=hwid_default)
+    parser.add_argument("--xray", type=Path, default=DEFAULT_XRAY)
+    parser.add_argument("--active-config", type=Path, default=DEFAULT_ACTIVE_CONFIG)
+    parser.add_argument("--state-dir", type=Path, default=DEFAULT_STATE_DIR)
+    parser.add_argument("--runtime-dir", type=Path, default=DEFAULT_RUNTIME_DIR)
+    parser.add_argument("--lock-file", type=Path, default=DEFAULT_LOCK)
+    return parser.parse_args()
+
+
+def read_secret(path: Path, label: str) -> str:
+    try:
+        value = path.read_text(encoding="utf-8").strip()
+    except OSError as error:
+        raise UpdateError(f"cannot read {label}") from error
+    if not value or any(ord(char) < 32 for char in value):
+        raise UpdateError(f"invalid {label}")
+    return value
+
+
+def validate_subscription_url(value: str) -> None:
+    parsed = urlsplit(value)
+    if parsed.scheme.lower() != "https" or not parsed.hostname:
+        raise UpdateError("subscription URL must use HTTPS")
+    if parsed.username or parsed.password:
+        raise UpdateError("subscription URL must not contain URL userinfo")
+
+
+def validate_hwid(value: str) -> None:
+    try:
+        parsed = uuid.UUID(value)
+    except ValueError as error:
+        raise UpdateError("invalid subscription HWID") from error
+    if str(parsed) != value.lower():
+        raise UpdateError("subscription HWID must be a canonical UUID")
+
+
+def copy_allowed_fields(value: dict[str, Any], allowed: set[str], label: str) -> dict[str, Any]:
+    if set(value) - allowed:
+        raise UpdateError(f"{label} contain unsupported fields")
+    return {key: copy.deepcopy(value[key]) for key in allowed if key in value}
+
+
+def validate_headers(value: Any, label: str) -> None:
+    if not isinstance(value, dict) or len(value) > 32:
+        raise UpdateError(f"{label} headers are invalid")
+    for key, item in value.items():
+        if not isinstance(key, str) or not isinstance(item, str):
+            raise UpdateError(f"{label} headers are invalid")
+        if len(key) > 128 or len(item) > 4096 or any(char in key + item for char in "\r\n\x00"):
+            raise UpdateError(f"{label} headers are invalid")
+
+
+def validate_integer(value: Any, label: str, minimum: int, maximum: int) -> None:
+    if isinstance(value, bool) or not isinstance(value, int) or not minimum <= value <= maximum:
+        raise UpdateError(f"{label} is outside the allowed range")
+
+
+def validate_integer_range(value: Any, label: str, minimum: int, maximum: int) -> None:
+    if isinstance(value, bool):
+        raise UpdateError(f"{label} is outside the allowed range")
+    if isinstance(value, int):
+        values = [value]
+    elif isinstance(value, str):
+        matched = re.fullmatch(r"([0-9]+)(?:-([0-9]+))?", value)
+        if not matched:
+            raise UpdateError(f"{label} is outside the allowed range")
+        raw_values = [matched.group(1)]
+        if matched.group(2) is not None:
+            raw_values.append(matched.group(2))
+        if any(len(item) > 10 for item in raw_values):
+            raise UpdateError(f"{label} is outside the allowed range")
+        try:
+            values = [int(item) for item in raw_values]
+        except ValueError as error:
+            raise UpdateError(f"{label} is outside the allowed range") from error
+    else:
+        raise UpdateError(f"{label} is outside the allowed range")
+    if values != sorted(values) or any(item < minimum or item > maximum for item in values):
+        raise UpdateError(f"{label} is outside the allowed range")
+
+
+def validate_xhttp_scalars(value: dict[str, Any], label: str) -> None:
+    for key, bounds in XHTTP_RANGE_LIMITS.items():
+        if key in value:
+            validate_integer_range(value[key], f"{label} {key}", *bounds)
+    for key, bounds in XHTTP_INTEGER_LIMITS.items():
+        if key in value:
+            validate_integer(value[key], f"{label} {key}", *bounds)
+    for key in ("xPaddingObfsMode", "noGRPCHeader", "noSSEHeader"):
+        if key in value and not isinstance(value[key], bool):
+            raise UpdateError(f"{label} {key} is invalid")
+    excluded = set(XHTTP_RANGE_LIMITS) | set(XHTTP_INTEGER_LIMITS) | {
+        "headers",
+        "xmux",
+        "extra",
+        "xPaddingObfsMode",
+        "noGRPCHeader",
+        "noSSEHeader",
+    }
+    for key, item in value.items():
+        if key in excluded:
+            continue
+        if not isinstance(item, str) or len(item) > 4096 or any(char in item for char in "\r\n\x00"):
+            raise UpdateError(f"{label} {key} is invalid")
+
+
+def sanitize_xmux(value: Any) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise UpdateError("XHTTP xmux settings are invalid")
+    result = copy_allowed_fields(value, XMUX_FIELDS, "XHTTP xmux settings")
+    for key, bounds in XMUX_RANGE_LIMITS.items():
+        if key in result:
+            validate_integer_range(result[key], f"XHTTP xmux {key}", *bounds)
+    if "hKeepAlivePeriod" in result:
+        validate_integer(result["hKeepAlivePeriod"], "XHTTP xmux hKeepAlivePeriod", -1, 3600)
+    return result
+
+
+def sanitize_xhttp_settings(value: Any) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise UpdateError("XHTTP settings are invalid")
+    allowed = XHTTP_SIMPLE_FIELDS | {"xmux", "extra"}
+    result = copy_allowed_fields(value, allowed, "XHTTP settings")
+    validate_xhttp_scalars(result, "XHTTP")
+    if "headers" in result:
+        validate_headers(result["headers"], "XHTTP")
+    if "xmux" in result:
+        result["xmux"] = sanitize_xmux(result["xmux"])
+    if "extra" in result:
+        raw_extra = result["extra"]
+        if not isinstance(raw_extra, dict):
+            raise UpdateError("XHTTP extra settings are invalid")
+        extra = copy_allowed_fields(raw_extra, XHTTP_EXTRA_FIELDS | {"xmux"}, "XHTTP extra settings")
+        validate_xhttp_scalars(extra, "XHTTP extra")
+        if "headers" in extra:
+            validate_headers(extra["headers"], "XHTTP extra")
+        if "xmux" in extra:
+            extra["xmux"] = sanitize_xmux(extra["xmux"])
+        result["extra"] = extra
+    return result
+
+
+def sanitize_tls_settings(value: Any) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise UpdateError("proxy TLS settings are invalid")
+    allowed = TLS_CLIENT_FIELDS | {"allowInsecure"}
+    result = copy_allowed_fields(value, allowed, "proxy TLS settings")
+    if result.pop("allowInsecure", False) is not False:
+        raise UpdateError("insecure TLS verification is not allowed")
+    return result
+
+
+def sanitize_reality_settings(value: Any) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise UpdateError("proxy REALITY settings are invalid")
+    result = copy_allowed_fields(value, REALITY_CLIENT_FIELDS, "proxy REALITY settings")
+    if result.get("show") not in (None, False):
+        raise UpdateError("REALITY debug output is not allowed")
+    result.pop("show", None)
+    if not result.get("password") and not result.get("publicKey"):
+        raise UpdateError("proxy REALITY public key is missing")
+    return result
+
+
+def sanitize_transport_settings(stream: dict[str, Any], network: str) -> tuple[str | None, dict[str, Any] | None]:
+    if network in {"tcp", "raw"}:
+        keys = [key for key in ("rawSettings", "tcpSettings") if key in stream]
+        if len(keys) > 1:
+            raise UpdateError("proxy RAW transport settings are ambiguous")
+        if not keys:
+            return None, None
+        value = stream[keys[0]]
+        if not isinstance(value, dict) or value:
+            raise UpdateError("proxy RAW transport settings are unsupported")
+        return keys[0], {}
+    if network == "xhttp":
+        keys = [key for key in ("xhttpSettings", "splithttpSettings") if key in stream]
+        if len(keys) != 1:
+            raise UpdateError("proxy XHTTP settings are missing or ambiguous")
+        return keys[0], sanitize_xhttp_settings(stream[keys[0]])
+    if network == "ws":
+        value = stream.get("wsSettings")
+        if not isinstance(value, dict):
+            raise UpdateError("proxy WebSocket settings are missing")
+        result = copy_allowed_fields(value, {"host", "path", "headers", "heartbeatPeriod"}, "WebSocket settings")
+        if "headers" in result:
+            validate_headers(result["headers"], "WebSocket")
+        return "wsSettings", result
+    if network == "httpupgrade":
+        value = stream.get("httpupgradeSettings")
+        if not isinstance(value, dict):
+            raise UpdateError("proxy HTTPUpgrade settings are missing")
+        result = copy_allowed_fields(value, {"host", "path", "headers"}, "HTTPUpgrade settings")
+        if "headers" in result:
+            validate_headers(result["headers"], "HTTPUpgrade")
+        return "httpupgradeSettings", result
+    if network == "grpc":
+        value = stream.get("grpcSettings")
+        if not isinstance(value, dict):
+            raise UpdateError("proxy gRPC settings are missing")
+        allowed = {
+            "serviceName",
+            "authority",
+            "multiMode",
+            "idle_timeout",
+            "health_check_timeout",
+            "permit_without_stream",
+            "initial_windows_size",
+        }
+        return "grpcSettings", copy_allowed_fields(value, allowed, "gRPC settings")
+    raise UpdateError("proxy transport is unsupported")
+
+
+def sanitize_stream_settings(value: Any, protocol: str) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise UpdateError("proxy stream settings are invalid")
+    network = str(value.get("network", "tcp")).lower()
+    security = str(value.get("security", "none")).lower()
+    if network not in ALLOWED_NETWORKS:
+        raise UpdateError("proxy transport is unsupported")
+    if security not in ALLOWED_SECURITY:
+        raise UpdateError("proxy transport security is unsupported")
+    if protocol in {"vless", "trojan"} and security not in {"tls", "reality"}:
+        raise UpdateError("proxy protocol requires TLS or REALITY")
+    if security == "reality" and network not in {"tcp", "raw", "xhttp", "grpc"}:
+        raise UpdateError("REALITY transport combination is unsupported")
+
+    result: dict[str, Any] = {"network": network, "security": security or "none"}
+    allowed_top = {"network", "security"}
+    if security == "tls":
+        allowed_top.add("tlsSettings")
+        result["tlsSettings"] = sanitize_tls_settings(value.get("tlsSettings", {}))
+    elif security == "reality":
+        allowed_top.add("realitySettings")
+        result["realitySettings"] = sanitize_reality_settings(value.get("realitySettings"))
+
+    transport_key, transport = sanitize_transport_settings(value, network)
+    if transport_key is not None:
+        allowed_top.add(transport_key)
+        result[transport_key] = transport
+    if set(value) - allowed_top:
+        raise UpdateError("proxy stream settings contain unsupported fields")
+    return result
+
+
+def curl_config_escape(value: str) -> str:
+    if "\n" in value or "\r" in value or "\x00" in value:
+        raise UpdateError("invalid control character in curl configuration")
+    return value.replace("\\", "\\\\").replace('"', '\\"')
+
+
+def parse_last_header_block(raw: str) -> dict[str, str]:
+    blocks = [block for block in re.split(r"\r?\n\r?\n", raw) if block.strip()]
+    for block in reversed(blocks):
+        lines = block.splitlines()
+        if not lines or not lines[0].startswith("HTTP/"):
+            continue
+        headers: dict[str, str] = {}
+        for line in lines[1:]:
+            if ":" not in line:
+                continue
+            key, value = line.split(":", 1)
+            headers[key.strip().lower()] = value.strip()
+        return headers
+    raise UpdateError("subscription response headers are missing")
+
+
+def strict_unquote(value: str, label: str, maximum: int, allow_empty: bool = False) -> str:
+    if re.search(r"%(?![0-9A-Fa-f]{2})", value):
+        raise UpdateError(f"{label} contains malformed percent encoding")
+    try:
+        decoded = unquote(value, encoding="utf-8", errors="strict")
+    except UnicodeDecodeError as error:
+        raise UpdateError(f"{label} is not valid UTF-8") from error
+    if (not decoded and not allow_empty) or len(decoded) > maximum:
+        raise UpdateError(f"{label} is outside the allowed length")
+    if any(ord(char) < 32 or ord(char) == 127 for char in decoded):
+        raise UpdateError(f"{label} contains control characters")
+    return decoded
+
+
+def parse_unique_query(raw_query: str) -> dict[str, str]:
+    if re.search(r"%(?![0-9A-Fa-f]{2})", raw_query):
+        raise UpdateError("VLESS query contains malformed percent encoding")
+    try:
+        pairs = parse_qsl(
+            raw_query,
+            keep_blank_values=True,
+            strict_parsing=True,
+            max_num_fields=24,
+            encoding="utf-8",
+            errors="strict",
+            separator="&",
+        )
+    except (UnicodeDecodeError, ValueError) as error:
+        raise UpdateError("VLESS query is invalid") from error
+    result: dict[str, str] = {}
+    for key, value in pairs:
+        if not key or key in result:
+            raise UpdateError("VLESS query contains an empty or duplicate field")
+        if len(key) > 64 or len(value) > MAX_VLESS_URI_LENGTH:
+            raise UpdateError("VLESS query field is outside the allowed length")
+        if any(ord(char) < 32 or ord(char) == 127 for char in key + value):
+            raise UpdateError("VLESS query contains control characters")
+        result[key] = value
+    return result
+
+
+def validate_server_name(value: str, label: str) -> str:
+    candidate = value.rstrip(".")
+    if not candidate or len(candidate) > 253 or ".." in candidate:
+        raise UpdateError(f"{label} is invalid")
+    labels = candidate.split(".")
+    if any(
+        not re.fullmatch(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?", item)
+        for item in labels
+    ):
+        raise UpdateError(f"{label} is invalid")
+    lowered = candidate.lower()
+    if lowered == "localhost" or lowered.endswith((".localhost", ".local", ".internal", ".home.arpa")):
+        raise UpdateError(f"{label} is not public")
+    return candidate
+
+
+def parse_vless_uri(value: str) -> dict[str, Any]:
+    if not isinstance(value, str) or not 1 <= len(value) <= MAX_VLESS_URI_LENGTH:
+        raise UpdateError("VLESS URI is outside the allowed length")
+    core = value.split("#", 1)[0]
+    try:
+        core.encode("ascii")
+    except UnicodeEncodeError as error:
+        raise UpdateError("VLESS URI core must be ASCII") from error
+    if any(ord(char) < 32 or ord(char) == 127 for char in core):
+        raise UpdateError("VLESS URI contains control characters")
+    if re.search(r"%(?![0-9A-Fa-f]{2})", core):
+        raise UpdateError("VLESS URI contains malformed percent encoding")
+    try:
+        parsed = urlsplit(core)
+        hostname = parsed.hostname
+        port = parsed.port
+        username = parsed.username
+        password = parsed.password
+    except ValueError as error:
+        raise UpdateError("VLESS URI authority is invalid") from error
+    if parsed.scheme != "vless" or not hostname or port is None:
+        raise UpdateError("VLESS URI endpoint is missing")
+    if password is not None or not username or parsed.path not in ("",):
+        raise UpdateError("VLESS URI userinfo or path is invalid")
+    user_id = strict_unquote(username, "VLESS user ID", 64)
+    try:
+        canonical_user_id = str(uuid.UUID(user_id))
+    except ValueError as error:
+        raise UpdateError("VLESS user ID is invalid") from error
+    if canonical_user_id != user_id:
+        raise UpdateError("VLESS user ID must be a canonical UUID")
+
+    query = parse_unique_query(parsed.query)
+    network = query.get("type", "")
+    common = {"encryption", "fp", "pbk", "security", "sid", "sni", "spx", "type"}
+    network_fields = {
+        "tcp": set(),
+        "grpc": {"authority", "serviceName"},
+        "xhttp": {"extra", "host", "mode", "path", "x_padding_bytes"},
+    }
+    if network not in ALLOWED_VLESS_URI_NETWORKS:
+        raise UpdateError("VLESS transport is unsupported")
+    expected = common | network_fields[network]
+    if set(query) != expected:
+        raise UpdateError("VLESS URI fields do not match the supported profile shape")
+    if query["encryption"] != "none" or query["security"] != "reality":
+        raise UpdateError("VLESS URI must use REALITY with encryption=none")
+
+    fingerprint = query["fp"]
+    if fingerprint not in ALLOWED_FINGERPRINTS:
+        raise UpdateError("VLESS fingerprint is unsupported")
+    public_key = query["pbk"]
+    if not re.fullmatch(r"[A-Za-z0-9_-]{43}", public_key):
+        raise UpdateError("VLESS REALITY public key is invalid")
+    server_name = validate_server_name(query["sni"], "VLESS REALITY server name")
+    short_id = query["sid"]
+    if len(short_id) > 16 or len(short_id) % 2 or not re.fullmatch(r"[0-9A-Fa-f]*", short_id):
+        raise UpdateError("VLESS REALITY short ID is invalid")
+    spider_x = query["spx"]
+    if len(spider_x) > 1024 or (spider_x and not spider_x.startswith("/")):
+        raise UpdateError("VLESS REALITY spider path is invalid")
+
+    stream: dict[str, Any] = {
+        "network": network,
+        "security": "reality",
+        "realitySettings": {
+            "fingerprint": fingerprint,
+            "serverName": server_name,
+            "password": public_key,
+            "shortId": short_id,
+            "spiderX": spider_x,
+        },
+    }
+    if network == "grpc":
+        service_name = query["serviceName"]
+        if not service_name or len(service_name) > 1024:
+            raise UpdateError("VLESS gRPC service name is invalid")
+        authority = query["authority"]
+        if len(authority) > 253:
+            raise UpdateError("VLESS gRPC authority is invalid")
+        stream["grpcSettings"] = {
+            "serviceName": service_name,
+            "authority": authority,
+            "multiMode": False,
+        }
+    elif network == "xhttp":
+        mode = query["mode"]
+        if mode not in ALLOWED_XHTTP_MODES:
+            raise UpdateError("VLESS XHTTP mode is unsupported")
+        path = query["path"]
+        if not path or len(path) > 4096 or not path.startswith("/"):
+            raise UpdateError("VLESS XHTTP path is invalid")
+        host = query["host"] or server_name
+        if len(host) > 253:
+            raise UpdateError("VLESS XHTTP host is invalid")
+
+        raw_extra = query["extra"]
+        if not raw_extra or len(raw_extra) > MAX_VLESS_URI_LENGTH:
+            raise UpdateError("VLESS XHTTP extra settings are invalid")
+
+        def unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+            result: dict[str, Any] = {}
+            for key, item in pairs:
+                if key in result:
+                    raise UpdateError("VLESS XHTTP extra settings contain duplicate fields")
+                result[key] = item
+            return result
+
+        try:
+            extra = json.loads(raw_extra, object_pairs_hook=unique_object)
+        except (json.JSONDecodeError, TypeError) as error:
+            raise UpdateError("VLESS XHTTP extra settings are invalid JSON") from error
+        if not isinstance(extra, dict) or set(extra) != {"mode", "xPaddingBytes"}:
+            raise UpdateError("VLESS XHTTP extra settings have an unsupported shape")
+        if not isinstance(extra["mode"], str) or not isinstance(extra["xPaddingBytes"], str):
+            raise UpdateError("VLESS XHTTP extra settings must contain strings")
+        if extra["mode"] != mode or extra["xPaddingBytes"] != query["x_padding_bytes"]:
+            raise UpdateError("VLESS XHTTP duplicate settings disagree")
+        validate_integer_range(extra["xPaddingBytes"], "VLESS XHTTP xPaddingBytes", 1, 8 * 1024)
+        stream["xhttpSettings"] = {
+            "host": host,
+            "path": path,
+            "mode": mode,
+            "extra": {"xPaddingBytes": extra["xPaddingBytes"]},
+        }
+
+    return {
+        "protocol": "vless",
+        "settings": {
+            "vnext": [
+                {
+                    "address": hostname,
+                    "port": port,
+                    "users": [{"id": canonical_user_id, "encryption": "none"}],
+                }
+            ]
+        },
+        "streamSettings": stream,
+    }
+
+
+def parse_base64_vless_subscription(body: bytes) -> list[dict[str, Any]]:
+    try:
+        encoded = body.decode("ascii")
+    except UnicodeDecodeError as error:
+        raise UpdateError("VLESS subscription envelope is not ASCII") from error
+    compact = re.sub(r"[ \t\r\n]", "", encoded)
+    if not compact or len(compact) > (MAX_VLESS_SUBSCRIPTION_BYTES * 4 // 3) + 4:
+        raise UpdateError("VLESS subscription envelope is outside the allowed size")
+    if len(compact) % 4 == 1:
+        raise UpdateError("VLESS subscription envelope has invalid Base64 padding")
+    compact += "=" * ((-len(compact)) % 4)
+    try:
+        decoded = base64.b64decode(compact, altchars=b"-_", validate=True)
+    except (binascii.Error, ValueError) as error:
+        raise UpdateError("VLESS subscription envelope is invalid Base64") from error
+    if not 1 <= len(decoded) <= MAX_VLESS_SUBSCRIPTION_BYTES:
+        raise UpdateError("VLESS subscription content is outside the allowed size")
+    try:
+        text = decoded.decode("utf-8", errors="strict")
+    except UnicodeDecodeError as error:
+        raise UpdateError("VLESS subscription content is not valid UTF-8") from error
+    if any((ord(char) < 32 and char not in "\r\n") or ord(char) == 127 for char in text):
+        raise UpdateError("VLESS subscription content contains control characters")
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    if not 1 <= len(lines) <= MAX_PROFILES:
+        raise UpdateError("VLESS subscription must contain a bounded non-empty URI list")
+    outbounds: list[dict[str, Any]] = []
+    for line in lines:
+        if len(line) > MAX_VLESS_URI_LENGTH:
+            continue
+        try:
+            outbounds.append(parse_vless_uri(line))
+        except UpdateError:
+            continue
+    if not outbounds:
+        raise UpdateError("VLESS subscription contains no supported profiles")
+    return outbounds
+
+
+def fetch_subscription(
+    url: str,
+    hwid: str,
+    runtime_dir: Path,
+) -> tuple[list[Any], int]:
+    runtime_dir.mkdir(parents=True, exist_ok=True)
+    header_path = runtime_dir / "response.headers"
+    body_path = runtime_dir / "response.body"
+    curl_config = "\n".join(
+        [
+            f'url = "{curl_config_escape(url)}"',
+            'user-agent = "v2raytun/android"',
+            'header = "Accept: application/json, text/plain;q=0.9"',
+            f'header = "X-HWID: {curl_config_escape(hwid)}"',
+            'header = "X-Device-OS: Linux"',
+            'header = "X-Device-Model: KOMUI Server"',
+            'header = "X-App-Version: 1.0"',
+            "",
+        ]
+    )
+    command = [
+        "curl",
+        "--http1.1",
+        "--silent",
+        "--show-error",
+        "--fail-with-body",
+        "--location",
+        "--max-redirs",
+        "3",
+        "--proto",
+        "=https",
+        "--proto-redir",
+        "=https",
+        "--connect-timeout",
+        "10",
+        "--max-time",
+        "60",
+        "--max-filesize",
+        str(MAX_RESPONSE_BYTES),
+        "--retry",
+        "2",
+        "--retry-max-time",
+        "120",
+        "--retry-delay",
+        "2",
+        "--retry-all-errors",
+        "--dump-header",
+        str(header_path),
+        "--output",
+        str(body_path),
+        "--config",
+        "-",
+    ]
+    try:
+        completed = subprocess.run(
+            command,
+            input=curl_config,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=150,
+        )
+    except subprocess.TimeoutExpired as error:
+        raise UpdateError("subscription fetch exceeded its time limit") from error
+    if completed.returncode != 0:
+        raise UpdateError(f"subscription fetch failed with exit code {completed.returncode}")
+    try:
+        body_size = body_path.stat().st_size
+    except OSError as error:
+        raise UpdateError("subscription response body is missing") from error
+    if body_size < 2 or body_size > MAX_RESPONSE_BYTES:
+        raise UpdateError("subscription response size is outside the allowed range")
+    headers = parse_last_header_block(header_path.read_text(encoding="utf-8", errors="replace"))
+    if headers.get("x-hwid-max-devices-reached", "").lower() == "true":
+        raise UpdateError("subscription device limit has been reached")
+    if headers.get("x-hwid-not-supported", "").lower() == "true":
+        raise UpdateError("subscription did not accept the server HWID")
+    content_type = headers.get("content-type", "").split(";", 1)[0].strip().lower()
+    if content_type == "application/json":
+        try:
+            payload = json.loads(body_path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+            raise UpdateError("subscription returned invalid JSON") from error
+        if not isinstance(payload, list) or not 1 <= len(payload) <= MAX_PROFILES:
+            raise UpdateError("subscription JSON must contain a bounded non-empty profile array")
+    elif content_type == "text/plain":
+        try:
+            payload = parse_base64_vless_subscription(body_path.read_bytes())
+        except OSError as error:
+            raise UpdateError("subscription response body is missing") from error
+    else:
+        raise UpdateError("subscription returned an unsupported content type")
+    try:
+        interval = int(headers.get("profile-update-interval", DEFAULT_UPDATE_INTERVAL_HOURS))
+    except ValueError:
+        interval = DEFAULT_UPDATE_INTERVAL_HOURS
+    return payload, min(24, max(1, interval))
+
+
+def sanitize_settings(outbound: dict[str, Any], protocol: str) -> dict[str, Any]:
+    settings = outbound.get("settings")
+    if not isinstance(settings, dict):
+        raise UpdateError("proxy outbound settings are missing")
+    if protocol in {"vless", "vmess"}:
+        endpoints = settings.get("vnext")
+    else:
+        endpoints = settings.get("servers")
+    if not isinstance(endpoints, list) or len(endpoints) != 1 or not isinstance(endpoints[0], dict):
+        raise UpdateError("proxy outbound must contain exactly one endpoint")
+    raw_address = endpoints[0].get("address")
+    if not isinstance(raw_address, str):
+        raise UpdateError("proxy endpoint address is invalid")
+    address = raw_address.strip()
+    raw_port = endpoints[0].get("port")
+    if isinstance(raw_port, bool) or not isinstance(raw_port, (int, str)):
+        raise UpdateError("proxy endpoint port is invalid")
+    if isinstance(raw_port, str) and not re.fullmatch(r"[0-9]{1,5}", raw_port):
+        raise UpdateError("proxy endpoint port is invalid")
+    try:
+        port = int(raw_port)
+    except (TypeError, ValueError, OverflowError) as error:
+        raise UpdateError("proxy endpoint port is invalid") from error
+    if not address or not 1 <= port <= 65535:
+        raise UpdateError("proxy endpoint is invalid")
+    try:
+        ip = ipaddress.ip_address(address.strip("[]"))
+    except ValueError:
+        if len(address) > 253 or not re.fullmatch(r"[A-Za-z0-9._:-]+", address):
+            raise UpdateError("proxy endpoint hostname is invalid")
+        lowered = address.rstrip(".").lower()
+        if lowered == "localhost" or lowered.endswith((".localhost", ".local", ".internal", ".home.arpa")):
+            raise UpdateError("proxy endpoint hostname is not public")
+    else:
+        if not ip.is_global:
+            raise UpdateError("proxy endpoint must use a public address")
+    endpoint = endpoints[0]
+    if protocol in {"vless", "vmess"}:
+        users = endpoint.get("users")
+        if not isinstance(users, list) or len(users) != 1 or not isinstance(users[0], dict):
+            raise UpdateError("proxy outbound must contain exactly one user")
+        raw_user = users[0]
+        try:
+            user_id = str(uuid.UUID(str(raw_user.get("id", ""))))
+        except ValueError as error:
+            raise UpdateError("proxy user ID is invalid") from error
+        user: dict[str, Any] = {"id": user_id}
+        if protocol == "vless":
+            encryption = str(raw_user.get("encryption", "none"))
+            if encryption != "none":
+                raise UpdateError("unsupported VLESS encryption")
+            user["encryption"] = encryption
+            flow = raw_user.get("flow")
+            if flow not in (None, ""):
+                if flow != "xtls-rprx-vision":
+                    raise UpdateError("unsupported VLESS flow")
+                user["flow"] = flow
+        else:
+            security = str(raw_user.get("security", "auto"))
+            if security not in {"auto", "aes-128-gcm", "chacha20-poly1305"}:
+                raise UpdateError("unsupported VMess security")
+            user["security"] = security
+        return {"vnext": [{"address": address, "port": port, "users": [user]}]}
+
+    password = endpoint.get("password")
+    if not isinstance(password, str) or not password:
+        raise UpdateError("Trojan password is missing")
+    server: dict[str, Any] = {"address": address, "port": port, "password": password}
+    flow = endpoint.get("flow")
+    if flow not in (None, ""):
+        if flow != "xtls-rprx-vision":
+            raise UpdateError("unsupported Trojan flow")
+        server["flow"] = flow
+    return {"servers": [server]}
+
+
+def sanitize_outbound(raw: Any, tag: str) -> dict[str, Any]:
+    if not isinstance(raw, dict):
+        raise UpdateError("proxy outbound is not an object")
+    protocol = str(raw.get("protocol", "")).lower()
+    if protocol not in ALLOWED_PROTOCOLS:
+        raise UpdateError("proxy outbound protocol is unsupported")
+    if raw.get("sendThrough") or raw.get("proxySettings"):
+        raise UpdateError("proxy outbound contains unsafe chaining settings")
+    settings = sanitize_settings(raw, protocol)
+    stream = sanitize_stream_settings(raw.get("streamSettings", {}), protocol)
+    sanitized = {
+        "tag": tag,
+        "protocol": protocol,
+        "settings": settings,
+    }
+    sanitized["streamSettings"] = stream
+    return sanitized
+
+
+def extract_candidates(
+    payload: list[Any], tag_prefix: str = "subscription-proxy"
+) -> list[dict[str, Any]]:
+    if not re.fullmatch(r"[a-z0-9-]{1,48}", tag_prefix):
+        raise UpdateError("candidate tag prefix is invalid")
+    candidates: list[dict[str, Any]] = []
+    for profile in payload:
+        if not isinstance(profile, dict):
+            continue
+        raw_outbounds = profile.get("outbounds")
+        if not isinstance(raw_outbounds, list):
+            raw_outbounds = [profile] if str(profile.get("protocol", "")).lower() in ALLOWED_PROTOCOLS else []
+        for raw in raw_outbounds:
+            if not isinstance(raw, dict) or str(raw.get("protocol", "")).lower() not in ALLOWED_PROTOCOLS:
+                continue
+            tag = f"{tag_prefix}-{len(candidates) + 1:03d}"
+            try:
+                candidates.append(sanitize_outbound(raw, tag))
+            except UpdateError:
+                continue
+            if len(candidates) >= MAX_PROFILES:
+                return candidates
+    if not candidates:
+        raise UpdateError("subscription contains no supported proxy outbounds")
+    return candidates
+
+
+def order_candidates(
+    candidates: list[dict[str, Any]],
+    preferred_index: Any,
+    preferred_fingerprint: Any = None,
+) -> list[tuple[int, dict[str, Any]]]:
+    indexed = list(enumerate(candidates, start=1))
+    if isinstance(preferred_fingerprint, str):
+        for offset, item in enumerate(indexed):
+            if outbound_fingerprint(item[1]) == preferred_fingerprint:
+                indexed.insert(0, indexed.pop(offset))
+                return indexed
+    if isinstance(preferred_index, int) and 1 <= preferred_index <= len(indexed):
+        preferred = indexed.pop(preferred_index - 1)
+        indexed.insert(0, preferred)
+    return indexed
+
+
+def outbound_fingerprint(outbound: dict[str, Any]) -> str:
+    stable = copy.deepcopy(outbound)
+    stable.pop("tag", None)
+    encoded = json.dumps(stable, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode(
+        "utf-8"
+    )
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def pin_public_endpoint(outbound: dict[str, Any]) -> dict[str, Any] | None:
+    pinned = copy.deepcopy(outbound)
+    protocol = str(outbound.get("protocol", ""))
+    settings = pinned.get("settings", {})
+    endpoint_key = "vnext" if protocol in {"vless", "vmess"} else "servers"
+    try:
+        endpoint = settings[endpoint_key][0]
+        address = str(endpoint["address"])
+        port = int(endpoint["port"])
+        results = socket.getaddrinfo(address, port, type=socket.SOCK_STREAM)
+    except (KeyError, IndexError, TypeError, ValueError, OSError):
+        return None
+    resolved: list[ipaddress.IPv4Address | ipaddress.IPv6Address] = []
+    for result in results:
+        try:
+            resolved_address = ipaddress.ip_address(str(result[4][0]).split("%", 1)[0])
+        except (IndexError, ValueError):
+            return None
+        if resolved_address not in resolved:
+            resolved.append(resolved_address)
+    if not resolved or not all(item.is_global for item in resolved):
+        return None
+
+    try:
+        original_is_ip = ipaddress.ip_address(address.strip("[]")) is not None
+    except ValueError:
+        original_is_ip = False
+    if original_is_ip:
+        return pinned
+
+    endpoint["address"] = str(resolved[0])
+    stream = pinned.get("streamSettings", {})
+    security = stream.get("security")
+    if security in {"tls", "reality"}:
+        security_key = "tlsSettings" if security == "tls" else "realitySettings"
+        if not stream.setdefault(security_key, {}).get("serverName"):
+            stream[security_key]["serverName"] = address
+    network = stream.get("network")
+    if network == "xhttp":
+        transport_key = "xhttpSettings" if "xhttpSettings" in stream else "splithttpSettings"
+    else:
+        transport_key = {
+            "ws": "wsSettings",
+            "httpupgrade": "httpupgradeSettings",
+            "grpc": "grpcSettings",
+        }.get(network)
+    if transport_key:
+        host_key = "authority" if network == "grpc" else "host"
+        if not stream.setdefault(transport_key, {}).get(host_key):
+            if network == "grpc":
+                authority_host = f"[{address}]" if ":" in address else address
+                stream[transport_key][host_key] = f"{authority_host}:{port}"
+            else:
+                stream[transport_key][host_key] = address
+    return pinned
+
+
+def build_config(outbound: dict[str, Any], socks_port: int, http_port: int) -> dict[str, Any]:
+    tag = str(outbound["tag"])
+    return {
+        "log": {"loglevel": "warning"},
+        "inbounds": [
+            {
+                "tag": "socks",
+                "listen": "127.0.0.1",
+                "port": socks_port,
+                "protocol": "socks",
+                "settings": {"auth": "noauth", "udp": True},
+            },
+            {
+                "tag": "http",
+                "listen": "127.0.0.1",
+                "port": http_port,
+                "protocol": "http",
+                "settings": {},
+            },
+        ],
+        "outbounds": [
+            copy.deepcopy(outbound),
+            {"tag": "direct", "protocol": "freedom"},
+            {"tag": "block", "protocol": "blackhole"},
+        ],
+        "routing": {
+            "domainStrategy": "AsIs",
+            "rules": [
+                {"type": "field", "ip": ["geoip:private"], "outboundTag": "direct"},
+                {"type": "field", "network": "tcp,udp", "outboundTag": tag},
+            ],
+        },
+    }
+
+
+def atomic_write(path: Path, data: bytes, mode: int, uid: int, gid: int) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.chown(temporary_name, uid, gid)
+        os.chmod(temporary_name, mode)
+        os.replace(temporary_name, path)
+        directory_fd = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+    finally:
+        if os.path.exists(temporary_name):
+            os.unlink(temporary_name)
+
+
+def write_json(path: Path, value: Any, mode: int, uid: int, gid: int) -> bytes:
+    data = (json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8")
+    atomic_write(path, data, mode, uid, gid)
+    return data
+
+
+def find_free_port() -> int:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as handle:
+        handle.bind(("127.0.0.1", 0))
+        return int(handle.getsockname()[1])
+
+
+def wait_for_port(port: int, timeout: float = 8.0) -> bool:
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        try:
+            with socket.create_connection(("127.0.0.1", port), timeout=0.3):
+                return True
+        except OSError:
+            time.sleep(0.2)
+    return False
+
+
+def curl_probe(proxy_port: int, url: str, expected_status: str | None = None) -> bool:
+    config = f'url = "{curl_config_escape(url)}"\n'
+    try:
+        completed = subprocess.run(
+            [
+                "curl",
+                "--http1.1",
+                "--proxy",
+                f"socks5h://127.0.0.1:{proxy_port}",
+                "--silent",
+                "--show-error",
+                "--output",
+                "/dev/null",
+                "--connect-timeout",
+                "8",
+                "--max-time",
+                "20",
+                "--write-out",
+                "%{http_code}",
+                "--config",
+                "-",
+            ],
+            input=config,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=25,
+        )
+    except subprocess.TimeoutExpired:
+        return False
+    status = completed.stdout.strip()
+    if completed.returncode != 0 or not status or status == "000":
+        return False
+    return expected_status is None or status == expected_status
+
+
+def proxy_is_healthy(port: int, telegram_attempts: int = 3, required_telegram_successes: int = 2) -> bool:
+    if not curl_probe(port, CLOUDFLARE_PROBE_URL, "204"):
+        return False
+    telegram_successes = sum(curl_probe(port, TELEGRAM_PROBE_URL) for _ in range(telegram_attempts))
+    return telegram_successes >= required_telegram_successes
+
+
+def nobody_process_kwargs(nobody_gid: int) -> dict[str, Any]:
+    return {
+        "user": pwd.getpwnam("nobody").pw_uid,
+        "group": nobody_gid,
+        "extra_groups": [],
+    }
+
+
+def syntax_test(xray: Path, config_path: Path) -> bool:
+    nobody_gid = grp.getgrnam("nogroup").gr_gid
+    try:
+        completed = subprocess.run(
+            [str(xray), "run", "-test", "-config", str(config_path)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+            timeout=15,
+            **nobody_process_kwargs(nobody_gid),
+        )
+    except subprocess.TimeoutExpired:
+        return False
+    return completed.returncode == 0
+
+
+def canary_test(xray: Path, config: dict[str, Any], runtime_dir: Path, nobody_gid: int) -> bool:
+    socks_port = find_free_port()
+    http_port = find_free_port()
+    while http_port == socks_port:
+        http_port = find_free_port()
+    canary = copy.deepcopy(config)
+    canary["inbounds"][0]["port"] = socks_port
+    canary["inbounds"][1]["port"] = http_port
+    canary_path = runtime_dir / "canary.json"
+    write_json(canary_path, canary, 0o640, 0, nobody_gid)
+    if not syntax_test(xray, canary_path):
+        log("isolated candidate failed Xray syntax validation")
+        return False
+    process = subprocess.Popen(
+        [str(xray), "run", "-config", str(canary_path)],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+        **nobody_process_kwargs(nobody_gid),
+    )
+    try:
+        if not wait_for_port(socks_port) or process.poll() is not None:
+            log("isolated candidate failed to start its loopback proxy")
+            return False
+        if not curl_probe(socks_port, CLOUDFLARE_PROBE_URL, "204"):
+            log("isolated candidate failed the Cloudflare connectivity probe")
+            return False
+        if not curl_probe(socks_port, TELEGRAM_PROBE_URL):
+            log("isolated candidate failed the Telegram connectivity probe")
+            return False
+        return True
+    finally:
+        if process.poll() is None:
+            process.terminate()
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=5)
+
+
+def restart_xray() -> bool:
+    try:
+        completed = subprocess.run(
+            ["systemctl", "restart", "xray.service"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+            timeout=30,
+        )
+    except subprocess.TimeoutExpired:
+        return False
+    if completed.returncode != 0:
+        return False
+    if not wait_for_port(10808, timeout=12):
+        return False
+    try:
+        active = subprocess.run(
+            ["systemctl", "is-active", "--quiet", "xray.service"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+            timeout=15,
+        )
+    except subprocess.TimeoutExpired:
+        return False
+    return active.returncode == 0
+
+
+def load_state(path: Path) -> dict[str, Any]:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {}
+    except OSError as error:
+        raise UpdateError("cannot read updater state") from error
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise UpdateError("updater state is invalid JSON") from error
+    if not isinstance(value, dict):
+        raise UpdateError("updater state must be an object")
+    return value
+
+
+def valid_state_timestamp(value: Any) -> bool:
+    if not isinstance(value, str):
+        return False
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    return parsed.tzinfo is not None
+
+
+def sanitized_provider_state(value: Any) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        return {}
+    result: dict[str, Any] = {}
+    preferred_index = value.get("preferredProfileIndex")
+    if (
+        isinstance(preferred_index, int)
+        and not isinstance(preferred_index, bool)
+        and 1 <= preferred_index <= MAX_PROFILES
+    ):
+        result["preferredProfileIndex"] = preferred_index
+    preferred_hash = value.get("preferredProfileSha256")
+    if isinstance(preferred_hash, str) and re.fullmatch(r"[0-9a-f]{64}", preferred_hash):
+        result["preferredProfileSha256"] = preferred_hash
+    interval = value.get("profileUpdateIntervalHours")
+    if isinstance(interval, int) and not isinstance(interval, bool) and 1 <= interval <= 24:
+        result["profileUpdateIntervalHours"] = interval
+    for key in ("lastSuccessfulAt", "nextDueAt"):
+        if valid_state_timestamp(value.get(key)):
+            result[key] = value[key]
+    return result
+
+
+def normalize_state(value: dict[str, Any]) -> dict[str, Any]:
+    version = value.get("version", 1)
+    if not isinstance(version, int) or isinstance(version, bool) or version not in {1, 2}:
+        raise UpdateError("unsupported updater state version")
+
+    providers: dict[str, dict[str, Any]] = {"primary": {}, "secondary": {}}
+    if version == 1:
+        legacy = {
+            "preferredProfileIndex": value.get("selectedProfileIndex"),
+            "profileUpdateIntervalHours": value.get("profileUpdateIntervalHours"),
+            "lastSuccessfulAt": value.get("lastSuccessfulAt"),
+            "nextDueAt": value.get("nextDueAt"),
+        }
+        providers["primary"] = sanitized_provider_state(legacy)
+        active_provider = "primary"
+    else:
+        raw_providers = value.get("providers")
+        if isinstance(raw_providers, dict):
+            for name in providers:
+                providers[name] = sanitized_provider_state(raw_providers.get(name))
+        active_provider = value.get("activeProvider")
+        if active_provider not in providers:
+            raise UpdateError("updater state has an invalid active provider")
+
+    result: dict[str, Any] = {
+        "version": 2,
+        "activeProvider": active_provider,
+        "providers": providers,
+    }
+    active_config_hash = value.get("activeConfigSha256")
+    if isinstance(active_config_hash, str) and re.fullmatch(r"[0-9a-f]{64}", active_config_hash):
+        result["activeConfigSha256"] = active_config_hash
+    active_state = providers[active_provider]
+    aliases = {
+        "preferredProfileIndex": "selectedProfileIndex",
+        "profileUpdateIntervalHours": "profileUpdateIntervalHours",
+        "lastSuccessfulAt": "lastSuccessfulAt",
+        "nextDueAt": "nextDueAt",
+    }
+    for provider_key, legacy_key in aliases.items():
+        if provider_key in active_state:
+            result[legacy_key] = active_state[provider_key]
+    return result
+
+
+def update_is_due(state: dict[str, Any], force: bool) -> bool:
+    if force:
+        return True
+    value = state.get("nextDueAt")
+    if not isinstance(value, str):
+        return True
+    try:
+        due = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return True
+    return utc_now() >= due.astimezone(timezone.utc)
+
+
+def provider_update_is_due(state: dict[str, Any], provider_name: str, force: bool) -> bool:
+    if force:
+        return True
+    providers = state.get("providers")
+    provider_state = providers.get(provider_name, {}) if isinstance(providers, dict) else {}
+    return update_is_due(provider_state, False)
+
+
+def provider_preference(state: dict[str, Any], provider_name: str) -> tuple[Any, Any]:
+    providers = state.get("providers")
+    provider_state = providers.get(provider_name, {}) if isinstance(providers, dict) else {}
+    if not isinstance(provider_state, dict):
+        return None, None
+    return (
+        provider_state.get("preferredProfileIndex"),
+        provider_state.get("preferredProfileSha256"),
+    )
+
+
+def provider_scan_order(
+    active_provider: str, active_healthy: bool, available_providers: set[str]
+) -> list[str]:
+    if active_healthy:
+        return [active_provider] if active_provider in available_providers else []
+    return [name for name in ("primary", "secondary") if name in available_providers]
+
+
+def provider_candidate_limit(
+    remaining_total: int, provider_name: str, providers_not_scanned: set[str]
+) -> int:
+    reserve = (
+        FAILOVER_PROFILE_RESERVE
+        if any(name != provider_name for name in providers_not_scanned)
+        else 0
+    )
+    return max(0, remaining_total - reserve)
+
+
+def prune_backups(directory: Path, keep: int = 5) -> None:
+    backups = sorted(directory.glob("*.json"), key=lambda path: path.stat().st_mtime, reverse=True)
+    for path in backups[keep:]:
+        path.unlink(missing_ok=True)
+
+
+def recover_pending(
+    marker_path: Path,
+    active_config: Path,
+    nobody_gid: int,
+) -> None:
+    if not marker_path.exists():
+        return
+    try:
+        marker = json.loads(marker_path.read_text(encoding="utf-8"))
+        backup_path = Path(str(marker["backupPath"]))
+        backup = backup_path.read_bytes()
+        state_existed = marker.get("stateExisted")
+        previous_state: bytes | None | object = _LEGACY_STATE_MARKER
+        if state_existed is not None:
+            if not isinstance(state_existed, bool):
+                raise ValueError("invalid state marker")
+            if state_existed:
+                encoded_state = marker.get("previousStateBase64")
+                if not isinstance(encoded_state, str):
+                    raise ValueError("missing state backup")
+                previous_state = base64.b64decode(encoded_state, validate=True)
+                if len(previous_state) > MAX_STATE_BYTES:
+                    raise ValueError("state backup is too large")
+                decoded_state = json.loads(previous_state.decode("utf-8"))
+                if not isinstance(decoded_state, dict):
+                    raise ValueError("state backup is invalid")
+            else:
+                previous_state = None
+    except (
+        OSError,
+        KeyError,
+        UnicodeDecodeError,
+        binascii.Error,
+        json.JSONDecodeError,
+        ValueError,
+    ) as error:
+        raise UpdateError("cannot recover an interrupted Xray update") from error
+    atomic_write(active_config, backup, 0o640, 0, nobody_gid)
+    state_path = marker_path.parent / "state.json"
+    if previous_state is None:
+        state_path.unlink(missing_ok=True)
+    elif previous_state is not _LEGACY_STATE_MARKER:
+        atomic_write(state_path, previous_state, 0o600, 0, 0)
+    if not restart_xray():
+        raise UpdateError("Xray restart failed while recovering an interrupted update")
+    marker_path.unlink(missing_ok=True)
+    log("recovered the previous Xray configuration from an interrupted update")
+
+
+def build_success_state(
+    previous_state: dict[str, Any],
+    provider_name: str,
+    selected_index: int,
+    selected_fingerprint: str,
+    interval_hours: int,
+    candidate_data: bytes,
+    now: datetime,
+) -> dict[str, Any]:
+    state = normalize_state(previous_state)
+    if provider_name not in state["providers"]:
+        raise UpdateError("selected provider is invalid")
+    providers = copy.deepcopy(state["providers"])
+    provider_state = providers[provider_name]
+    provider_state.update(
+        {
+            "preferredProfileIndex": selected_index,
+            "preferredProfileSha256": selected_fingerprint,
+            "lastSuccessfulAt": isoformat(now),
+            "nextDueAt": isoformat(now + timedelta(hours=interval_hours)),
+            "profileUpdateIntervalHours": interval_hours,
+        }
+    )
+    return {
+        "version": 2,
+        "activeProvider": provider_name,
+        "providers": providers,
+        "lastSuccessfulAt": provider_state["lastSuccessfulAt"],
+        "nextDueAt": provider_state["nextDueAt"],
+        "profileUpdateIntervalHours": interval_hours,
+        "selectedProfileIndex": selected_index,
+        "activeConfigSha256": hashlib.sha256(candidate_data).hexdigest(),
+    }
+
+
+def activate_candidate(
+    candidate_data: bytes,
+    active_config: Path,
+    state_dir: Path,
+    nobody_gid: int,
+    interval_hours: int,
+    selected_index: int,
+    selected_fingerprint: str,
+    provider_name: str,
+    previous_state: dict[str, Any],
+) -> None:
+    try:
+        previous = active_config.read_bytes()
+    except OSError as error:
+        raise UpdateError("cannot read the active Xray configuration") from error
+    backup_dir = state_dir / "backups"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    timestamp = utc_now().strftime("%Y%m%dT%H%M%SZ")
+    backup_path = backup_dir / f"config-{timestamp}-{os.getpid()}.json"
+    atomic_write(backup_path, previous, 0o600, 0, 0)
+    marker_path = state_dir / "pending.json"
+    state_path = state_dir / "state.json"
+    try:
+        previous_state_data = state_path.read_bytes()
+        state_existed = True
+    except FileNotFoundError:
+        previous_state_data = b""
+        state_existed = False
+    except OSError as error:
+        raise UpdateError("cannot back up the updater state") from error
+    if len(previous_state_data) > MAX_STATE_BYTES:
+        raise UpdateError("updater state is outside the allowed size")
+    marker = {
+        "backupPath": str(backup_path),
+        "startedAt": isoformat(utc_now()),
+        "stateExisted": state_existed,
+        "previousStateBase64": base64.b64encode(previous_state_data).decode("ascii"),
+    }
+    write_json(marker_path, marker, 0o600, 0, 0)
+    atomic_write(active_config, candidate_data, 0o640, 0, nobody_gid)
+    switched = restart_xray() and proxy_is_healthy(10808)
+    if not switched:
+        atomic_write(active_config, previous, 0o640, 0, nobody_gid)
+        restored = restart_xray()
+        if not restored:
+            raise UpdateError("candidate failed and the previous Xray service could not be restarted")
+        marker_path.unlink(missing_ok=True)
+        backup_path.unlink(missing_ok=True)
+        raise CandidateRejected(
+            "candidate failed the production probe; previous Xray configuration restored"
+        )
+    now = utc_now()
+    state = build_success_state(
+        previous_state,
+        provider_name,
+        selected_index,
+        selected_fingerprint,
+        interval_hours,
+        candidate_data,
+        now,
+    )
+    write_json(state_path, state, 0o600, 0, 0)
+    atomic_write(state_dir / "last-successful.json", candidate_data, 0o600, 0, 0)
+    marker_path.unlink(missing_ok=True)
+    prune_backups(backup_dir)
+
+
+def main() -> int:
+    args = parse_args()
+    if os.geteuid() != 0:
+        raise UpdateError("must run as root")
+    os.umask(0o077)
+    set_stage("preparing protected directories")
+    args.runtime_dir.mkdir(parents=True, exist_ok=True)
+    args.state_dir.mkdir(parents=True, exist_ok=True)
+    nobody_gid = grp.getgrnam("nogroup").gr_gid
+    os.chown(args.runtime_dir, 0, nobody_gid)
+    os.chmod(args.runtime_dir, 0o750)
+    os.chown(args.state_dir, 0, 0)
+    os.chmod(args.state_dir, 0o700)
+    args.lock_file.parent.mkdir(parents=True, exist_ok=True)
+    set_stage("acquiring the update lock")
+    with args.lock_file.open("a+", encoding="utf-8") as lock:
+        try:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            log("another update is already running; skipping")
+            return 0
+        marker_path = args.state_dir / "pending.json"
+        set_stage("checking interrupted updates")
+        recover_pending(marker_path, args.active_config, nobody_gid)
+        raw_state = load_state(args.state_dir / "state.json")
+        state = normalize_state(raw_state)
+        set_stage("checking the active proxy")
+        active_provider = str(state["activeProvider"])
+        active_healthy = proxy_is_healthy(10808)
+        if active_healthy and not provider_update_is_due(state, active_provider, args.force):
+            active_state = state["providers"].get(active_provider, {})
+            log(
+                f"{active_provider} subscription refresh is not due until "
+                f"{active_state.get('nextDueAt')}; proxy is healthy"
+            )
+            return 0
+        set_stage("reading subscription credentials")
+        hwid = read_secret(args.hwid_file, "subscription HWID")
+        validate_hwid(hwid)
+        provider_files: dict[str, Path] = {"primary": args.url_file}
+        if args.secondary_url_file.exists():
+            provider_files["secondary"] = args.secondary_url_file
+        provider_names = provider_scan_order(
+            active_provider, active_healthy, set(provider_files)
+        )
+        set_stage("creating a protected temporary directory")
+        with tempfile.TemporaryDirectory(prefix="fetch-", dir=args.runtime_dir) as temporary:
+            temporary_dir = Path(temporary)
+            os.chown(temporary_dir, 0, nobody_gid)
+            os.chmod(temporary_dir, 0o750)
+            selected_data: bytes | None = None
+            selected_index = 0
+            selected_fingerprint = ""
+            selected_provider = ""
+            selected_interval_hours = DEFAULT_UPDATE_INTERVAL_HOURS
+            profiles_examined = 0
+            scanned_providers: set[str] = set()
+            scan_deadline = time.monotonic() + MAX_SCAN_SECONDS
+            scan_timed_out = False
+            deferred_scans: list[
+                tuple[
+                    str,
+                    Path,
+                    int,
+                    list[tuple[int, dict[str, Any]]],
+                ]
+            ] = []
+            while True:
+                scan_queue: list[
+                    tuple[
+                        str,
+                        Path | None,
+                        int | None,
+                        list[tuple[int, dict[str, Any]]] | None,
+                    ]
+                ] = [(name, None, None, None) for name in provider_names]
+                if not active_healthy:
+                    scan_queue.extend(deferred_scans)
+                    deferred_scans.clear()
+                for provider_name, cached_dir, cached_interval, cached_candidates in scan_queue:
+                    if time.monotonic() >= scan_deadline:
+                        scan_timed_out = True
+                        log("profile scan reached its global time limit")
+                        break
+                    if cached_candidates is None:
+                        scanned_providers.add(provider_name)
+                        provider_dir = temporary_dir / provider_name
+                        provider_dir.mkdir(mode=0o750, exist_ok=True)
+                        os.chown(provider_dir, 0, nobody_gid)
+                        os.chmod(provider_dir, 0o750)
+                        try:
+                            set_stage(f"reading {provider_name} subscription URL")
+                            url = read_secret(
+                                provider_files[provider_name], f"{provider_name} subscription URL"
+                            )
+                            validate_subscription_url(url)
+                            set_stage(f"fetching {provider_name} subscription")
+                            payload, interval_hours = fetch_subscription(url, hwid, provider_dir)
+                            set_stage(f"parsing {provider_name} subscription")
+                            candidates = extract_candidates(
+                                payload, f"subscription-{provider_name}"
+                            )
+                        except UpdateError as error:
+                            log(f"{provider_name} provider could not be used: {error}")
+                            continue
+                        preferred_index, preferred_fingerprint = provider_preference(
+                            state, provider_name
+                        )
+                        indexed_candidates = order_candidates(
+                            candidates, preferred_index, preferred_fingerprint
+                        )
+                    else:
+                        if cached_dir is None or cached_interval is None:
+                            raise UpdateError("deferred provider scan is invalid")
+                        provider_dir = cached_dir
+                        interval_hours = cached_interval
+                        indexed_candidates = cached_candidates
+                    remaining = MAX_TOTAL_PROFILES - profiles_examined
+                    if remaining <= 0:
+                        log(
+                            "combined profile safety limit reached before all providers were scanned"
+                        )
+                        break
+                    candidate_limit = remaining
+                    if cached_candidates is None:
+                        providers_not_scanned = set(provider_names) - scanned_providers
+                        if active_healthy:
+                            providers_not_scanned.update(
+                                set(provider_files) - {provider_name}
+                            )
+                        candidate_limit = provider_candidate_limit(
+                            remaining,
+                            provider_name,
+                            providers_not_scanned,
+                        )
+                    if len(indexed_candidates) > candidate_limit:
+                        if candidate_limit < remaining:
+                            deferred_scan = (
+                                provider_name,
+                                provider_dir,
+                                interval_hours,
+                                indexed_candidates[candidate_limit:],
+                            )
+                            if active_healthy:
+                                deferred_scans.append(deferred_scan)
+                            else:
+                                scan_queue.append(deferred_scan)
+                        indexed_candidates = indexed_candidates[:candidate_limit]
+                        if candidate_limit < remaining:
+                            log(
+                                f"{provider_name} provider scan was bounded to preserve "
+                                "failover capacity"
+                            )
+                    profiles_examined += len(indexed_candidates)
+                    for index, outbound in indexed_candidates:
+                        if time.monotonic() >= scan_deadline:
+                            scan_timed_out = True
+                            log("profile scan reached its global time limit")
+                            break
+                        pinned_outbound = pin_public_endpoint(outbound)
+                        if pinned_outbound is None:
+                            log(
+                                f"{provider_name} profile {index} failed endpoint safety validation"
+                            )
+                            continue
+                        config = build_config(pinned_outbound, 10808, 10809)
+                        candidate_path = provider_dir / f"candidate-{index}.json"
+                        candidate_data = write_json(
+                            candidate_path, config, 0o640, 0, nobody_gid
+                        )
+                        set_stage(f"probing {provider_name} profile {index}")
+                        if not canary_test(args.xray, config, provider_dir, nobody_gid):
+                            log(
+                                f"{provider_name} profile {index} failed the isolated network probe"
+                            )
+                            continue
+                        fingerprint = outbound_fingerprint(outbound)
+                        set_stage(f"activating {provider_name} profile {index}")
+                        try:
+                            activate_candidate(
+                                candidate_data,
+                                args.active_config,
+                                args.state_dir,
+                                nobody_gid,
+                                interval_hours,
+                                index,
+                                fingerprint,
+                                provider_name,
+                                state,
+                            )
+                        except CandidateRejected as error:
+                            log(f"{provider_name} profile {index} could not be activated: {error}")
+                            if active_healthy and proxy_is_healthy(10808):
+                                log(
+                                    "restored active proxy is healthy; keeping it after refresh rejection"
+                                )
+                                return 0
+                            if active_healthy:
+                                active_healthy = False
+                                for fallback_name in provider_scan_order(
+                                    active_provider, False, set(provider_files)
+                                ):
+                                    if (
+                                        fallback_name not in scanned_providers
+                                        and fallback_name not in provider_names
+                                    ):
+                                        provider_names.append(fallback_name)
+                                        scan_queue.append((fallback_name, None, None, None))
+                                scan_queue.extend(deferred_scans)
+                                deferred_scans.clear()
+                            continue
+                        selected_data = candidate_data
+                        selected_index = index
+                        selected_fingerprint = fingerprint
+                        selected_provider = provider_name
+                        selected_interval_hours = interval_hours
+                        break
+                    if selected_data is not None:
+                        break
+                    if scan_timed_out:
+                        break
+                if selected_data is not None:
+                    break
+                if scan_timed_out:
+                    break
+                if active_healthy and not proxy_is_healthy(10808):
+                    active_healthy = False
+                    provider_names = [
+                        name
+                        for name in provider_scan_order(
+                            active_provider, False, set(provider_files)
+                        )
+                        if name not in scanned_providers
+                    ]
+                    if provider_names:
+                        log("active proxy became unhealthy during refresh; starting failover scan")
+                        continue
+                break
+            if selected_data is None:
+                if active_healthy and proxy_is_healthy(10808):
+                    log("active proxy remains healthy; keeping the current configuration")
+                    return 0
+                raise UpdateError("no provider profile passed the isolated Telegram probe")
+        log(
+            f"activated {selected_provider} subscription profile {selected_index}; "
+            f"next refresh in {selected_interval_hours} hour(s)"
+        )
+        return 0
+
+
+if __name__ == "__main__":
+    try:
+        raise SystemExit(main())
+    except UpdateError as error:
+        log(str(error))
+        raise SystemExit(1)
+    except Exception as error:  # noqa: BLE001 - do not leak secret-bearing exception details
+        log(f"unexpected failure during {CURRENT_STAGE} ({type(error).__name__})")
+        raise SystemExit(1)

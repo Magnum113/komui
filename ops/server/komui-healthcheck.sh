@@ -31,6 +31,66 @@ check() {
   fi
 }
 
+curl_config_escape() {
+  local value="$1"
+  value="${value//\\/\\\\}"
+  value="${value//\"/\\\"}"
+  printf '%s' "$value"
+}
+
+staging_curl() {
+  local url="$1"
+  shift
+  unset staging_user staging_password
+  local staging_user="${STAGING_USER:-}"
+  local staging_password="${STAGING_PASSWORD:-}"
+  export -n staging_user staging_password
+  unset STAGING_USER STAGING_PASSWORD
+
+  [[ -n "$staging_user" && -n "$staging_password" ]] || return 2
+  [[ "$staging_user" != *:* ]] || return 2
+  if printf '%s%s' "$staging_user" "$staging_password" | LC_ALL=C grep -q '[[:cntrl:]]'; then
+    return 2
+  fi
+  {
+    printf 'user = "'
+    curl_config_escape "${staging_user}:${staging_password}"
+    printf '"\n'
+  } | curl -q --config - "$@" "$url"
+}
+
+stage_root_https() {
+  # shellcheck disable=SC1091
+  unset STAGING_USER STAGING_PASSWORD
+  if ! . /etc/komui/staging-access.env; then
+    unset STAGING_USER STAGING_PASSWORD
+    return 1
+  fi
+  local code
+  if ! code="$(staging_curl https://stage.komui.ru/ -sS --max-time 8 -o /dev/null -w '%{http_code}')"; then
+    unset STAGING_USER STAGING_PASSWORD
+    return 1
+  fi
+  unset STAGING_USER STAGING_PASSWORD
+  [[ "$code" == "200" ]]
+}
+
+stage_products_https() {
+  # shellcheck disable=SC1091
+  unset STAGING_USER STAGING_PASSWORD
+  if ! . /etc/komui/staging-access.env; then
+    unset STAGING_USER STAGING_PASSWORD
+    return 1
+  fi
+  local code
+  if ! code="$(staging_curl 'https://stage.komui.ru/api/v1/products?limit=1' -sS --max-time 8 -o /dev/null -w '%{http_code}')"; then
+    unset STAGING_USER STAGING_PASSWORD
+    return 1
+  fi
+  unset STAGING_USER STAGING_PASSWORD
+  [[ "$code" == "200" ]]
+}
+
 no_relevant_failed_units() {
   local unit
 
@@ -151,19 +211,8 @@ check email_worker_active email_workers_active
 check email_failed_or_stale_jobs email_queues_healthy
 check tbank_ca_readable runuser -u komui -- test -r /etc/komui/certs/komui-node-ca-bundle.pem
 
-check stage_root_https bash -c '
-  set -euo pipefail
-  . /etc/komui/staging-access.env
-  code=$(curl -sS --max-time 8 -o /dev/null -w "%{http_code}" -u "$STAGING_USER:$STAGING_PASSWORD" https://stage.komui.ru/)
-  test "$code" = "200"
-'
-
-check stage_products_https bash -c '
-  set -euo pipefail
-  . /etc/komui/staging-access.env
-  code=$(curl -sS --max-time 8 -o /dev/null -w "%{http_code}" -u "$STAGING_USER:$STAGING_PASSWORD" "https://stage.komui.ru/api/v1/products?limit=1")
-  test "$code" = "200"
-'
+check stage_root_https stage_root_https
+check stage_products_https stage_products_https
 
 check production_yandex_feed bash -c '
   set -euo pipefail

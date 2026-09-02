@@ -2,6 +2,47 @@
 set -Eeuo pipefail
 
 source_dir="${KOMUI_DEPLOY_SOURCE_DIR:-/opt/komui/deploy-source}"
+deploy_home="${KOMUI_DEPLOY_HOME:-/var/lib/komui/deploy-home}"
+staging_access_file="${KOMUI_STAGING_ACCESS_FILE:-/etc/komui/staging-access.env}"
+remote_timeout_seconds="${KOMUI_DEPLOY_REMOTE_TIMEOUT_SECONDS:-10}"
+if [[ ! "$remote_timeout_seconds" =~ ^[1-9][0-9]?$ ]]; then
+  remote_timeout_seconds=10
+fi
+
+curl_config_escape() {
+  local value="$1"
+  value="${value//\\/\\\\}"
+  value="${value//\"/\\\"}"
+  printf '%s' "$value"
+}
+
+staging_curl() {
+  local url="$1"
+  shift
+  unset staging_user staging_password
+  local staging_user="${STAGING_USER:-}"
+  local staging_password="${STAGING_PASSWORD:-}"
+  export -n staging_user staging_password
+  unset STAGING_USER STAGING_PASSWORD
+
+  [[ -n "$staging_user" && -n "$staging_password" ]] || return 2
+  [[ "$staging_user" != *:* ]] || return 2
+  if printf '%s%s' "$staging_user" "$staging_password" | LC_ALL=C grep -q '[[:cntrl:]]'; then
+    return 2
+  fi
+  {
+    printf 'user = "'
+    curl_config_escape "${staging_user}:${staging_password}"
+    printf '"\n'
+  } | curl -q --config - "$@" "$url"
+}
+
+load_staging_access() {
+  [[ -r "$staging_access_file" ]] || return 1
+  STAGING_USER="$(awk 'index($0, "STAGING_USER=") == 1 {print substr($0, 14); exit}' "$staging_access_file")"
+  STAGING_PASSWORD="$(awk 'index($0, "STAGING_PASSWORD=") == 1 {print substr($0, 18); exit}' "$staging_access_file")"
+  [[ -n "$STAGING_USER" && -n "$STAGING_PASSWORD" ]]
+}
 
 echo "KOMUI deploy status"
 echo
@@ -10,8 +51,21 @@ if [[ -d "$source_dir/.git" ]]; then
   echo "deploy-source: $source_dir"
   echo "branch: $(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
   echo "local:  $(git rev-parse --short=12 HEAD 2>/dev/null || true)"
-  remote="$(git ls-remote origin refs/heads/main 2>/dev/null | awk '{print substr($1,1,12)}')"
-  echo "origin/main: ${remote:-unknown}"
+  remote="$(
+    HOME="$deploy_home" GIT_TERMINAL_PROMPT=0 \
+      timeout --signal=TERM --kill-after=2s "${remote_timeout_seconds}s" \
+      git -c protocol.version=1 ls-remote origin refs/heads/main 2>/dev/null \
+      | awk '{print substr($1,1,12)}' \
+      || true
+  )"
+  remote_source=""
+  if [[ -z "$remote" ]]; then
+    remote="$(git rev-parse --short=12 refs/remotes/origin/main 2>/dev/null || true)"
+    if [[ -n "$remote" ]]; then
+      remote_source=" (cached)"
+    fi
+  fi
+  echo "origin/main: ${remote:-unknown}${remote_source}"
 else
   echo "deploy-source: not cloned yet"
 fi
@@ -25,11 +79,35 @@ echo "prod frontend: $(basename "$(readlink -f /var/lib/komui/production-root 2>
 
 echo
 echo "services:"
-for unit in postgresql nginx komui-backend komui-production-backend komui-backup.timer komui-healthcheck.timer komui-deploy-bot; do
-  printf "%s: %s\n" "$unit" "$(systemctl is-active "$unit" 2>/dev/null || echo unknown)"
+for unit in \
+  postgresql \
+  nginx \
+  komui-backend \
+  komui-production-backend \
+  komui-email-worker \
+  komui-production-email-worker \
+  komui-backup.timer \
+  komui-healthcheck.timer \
+  komui-order-monitor.timer \
+  komui-deploy-bot \
+  xray \
+  komui-xray-subscription-update.timer; do
+  unit_state="$(systemctl is-active "$unit" 2>/dev/null || true)"
+  printf "%s: %s\n" "$unit" "${unit_state:-unknown}"
 done
 
 echo
 echo "smoke:"
-curl -fsS -o /dev/null -w "stage products: %{http_code}\n" -u "$(awk -F= '$1=="STAGING_USER"{u=$2} $1=="STAGING_PASSWORD"{p=$2} END{print u":"p}' /etc/komui/staging-access.env)" "https://stage.komui.ru/api/v1/products?limit=1" || true
-curl -fsS -o /dev/null -w "prod products: %{http_code}\n" "https://komui.ru/api/v1/products?limit=1" || true
+if load_staging_access; then
+  staging_curl \
+    "https://stage.komui.ru/api/v1/products?limit=1" \
+    -fsS --connect-timeout 5 --max-time 10 \
+    -o /dev/null -w "stage products: %{http_code}\n" || true
+  unset STAGING_USER STAGING_PASSWORD
+else
+  unset STAGING_USER STAGING_PASSWORD
+  echo "stage products: credentials unavailable"
+fi
+curl -fsS --connect-timeout 5 --max-time 10 \
+  -o /dev/null -w "prod products: %{http_code}\n" \
+  "https://komui.ru/api/v1/products?limit=1" || true

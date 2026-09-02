@@ -153,6 +153,34 @@ record_event() {
   "$registry" "${args[@]}" >/dev/null || true
 }
 
+curl_config_escape() {
+  local value="$1"
+  value="${value//\\/\\\\}"
+  value="${value//\"/\\\"}"
+  printf '%s' "$value"
+}
+
+staging_curl() {
+  local url="$1"
+  shift
+  unset staging_user staging_password
+  local staging_user="${STAGING_USER:-}"
+  local staging_password="${STAGING_PASSWORD:-}"
+  export -n staging_user staging_password
+  unset STAGING_USER STAGING_PASSWORD
+
+  [[ -n "$staging_user" && -n "$staging_password" ]] || return 2
+  [[ "$staging_user" != *:* ]] || return 2
+  if printf '%s%s' "$staging_user" "$staging_password" | LC_ALL=C grep -q '[[:cntrl:]]'; then
+    return 2
+  fi
+  {
+    printf 'user = "'
+    curl_config_escape "${staging_user}:${staging_password}"
+    printf '"\n'
+  } | curl -q --config - "$@" "$url"
+}
+
 activate_backend() {
   ln -sfnT "$release_path" "$current_link" || return 1
   systemctl restart komui-backend || return 1
@@ -175,8 +203,16 @@ activate_frontend() {
 
   if [[ -f /etc/komui/staging-access.env ]]; then
     # shellcheck disable=SC1091
-    . /etc/komui/staging-access.env
-    curl -fsS --max-time 8 -u "$STAGING_USER:$STAGING_PASSWORD" https://stage.komui.ru/ >/dev/null 2>&1 || return 1
+    unset STAGING_USER STAGING_PASSWORD
+    if ! . /etc/komui/staging-access.env; then
+      unset STAGING_USER STAGING_PASSWORD
+      return 1
+    fi
+    if ! staging_curl https://stage.komui.ru/ -fsS --max-time 8 >/dev/null 2>&1; then
+      unset STAGING_USER STAGING_PASSWORD
+      return 1
+    fi
+    unset STAGING_USER STAGING_PASSWORD
     checks+=(nginx_config_ok nginx_reloaded stage_root_https)
   else
     checks+=(nginx_config_ok nginx_reloaded)

@@ -45,6 +45,12 @@ class KomuiHealthcheckContractTest(unittest.TestCase):
         self.assertNotIn("recipient_email", self.script)
         self.assertNotIn("customer_email", self.script)
 
+    def test_staging_credentials_are_passed_on_stdin_not_in_curl_argv(self) -> None:
+        self.assertNotRegex(self.script, r"curl[^\n]*(?:^|\s)(?:-u|--user)(?:\s|=)")
+        self.assertIn('curl -q --config - "$@" "$url"', self.script)
+        self.assertIn("check stage_root_https stage_root_https", self.script)
+        self.assertIn("check stage_products_https stage_products_https", self.script)
+
 
 if __name__ == "__main__":
     unittest.main()

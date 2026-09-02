@@ -35,6 +35,16 @@ class KomuiDeployFromGitCompatibilityTest(unittest.TestCase):
         self.assertIn("--check-compatibility-only", completed.stdout)
         self.assertIn("without\n      building or activating", completed.stdout)
 
+    def test_github_network_operations_use_compatible_protocol(self) -> None:
+        self.assertIn(
+            'git -c protocol.version=1 clone --branch "$branch"',
+            self.script,
+        )
+        self.assertIn(
+            'git -c protocol.version=1 fetch --prune origin "$branch"',
+            self.script,
+        )
+
     def test_guard_covers_source_and_database_mismatch_in_both_directions(self) -> None:
         self.assertIn('database_name="komui_staging"', self.script)
         self.assertIn('database_name="komui_production"', self.script)
@@ -82,6 +92,11 @@ class KomuiDeployFromGitCompatibilityTest(unittest.TestCase):
         self.assertLess(guard_offset, build_offset)
         self.assertLess(build_offset, final_guard_offset)
         self.assertLess(final_guard_offset, activation_offset)
+
+    def test_staging_credentials_are_passed_on_stdin_not_in_curl_argv(self) -> None:
+        self.assertNotRegex(self.script, r"curl[^\n]*(?:^|\s)(?:-u|--user)(?:\s|=)")
+        self.assertIn('curl -q --config - "$@" "$url"', self.script)
+        self.assertEqual(self.script.count("staging_curl \"$public_smoke_url\""), 2)
 
 
 if __name__ == "__main__":
