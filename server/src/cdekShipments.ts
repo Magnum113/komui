@@ -10,6 +10,7 @@ import {
   createCdekOrder,
   getCdekOrder,
   getCdekOrderByImNumber,
+  isCdekOrderNotFoundError,
   quoteCdekDelivery,
   type CdekOrderResponse,
 } from "./cdek";
@@ -680,14 +681,6 @@ function assertReconciledCdekOrder(
 
 }
 
-function isCdekNotFound(error: unknown): boolean {
-  return (
-    error instanceof HttpError &&
-    error.code === "cdek_request_failed" &&
-    error.details.providerStatus === 404
-  );
-}
-
 export async function createCdekShipmentForOrder(
   context: HandlerContext,
   input: CreateShipmentInput,
@@ -957,7 +950,7 @@ export async function createCdekShipmentForOrder(
             context.provider?.getOrderByUuid ?? getCdekOrder
           )(context.config, shipment.cdek_uuid);
         } catch (error) {
-          if (!isCdekNotFound(error)) throw error;
+          if (!isCdekOrderNotFoundError(error)) throw error;
           knownUuidNotFound = true;
         }
       }

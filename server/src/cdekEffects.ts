@@ -9,6 +9,7 @@ import {
   cdekRequestState,
   getCdekOrder,
   getCdekOrderByImNumber,
+  isCdekOrderNotFoundError,
   type CdekOrderResponse,
 } from "./cdek";
 import { createCdekShipmentForOrder } from "./cdekShipments";
@@ -1540,11 +1541,7 @@ async function processCancelEffect(
       providerShipment.cdek_uuid!,
     );
   } catch (error) {
-    if (
-      error instanceof HttpError &&
-      error.code === "cdek_request_failed" &&
-      error.details.providerStatus === 404
-    ) {
+    if (isCdekOrderNotFoundError(error)) {
       try {
         const merchantLookup = await findOrderByImNumber(
           context.config,

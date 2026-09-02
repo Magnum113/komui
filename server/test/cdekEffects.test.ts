@@ -929,7 +929,7 @@ test("legacy shipment identity must be complete and exact before DELETE", async 
   }
 });
 
-test("UUID 404 cannot hide a live shipment found by merchant number", async () => {
+test("semantic UUID miss cannot hide a live shipment found by merchant number", async () => {
   const cancelEffect = effect("cdek_cancel");
   const shipment: FakeShipment = {
     id: 29,
@@ -948,7 +948,8 @@ test("UUID 404 cannot hide a live shipment found by merchant number", async () =
       limit: 1,
       getOrder: async () => {
         throw new HttpError(400, "cdek_request_failed", "Not found", {
-          providerStatus: 404,
+          providerStatus: 400,
+          providerErrorCode: "v2_entity_not_found",
         });
       },
       getOrderByImNumber: async (_config, number) => ({

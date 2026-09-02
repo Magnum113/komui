@@ -8,10 +8,13 @@ import {
   cdekRequestState,
   cancelCdekOrder,
   createCdekOrder,
+  getCdekOrder,
   getCdekOrderByImNumber,
+  isCdekOrderNotFoundError,
   quoteCdekDelivery,
 } from "../src/cdek";
 import { loadConfig } from "../src/config";
+import { HttpError } from "../src/errors";
 
 test("buildCdekPackages uses hoodie profile and preserves non-payment items", () => {
   const packages = buildCdekPackages("KOM-TEST", [
@@ -235,6 +238,98 @@ test("cancelCdekOrder treats provider 404 as idempotent success", async (context
   assert.equal(response.requests?.[0]?.warnings?.[0]?.code, "already_absent");
 });
 
+test("CDEK nested entity-not-found error is preserved and classified", async (context) => {
+  const originalFetch = globalThis.fetch;
+  context.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+  globalThis.fetch = async (input) => {
+    if (String(input).endsWith("/v2/oauth/token")) {
+      return new Response(
+        JSON.stringify({ access_token: "lookup-token", expires_in: 3600 }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
+    }
+    return new Response(
+      JSON.stringify({
+        requests: [{
+          type: "GET",
+          state: "INVALID",
+          errors: [{
+            code: "v2_entity_not_found",
+            message: "Entity does not exist",
+          }],
+        }],
+        related_entities: [],
+      }),
+      { status: 400, headers: { "Content-Type": "application/json" } },
+    );
+  };
+  const config = loadConfig({
+    DATABASE_URL: "postgresql://komui_app:secret@127.0.0.1:5432/komui_test",
+    CDEK_API_BASE_URL: "https://cdek-nested-missing.example",
+    CDEK_LOGIN: "test-login",
+    CDEK_PASSWORD: "test-password",
+  });
+
+  await assert.rejects(
+    () => getCdekOrder(config, "missing-order-uuid"),
+    (error: unknown) => {
+      assert.ok(error instanceof HttpError);
+      assert.equal(error.details.providerStatus, 400);
+      assert.equal(error.details.providerErrorCode, "v2_entity_not_found");
+      assert.equal(isCdekOrderNotFoundError(error), true);
+      assert.equal(
+        isCdekOrderNotFoundError(
+          new HttpError(400, "cdek_request_failed", "Not found", {
+            providerStatus: 400,
+            providerErrorCode: "v2_order_not_found",
+          }),
+        ),
+        true,
+      );
+      return true;
+    },
+  );
+});
+
+test("cancelCdekOrder treats nested entity-not-found as idempotent success", async (context) => {
+  const originalFetch = globalThis.fetch;
+  context.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+  globalThis.fetch = async (input) => {
+    if (String(input).endsWith("/v2/oauth/token")) {
+      return new Response(
+        JSON.stringify({ access_token: "delete-token", expires_in: 3600 }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
+    }
+    return new Response(
+      JSON.stringify({
+        requests: [{
+          type: "DELETE",
+          state: "INVALID",
+          errors: [{ code: "v2_entity_not_found", message: "Entity does not exist" }],
+        }],
+      }),
+      { status: 400, headers: { "Content-Type": "application/json" } },
+    );
+  };
+  const config = loadConfig({
+    DATABASE_URL: "postgresql://komui_app:secret@127.0.0.1:5432/komui_test",
+    CDEK_API_BASE_URL: "https://cdek-delete-nested-missing.example",
+    CDEK_LOGIN: "test-login",
+    CDEK_PASSWORD: "test-password",
+  });
+
+  const response = await cancelCdekOrder(config, "already-gone");
+
+  assert.equal(response.requests?.[0]?.type, "DELETE");
+  assert.equal(response.requests?.[0]?.state, "SUCCESSFUL");
+  assert.equal(response.requests?.[0]?.warnings?.[0]?.code, "already_absent");
+});
+
 test("getCdekOrderByImNumber uses the merchant number query", async (context) => {
   const originalFetch = globalThis.fetch;
   const calls: Array<{ url: string; method: string }> = [];
@@ -304,6 +399,42 @@ test("getCdekOrderByImNumber maps provider 404 to no match", async (context) => 
   const config = loadConfig({
     DATABASE_URL: "postgresql://komui_app:secret@127.0.0.1:5432/komui_test",
     CDEK_API_BASE_URL: "https://cdek-lookup-missing.example",
+    CDEK_LOGIN: "test-login",
+    CDEK_PASSWORD: "test-password",
+  });
+
+  assert.equal(await getCdekOrderByImNumber(config, "KOM-404"), null);
+});
+
+test("getCdekOrderByImNumber maps nested entity-not-found to no match", async (context) => {
+  const originalFetch = globalThis.fetch;
+  context.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+  globalThis.fetch = async (input) => {
+    if (String(input).endsWith("/v2/oauth/token")) {
+      return new Response(
+        JSON.stringify({ access_token: "lookup-token", expires_in: 3600 }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
+    }
+    return new Response(
+      JSON.stringify({
+        requests: [{
+          type: "GET",
+          state: "INVALID",
+          errors: [{
+            code: "v2_entity_not_found_im_number",
+            message: "Entity does not exist",
+          }],
+        }],
+      }),
+      { status: 400, headers: { "Content-Type": "application/json" } },
+    );
+  };
+  const config = loadConfig({
+    DATABASE_URL: "postgresql://komui_app:secret@127.0.0.1:5432/komui_test",
+    CDEK_API_BASE_URL: "https://cdek-lookup-nested-missing.example",
     CDEK_LOGIN: "test-login",
     CDEK_PASSWORD: "test-password",
   });

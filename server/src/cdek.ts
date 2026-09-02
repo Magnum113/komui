@@ -14,6 +14,7 @@ export type CdekResponseError = {
 
 type CdekApiResponse<T = unknown> = T & {
   errors?: CdekResponseError[];
+  requests?: Array<{ errors?: CdekResponseError[] }>;
 };
 
 export type CdekCity = {
@@ -233,7 +234,8 @@ async function parseJsonResponse<T>(response: Response): Promise<T> {
   }
 
   if (!response.ok) {
-    const firstError = parsed?.errors?.[0];
+    const firstError =
+      parsed?.errors?.[0] ?? (parsed ? cdekFirstError(parsed) : null);
     throw new HttpError(
       response.status >= 500 ? 502 : 400,
       "cdek_request_failed",
@@ -246,6 +248,22 @@ async function parseJsonResponse<T>(response: Response): Promise<T> {
   }
 
   return (parsed ?? {}) as T;
+}
+
+const cdekOrderNotFoundErrorCodes = new Set([
+  "v2_entity_not_found",
+  "v2_entity_not_found_im_number",
+  "v2_order_not_found",
+]);
+
+export function isCdekOrderNotFoundError(error: unknown): boolean {
+  if (!(error instanceof HttpError) || error.code !== "cdek_request_failed") {
+    return false;
+  }
+  if (Number(error.details.providerStatus) === 404) return true;
+  return cdekOrderNotFoundErrorCodes.has(
+    text(error.details.providerErrorCode, 120).toLowerCase(),
+  );
 }
 
 async function cdekToken(config: AppConfig): Promise<string> {
@@ -771,11 +789,7 @@ export async function getCdekOrderByImNumber(
       { method: "GET" },
     );
   } catch (error) {
-    if (
-      error instanceof HttpError &&
-      error.code === "cdek_request_failed" &&
-      error.details.providerStatus === 404
-    ) {
+    if (isCdekOrderNotFoundError(error)) {
       return null;
     }
     throw error;
@@ -823,11 +837,7 @@ export async function cancelCdekOrder(
       { method: "DELETE" },
     );
   } catch (error) {
-    if (
-      error instanceof HttpError &&
-      error.code === "cdek_request_failed" &&
-      error.details.providerStatus === 404
-    ) {
+    if (isCdekOrderNotFoundError(error)) {
       return {
         entity: { uuid: normalized },
         requests: [

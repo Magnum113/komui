@@ -680,55 +680,62 @@ test("lookup network ambiguity defers the effect without repeating POST", async 
   assert.equal(state.failedCalls, 1);
 });
 
-test("known CDEK UUID cannot fall through to POST after lookup 404", async () => {
-  const { db, state } = fakeDb({
-    id: 33,
-    order_id: orderId,
-    status: "failed",
-    cdek_uuid: "known-provider-uuid",
-    cdek_number: null,
-  });
-  let uuidLookups = 0;
-  let numberLookups = 0;
-  let createCalls = 0;
+test("known CDEK UUID cannot fall through to POST after provider miss", async (context) => {
+  for (const providerDetails of [
+    { providerStatus: 404 },
+    { providerStatus: 400, providerErrorCode: "v2_entity_not_found" },
+  ]) {
+    await context.test(JSON.stringify(providerDetails), async () => {
+      const { db, state } = fakeDb({
+        id: 33,
+        order_id: orderId,
+        status: "failed",
+        cdek_uuid: "known-provider-uuid",
+        cdek_number: null,
+      });
+      let uuidLookups = 0;
+      let numberLookups = 0;
+      let createCalls = 0;
 
-  await assert.rejects(
-    createCdekShipmentForOrder(
-      {
-        config: config(),
-        db,
-        provider: {
-          getOrderByUuid: async () => {
-            uuidLookups += 1;
-            throw new HttpError(400, "cdek_request_failed", "Not found", {
-              providerStatus: 404,
-            });
+      await assert.rejects(
+        createCdekShipmentForOrder(
+          {
+            config: config(),
+            db,
+            provider: {
+              getOrderByUuid: async () => {
+                uuidLookups += 1;
+                throw new HttpError(400, "cdek_request_failed", "Not found", {
+                  ...providerDetails,
+                });
+              },
+              getOrderByImNumber: async () => {
+                numberLookups += 1;
+                return null;
+              },
+              createOrder: async () => {
+                createCalls += 1;
+                return {};
+              },
+            },
           },
-          getOrderByImNumber: async () => {
-            numberLookups += 1;
-            return null;
-          },
-          createOrder: async () => {
-            createCalls += 1;
-            return {};
-          },
+          { orderId },
+        ),
+        (error: unknown) => {
+          assert.ok(error instanceof HttpError);
+          assert.equal(error.code, "cdek_reconciliation_pending");
+          assert.equal(error.statusCode, 503);
+          return true;
         },
-      },
-      { orderId },
-    ),
-    (error: unknown) => {
-      assert.ok(error instanceof HttpError);
-      assert.equal(error.code, "cdek_reconciliation_pending");
-      assert.equal(error.statusCode, 503);
-      return true;
-    },
-  );
+      );
 
-  assert.equal(uuidLookups, 1);
-  assert.equal(numberLookups, 1);
-  assert.equal(createCalls, 0);
-  assert.equal(state.resetCalls, 1);
-  assert.equal(state.failedCalls, 1);
+      assert.equal(uuidLookups, 1);
+      assert.equal(numberLookups, 1);
+      assert.equal(createCalls, 0);
+      assert.equal(state.resetCalls, 1);
+      assert.equal(state.failedCalls, 1);
+    });
+  }
 });
 
 test("known CDEK UUID is adopted through exact GET before im_number lookup", async () => {
