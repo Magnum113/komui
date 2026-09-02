@@ -110,7 +110,7 @@ rollout 1 сентября 2026 года.
 
 ### 3.3. Проверено
 
-- 286 серверных тестов проходят;
+- полный server test suite проходит;
 - production TypeScript build проходит;
 - тесты Яндекс Метрики и deployment guard проходят;
 - миграция сначала применена к staging, затем к production после проверенного
@@ -119,8 +119,9 @@ rollout 1 сентября 2026 года.
   `subscribed`, создаётся append-only событие `granted`, outbox не используется;
 - production-форма сразу активирует доказуемое согласие без обращения к
   UniSender; зависших или failed email-задач после rollout нет;
-- активный production-релиз:
-  `20260901T140903Z-prod-5cc360e247bb`.
+- первый production-релиз с этим функционалом:
+  `20260901T140903Z-prod-5cc360e247bb`; Single Opt-In сохранён в последующих
+  релизах из `main`.
 
 ## 4. Разделение писем
 

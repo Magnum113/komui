@@ -19,6 +19,8 @@ nginx отдаёт HTML/static, Fastify backend отдаёт API, PostgreSQL х�
 - Локальный media-cache для товарных фото вместо hotlink на Ozon CDN.
 - Импортированные отзывы Ozon с оценками, текстами, фото и видео; публичные
   медиа хранятся локально на сервере, а отменённые отзывы не публикуются.
+- Single Opt-In подписка в checkout и футере с доказуемым согласием в
+  PostgreSQL и без дополнительного письма-подтверждения.
 
 ## Технологии
 
@@ -49,25 +51,28 @@ Root `package.json` используется для build scripts, включа�
 .
 ├── index.html
 ├── assets/
+│   ├── ads/
+│   ├── collection-logos/
+│   ├── email/
+│   ├── fonts/
 │   ├── ozon-main/
-│   ├── ozon/
-│   └── ozon-candidates/
+│   ├── cdek-logo.svg
+│   ├── metrika.js
+│   ├── og-image.png
+│   ├── product.css
+│   └── shop-header.js
 ├── data/
-│   ├── storefront-products.js
 │   ├── api-config.js
-│   ├── storefront-products.json
-│   ├── supabase-storefront-products.json
-│   ├── supabase-storefront-products.compact.json
-│   ├── ozon-products.raw.json
-│   ├── ozon-products.enriched.json
-│   ├── ozon-products.cards.json
-│   └── main-image-selection.json
+│   ├── delivery-config.js
+│   └── storefront-products.js
 ├── sku-mapping.csv
 ├── sku-mapping.md
 ├── sku-template-guide.md
 ├── scripts/
+│   ├── audit-yandex-direct-feed.js
 │   ├── build-products.js
-│   └── sync-product-media.js
+│   ├── sync-product-media.js
+│   └── test-metrika.js
 ├── server/
 │   ├── src/
 │   └── test/
@@ -87,7 +92,9 @@ Root `package.json` используется для build scripts, включа�
 
 Ключевые части логики:
 
-- `loadStorefrontProducts()` сначала загружает локальные товары из `window.KOMUI_PRODUCTS`, затем пробует заменить их данными из Supabase.
+- `loadStorefrontProducts()` сначала запрашивает товары из KOMUI backend API,
+  а при ошибке, таймауте или пустом ответе использует локальный fallback из
+  `window.KOMUI_PRODUCTS`.
 - `setProducts()` нормализует товары и пересчитывает списки фильтров.
 - `renderGrid()` строит карточки каталога.
 - `openModal()` открывает быстрый просмотр.
@@ -312,6 +319,14 @@ Systemd timer запускает чистку ежедневно. Лог:
 /var/log/komui/prune-releases.log
 ```
 
+### Telegram и Xray
+
+Серверные Telegram-алерты используют loopback SOCKS-прокси Xray. Его
+конфигурацию безопасно обновляет отдельный primary/secondary subscription
+updater с systemd-таймером. Архитектура, ограничения и команды диагностики
+описаны в
+[`docs/server-migration/XRAY_SUBSCRIPTION_UPDATER.md`](docs/server-migration/XRAY_SUBSCRIPTION_UPDATER.md).
+
 ### T-Bank Russian Trusted CA
 
 Для исходящих backend-запросов к T-Bank API сервер доверяет сертификатам
@@ -347,8 +362,12 @@ sudo -u komui env NODE_EXTRA_CA_CERTS=/etc/komui/certs/komui-node-ca-bundle.pem 
 
 ## Важные нюансы
 
-- Корзина живёт только в памяти страницы. После перезагрузки она очищается.
-- Email-форма в футере не отправляет данные на backend.
+- Корзина сохраняется в `localStorage` под ключом `komui-cart-v1`, переживает
+  перезагрузку страницы и при обновлении каталога очищается от позиций, которых
+  больше нет среди актуальных товаров.
+- Email-форма в футере отправляет `POST /api/v1/email/subscribe`. При двух
+  явных согласиях Single Opt-In сразу фиксирует согласие и статус
+  `subscribed`, не создавая письмо-подтверждение.
 - Frontend не должен содержать приватные ключи backend-интеграций и базы данных.
 - Public HTML, JSON-LD, meta images, `data/storefront-products.js` и
   `/api/v1/products` не должны отдавать `ir.ozone.ru`.
@@ -358,9 +377,11 @@ sudo -u komui env NODE_EXTRA_CA_CERTS=/etc/komui/certs/komui-node-ca-bundle.pem 
 - `.env.local`, `.DS_Store`, `.git/`, `.claude/` и другие локальные файлы не должны попадать в репозиторий.
 - Файл `data/api-config.js` допустим только для публичных URL/путей. Секреты туда не добавлять.
 
-## Текущие замечания к данным
+## Исторический снимок данных
 
-На момент подготовки README есть несколько известных несостыковок, которые стоит учитывать при дальнейшей чистке каталога:
+Следующие цифры были зафиксированы до перехода production на self-hosted
+backend и не являются текущим live-status. Перед чисткой каталога их нужно
+перепроверить через KOMUI API и локальную PostgreSQL:
 
 - live Supabase отдаёт 29 карточек, локальный fallback `storefront-products.js` содержит 24 карточки;
 - в `sku-mapping.csv` 109 строк данных, а в `ozon-products.raw.json` 110 SKU;

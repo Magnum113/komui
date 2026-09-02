@@ -2,7 +2,7 @@
   "name": "@komui/server",
   "version": "0.1.0",
   "private": true,
-  "description": "KOMUI staging backend for catalog and migration checks",
+  "description": "KOMUI storefront backend and email worker for staging and production",
   "main": "dist/server.js",
   "scripts": {
     "build": "tsc -p tsconfig.json",

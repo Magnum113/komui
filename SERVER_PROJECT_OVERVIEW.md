@@ -8,7 +8,26 @@
 агентов. Все существенные изменения серверной реализации нужно описывать в
 основном документе выше.
 
-Последнее крупное обновление: 1 сентября 2026 — exact post-drain archive
+Последняя проверка актуального состояния: 2 сентября 2026 года.
+
+- `komui.ru` и `stage.komui.ru` обслуживаются self-hosted
+  Nginx/Fastify/PostgreSQL;
+- payment/CDEK consistency hardening из первых трёх пунктов P1 и совместимая
+  схема работают в staging и production;
+- PostgreSQL обновлён внутри ветки 17.x до версии 17.11;
+- Single Opt-In работает в checkout и футере без confirmation-письма;
+- production order monitor использует hardened payment/CDEK schema;
+- Telegram transport работает через loopback Xray 26.3.27, конфигурацию которого
+  обновляет fail-closed primary/secondary systemd timer;
+- backup v2 сохраняет обе KOMUI DB с owners/ACL и staging/production runtime,
+  а публикация во внешнее хранилище завершается только после обратного
+  скачивания и проверки checksum.
+
+Точные активные release paths и Git revision не фиксируются здесь как
+долгоживущая константа: их нужно получать через
+`/usr/local/sbin/komui-deploy-status`.
+
+Историческое recovery evidence от 1 сентября 2026: exact post-drain archive
 `komui-backup-20260830T180555Z.tar.gz.gpg` успешно восстановлен по обоим DB
 dumps в уникальные временные базы. Подтверждены legacy schema и aggregate
 counts, catalog read как `komui_app`, `/health/ready` и
@@ -20,9 +39,12 @@ staging/production PID, symlinks и active DB identity не изменились
 DR: backup не сохраняет owners/ACL, runtime-config staging-centric, offsite
 download/key escrow и более свежий scheduled archive отдельно не
 восстанавливались. Подробности — в основном документе ниже.
+Эти ограничения относятся именно к старому archive: backup v2 позднее закрыл
+owners/ACL, production runtime и offsite-download проверки. Отдельное хранение
+encryption key вне сервера всё ещё требует решения владельца.
 
-Предыдущее крупное обновление: 30 августа 2026 — усиление согласованности оплаты
-и доставки по первым трём пунктам P1-аудита развёрнуто на staging. T-Bank
+Исторический staging rollout от 30 августа 2026: усиление согласованности оплаты
+и доставки по первым трём пунктам P1-аудита первоначально развёрнуто на staging. T-Bank
 webhook теперь обрабатывается одной транзакцией с монотонной state machine и
 durable CDEK outbox; неоднозначный `/Init` блокирует повторный заказ до
 `CheckOrder`/`GetState` reconciliation. Перед provider `Cancel` backend
@@ -54,9 +76,9 @@ fail-closed source/schema gate: legacy code не запускается на mig
 а новый payment-consistency code не запускается на legacy production schema.
 Guard commit `b2c7337` установлен и проверен четырьмя server-side
 non-activation probes; staging/production runtime при проверке не изменились.
-Production release
-`20260827T150442Z-prod-5a36b6c11d66`, process и schema не изменялись; production
-ещё не содержит эту migration. Подробности — в основном документе ниже.
+На этом конкретном staging-этапе production не изменялся. Позднее migration и
+тот же набор payment/CDEK-инвариантов были контролируемо развёрнуты в
+production; актуальное состояние описано выше и в основном документе.
 
 Предыдущее крупное обновление: 21 августа 2026 — добавлена self-hosted система
 отзывов Ozon: нормализованные таблицы PostgreSQL, идемпотентный CSV/media

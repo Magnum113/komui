@@ -1,5 +1,11 @@
 # Этап 8. Production cutover — только по отдельному разрешению
 
+> Статус: завершён 30 июня 2026 года после отдельного разрешения владельца.
+> Этот файл сохраняет исходные gates, порядок действий и evidence как
+> исторический runbook. Он не является текущим списком незавершённых работ;
+> актуальная эксплуатационная картина находится в
+> [`SERVER_PROJECT_OVERVIEW.md`](SERVER_PROJECT_OVERVIEW.md).
+
 ## Цель
 
 Переключить production на новый сервер с коротким контролируемым downtime и без split-brain.
@@ -80,15 +86,16 @@ test orders/payments/CDEK rows. Cleanup этих строк перед DNS cutov
   `/api/v1/products?limit=1`, `/api/delivery-config`, `robots.txt`,
   `sitemap.xml` вернули HTTP `200`.
 
-Production DNS/TLS часть cutover выполнена. Остаётся T-Bank webhook/test
-payment и наблюдение.
+Production DNS/TLS и application cutover выполнены. Текущие настройки T-Bank,
+CDEK и результаты проверок нужно получать из актуального server overview и
+live health/deploy status, а не из этого датированного preparatory snapshot.
 
 ## До окна
 
 - Объявить maintenance window.
 - Проверить demo/test в последний раз.
-- Обновить или явно принять `komui_production`; текущая БД является clone
-  текущего staging и содержит staging transactional rows.
+- Обновить или явно принять `komui_production`; на момент исходного окна БД
+  являлась clone staging и содержала staging transactional rows.
 - Зафиксировать source row counts.
 - Проверить свободный диск и backup destination.
 - Подготовить maintenance page.

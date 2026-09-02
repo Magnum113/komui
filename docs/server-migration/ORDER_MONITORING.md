@@ -1,13 +1,13 @@
 # Мониторинг проблем с заказами KOMUI
 
 Production-заказы проверяет отдельный systemd-таймер
-`komui-order-monitor.timer`. Он запускается каждую минуту и читает только
-локальную базу `komui_production`.
+`komui-order-monitor.timer`. Он запускается каждую минуту и читает заказы только
+из локальной базы `komui_production`; проверка сбоев email workers охватывает
+обе базы — `komui_production` и `komui_staging`.
 
-Текущее состояние на 30 августа 2026: глобально установлен legacy binary из
-`origin/main`, совместимый с ещё не мигрированной production DB. Candidate из
-payment-consistency revision проверен однократно на staging, но не установлен в
-production timer. Поэтому ниже возможности current и candidate разделены.
+Текущее состояние на 2 сентября 2026: глобально установлена hardened-версия из
+репозитория, совместимая с мигрированной `komui_production`. Production timer
+активен, а monitor учитывает payment reconciliation и durable CDEK effects.
 
 ## Уведомление о новом заказе
 
@@ -27,7 +27,7 @@ production timer. Поэтому ниже возможности current и cand
 сообщением. Курсор мониторинга обновляется только после успешной отправки, поэтому
 сбой Telegram не приводит к потере уведомления.
 
-## Что сейчас считает проблемой production monitor
+## Что считает проблемой production monitor
 
 - новая сетевая ошибка при обращении backend к Т-Банку;
 - платёж в статусе `payment_review`;
@@ -37,18 +37,12 @@ production timer. Поэтому ниже возможности current и cand
 - пять и более неудачных оплат минимум двух покупателей за пятнадцать минут;
 - заказ без строк в `merch_customer_order_items`;
 - отправление CDEK в статусе `failed` или `invalid`;
-- оплаченный/авторизованный заказ, для которого через десять минут вообще нет
-  строки CDEK shipment. Legacy monitor не отличает terminal `created` от
-  промежуточного `creating`/`accepted`.
-
-## Что добавляет candidate после production migration
-
+- заказ в `paid`/`partially_refunded`, для которого через десять минут нет CDEK
+  shipment в конечном статусе `created`; промежуточные `creating`/`accepted` и
+  ошибочные строки проблему не скрывают;
 - первичный неоднозначный T-Bank `Init` (`INIT_UNKNOWN`), пока новый заказ
   безопасно заблокирован и фоновый reconciler уточняет результат;
 - durable CDEK-действие `cdek_create`/`cdek_cancel` в статусе `needs_review`;
-- более строгий delivery gap: для `paid`/`partially_refunded` требуется именно
-  shipment status `created`; `creating`/`accepted` и ошибочные строки проблему
-  не скрывают.
 
 Уведомления отправляются через `/usr/local/sbin/komui-alert`, поэтому монитор
 использует тот же Telegram-бот, chat ID и Xray-прокси, что и остальные алерты.
@@ -75,20 +69,23 @@ sudo systemctl status komui-order-monitor.service
 sudo journalctl -u komui-order-monitor.service -n 100 --no-pager
 sudo /usr/local/sbin/komui-order-monitor --dry-run
 sudo /usr/local/sbin/komui-order-monitor --test-alert
+sudo systemctl status xray komui-xray-subscription-update.timer
+sudo journalctl -u komui-xray-subscription-update.service -n 100 --no-pager
 ```
 
-## Установка после восстановления сервера
+Если monitor не может доставить Telegram-уведомление, нужно проверять всю цепочку
+до Xray, а не только состояние timer. Xray updater описан в
+[`XRAY_SUBSCRIPTION_UPDATER.md`](XRAY_SUBSCRIPTION_UPDATER.md).
 
-Candidate-версия monitor из этого revision читает `merch_order_effects` и новые поля
-reconciliation. Сначала должна быть применена migration
-`20260830143000_harden_payment_consistency.sql`.
+## Установка или восстановление после сбоя сервера
 
-Важно: текущий systemd unit читает `komui_production`. Поэтому staging deploy
-не устанавливает эту версию глобально, пока production migration не применена.
-Во время rollout новая candidate-версия была запущена однократно из
-подготовленного source tree с `--database komui_staging --bootstrap --dry-run`,
-отдельными временными state/lock paths и без изменения production timer. Это
-не постоянный staging monitor.
+Текущая версия monitor читает `merch_order_effects` и новые поля
+reconciliation. На новом или восстановленном сервере сначала должна быть
+применена migration `20260830143000_harden_payment_consistency.sql`.
+
+Systemd unit читает `komui_production`; отдельного постоянного staging monitor
+нет. В рабочем production migration уже применена, поэтому это ограничение
+важно только для восстановления или развёртывания на новой БД.
 
 ```bash
 sudo install -d -m 0700 -o root -g root /var/lib/komui/order-monitor

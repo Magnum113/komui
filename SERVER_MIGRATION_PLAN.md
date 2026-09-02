@@ -2,11 +2,17 @@
 
 Дата: 25 июня 2026 года.
 
+> Актуальный статус на 2 сентября 2026 года: production migration и cutover
+> завершены; `komui.ru` работает на self-hosted Nginx/Fastify/PostgreSQL 17.11.
+> Таблица и последовательность ниже сохраняют план и контрольные ворота
+> исторического переноса. Текущее runtime-состояние описано в
+> [`SERVER_PROJECT_OVERVIEW.md`](docs/server-migration/SERVER_PROJECT_OVERVIEW.md).
+
 Цель: перенести сайт, PostgreSQL, backend, оплату, СДЭК, промокоды, SEO-генерацию, деплой и эксплуатацию с Supabase/Vercel на сервер `89.111.152.112` без установки Supabase.
 
 Полная архитектура, перечень таблиц и технические решения сохранены в [техническом справочнике](docs/server-migration/REFERENCE.md).
 
-## Правила выполнения
+## Правила исторического выполнения
 
 - Этапы выполняются последовательно.
 - Этапы 0–7 выполняются в полностью параллельном staging-контуре.
@@ -47,14 +53,14 @@
 | 2 | [Подготовка серверной платформы](docs/server-migration/02-server-foundation.md) | Защищённый Ubuntu, Nginx, Node.js, PostgreSQL 17, systemd | Завершён — GO с ограничениями |
 | 3 | [Тестовый перенос PostgreSQL](docs/server-migration/03-database-rehearsal.md) | Воспроизводимый снимок и restore всех данных без Supabase | Завершён — GO |
 | 4 | [Backend и API каталога](docs/server-migration/04-backend-and-catalog.md) | Собственный API, DB-слой, каталог и health checks | Завершён — GO |
-| 5 | [Checkout, Т-Банк, СДЭК, промокоды и admin jobs](docs/server-migration/05-checkout-integrations.md) | Полностью перенесённый платёжно-доставочный контур и управляемая синхронизация Ozon | Частично завершён — checkout/T-Bank/CDEK GO в staging; Ozon dual-write/final import acceptance ожидаются |
+| 5 | [Checkout, Т-Банк, СДЭК, промокоды и admin jobs](docs/server-migration/05-checkout-integrations.md) | Полностью перенесённый платёжно-доставочный контур и управляемая синхронизация Ozon | Checkout/T-Bank/CDEK завершены в production; Ozon dual-write остаётся выключенным и рассматривается отдельно |
 | 6 | [Frontend, SEO и статические ресурсы](docs/server-migration/06-frontend-seo-assets.md) | Отсутствие runtime-зависимости от Supabase/Vercel | Завершён — GO с ограничениями |
-| 7 | [Изолированный staging, backup и тестовая приёмка](docs/server-migration/07-staging-and-verification.md) | Рабочая тестовая версия на сервере при неизменном production | Частично завершён — infra/backup/restore/alerting и checkout/payment/CDEK GO; Ozon acceptance и cutover decision ожидаются |
-| — | **Обязательная остановка и ручное решение владельца** | `ОСТАТЬСЯ НА STAGING` или явно разрешить этап 8 | — |
-| 8 | [Production cutover — только по отдельному разрешению](docs/server-migration/08-production-cutover.md) | Production работает на новом сервере | Заблокирован до подтверждения |
-| 9 | [Стабилизация и отключение старой инфраструктуры](docs/server-migration/09-stabilization-and-decommission.md) | Supabase/Vercel безопасно выведены из эксплуатации | Не начат |
+| 7 | [Изолированный staging, backup и тестовая приёмка](docs/server-migration/07-staging-and-verification.md) | Рабочая тестовая версия на сервере при неизменном production | Завершён; staging сохранён как отдельный контур |
+| — | **Обязательная остановка и ручное решение владельца** | `ОСТАТЬСЯ НА STAGING` или явно разрешить этап 8 | Исторический gate пройден |
+| 8 | [Production cutover — только по отдельному разрешению](docs/server-migration/08-production-cutover.md) | Production работает на новом сервере | Завершён 30 июня 2026 года |
+| 9 | [Стабилизация и отключение старой инфраструктуры](docs/server-migration/09-stabilization-and-decommission.md) | Supabase/Vercel безопасно выведены из эксплуатации | Частично: self-hosted production работает, legacy decommission не завершён |
 
-## Критический путь
+## Исторический критический путь
 
 ```text
 Этап 0
@@ -82,7 +88,7 @@
 
 Этапы 2–6 можно частично готовить параллельно после завершения инвентаризации, но их контрольные ворота проходят последовательно. Завершение этапа 7 не означает автоматический переход на production.
 
-## Граница безопасного теста
+## Историческая граница безопасного теста до cutover
 
 К моменту вашей тестовой проверки:
 
@@ -104,7 +110,9 @@
   создать реальное отправление в CDEK;
 - любые тестовые записи остаются только в staging-БД.
 
-Можно полностью завершить этапы 0–7, показать реализацию на сервере и остановиться на этом состоянии на любой срок. Этапы 8–9 являются отдельным решением о миграции production.
+На этапе подготовки можно было полностью завершить этапы 0–7 и остановиться до
+отдельного решения о production. Этот gate уже пройден: этап 8 завершён, а этап
+9 остаётся частично открытым до окончательного вывода legacy-инфраструктуры.
 
 ## Общие критерии завершения проекта
 
@@ -128,7 +136,7 @@
 ## Дополнение по media/SEO, 7 июля 2026
 
 Пункт дорожной карты по переносу товарных фото с `ir.ozone.ru` на `komui.ru`
-реализован в коде и ожидает stage/prod deploy-проверки:
+реализован и развёрнут в staging/production:
 
 - `scripts/sync-product-media.js` скачивает Ozon images в
   `/var/lib/komui/media-cache`;
@@ -139,8 +147,8 @@
 - deploy pipeline запускает media sync, strict build и проверки на отсутствие
   `ir.ozone.ru` в public static/API artifacts.
 
-До полного закрытия пункта нужно выполнить deploy и проверить реальные
-`stage.komui.ru`/`komui.ru` ответы.
+Deploy и проверки реальных `stage.komui.ru`/`komui.ru` ответов выполнены;
+public static/API artifacts не должны содержать `ir.ozone.ru`.
 
 ## Рабочие артефакты
 

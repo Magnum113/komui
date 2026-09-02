@@ -2,6 +2,10 @@
 
 Дата подготовки: 25 июня 2026 года.
 
+> Это исходный технический проект, а не текущий runtime inventory. Фактическое
+> состояние после production cutover, payment/email rollout и PostgreSQL 17.11
+> описано в [`SERVER_PROJECT_OVERVIEW.md`](SERVER_PROJECT_OVERVIEW.md).
+
 Этот файл сохраняет полный технический проект. Исполнимый порядок работ,
 критерии перехода и статус этапов находятся в
 [`SERVER_MIGRATION_PLAN.md`](../../SERVER_MIGRATION_PLAN.md).

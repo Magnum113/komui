@@ -1,14 +1,21 @@
 # KOMUI production migration and cutover runbook
 
-Статус: DNS/TLS cutover выполнен 30 июня 2026 года. Следующий controlled step —
-payment-consistency migration/release; его не выполнять без отдельного явного
-разрешения владельца.
+Статус: DNS/TLS cutover выполнен 30 июня 2026 года, а controlled
+payment-consistency migration/release — 1 сентября 2026 года. Совместимая схема
+и backend работают в staging и production.
 
-Разделы про первоначальный DNS/Vercel cutover сохранены как historical
-procedure. Они не описывают текущий live routing: production уже обслуживается
-self-hosted Nginx/backend.
+Разделы про первоначальный DNS/Vercel cutover и точный payment-consistency
+maintenance window сохранены как historical procedure и reusable checklist для
+будущих schema-changing релизов. Их нельзя механически повторять при обычном
+deploy: production уже обслуживается self-hosted Nginx/backend, а migration
+`20260830143000_harden_payment_consistency.sql` уже применена. Текущее состояние
+нужно сверять по `SERVER_PROJECT_OVERVIEW.md` и
+`/usr/local/sbin/komui-deploy-status`.
 
-## Предусловия
+## Reusable предусловия для нового migration window
+
+Незаполненные checkbox ниже являются шаблоном будущей операции, а не списком
+незавершённых задач текущего rollout.
 
 - [ ] Владелец вручную принял staging.
 - [ ] Есть свежий encrypted backup.
@@ -28,7 +35,7 @@ self-hosted Nginx/backend.
 - [ ] Подтверждены текущие DNS TTL.
 - [ ] Подтверждены production webhook настройки Т-Банка.
 
-Текущий evidence для rollback archive staging rollout:
+Исторический evidence для rollback archive staging rollout:
 
 ```text
 archive: /var/backups/komui/daily/komui-backup-20260830T180555Z.tar.gz.gpg
@@ -39,11 +46,11 @@ cleanup/live-runtime invariants: OK
 log: /var/backups/komui/logs/restore-drill-20260830T180555Z-20260901t082839z.log
 ```
 
-Этот evidence не отменяет новый backup/restore gate для будущего production
-window. Текущий backup format не сохраняет owners/ACL, а runtime-config archive
-не покрывает production Nginx/systemd/frontend контур полностью. До заявления
-полного production DR исправить оба пробела, создать новый archive и проверить
-также offsite download + доступность ключа вне самого сервера.
+Этот старый evidence не отменяет новый backup/restore gate для будущего
+production window. Установленный позднее backup v2 уже сохраняет owners/ACL и
+staging/production runtime и проверяет exact offsite download. Для нового окна
+всё равно нужен свежий archive; доступность encryption key вне самого сервера
+остаётся отдельным DR gate.
 
 ## Pre-freeze перед migration window
 
@@ -63,7 +70,7 @@ sudo systemctl status komui-backup.service --no-pager -l
 sudo find /var/backups/komui/daily -type f -name 'komui-backup-*.tar.gz.gpg' | sort | tail -1
 ```
 
-## Обязательный gate для payment-consistency migration
+## Исторический gate выполненной payment-consistency migration
 
 Migration `20260830143000_harden_payment_consistency.sql` и backend, который
 ставит durable CDEK effects для `PARTIAL_REVERSED`/amount mismatch, должны
@@ -86,9 +93,11 @@ sudo /usr/local/sbin/komui-deploy-from-git prod main --check-compatibility-only
 services, но fetch/reset/clean выполняются в специально disposable
 `/opt/komui/deploy-source`. Не хранить в этом checkout ручные изменения.
 
-После merge hardening в `main` эта команда обязана блокироваться до применения
-migration. Candidate release готовится отдельно до write gate; активация
-выполняется только после backup, migration и разбора provider-effect backfill.
+Во время исходного rollout после merge hardening в `main` эта команда
+блокировалась до применения migration. Сейчас совместимая schema уже есть в
+обеих KOMUI DB; для будущих schema changes candidate по-прежнему готовится до
+write gate, а activation выполняется только после backup, migration и разбора
+provider effects.
 
 Порядок обязателен:
 
@@ -305,7 +314,7 @@ https://stage.komui.ru/checkout
 https://stage.komui.ru/api/v1/products?limit=1
 ```
 
-## Финальные проверки текущего production runtime перед migration
+## Исторические проверки production runtime перед migration
 
 Эти проверки не переключают live `komui.ru`; они проверяют уже работающий
 self-hosted production через loopback и публичный endpoint.

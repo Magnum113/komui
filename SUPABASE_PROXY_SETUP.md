@@ -1,5 +1,11 @@
 # Проксирование Supabase через свой сервер — инструкция
 
+> **Исторический документ.** Он описывает архитектуру до self-hosted cutover и
+> не должен применяться как текущая инструкция. Production-витрина использует
+> KOMUI backend и локальную PostgreSQL; `api.komui.ru` сохранён только как
+> legacy-compatible контур. Актуальная схема находится в
+> [`docs/server-migration/SERVER_PROJECT_OVERVIEW.md`](docs/server-migration/SERVER_PROJECT_OVERVIEW.md).
+
 Документ для нейросети/админа на сервере. Цель — сделать так, чтобы браузер пользователя из РФ ходил в Supabase **не напрямую** (AWS-эндпоинт `*.supabase.co` режется/тормозит из РФ), а через российский сервер, на котором ты работаешь. Сам Supabase остаётся, ничего там не меняем.
 
 ## 0. Контекст
@@ -273,8 +279,8 @@ curl -sS -X OPTIONS "https://api.komui.ru/rest/v1/merch_storefront_products" \
 
 | Файл | Было | Стало |
 |---|---|---|
-| [data/supabase-config.js](data/supabase-config.js) | `url: "https://bkxpzfnglihxpbnhtjjq.supabase.co"` | `url: "https://api.komui.ru"` |
-| [index.html:1190–1200](index.html:1190) — fetch каталога | `cfg.url + "/rest/v1/merch_storefront_products..."` | то же, но `cfg.url` уже указывает на api.komui.ru |
+| исторический `data/supabase-config.js` | `url: "https://bkxpzfnglihxpbnhtjjq.supabase.co"` | `url: "https://api.komui.ru"` |
+| исторический fetch каталога в `index.html` | `cfg.url + "/rest/v1/merch_storefront_products..."` | то же, но `cfg.url` уже указывает на api.komui.ru |
 | [checkout.html](checkout.html) — вызов tbank-create-payment, cdek-* | `*.supabase.co/functions/v1/...` | `https://api.komui.ru/functions/v1/...` |
 | [payment-result.html](payment-result.html) — вызов tbank-payment-status | `*.supabase.co/functions/v1/...` | `https://api.komui.ru/functions/v1/...` |
 

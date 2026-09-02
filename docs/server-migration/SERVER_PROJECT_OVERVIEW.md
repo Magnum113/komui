@@ -1,11 +1,11 @@
 # KOMUI self-hosted server project overview
 
-Дата актуализации: 30 августа 2026 года.
+Дата актуализации: 2 сентября 2026 года.
 
 Этот документ описывает, как устроена текущая серверная реализация KOMUI на
 `89.111.152.112`, какие компоненты уже перенесены с Supabase/Vercel, где лежит
 код и конфигурация, как работают backend/API, PostgreSQL, staging, backup,
-alerting, Ozon import и production traffic fallback.
+email, alerting, Xray, Ozon import и production traffic fallback.
 
 Документ предназначен для разработчика, который не участвовал в миграции и
 должен быстро понять проект.
@@ -23,12 +23,30 @@ Production cutover выполнен, а staging сохранён как отде
 - production backend `komui-production-backend` работает на
   `127.0.0.1:3001` с локальной БД `komui_production`;
 - production `/api/health/ready` возвращал HTTP `200` при read-only проверке
-  30 августа 2026 года;
+  2 сентября 2026 года;
 - staging доступен на `https://stage.komui.ru`, закрыт Basic Auth/`noindex` и
   использует backend `127.0.0.1:3000` с БД `komui_staging`;
 - локальный PostgreSQL не открыт наружу;
 - Vercel origin сохранён только как legacy fallback, а старый Supabase proxy —
   для совместимости отдельных legacy путей, не как основной checkout runtime.
+
+Актуальные инварианты, подтверждённые после последних rollout:
+
+- staging и production разворачиваются из `main`; точные active Git revision и
+  release paths нужно получать через `/usr/local/sbin/komui-deploy-status`;
+- payment/CDEK consistency migration и backend из первых трёх пунктов P1
+  работают в обеих KOMUI databases;
+- PostgreSQL server/client работает на версии 17.11 внутри прежнего cluster
+  `17/main`;
+- Single Opt-In в checkout и футере сразу фиксирует доказуемое согласие без
+  дополнительного confirmation-письма;
+- production order monitor читает hardened payment/CDEK schema и отслеживает
+  `INIT_UNKNOWN`, `payment_review` и durable effects в `needs_review`;
+- Telegram transport использует loopback Xray 26.3.27. Конфигурацию обновляет
+  fail-closed primary/secondary subscription timer;
+- backup v2 сохраняет обе KOMUI DB с owners/ACL и staging/production runtime;
+  внешний объект принимается только после обратного скачивания и проверки
+  checksum.
 
 Проверенные safe-флаги production (значения секретов не читались):
 
@@ -66,10 +84,30 @@ Ozon dual-write в legacy Supabase остаётся выключенным; impo
 
 ### 1.1. Последние существенные обновления
 
-#### 30 августа 2026 — payment/CDEK consistency hardening на staging
+#### 1–2 сентября 2026 — production convergence
 
-По первым трём пунктам P1-аудита backend/frontend candidate развёрнут на
-staging. Production backend, frontend, БД и process не изменялись.
+- Payment/CDEK consistency migration применена к staging и production; один
+  совместимый backend revision развёрнут в обоих контурах.
+- Hardened `komui-order-monitor` установлен глобально после production
+  migration; state сохранён, timer активен.
+- Newsletter signup переведён на Single Opt-In в checkout и футере. Новая
+  подписка получает `subscribed` и append-only `granted` event сразу, а pending
+  confirmation job не создаётся.
+- PostgreSQL обновлён с 17.10 до 17.11 контролируемым minor-version restart без
+  изменения cluster identity и данных.
+- Backup v2 прошёл exact offsite download и изолированный restore обеих KOMUI
+  databases с проверкой owners, ACL, schema, данных и app-role доступа.
+- Xray обновлён до 26.3.27; primary/secondary updater, state v2, canary probes,
+  atomic activation и rollback работают через 15-минутный systemd timer.
+
+Эта сводка является текущим состоянием. Датированные разделы ниже сохраняют
+историю отдельных этапов и не должны интерпретироваться как live-status.
+
+#### 30 августа 2026 — исторический payment/CDEK staging rollout
+
+На этом этапе по первым трём пунктам P1-аудита backend/frontend candidate был
+развёрнут только на staging. Позднее тот же контракт был контролируемо перенесён
+в production, как указано в актуальной сводке выше.
 
 Основные инварианты новой реализации:
 
@@ -589,48 +627,44 @@ www.komui.ru  A 89.111.152.112
 Production теперь обслуживается self-hosted сервером. `stage.komui.ru`
 продолжает работать отдельным Basic Auth/noindex контуром.
 
-Оставшиеся обязательные cutover-действия: переключить/подтвердить T-Bank
-webhook на `https://komui.ru/api/v1/webhooks/tbank`, выполнить тестовый платёж
-в demo mode и наблюдать логи/алерты.
+На завершении этого датированного этапа ещё требовались подтверждение T-Bank
+webhook, тестовый платёж и наблюдение. Это historical note; последующие rollout
+и текущий статус описаны в начале документа.
 
 ## 2. Высокоуровневая архитектура
 
 ```text
-Пользователь / тестировщик
-        |
-        v
-https://stage.komui.ru
-        |
-        v
-Nginx staging vhost
-  - TLS Let's Encrypt
-  - Basic Auth
-  - X-Robots-Tag noindex
-  - /api/* -> backend 127.0.0.1:3000
-  - остальные пути -> static frontend
-        |
-        +--------------------------+
-        |                          |
-        v                          v
-Static frontend              Fastify backend
-/var/lib/komui/staging-root  /opt/komui/current/backend
-                                  |
-                                  v
-                           PostgreSQL local
-                           database: komui_staging
+Покупатель                         Тестировщик
+    |                                  |
+    v                                  v
+https://komui.ru                 https://stage.komui.ru
+    |                                  |
+    +------------ Nginx ---------------+
+                 |              |
+                 v              v
+        production static    staging static
+        + backend :3001      + backend :3000
+                 |              |
+                 +------ PostgreSQL 17.11
+                        komui_production
+                        komui_staging
 
 Дополнительно:
 
-- komui-backup.timer -> encrypted local backup -> Yandex Object Storage
-- komui-healthcheck.timer -> local checks -> Telegram alert on failure
-- komui-traffic-switch.path -> prepares production server/legacy runtime mode
+- staging/production email workers -> PostgreSQL outbox -> Unisender Go
+- komui-order-monitor.timer -> komui_production -> Telegram alert
+- Telegram callers -> komui-alert -> Xray SOCKS 127.0.0.1:10808
+- komui-xray-subscription-update.timer -> primary/secondary canary + activation
+- komui-backup.timer -> encrypted local backup -> verified Yandex Object Storage
+- komui-healthcheck.timer -> local/public checks -> Telegram alert on failure
+- komui-traffic-switch.path -> controlled production server/legacy runtime mode
 ```
 
 ## 3. Сервер и системные ресурсы
 
 Сервер:
 
-Ресурсный снимок после rollout 30 августа 2026 года:
+Исторический ресурсный снимок после rollout 30 августа 2026 года:
 
 ```text
 IP: 89.111.152.112
@@ -650,11 +684,15 @@ postgresql                 active
 nginx                      active
 komui-backend              active
 komui-production-backend   active
+komui-email-worker         active
+komui-production-email-worker active
 komui-backup.timer         active
 komui-healthcheck.timer    active
 komui-order-monitor.timer  active
 komui-deploy-bot           active
 komui-traffic-switch.path  active
+xray                       active
+komui-xray-subscription-update.timer active
 ```
 
 ## 4. Основные серверные пути
@@ -667,11 +705,10 @@ komui-traffic-switch.path  active
 /opt/komui/current/backend
 ```
 
-Активный backend release на момент проверки:
+Точные active targets меняются при каждом deploy. Проверять их нужно командой:
 
-```text
-/opt/komui/current -> /opt/komui/releases/20260830T175312Z-stage-ac2567bb42ae
-/opt/komui/production-current -> /opt/komui/releases/20260827T150442Z-prod-5a36b6c11d66
+```bash
+sudo /usr/local/sbin/komui-deploy-status
 ```
 
 Backend запускается из разных active symlink:
@@ -685,9 +722,9 @@ production: /opt/komui/production-current/backend/dist/server.js
 
 ```text
 /opt/komui/frontend-releases/
-/var/lib/komui/staging-root -> /opt/komui/frontend-releases/20260830T175312Z-stage-ac2567bb42ae
+/var/lib/komui/staging-root -> /opt/komui/frontend-releases/<active-release>
 /opt/komui/production-frontend-releases/
-/var/lib/komui/production-root -> /opt/komui/production-frontend-releases/20260827T150442Z-prod-5a36b6c11d66
+/var/lib/komui/production-root -> /opt/komui/production-frontend-releases/<active-release>
 ```
 
 `/var/lib/komui/staging-root` — static root для Nginx staging.
@@ -712,6 +749,9 @@ production: /opt/komui/production-current/backend/dist/server.js
 /etc/komui/telegram-alerts.env
 /etc/komui/traffic-switch.env
 /etc/komui/backup.key
+/etc/komui-xray/subscription.url
+/etc/komui-xray/subscription-secondary.url
+/etc/komui-xray/subscription.hwid
 ```
 
 Эти файлы не должны попадать в Git.
@@ -720,9 +760,10 @@ Important runtime permissions:
 
 ```text
 /etc/komui                  root:komui 0710
-/etc/komui/backend.env      root:komui 0640
-/etc/komui/backend-production.env root:komui 0640
+/etc/komui/backend.env      root:root 0600
+/etc/komui/backend-production.env root:root 0600
 /etc/komui/ozon-sync.env    root:komui 0640
+/etc/komui/traffic-switch.env root:komui 0640
 ```
 
 `backend.env` is loaded by systemd before the process starts, so the `komui`
@@ -739,17 +780,16 @@ backend process at request time, so user `komui` needs execute permission on
 /etc/nginx/sites-available/komui-production-switch
 /etc/nginx/sites-enabled/komui-production-switch
 /etc/nginx/sites-available/komui-production-http-precutover
-/etc/nginx/sites-enabled/komui-production-http-precutover
 /etc/nginx/snippets/komui-production-runtime.conf
 
 /etc/nginx/sites-available/api.komui.ru
 /etc/nginx/sites-enabled/api.komui.ru
 ```
 
-Название `komui-production-http-precutover` осталось историческим: HTTP-конфиг
-используется для служебного HTTP/ACME-пути. Активный HTTPS vhost
-`komui-production-switch` уже включён в `sites-enabled`, сертификат установлен,
-а live `komui.ru` обслуживается этим сервером. Проверенное состояние traffic
+Файл `komui-production-http-precutover` сохранён как исторический артефакт и не
+включён в `sites-enabled`. Активный `komui-production-switch`
+обслуживает HTTP/ACME и HTTPS, сертификат установлен, а live `komui.ru`
+работает через этот vhost. Проверенное состояние traffic
 switch — `mode=server`, `state=applied`; точные пути и ограничения описаны ниже
 в разделе **Active production switch vhost**.
 
@@ -832,14 +872,15 @@ https://stage.komui.ru/api/v1/products
 
 ### Legacy-compatible `api.komui.ru`
 
-`api.komui.ru` is still an existing production proxy to current Supabase:
+`api.komui.ru` сохранён как legacy proxy к Supabase origin:
 
 ```text
 https://bkxpzfnglihxpbnhtjjq.supabase.co
 ```
 
-This vhost is intentionally preserved for legacy compatibility. Its изменение
-не входит в обычный backend deploy и требует отдельной проверки consumers.
+Этот vhost не является зависимостью текущей self-hosted витрины. Его изменение
+не входит в обычный backend deploy; перед ремонтом или удалением нужно отдельно
+проверить legacy consumers и фактическую доступность upstream.
 
 ### Active production switch vhost
 
@@ -980,11 +1021,9 @@ Tests:
 server/test/*.test.ts
 ```
 
-Current test count:
-
-```text
-228/228 tests passing for release ac2567b
-```
+Полный server test suite и TypeScript build должны проходить до создания
+immutable release. Точный test count не фиксируется здесь, потому что он меняется
+вместе с кодом.
 
 ## 9. Backend API routes
 
@@ -1119,20 +1158,40 @@ POST /v1/payments/status
 POST /v1/webhooks/tbank
 ```
 
-Current flags:
+Контуры используют разные T-Bank modes:
 
 ```text
-TBANK_MODE=demo
-TBANK_MOCK_PAYMENTS=false
+staging:    TBANK_MODE=demo,       TBANK_MOCK_PAYMENTS=false
+production: TBANK_MODE=production, TBANK_MOCK_PAYMENTS=false
 ```
 
 Meaning:
 
-- real T-Bank demo API is used;
-- this is not production terminal mode;
-- full demo payment/webhook E2E is still a manual acceptance step.
+- staging обращается к реальному demo API;
+- production использует production terminal mode;
+- provider-mutating smoke в любом контуре запускается только как отдельная
+  контролируемая операция.
 
 T-Bank token/signature logic is implemented in `server/src/crypto.ts`.
+
+### Email subscription и Unisender webhook
+
+```text
+POST /v1/email/subscribe
+POST /v1/email/confirm
+GET  /v1/webhooks/unisender-go
+POST /v1/webhooks/unisender-go
+```
+
+`/v1/email/subscribe` требует отдельные privacy и marketing consents. Single
+Opt-In атомарно устанавливает `subscribed` и записывает append-only `granted`
+event без confirmation email. `/v1/email/confirm` сохранён только для старых
+Double Opt-In links. Unsubscribe, hard bounce и complaint создают suppression и
+останавливают ожидающие marketing jobs. Отдельные staging/production workers
+обрабатывают PostgreSQL outbox; HTTP/payment flow не ждёт Unisender.
+
+Подробности:
+[`../email-marketing/UNISENDER_GO_INTEGRATION_PLAN.md`](../email-marketing/UNISENDER_GO_INTEGRATION_PLAN.md).
 
 ### T-Bank Russian Trusted CA
 
@@ -1312,20 +1371,16 @@ actionableSupabase=0
 
 ## 10. PostgreSQL
 
-Database:
+PostgreSQL server/client: 17.11, cluster `17/main`. Application databases:
 
 ```text
 komui_staging
+komui_production
 ```
 
-PostgreSQL is local only; application connects through `DATABASE_URL` in
-`/etc/komui/backend.env`.
-
-Current production table count in `public` after the reviews migration:
-
-```text
-35 tables
-```
+PostgreSQL is local only. Staging and production applications connect through
+separate `DATABASE_URL` values in `/etc/komui/backend.env` and
+`/etc/komui/backend-production.env`.
 
 Important tables:
 
@@ -1336,10 +1391,15 @@ public.merch_customer_orders           checkout orders
 public.merch_customer_order_items      checkout items
 public.merch_payment_attempts          payment init/status
 public.merch_payment_events            payment webhooks/events
+public.merch_order_effects             durable CDEK create/cancel outbox
 public.merch_promo_codes               promo config
 public.merch_promo_redemptions         promo usage
 public.merch_cdek_shipments            CDEK shipment records
 public.merch_cdek_events               CDEK events
+public.merch_email_contacts            normalized email contacts
+public.merch_email_consent_events      append-only consent history
+public.merch_email_outbox              transactional email queue
+public.merch_email_suppressions        unsubscribe/bounce/complaint blocks
 public.merch_admin_import_previews     Ozon import previews
 public.merch_admin_jobs                Ozon import jobs
 public.merch_review_sync_runs           review import audit runs
@@ -1347,14 +1407,9 @@ public.merch_storefront_reviews         normalized product reviews
 public.merch_storefront_review_media    local review images/videos
 ```
 
-Current key counts:
-
-```text
-merch_storefront_products=31
-merch_products=151
-admin_previews=7
-admin_jobs=1
-```
+Row counts are operational data and are intentionally not recorded as current
+constants. Query the required tables read-only immediately before a migration,
+restore comparison or incident decision.
 
 Admin import tables were added by:
 
@@ -1404,20 +1459,22 @@ merch_admin_jobs_idempotency_key_idx
 
 ## 11. Frontend/static site
 
-Static frontend is deployed to:
+Static frontends are deployed to immutable release directories:
 
 ```text
-/opt/komui/frontend-releases/20260830T175312Z-stage-ac2567bb42ae
+/opt/komui/frontend-releases/<stage-release>
+/opt/komui/production-frontend-releases/<production-release>
 ```
 
-and exposed through:
+and exposed through active symlinks:
 
 ```text
 /var/lib/komui/staging-root
+/var/lib/komui/production-root
 ```
 
 The current frontend no longer contains runtime Supabase URL/key in deployed
-HTML/JS/CSS under `/var/lib/komui/staging-root`.
+HTML/JS/CSS under either active root.
 
 Runtime API config file:
 
@@ -1456,98 +1513,68 @@ There is still a legacy file in the Git repo:
 api/supabase-function.js
 ```
 
-It proxies to Supabase Edge Functions and is part of the old Vercel production
-compatibility path. It is not deployed into the current staging static root.
-Do not delete or change it without checking current Vercel production behavior.
+It proxies to Supabase Edge Functions and is part of the old Vercel
+compatibility path. It is not part of the self-hosted storefront runtime. Do not
+delete or change it until legacy consumers and fallback are explicitly
+decommissioned.
 
 ## 12. Backup
 
-Installed script:
+Backup v2 установлен как:
 
 ```text
 /usr/local/sbin/komui-backup
-```
-
-Systemd:
-
-```text
 /etc/systemd/system/komui-backup.service
 /etc/systemd/system/komui-backup.timer
-```
-
-Timer:
-
-```text
-komui-backup.timer active
-```
-
-Backup root:
-
-```text
 /var/backups/komui
 ```
 
-Daily examples:
+Формат v2 включает:
 
-```text
-/var/backups/komui/daily/komui-backup-20260627T120725Z.tar.gz.gpg
-/var/backups/komui/daily/komui-backup-20260627T143747Z.tar.gz.gpg
-/var/backups/komui/daily/komui-backup-20260630T145422Z.tar.gz.gpg
-/var/backups/komui/daily/komui-backup-20260830T180555Z.tar.gz.gpg
-```
+- PostgreSQL custom dumps `--create` для `komui_staging` и
+  `komui_production` с native owners, ACL и default ACL;
+- recoverable PostgreSQL globals и checksummed per-DB/cluster security
+  inventories в явно ограниченном KOMUI scope;
+- staging и production Nginx, TLS, systemd, active backend/frontend releases,
+  `/var/lib/komui`, PostgreSQL host config и control-plane tools;
+- Xray runtime, updater units/state и root-only subscription credential files;
+- local review media, private source archives, UID/GID mapping, manifest и
+  checksums.
 
-Backup includes:
+Текущий encryption key `/etc/komui/backup.key` намеренно исключается из каждого
+archive. Скрипт требует заранее созданный root-only key и не генерирует его
+автоматически.
 
-- PostgreSQL custom dumps for `komui_staging` and `komui_production` by default;
-- PostgreSQL globals;
-- staging-centric runtime config archive;
-- local review media and private source archives;
-- staging Nginx/systemd/release/root artifacts; текущий production
-  Nginx/backend unit/frontend release/root покрыты не полностью;
-- manifest;
-- checksums.
+Публикация fail-closed: encrypted archive загружается в Yandex Object Storage,
+затем скачивается обратно и сверяется по exact SHA-256. Локальный final `.gpg`
+появляется только после успешной offsite-проверки. Backup lock также очищает
+точно определённые stale plaintext/partial artifacts.
 
-PostgreSQL dumps создаются с `--no-owner --no-acl`; grants/ownership recovery
-должен быть отдельной явно проверенной частью DR procedure.
-
-Encryption:
-
-```text
-/etc/komui/backup.key
-```
-
-External upload:
+External storage:
 
 ```text
 Yandex Object Storage
 bucket: komui-backups
 prefix: komui/stage/
 endpoint: https://storage.yandexcloud.net
+credentials: /etc/komui/yandex-backup.env
 ```
 
-Credentials:
+Принятый backup v2 был скачан из Object Storage и полностью восстановлен в
+изолированный PostgreSQL 1 сентября 2026 года:
 
 ```text
-/etc/komui/yandex-backup.env
+archive: /var/backups/komui/daily/komui-backup-20260901T122859Z.tar.gz.gpg
+exact offsite download/hash/decrypt/internal checksums: PASS
+both DB restore + owners/ACL/security/catalog/data/app-role checks: PASS
+live runtime and cleanup invariants: PASS
+evidence: /var/backups/komui/logs/restore-v2-drill-20260901T122859Z-20260901T123323Z-904805.log
 ```
 
-Verified rollout backup and restore drill:
-
-```text
-rollout archive: /var/backups/komui/daily/komui-backup-20260830T180555Z.tar.gz.gpg
-rollout archive size: 52,584,372 bytes
-rollout archive checksum/external upload: OK
-rollout archive restore drill: OK, 2026-09-01, both DB dumps, 35 public tables each
-staging snapshot: 31 products, 13 orders, 13 attempts, 14 events, 3 shipments
-production snapshot: 38 products, 78 orders, 78 attempts, 16 events, 4 shipments
-komui_app read + isolated legacy backend smokes: OK
-cleanup/live-runtime invariants: OK
-evidence: /var/backups/komui/logs/restore-drill-20260830T180555Z-20260901t082839z.log
-latest scheduled archive observed: /var/backups/komui/daily/komui-backup-20260901T002703Z.tar.gz.gpg
-latest scheduled archive checksum/external upload: OK; restore drill NOT RUN
-production snapshot archive: /var/backups/komui/daily/komui-backup-20260630T164013Z.tar.gz.gpg
-production snapshot restore drill: OK, 2026-06-30, 31 public tables
-```
+Этот drill восстанавливает заявленный KOMUI scope; другие databases общего
+PostgreSQL cluster, включая GetoMerch, в контракт не входят. Единственный
+существенный внешний DR gap — отдельное от сервера хранение и проверка
+доступности `/etc/komui/backup.key`.
 
 Useful commands:
 
@@ -1583,18 +1610,22 @@ Healthcheck verifies:
 
 - PostgreSQL active;
 - Nginx active;
-- backend active;
-- backup timer active;
-- backend `/health/ready`;
+- staging и production backend active/readiness;
+- включённые staging/production email workers и состояние email queues;
+- backup и order-monitor timers;
 - stage root HTTPS;
 - stage catalog API HTTPS;
+- production Yandex Direct feed и соответствие количества offers активному
+  каталогу production backend;
 - disk under threshold;
 - memory available;
 - backup freshness;
-- no failed systemd units;
-- no stale pending payments.
+- no relevant failed service units; текущий healthcheck исключает собственный
+  oneshot и оставшиеся после диагностики transient `run-u*.service`;
+- no stale pending payments в настроенной healthcheck DB (по умолчанию
+  `komui_staging`).
 
-Current result:
+Результат последней live-проверки 2 сентября 2026:
 
 ```text
 SUMMARY OK
@@ -1626,11 +1657,15 @@ Telegram access from the server uses Xray proxy:
 socks5h://127.0.0.1:10808
 ```
 
-Telegram alerting historically passed its test. During the 30 August staging
-rollout, two release-notification attempts timed out while the deployment
-registry still recorded both successful events. Current notification transport
-therefore requires a separate non-mutating verification; registry persistence
-is not affected.
+Telegram transport проверен через Xray вместе с bot API и order-monitor
+delivery. Production использует Xray 26.3.27 с loopback-only inbounds.
+`komui-xray-subscription-update.timer` каждые 15 минут проверяет активный proxy и
+при необходимости выбирает проверенный profile из primary/secondary providers.
+Каждая активация требует isolated Cloudflare/Telegram canaries и production
+probe; при ошибке восстанавливаются точные прежние config/state.
+
+Подробный runbook:
+[`XRAY_SUBSCRIPTION_UPDATER.md`](XRAY_SUBSCRIPTION_UPDATER.md).
 
 ## 14. Traffic switch / rollback foundation
 
@@ -1755,6 +1790,9 @@ Why `X-Komui-Admin-Token` exists:
 Admin features already supported by backend:
 
 - runtime status / traffic switch;
+- storefront product list, detail and update;
+- order list, detail, fulfillment update and mark-shipped action;
+- manual CDEK shipment creation/retry;
 - Ozon import preview;
 - Ozon import job;
 - Ozon job status.
@@ -1769,13 +1807,19 @@ Current safety properties:
 - staging sets `noindex`;
 - root-owned env files hold secrets;
 - backend runs as `komui` user;
-- `/etc/komui` allows `komui` directory traversal only, and only
-  `ozon-sync.env` is group-readable because Ozon import loads it at runtime;
+- `/etc/komui` allows `komui` directory traversal; `ozon-sync.env` and
+  `traffic-switch.env` are intentionally group-readable by `komui`, while the
+  active backend env files remain `0600 root:root`;
 - systemd hardening is enabled;
 - admin routes require server-only token;
 - admin audit events are appended to `/var/lib/komui/admin-audit.log`;
 - production Supabase writes are disabled unless explicitly enabled for a
   controlled Ozon dual-write job.
+
+Security hygiene follow-up: two historical `backend.env.bak-*` files observed
+2 September 2026 still had `root:komui 0640`; verify their recovery value and
+remove them or restrict them to `0600 root:root` in a separately controlled
+server operation.
 
 Do not commit:
 
@@ -1818,10 +1862,13 @@ Management scripts:
 - active backend/frontend symlink snapshot;
 - service states.
 
-Every successful `komui-release-activate` call writes to the registry and sends
-a Telegram release notification via the existing `/usr/local/sbin/komui-alert`.
-Failed activation attempts are also recorded and notified; by default the script
-tries to restore the previous symlink.
+Every `komui-release-activate` call best-effort records its result in the
+registry and, by default, asks the registry to send a Telegram release
+notification through `/usr/local/sbin/komui-alert`; `--no-notify` suppresses
+only the notification. A registry/notification failure does not undo an
+otherwise successful activation. Failed activation attempts use the same
+best-effort reporting path; by default the script first tries to restore the
+previous symlink.
 
 Release Telegram notifications are formatted in Russian and include:
 
@@ -1929,12 +1976,11 @@ build or activation:
 - `--check-compatibility-only` performs this check without building,
   restarting a service or changing a release symlink.
 
-Consequently, while `origin/main` remains at `5a36b6c`, the Telegram stage
-button intentionally reports a blocked deploy instead of downgrading migrated
-staging. After the hardening revision reaches `main`, the production button
-will likewise remain blocked until the controlled production migration is
-complete. The guard does not apply migrations and is not a substitute for the
-maintenance/drain procedure in `CUTOVER_RUNBOOK.md`.
+Обе KOMUI databases уже имеют payment-consistency schema, а совместимый код
+находится в `main`. Guard остаётся обязательным: legacy, partial либо
+несовместимая source/schema комбинация блокируется до build/activation. Guard
+не применяет migrations и не заменяет maintenance/drain procedure из
+`CUTOVER_RUNBOOK.md` для будущих schema changes.
 
 ### Backend release pattern
 
@@ -2030,49 +2076,45 @@ npm test
 npm run build
 ```
 
-Staging smoke from server:
+Staging and catalog smoke from server:
 
 ```bash
 sudo /usr/local/sbin/komui-healthcheck
+sudo /usr/local/sbin/komui-deploy-status
 ```
 
-Catalog smoke:
+Both tools load staging credentials without placing their values in process
+arguments. Do not pass the combined username/password through curl's command-line
+authentication option: another local user can observe command arguments through
+`ps`.
 
-```bash
-sudo bash -c '. /etc/komui/staging-access.env; curl -fsS -u "$STAGING_USER:$STAGING_PASSWORD" https://stage.komui.ru/api/v1/products?limit=1'
+Admin runtime smoke should use the protected server-side admin BFF/UI against
+the explicitly selected staging target:
+
+```text
+GET https://stage.komui.ru/api/admin/runtime
 ```
 
-Admin runtime smoke:
+The response must identify the staging backend/database and current runtime
+state. For an exceptional SSH-only diagnostic, pass Basic Auth and admin
+headers through curl stdin config or another protected file descriptor, never
+through `-u`/`-H` command-line values.
 
-```bash
-sudo bash -c '
-  set -a
-  . /etc/komui/backend.env
-  . /etc/komui/staging-access.env
-  set +a
-  curl -fsS \
-    -u "$STAGING_USER:$STAGING_PASSWORD" \
-    -H "X-Komui-Admin-Token: $ADMIN_API_TOKEN" \
-    https://stage.komui.ru/api/admin/runtime
-'
+Ozon preview smoke is also run through the protected admin flow with staging
+selected and this bounded request:
+
+```json
+{
+  "limit": 1,
+  "targets": {
+    "serverPostgres": true,
+    "supabase": false
+  }
+}
 ```
 
-Ozon preview smoke:
-
-```bash
-sudo bash -c '
-  set -a
-  . /etc/komui/backend.env
-  . /etc/komui/staging-access.env
-  set +a
-  curl -fsS \
-    -u "$STAGING_USER:$STAGING_PASSWORD" \
-    -H "X-Komui-Admin-Token: $ADMIN_API_TOKEN" \
-    -H "Content-Type: application/json" \
-    -d "{\"limit\":1,\"targets\":{\"serverPostgres\":true,\"supabase\":false}}" \
-    https://stage.komui.ru/api/admin/ozon/products/import-preview
-'
-```
+This smoke calls Ozon and records a preview row, so it is an explicit bounded
+admin operation rather than a read-only public healthcheck.
 
 ## 19. Post-cutover operations and release readiness
 
@@ -2080,31 +2122,22 @@ DNS/TLS cutover уже выполнен. Любое переключение liv
 или изменение production credentials по-прежнему требует явного owner
 approval.
 
-Перед production rollout payment-consistency revision:
+Payment-consistency migration и production rollout завершены. Для обычного
+code/docs release применяется текущая deployment model:
 
-1. Complete remaining Ozon import/dual-write acceptance.
-2. Проверить актуальные production transactional rows; cleanup выполнять только
-   отдельной явно разрешённой операцией.
-3. В закрытом write window снять свежий согласованный encrypted backup.
-4. Перед production window выполнить restore drill его актуального backup.
-   Точный staging post-drain rollback archive
-   `komui-backup-20260830T180555Z.tar.gz.gpg` уже восстановлен по обоим DB dumps
-   1 сентября 2026, но более свежий scheduled archive `20260901T002703Z` не
-   восстанавливался. До production DR также исправить полноту runtime-config и
-   owners/ACL recovery.
-5. Decide final Ozon dual-write policy.
-6. Confirm production T-Bank credentials/webhook settings.
-7. Production CDEK auto-create включён:
-   `CDEK_CREATE_SHIPMENTS=true`.
-8. DNS уже указывает на сервер и TLS vhost включён.
-9. Подтвердить T-Bank webhook:
-   `https://komui.ru/api/v1/webhooks/tbank`.
-10. До production выполнить явно разрешённый end-to-end provider smoke на
-    staging либо эквивалентную контролируемую приёмку; staging CDEK не mock.
-11. Применить migration и активировать backend только по closed-write
-    migration-aware runbook. Generic Telegram deploy не выполняет migration.
-12. После production migration установить новый global order monitor с
-    сохранением state и первым `--dry-run`, затем проверить alert transport.
+1. Проверить clean source, exact remote revision, tests/build и
+   source/schema compatibility gate.
+2. Развернуть revision сначала в staging и проверить readiness, public routes,
+   queues, logs и generated static artifacts.
+3. Убедиться, что свежий encrypted backup опубликован и проверен через exact
+   offsite round-trip.
+4. Тем же immutable revision выполнить production deploy.
+5. После переключения проверить production backend/frontend, email worker,
+   payment/CDEK queues, order monitor, Xray/Telegram transport, Nginx и failed
+   units.
+
+Новый schema-changing release по-прежнему требует отдельного closed-write
+maintenance window. Generic Telegram/Git deploy не применяет migrations.
 
 Cutover runbook:
 
@@ -2116,32 +2149,25 @@ docs/server-migration/CUTOVER_RUNBOOK.md
 
 Current known limitations:
 
-1. Deployment и non-provider-mutating acceptance revision `ac2567b` на staging
-   завершены. Полный payment/refund/real-CDEK E2E для этого revision не
-   выполнялся и требует явного разрешения.
-2. Ozon import writes only local server PostgreSQL by default; Supabase dual-write
-   is disabled.
-3. Fully new Ozon products without mapping are not auto-published.
-4. Production использует T-Bank production mode; staging использует demo mode.
-   Webhook URL и один безопасный payment smoke нужно подтверждать после release.
-5. CDEK real shipment creation включён на staging и production:
-   `CDEK_CREATE_SHIPMENTS=true`.
-6. External product images still use Ozon CDN.
-7. Google Fonts are not fully localized.
-8. `api/supabase-function.js` remains for legacy Vercel compatibility.
-9. Production HTTPS vhost уже включён; traffic fallback меняет live routing и
-   требует runbook/owner approval. DNS rollback остаётся запасным вариантом,
-   если server-side fallback недоступен.
-10. Два historical staging `cdek_cancel` остаются в `needs_review` до
-    operator/business решения; новый monitor пока не установлен глобально,
-    потому что его systemd unit читает legacy production schema.
-11. Последний rollout получил два Telegram timeout; registry записи сохранены,
-    но notification transport нужно перепроверить.
-12. Backup сохраняет оба DB dumps, но использует `--no-owner --no-acl`, а
-    `runtime-config.tar.gz` остаётся staging-centric. Exact post-drain archive
-    успешно восстановлен, однако полный production DR требует исправить эти
-    два пробела, создать новый backup и повторить drill, включая offsite
-    download/key-recovery path.
+1. Ozon import пишет только в local server PostgreSQL; Supabase dual-write
+   выключен.
+2. Полностью новый Ozon product без mapping не публикуется автоматически.
+3. Production использует T-Bank production mode, staging — demo; реальные
+   provider-mutating payment/refund/CDEK smokes требуют отдельного разрешения и
+   поштучного контроля side effects.
+4. Historical `cdek_cancel` backfill может оставаться в `needs_review`; перед
+   любым retry/cleanup нужно сверять live queue и реальный CDEK shipment.
+5. Google Fonts ещё не полностью локализованы.
+6. `api/supabase-function.js`, Supabase и Vercel сохраняются для legacy
+   compatibility/fallback; их decommission не завершён. `api.komui.ru` не
+   является зависимостью текущего checkout и требует отдельного решения о
+   ремонте либо выводе из эксплуатации.
+7. Production traffic fallback меняет live routing и требует runbook/owner
+   approval. DNS rollback остаётся запасным вариантом при недоступности сервера.
+8. Backup v2 намеренно исключает `/etc/komui/backup.key`; независимое
+   off-server escrow и recovery test ключа ещё не подтверждены.
+9. KOMUI backup не является backup всего общего PostgreSQL cluster: базы и
+   runtime GetoMerch имеют отдельный recovery contract.
 
 ## 21. Quick orientation for a new developer
 
@@ -2150,13 +2176,15 @@ If you need to understand the project quickly:
 1. Read this document.
 2. Read `SERVER_MIGRATION_PLAN.md`.
 3. Read `docs/server-migration/CUTOVER_RUNBOOK.md`.
-4. Inspect backend routes in `server/src/app.ts`.
-5. Inspect env schema in `server/src/config.ts`.
-6. Inspect checkout/integration logic in `server/src/stage5.ts`.
-7. Inspect Ozon import in `server/src/ozonImport.ts`.
-8. Inspect traffic switch in `server/src/runtimeSwitch.ts` and
+4. Read `docs/server-migration/XRAY_SUBSCRIPTION_UPDATER.md` for Telegram
+   transport operations.
+5. Inspect backend routes in `server/src/app.ts`.
+6. Inspect env schema in `server/src/config.ts`.
+7. Inspect checkout/integration logic in `server/src/stage5.ts`.
+8. Inspect Ozon import in `server/src/ozonImport.ts`.
+9. Inspect traffic switch in `server/src/runtimeSwitch.ts` and
    `ops/server/komui-traffic-switch-apply.sh`.
-9. Run:
+10. Run:
 
 ```bash
 cd server
@@ -2164,12 +2192,16 @@ npm test
 npm run build
 ```
 
-10. On server, run:
+11. On server, run:
 
 ```bash
 sudo /usr/local/sbin/komui-healthcheck
-systemctl is-active postgresql nginx komui-backend komui-backup.timer komui-healthcheck.timer
+systemctl is-active postgresql nginx komui-backend komui-production-backend \
+  komui-email-worker komui-production-email-worker komui-backup.timer \
+  komui-healthcheck.timer komui-order-monitor.timer xray \
+  komui-xray-subscription-update.timer
 ```
 
-If both local tests and server healthcheck pass, the staging system is in a
-known good technical state.
+Локальные tests и один healthcheck недостаточны для заявления о production
+deploy. Дополнительно сверяются exact Git/release state, обе readiness probes,
+public endpoints, queues, service logs и отсутствие failed units.

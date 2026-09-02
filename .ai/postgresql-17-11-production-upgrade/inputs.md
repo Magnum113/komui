@@ -2,7 +2,8 @@
 
 - User authorization: update live PostgreSQL 17.10 to 17.11 with a short,
   controlled restart.
-- Production host: `89.111.152.112`, SSH user `codex-migrate`, root via sudo.
+- Server access: use the owner-provided SSH configuration with pinned host-key
+  verification; elevate only the required commands through `sudo`.
 - Scope: PostgreSQL 17 server/client minor packages and the shared existing
   `17/main` cluster only.
 - Constraints:
