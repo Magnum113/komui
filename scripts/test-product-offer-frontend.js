@@ -93,8 +93,10 @@ assert.doesNotThrow(() => new Function(checkoutHtml.slice(checkoutScriptStart, c
 
 assert.match(indexHtml, /assets\/product-offers\.js/);
 assert.doesNotMatch(indexHtml, /p\.sizes\.includes\('M'\)\?'M':p\.sizes\[0\]/);
+assert.match(indexHtml, /class="q-add"[^>]*aria-label="Выбрать размер[^>]*><svg[^>]*aria-hidden="true"/);
+assert.doesNotMatch(indexHtml, /productVariantHtml|class="product-variant/);
+assert.match(indexHtml, /if\(a\).*openModal\(a\.dataset\.add,'catalog_quick_select'\)/);
 assert.match(indexHtml, /PRODUCT_OFFERS\.cartKey\(id,resolved\.offerId\)/);
-assert.match(indexHtml, /displayVariantLabels\(product,P\)/);
 assert.match(checkoutHtml, /slug:p\.slug\|\|''/);
 assert.match(checkoutHtml, /displayVariantLabels\(product,localProducts\)/);
 assert.equal((checkoutHtml.match(/items:apiItems\(\)/g)||[]).length,3);

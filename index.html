@@ -433,8 +433,6 @@ html[data-theme="light"] .cursor-glow{mix-blend-mode:multiply;background:radial-
 .card .info{padding:16px 16px 18px}
 .card .info .col{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mag);font-weight:700;margin-bottom:6px}
 .card .info h3{font-size:16px;font-weight:600;line-height:1.25;margin-bottom:10px}
-.product-variant{color:var(--txt-2);font-size:12px;line-height:1.35}
-.card .product-variant{margin:-4px 0 8px}
 .p-rating-stars{position:relative;display:inline-block;width:5.55em;line-height:1;letter-spacing:.08em;white-space:nowrap;color:var(--line-2);font-size:12px}
 .p-rating-stars-base,.p-rating-stars-fill{display:block}
 .p-rating-stars-fill{position:absolute;inset:0 auto 0 0;overflow:hidden;color:#f5a623}
@@ -557,7 +555,6 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
 .size-pick input:disabled + .size-choice{cursor:not-allowed;opacity:.42;text-decoration:line-through}
 .size-error{margin:0 0 14px;color:#c43f4b;font-size:13px;font-weight:700;line-height:1.35}
 .size-error[hidden]{display:none}
-.modal .modal-variant{margin:-4px 0 16px}
 .modal .msize-chart-panel{margin:-8px 0 22px;padding:14px;border-radius:16px;background:var(--panel-2);box-shadow:inset 0 0 0 1px var(--line-2)}
 .modal .msize-chart-panel[hidden]{display:none}
 .modal .msize-chart-head{display:none}
@@ -776,7 +773,6 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
   }
   .modal.madd-floating .madd-float{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
   .modal .madd-float:hover{transform:translateX(-50%) translateY(-2px)}
-  .modal .modal-variant{order:5;margin:0 0 14px}
   .modal .mdesc{order:10;margin-bottom:20px}
   .modal .msize-head{order:6;justify-content:flex-start}
   .modal .msize-head .mlabel{order:0}
@@ -1359,14 +1355,6 @@ function productSizeOptions(product){
 function productAvailableSizes(product){
   return productSizeOptions(product).filter(option=>option.status==='selected').map(option=>option.size);
 }
-function productVariantLabels(product){
-  return PRODUCT_OFFERS?PRODUCT_OFFERS.displayVariantLabels(product,P):{groupKey:'',fit:'',warmth:''};
-}
-function productVariantHtml(product,className=''){
-  const labels=productVariantLabels(product);
-  const copy=[labels.fit,labels.warmth].filter(Boolean).join(' · ');
-  return copy?`<div class="product-variant ${className}">${esc(copy)}</div>`:'';
-}
 function cleanChartCell(value){
   return String(value??'').replace(/\u00a0/g,' ').replace(/\s+/g,' ').trim();
 }
@@ -1699,13 +1687,12 @@ function renderGrid(){
         <span class="type-badge${p.type==='Вышивка'?' emb':''}">${p.type}</span>
         <div class="quick">
           <button class="q-view" data-view="${p.id}">Быстрый просмотр</button>
-          <button class="q-add" data-add="${p.id}" aria-label="Выбрать размер — ${esc(p.name)}">Выбрать размер</button>
+          <button class="q-add" data-add="${p.id}" type="button" aria-label="Выбрать размер — ${esc(p.name)}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></button>
         </div>
       </div>
       <div class="info">
         <div class="col">${p.col}</div>
         <h3>${p.name}</h3>
-        ${productVariantHtml(p,'card-variant')}
         ${compactRatingHtml(p,'card-rating')}
         <div class="meta"><span class="price">${RUB(p.price)}${p.priceOld?`<s class="price-old">${RUB(p.priceOld)}</s>`:''}</span>${cardSizesHtml(p.sizes)}</div>
       </div>
@@ -2063,7 +2050,6 @@ function openModal(id,source='catalog',options={}){
       <div class="col">${p.col}</div><h2 id="modalTitle">${p.name}</h2>
       ${compactRatingHtml(p,'modal-rating',p.slug?`/p/${encodeURIComponent(p.slug)}#reviews`:'')}
       <div class="mprice"><span id="modalPrice">${RUB(p.price)}</span>${p.priceOld?`<s class="mprice-old">${RUB(p.priceOld)}</s>`:''}</div>
-      ${productVariantHtml(p,'modal-variant')}
       <p class="mdesc">${p.desc}</p>
       <div class="msize-head"><div class="mlabel">Размер</div>${sizeChartButton}</div>
       <fieldset class="size-pick" id="sizePick" aria-describedby="modalSizeError"><legend>Размер</legend>${sizeInputs}</fieldset>
