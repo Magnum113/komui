@@ -137,6 +137,24 @@ class KomuiDeployFromGitCompatibilityTest(unittest.TestCase):
             self.script,
         )
 
+    def test_production_decommissions_hosted_runtime_after_backend_smoke(self) -> None:
+        decommission = "komui-decommission-hosted-platforms"
+        backend_offset = self.script.index('log "activating backend"')
+        decommission_offset = self.script.index(
+            'log "decommissioning retired hosted-platform runtime"'
+        )
+        frontend_offset = self.script.index('log "activating frontend"')
+
+        self.assertIn('[[ "$target" == "prod"', self.script)
+        self.assertIn(decommission, self.script)
+        self.assertIn("KOMUI_DEPLOY_LOCK_HELD=1", self.script)
+        self.assertIn(
+            "does not contain the executable hosted-platform decommission gate",
+            self.script,
+        )
+        self.assertLess(backend_offset, decommission_offset)
+        self.assertLess(decommission_offset, frontend_offset)
+
 
 if __name__ == "__main__":
     unittest.main()

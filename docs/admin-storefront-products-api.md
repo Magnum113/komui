@@ -1,21 +1,17 @@
 # API редактирования товаров витрины KOMUI
 
-Документ для внедрения редактора товаров в отдельной админке. Визуал можно делать любым, но данные нужно менять через Komui backend, а не прямой записью из браузера в Supabase/Postgres.
+Документ для внедрения редактора товаров в отдельной админке. Визуал можно делать любым, но данные нужно менять через Komui backend, а не прямой записью из браузера в PostgreSQL.
 
 ## Общая схема
 
-- В проекте есть два контура данных:
-  - server PostgreSQL на отдельном сервере, подключается Komui backend через `DATABASE_URL`;
-  - Supabase project `bkxpzfnglihxpbnhtjjq`, исторический/legacy контур и источник Edge Functions.
-- Этот API редактирования пишет именно в server PostgreSQL, то есть в базу, которая стоит за Komui backend `/api`.
-- Таблица витрины в обоих контурах называется `public.merch_storefront_products`.
+- Единственный рабочий контур данных — PostgreSQL на сервере, к которому Komui backend подключается через `DATABASE_URL`.
+- API редактирования пишет в базу, которая стоит за Komui backend `/api`.
+- Таблица витрины называется `public.merch_storefront_products`.
 - Backend маршруты: `server/src/adminStorefront.ts`, подключены в `server/src/app.ts`.
 - Авторизация: тот же `ADMIN_API_TOKEN`, что уже используется для Ozon import.
 - Деньги в этом API передаются в рублях числом, не в копейках.
 - Изменение строки `merch_storefront_products` обновляет `updated_at = now()`.
-- Если в БД активен trigger `storefront_products_redeploy`, изменение товара запустит rebuild статических страниц.
 - Новая миграция БД не нужна: API использует существующие колонки `merch_storefront_products` и backend DB user, который уже нужен для Ozon import.
-- Supabase этим endpoint сейчас не обновляется. Если текущая production-витрина или checkout всё ещё читают Supabase Edge Functions напрямую, нужно либо сначала перевести их на Komui backend `/api`, либо добавить отдельный server-side dual-write/sync в Supabase через service role. Не пытаться делать это из браузера админки.
 
 ## Авторизация
 
@@ -305,4 +301,4 @@ export async function updateKomuiProduct(productId: string, patch: {
 5. В форме редактировать название, описание, цену, старую цену, размеры и порядок фото.
 6. На save отправить `PATCH` только с изменёнными полями.
 7. После save заменить форму ответом `product`, показать `changedFields`.
-8. Не писать напрямую в Supabase из браузера и не светить admin token.
+8. Не писать напрямую в PostgreSQL из браузера и не светить admin token.

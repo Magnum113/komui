@@ -105,8 +105,6 @@ test("buildOzonPreview matches storefront by normalized offer id and skips unmap
       },
     ],
     [],
-    { serverPostgres: true, supabase: true },
-    { supabaseWriteEnabled: false },
   );
 
   assert.equal(preview.summary.totalOzonItems, 2);
@@ -118,7 +116,6 @@ test("buildOzonPreview matches storefront by normalized offer id and skips unmap
   assert.equal(preview.items[0].targetProduct?.designKey, "var5|print|tshirt|white");
   assert.equal(preview.items[0].plannedActions[0]?.action, "create_storefront_offer");
   assert.equal(preview.items[1].status, "unmatched");
-  assert.equal(preview.warnings.some((item) => item.code === "supabase_write_disabled"), true);
 });
 
 test("buildOzonPreview maps a hoodie to its exact variant before the legacy base fallback", () => {
@@ -157,7 +154,6 @@ test("buildOzonPreview maps a hoodie to its exact variant before the legacy base
       },
     ],
     [],
-    { serverPostgres: true, supabase: false },
   );
 
   assert.equal(
@@ -188,7 +184,6 @@ test("buildOzonPreview maps a hoodie to its exact variant before the legacy base
       },
     ],
     [],
-    { serverPostgres: true, supabase: false },
   );
 
   assert.equal(
@@ -225,7 +220,6 @@ test("buildOzonPreview fails closed on duplicate active storefront offer mapping
           },
         ],
         [],
-        { serverPostgres: true, supabase: false },
       ),
     (error: unknown) => {
       assert.equal(
@@ -297,14 +291,11 @@ test("buildOzonPreview marks unchanged storefront offer as noop", () => {
       },
     ],
     [],
-    { serverPostgres: true, supabase: true },
-    { supabaseWriteEnabled: true },
     { updatePrices: true, syncSizes: "off" },
   );
 
   assert.equal(preview.summary.matchedStorefront, 1);
   assert.equal(preview.summary.actionableServerPostgres, 0);
-  assert.equal(preview.summary.actionableSupabase, 0);
   assert.equal(preview.summary.noop, 1);
   assert.equal(preview.canImport, false);
   assert.equal(preview.items[0].status, "noop");
@@ -348,8 +339,6 @@ test("buildOzonPreview reports changed storefront offer diff", () => {
       },
     ],
     [],
-    { serverPostgres: true, supabase: false },
-    { supabaseWriteEnabled: false },
     { updatePrices: true, syncSizes: "off" },
   );
 
@@ -398,8 +387,6 @@ test("buildOzonPreview with updatePrices=false keeps existing site prices", () =
       },
     ],
     [],
-    { serverPostgres: true, supabase: false },
-    { supabaseWriteEnabled: false },
     { updatePrices: false },
   );
 
@@ -444,8 +431,6 @@ test("buildOzonPreview with updatePrices=false stores Ozon price separately for 
       },
     ],
     [],
-    { serverPostgres: true, supabase: false },
-    { supabaseWriteEnabled: false },
     { updatePrices: false },
   );
 
@@ -509,8 +494,6 @@ test("buildOzonPreview reports media diff without overwriting manual main image"
       },
     ],
     [],
-    { serverPostgres: true, supabase: false },
-    { supabaseWriteEnabled: false },
     { updatePrices: true, syncSizes: "off" },
   );
 
@@ -586,8 +569,6 @@ test("buildOzonPreview filters blocked Ozon warning image from storefront media"
       },
     ],
     [],
-    { serverPostgres: true, supabase: false },
-    { supabaseWriteEnabled: false },
     { updatePrices: true, syncSizes: "off" },
   );
 
@@ -628,8 +609,6 @@ test("buildOzonPreview marks unchanged merch product as noop", () => {
         sale_price: "2990",
       },
     ],
-    { serverPostgres: true, supabase: false },
-    { supabaseWriteEnabled: false },
     { updatePrices: true },
   );
 
@@ -675,8 +654,6 @@ test("buildOzonPreview safely adds new storefront sizes without changing site pr
       },
     ],
     [],
-    { serverPostgres: true, supabase: false },
-    { supabaseWriteEnabled: false },
   );
 
   const item = preview.items[0];
@@ -740,8 +717,6 @@ test("buildOzonPreview stores Ozon size chart JSON on matched storefront product
       },
     ],
     [],
-    { serverPostgres: true, supabase: false },
-    { supabaseWriteEnabled: false },
     { updatePrices: false },
   );
 
@@ -819,8 +794,6 @@ test("buildOzonPreview ignores size chart JSON object key order", () => {
       },
     ],
     [],
-    { serverPostgres: true, supabase: false },
-    { supabaseWriteEnabled: false },
     { updatePrices: false },
   );
 
@@ -892,8 +865,6 @@ test("buildOzonPreview skips storefront size chart when matched Ozon offers disa
       },
     ],
     [],
-    { serverPostgres: true, supabase: false },
-    { supabaseWriteEnabled: false },
     { updatePrices: false },
   );
 
@@ -935,8 +906,6 @@ test("buildOzonPreview does not choose a size chart for new product group confli
     ],
     [],
     [],
-    { serverPostgres: true, supabase: false },
-    { supabaseWriteEnabled: false },
     { updatePrices: false },
   );
 
@@ -974,8 +943,6 @@ test("buildOzonPreview groups unmatched structured Ozon offers as new product ca
     ],
     [],
     [],
-    { serverPostgres: true, supabase: false },
-    { supabaseWriteEnabled: false },
   );
 
   assert.equal(preview.summary.unmatched, 2);
@@ -1030,7 +997,6 @@ test("buildOzonPreview keeps unmatched hoodie fit and fleece variants in separat
     ],
     [],
     [],
-    { serverPostgres: true, supabase: false },
   );
 
   assert.equal(preview.summary.newProductGroups, 4);
@@ -1111,7 +1077,6 @@ test("Ozon storefront creation persists inferred hoodie variant columns", async 
     ],
     [],
     [],
-    { serverPostgres: true, supabase: false },
   );
   let insertSql = "";
   let insertValues: unknown[] = [];
@@ -1235,8 +1200,6 @@ test("buildOzonPreview removes a SKU size before a trailing colour from suggeste
     ],
     [],
     [],
-    { serverPostgres: true, supabase: false },
-    { supabaseWriteEnabled: false },
     { updatePrices: false },
   );
 

@@ -76,6 +76,8 @@ Root `package.json` используется для build scripts, включа�
 ├── server/
 │   ├── src/
 │   └── test/
+├── db/
+│   └── migrations/
 ├── ops/server/
 └── README.md
 ```
@@ -201,19 +203,7 @@ window.KOMUI_API = {
 /api/v1/products?limit=200
 ```
 
-Важно: в этом файле не должно быть Supabase service role, T-Bank, CDEK, Ozon или других секретов.
-
-### Остальные файлы `data/`
-
-- `ozon-products.raw.json` - сырая выгрузка SKU из Ozon.
-- `ozon-products.enriched.json` - расширенная подготовленная выгрузка.
-- `ozon-products.cards.json` - сгруппированные карточки товаров.
-- `storefront-products.json` - подготовленная storefront-структура для локального использования.
-- `supabase-storefront-products.json` - данные в формате, близком к Supabase view/table.
-- `supabase-storefront-products.compact.json` - компактная версия Supabase-данных.
-- `main-image-selection.json` - выбор основных изображений для карточек.
-
-Эти файлы нужны для аудита, ручной проверки и регенерации витрины.
+Важно: в этом файле не должно быть ключей базы данных, T-Bank, CDEK, Ozon или других секретов.
 
 ### SKU-документы
 
@@ -393,16 +383,15 @@ sudo -u komui env NODE_EXTRA_CA_CERTS=/etc/komui/certs/komui-node-ca-bundle.pem 
 - `.env.local`, `.DS_Store`, `.git/`, `.claude/` и другие локальные файлы не должны попадать в репозиторий.
 - Файл `data/api-config.js` допустим только для публичных URL/путей. Секреты туда не добавлять.
 
-## Исторический снимок данных
+## Исторические замечания по каталогу
 
 Следующие цифры были зафиксированы до перехода production на self-hosted
 backend и не являются текущим live-status. Перед чисткой каталога их нужно
 перепроверить через KOMUI API и локальную PostgreSQL:
 
-- live Supabase отдаёт 29 карточек, локальный fallback `storefront-products.js` содержит 24 карточки;
 - в `sku-mapping.csv` 109 строк данных, а в `ozon-products.raw.json` 110 SKU;
 - в маппинге отсутствует старый offer_id `var6` для товара "Футболка с принтом гор, Дагестан";
-- в live Supabase у карточек `var4|embroidery|tshirt|other` и `var7|print|tshirt|other` нет размеров, из-за чего их нужно дозаполнить перед полноценными продажами.
+- старые выгрузки нельзя использовать как текущий статус каталога без проверки через KOMUI API и PostgreSQL.
 
 ## Быстрая проверка перед публикацией
 

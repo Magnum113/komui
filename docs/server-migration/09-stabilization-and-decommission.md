@@ -64,6 +64,44 @@
 - удалить временный SSH-доступ `codex-migrate`;
 - удалить `/etc/sudoers.d/codex-migrate`.
 
+### 9.6. Фактический server-side decommission после cutover
+
+Удаления файлов из Git недостаточно: установленные systemd units, Nginx vhost
+и секреты в `/etc/komui` продолжают существовать до отдельной серверной
+операции. Для этого в репозитории есть идемпотентный gate:
+
+```text
+ops/server/komui-decommission-hosted-platforms
+```
+
+Production deploy обязан выполнить его после запуска нового backend и до
+активации frontend. Прямой запуск и production deploy используют один
+`/run/komui-deploy.lock`, поэтому две операции не могут менять Nginx и env
+параллельно. Gate делает root-only snapshot для rollback и затем:
+
+- останавливает и удаляет `komui-traffic-switch.path/.service` и оба CLI;
+- удаляет завершённый одноразовый TLS cutover helper, чтобы его старая
+  установленная копия не могла повторно включить legacy vhost;
+- заменяет изменяемый runtime snippet отдельным server-only snippet;
+- исключает одновременное включение старого и нового production vhost;
+- заменяет публичный `api.komui.ru` proxy на явный TLS tombstone HTTP 410 без
+  upstream, чтобы DNS не отправлял неизвестный Host в другой vhost;
+- удаляет только перечисленные legacy/Supabase keys из server env-файлов,
+  сохраняя owner и mode остальных настроек;
+- проверяет `nginx -T`, локальный origin `komui.ru`, 404 удалённого
+  compatibility endpoint и 410 для `/rest`, `/functions` и `/healthz` на
+  `api.komui.ru`.
+
+DNS и TLS certificate `api.komui.ru` удаляются отдельно после периода
+наблюдения. До этого tombstone должен оставаться включённым. Финальное удаление
+делается в таком порядке: удалить DNS record, дождаться истечения TTL и
+подтвердить отсутствие обращений; создать обычный root-owned файл-маркер
+`/etc/komui/api.komui.ru-finalized`; отключить vhost; проверить и перезагрузить
+Nginx; только после этого удалить certificate. При наличии маркера последующие
+production deploy не восстанавливают tombstone и не требуют удалённый
+certificate. Без маркера отсутствие полной TLS-пары считается ошибкой, чтобы
+случайная потеря certificate не отправила старый hostname в default vhost.
+
 ## Финальные проверки
 
 - 7–14 дней без source writes.
@@ -84,4 +122,3 @@ KOMUI работает независимо от Supabase и Vercel, а стар
 - админка/Ozon sync ещё используют Supabase;
 - не завершена сверка платежей;
 - временный доступ нужен для незавершённых работ.
-

@@ -42,5 +42,5 @@ server {
     access_log /var/log/nginx/komui.production.access.log;
     error_log /var/log/nginx/komui.production.error.log warn;
 
-    include /etc/nginx/snippets/komui-production-runtime.conf;
+    include /etc/nginx/snippets/komui-production-server.conf;
 }

@@ -5,8 +5,9 @@
 > Актуальный статус на 2 сентября 2026 года: production migration и cutover
 > завершены; `komui.ru` работает на self-hosted Nginx/Fastify/PostgreSQL 17.11.
 > Таблица и последовательность ниже сохраняют план и контрольные ворота
-> исторического переноса. Текущее runtime-состояние описано в
-> [`SERVER_PROJECT_OVERVIEW.md`](docs/server-migration/SERVER_PROJECT_OVERVIEW.md).
+> исторического переноса. Документ не является действующей инструкцией по
+> эксплуатации. Текущее runtime-состояние описано в
+> [`SERVER_PROJECT_OVERVIEW.md`](SERVER_PROJECT_OVERVIEW.md).
 
 Цель: перенести сайт, PostgreSQL, backend, оплату, СДЭК, промокоды, SEO-генерацию, деплой и эксплуатацию с Supabase/Vercel на сервер `89.111.152.112` без установки Supabase.
 

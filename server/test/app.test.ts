@@ -66,6 +66,61 @@ test("delivery config exposes configured Yandex Maps browser key", async () => {
   await app.close();
 });
 
+test("retired hosted-platform compatibility routes stay unavailable", async () => {
+  const config = loadConfig({
+    NODE_ENV: "test",
+    DATABASE_URL: "postgresql://komui_app:secret@127.0.0.1:5432/komui_test",
+    ADMIN_API_TOKEN: "x".repeat(32),
+    LEGACY_ORIGIN: "https://retired-host.example",
+    ENABLE_TRAFFIC_SWITCH: "true",
+  });
+  const app = buildApp({ config, db: mockDb() });
+
+  for (const url of [
+    "/supabase-function?name=promo-validate",
+    "/api/supabase-function?name=promo-validate",
+    "/admin/runtime/fallback",
+  ]) {
+    const response = await app.inject({
+      method: "POST",
+      url,
+      headers: { authorization: `Bearer ${"x".repeat(32)}` },
+      payload: { confirm: true, mode: "legacy" },
+    });
+    assert.equal(response.statusCode, 404, url);
+  }
+
+  assert.equal("LEGACY_ORIGIN" in config, false);
+  assert.equal("ENABLE_TRAFFIC_SWITCH" in config, false);
+  await app.close();
+});
+
+test("retired Ozon import targets fail closed instead of writing PostgreSQL", async () => {
+  const config = loadConfig({
+    NODE_ENV: "test",
+    DATABASE_URL: "postgresql://komui_app:secret@127.0.0.1:5432/komui_test",
+    ADMIN_API_TOKEN: "x".repeat(32),
+  });
+  const app = buildApp({ config, db: mockDb() });
+
+  for (const targets of [
+    { serverPostgres: true, supabase: true },
+    { serverPostgres: false, supabase: false },
+    { serverPostgres: false, supabase: true },
+  ]) {
+    const response = await app.inject({
+      method: "POST",
+      url: "/admin/ozon/products/import-preview",
+      headers: { authorization: `Bearer ${"x".repeat(32)}` },
+      payload: { targets },
+    });
+    assert.equal(response.statusCode, 400, JSON.stringify(targets));
+    assert.equal(response.json().error?.code, "bad_request");
+  }
+
+  await app.close();
+});
+
 test("payment creation does not reuse failed payment URL", async () => {
   const accessToken = "A".repeat(40);
   const queryLog: string[] = [];

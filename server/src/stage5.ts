@@ -62,14 +62,6 @@ type HandlerContext = {
 
 type JsonBody = Record<string, unknown>;
 
-const allowedCompatibilityFunctions = new Set([
-  "cdek-delivery-points",
-  "cdek-delivery-quote",
-  "promo-validate",
-  "tbank-create-payment",
-  "tbank-payment-status",
-]);
-
 function assertPost(request: FastifyRequest) {
   if (request.method !== "POST") {
     throw new HttpError(405, "method_not_allowed", "Method not allowed");
@@ -1535,39 +1527,4 @@ export async function handleTbankWebhook(
   }
 
   return reply.type("text/plain; charset=utf-8").send("OK");
-}
-
-export async function handleCompatibilityFunction(
-  request: FastifyRequest,
-  reply: FastifyReply,
-  context: HandlerContext,
-) {
-  assertPost(request);
-  const functionName = text((request.query as Record<string, unknown>).name, 80);
-  if (!allowedCompatibilityFunctions.has(functionName)) {
-    throw new HttpError(404, "function_not_found", "Function not found");
-  }
-
-  const apiKey = text(request.headers.apikey, 256);
-  if (
-    !apiKey ||
-    !apiKey.startsWith(context.config.LEGACY_FUNCTION_API_KEY_PREFIX)
-  ) {
-    throw new HttpError(401, "invalid_api_key", "Missing or invalid API key");
-  }
-
-  switch (functionName) {
-    case "cdek-delivery-points":
-      return handleCdekDeliveryPoints(request, reply, context);
-    case "cdek-delivery-quote":
-      return handleCdekDeliveryQuote(request, reply, context);
-    case "promo-validate":
-      return handlePromoValidate(request, reply, context);
-    case "tbank-create-payment":
-      return handleTbankCreatePayment(request, reply, context);
-    case "tbank-payment-status":
-      return handleTbankPaymentStatus(request, reply, context);
-    default:
-      throw new HttpError(404, "function_not_found", "Function not found");
-  }
 }

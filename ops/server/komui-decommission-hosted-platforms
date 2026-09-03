@@ -1,0 +1,491 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+usage() {
+  cat <<'USAGE'
+Usage:
+  sudo komui-decommission-hosted-platforms [repository-root]
+
+Permanently removes the retired hosted-platform traffic switch from the live
+server, installs the self-hosted production Nginx configuration, removes only
+the obsolete environment keys, and verifies that the local origin serves the
+public API. A root-only rollback snapshot is kept under /var/backups/komui.
+USAGE
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+if [[ "${EUID}" -ne 0 ]]; then
+  echo "Run with sudo." >&2
+  exit 1
+fi
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repository_root="${1:-$(cd "$script_dir/../.." && pwd)}"
+runtime_source="$repository_root/ops/server/komui-production-runtime.nginx"
+site_source="$repository_root/ops/server/komui-production.nginx"
+api_retired_source="$repository_root/ops/server/komui-api-retired.nginx"
+api_retirement_marker="/etc/komui/api.komui.ru-finalized"
+api_certificate_chain="/etc/letsencrypt/live/api.komui.ru/fullchain.pem"
+api_certificate_key="/etc/letsencrypt/live/api.komui.ru/privkey.pem"
+
+[[ -f "$runtime_source" ]] || {
+  echo "Missing runtime source: $runtime_source" >&2
+  exit 1
+}
+[[ -f "$site_source" ]] || {
+  echo "Missing production site source: $site_source" >&2
+  exit 1
+}
+[[ -f "$api_retired_source" ]] || {
+  echo "Missing retired API vhost source: $api_retired_source" >&2
+  exit 1
+}
+
+api_tombstone_enabled=0
+if [[ -e "$api_retirement_marker" ]]; then
+  [[ -f "$api_retirement_marker" && ! -L "$api_retirement_marker" ]] || {
+    echo "Invalid retired API finalization marker: $api_retirement_marker" >&2
+    exit 1
+  }
+elif [[ -f "$api_certificate_chain" && -f "$api_certificate_key" ]]; then
+  api_tombstone_enabled=1
+elif [[ -e "$api_certificate_chain" || -e "$api_certificate_key" ]]; then
+  echo "Incomplete TLS certificate pair for api.komui.ru" >&2
+  exit 1
+else
+  echo "api.komui.ru TLS certificate is absent without the finalization marker" >&2
+  exit 1
+fi
+
+run_id="$(date -u +%Y%m%dT%H%M%SZ)"
+backup_root="${KOMUI_DECOMMISSION_BACKUP_ROOT:-/var/backups/komui/hosted-platform-decommission}"
+backup_dir=""
+manifest=""
+committed=0
+state_moved=0
+services_restarted=0
+restart_units=()
+
+runtime_path="/etc/nginx/snippets/komui-production-server.conf"
+old_runtime_path="/etc/nginx/snippets/komui-production-runtime.conf"
+site_available="/etc/nginx/sites-available/komui-production"
+site_enabled="/etc/nginx/sites-enabled/komui-production"
+old_site_available="/etc/nginx/sites-available/komui-production-switch"
+old_site_enabled="/etc/nginx/sites-enabled/komui-production-switch"
+precutover_site_enabled="/etc/nginx/sites-enabled/komui-production-http-precutover"
+api_site_available="/etc/nginx/sites-available/api.komui.ru"
+api_site_enabled="/etc/nginx/sites-enabled/api.komui.ru"
+path_unit="/etc/systemd/system/komui-traffic-switch.path"
+service_unit="/etc/systemd/system/komui-traffic-switch.service"
+switch_cli="/usr/local/sbin/komui-traffic-switch"
+switch_apply="/usr/local/sbin/komui-traffic-switch-apply"
+cutover_tls_helper="/usr/local/sbin/komui-production-issue-cert-and-enable"
+switch_env="/etc/komui/traffic-switch.env"
+switch_state="/var/lib/komui/traffic-switch"
+deploy_lock_path="${KOMUI_DEPLOY_LOCK_PATH:-/run/komui-deploy.lock}"
+
+managed_paths=(
+  "$runtime_path"
+  "$old_runtime_path"
+  "$site_available"
+  "$site_enabled"
+  "$old_site_available"
+  "$old_site_enabled"
+  "$precutover_site_enabled"
+  "$api_site_available"
+  "$api_site_enabled"
+  "$path_unit"
+  "$service_unit"
+  "$switch_cli"
+  "$switch_apply"
+  "$cutover_tls_helper"
+  "$switch_env"
+  "/etc/komui/backend.env"
+  "/etc/komui/backend-production.env"
+  "/etc/komui/ozon-sync.env"
+)
+
+if [[ "${KOMUI_DEPLOY_LOCK_HELD:-0}" == "1" ]]; then
+  inherited_lock="$(readlink -f /proc/$$/fd/9 2>/dev/null || true)"
+  [[ "$inherited_lock" == "$deploy_lock_path" ]] || {
+    echo "Deploy-lock marker is set but fd 9 does not hold $deploy_lock_path" >&2
+    exit 1
+  }
+  flock -n 9 || {
+    echo "Inherited deploy lock is not held" >&2
+    exit 1
+  }
+else
+  exec 8>"$deploy_lock_path"
+  flock -n 8 || {
+    echo "Another deploy or hosted-platform decommission is already running" >&2
+    exit 1
+  }
+fi
+
+install -d -m 0700 "$backup_root"
+backup_dir="$(mktemp -d "$backup_root/${run_id}.XXXXXX")"
+chmod 0700 "$backup_dir"
+manifest="$backup_dir/manifest.tsv"
+: >"$manifest"
+chmod 0600 "$manifest"
+
+path_was_enabled=0
+path_was_active=0
+service_was_active=0
+systemctl is-enabled --quiet komui-traffic-switch.path 2>/dev/null && path_was_enabled=1
+systemctl is-active --quiet komui-traffic-switch.path 2>/dev/null && path_was_active=1
+systemctl is-active --quiet komui-traffic-switch.service 2>/dev/null && service_was_active=1
+
+for managed_unit in \
+  komui-backend.service \
+  komui-production-backend.service \
+  komui-email-worker.service \
+  komui-production-email-worker.service; do
+  if systemctl is-active --quiet "$managed_unit"; then
+    restart_units+=("$managed_unit")
+  fi
+done
+
+backup_path() {
+  local path="$1"
+  local relative="${path#/}"
+  if [[ -e "$path" || -L "$path" ]]; then
+    install -d -m 0700 "$backup_dir/$(dirname "$relative")"
+    cp -a "$path" "$backup_dir/$relative"
+    printf 'present\t%s\n' "$path" >>"$manifest"
+  else
+    printf 'absent\t%s\n' "$path" >>"$manifest"
+  fi
+}
+
+restore_path() {
+  local path="$1"
+  local relative="${path#/}"
+  local state
+  state="$(awk -F '\t' -v wanted="$path" '$2 == wanted { print $1; exit }' "$manifest")"
+  case "$state" in
+    present)
+      rm -f -- "$path"
+      mkdir -p -- "$(dirname "$path")"
+      cp -a "$backup_dir/$relative" "$path"
+      ;;
+    absent)
+      rm -f -- "$path"
+      ;;
+    "")
+      # A failed backup may leave later paths unrecorded. Never mutate a path
+      # whose preflight state is unknown.
+      return 0
+      ;;
+    *)
+      echo "Unknown snapshot state for $path: $state" >&2
+      return 1
+      ;;
+  esac
+}
+
+rollback() {
+  local path
+  set +e
+  echo "Decommission failed; restoring the preflight snapshot from $backup_dir" >&2
+  for path in "${managed_paths[@]}"; do
+    restore_path "$path"
+  done
+  if [[ "$state_moved" -eq 1 && -d "$backup_dir/retired-state" ]]; then
+    mkdir -p -- "$(dirname "$switch_state")"
+    mv "$backup_dir/retired-state" "$switch_state"
+  fi
+  systemctl daemon-reload
+  if [[ "$path_was_enabled" -eq 1 ]]; then
+    systemctl enable komui-traffic-switch.path
+  fi
+  if [[ "$path_was_active" -eq 1 ]]; then
+    systemctl start komui-traffic-switch.path
+  fi
+  if [[ "$service_was_active" -eq 1 ]]; then
+    systemctl start komui-traffic-switch.service
+  fi
+  nginx -t && systemctl reload nginx
+  if [[ "$services_restarted" -eq 1 ]]; then
+    for managed_unit in "${restart_units[@]}"; do
+      systemctl restart "$managed_unit"
+    done
+  fi
+}
+
+on_exit() {
+  local status="$?"
+  trap - EXIT
+  if [[ "$status" -ne 0 && "$committed" -ne 1 ]]; then
+    rollback
+  fi
+  exit "$status"
+}
+trap on_exit EXIT
+
+for path in "${managed_paths[@]}"; do
+  backup_path "$path"
+done
+
+filter_env_file() {
+  local path="$1"
+  shift
+  [[ -f "$path" ]] || return 0
+  local temporary
+  local line
+  local key
+  local drop
+  temporary="$(mktemp "${path}.komui-decommission.XXXXXX")"
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    key=""
+    if [[ "$line" =~ ^[[:space:]]*(export[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*= ]]; then
+      key="${BASH_REMATCH[2]}"
+    fi
+    drop=0
+    for retired_key in "$@"; do
+      if [[ "$key" == "$retired_key" ]]; then
+        drop=1
+        break
+      fi
+    done
+    if [[ "$drop" -eq 0 ]]; then
+      printf '%s\n' "$line" >>"$temporary"
+    fi
+  done <"$path"
+  chown --reference="$path" "$temporary"
+  chmod --reference="$path" "$temporary"
+  mv -f "$temporary" "$path"
+}
+
+systemctl disable --now komui-traffic-switch.path 2>/dev/null || true
+systemctl stop komui-traffic-switch.service 2>/dev/null || true
+if systemctl is-active --quiet komui-traffic-switch.path 2>/dev/null ||
+  systemctl is-active --quiet komui-traffic-switch.service 2>/dev/null; then
+  echo "Retired traffic-switch unit did not stop" >&2
+  exit 1
+fi
+
+install -D -m 0644 "$runtime_source" "$runtime_path"
+install -D -m 0644 "$site_source" "$site_available"
+rm -f -- "$site_enabled"
+ln -s "$site_available" "$site_enabled"
+rm -f -- "$old_site_enabled" "$old_site_available" "$precutover_site_enabled"
+rm -f -- "$old_runtime_path"
+
+if [[ "$api_tombstone_enabled" -eq 1 ]]; then
+  install -D -m 0644 "$api_retired_source" "$api_site_available"
+  rm -f -- "$api_site_enabled"
+  ln -s "$api_site_available" "$api_site_enabled"
+else
+  rm -f -- "$api_site_enabled" "$api_site_available"
+fi
+
+rm -f -- \
+  "$path_unit" \
+  "$service_unit" \
+  "$switch_cli" \
+  "$switch_apply" \
+  "$cutover_tls_helper" \
+  "$switch_env"
+systemctl daemon-reload
+systemctl reset-failed komui-traffic-switch.path komui-traffic-switch.service 2>/dev/null || true
+
+filter_env_file /etc/komui/backend.env \
+  ENABLE_TRAFFIC_SWITCH \
+  TRAFFIC_SWITCH_STATE_DIR \
+  TRAFFIC_SWITCH_REQUEST_TIMEOUT_MS \
+  LEGACY_ORIGIN \
+  LEGACY_FUNCTION_API_KEY_PREFIX
+filter_env_file /etc/komui/backend-production.env \
+  ENABLE_TRAFFIC_SWITCH \
+  TRAFFIC_SWITCH_STATE_DIR \
+  TRAFFIC_SWITCH_REQUEST_TIMEOUT_MS \
+  LEGACY_ORIGIN \
+  LEGACY_FUNCTION_API_KEY_PREFIX
+filter_env_file /etc/komui/ozon-sync.env \
+  SUPABASE_URL \
+  SUPABASE_SERVICE_KEY \
+  OZON_IMPORT_WRITE_SUPABASE
+
+assert_env_keys_absent() {
+  local path="$1"
+  shift
+  [[ -f "$path" ]] || return 0
+  local retired_key
+  for retired_key in "$@"; do
+    if grep -Eq "^[[:space:]]*(export[[:space:]]+)?${retired_key}[[:space:]]*=" "$path"; then
+      echo "Retired environment key remains in $path: $retired_key" >&2
+      return 1
+    fi
+  done
+}
+
+assert_env_keys_absent /etc/komui/backend.env \
+  ENABLE_TRAFFIC_SWITCH \
+  TRAFFIC_SWITCH_STATE_DIR \
+  TRAFFIC_SWITCH_REQUEST_TIMEOUT_MS \
+  LEGACY_ORIGIN \
+  LEGACY_FUNCTION_API_KEY_PREFIX
+assert_env_keys_absent /etc/komui/backend-production.env \
+  ENABLE_TRAFFIC_SWITCH \
+  TRAFFIC_SWITCH_STATE_DIR \
+  TRAFFIC_SWITCH_REQUEST_TIMEOUT_MS \
+  LEGACY_ORIGIN \
+  LEGACY_FUNCTION_API_KEY_PREFIX
+assert_env_keys_absent /etc/komui/ozon-sync.env \
+  SUPABASE_URL \
+  SUPABASE_SERVICE_KEY \
+  OZON_IMPORT_WRITE_SUPABASE
+
+if [[ -d "$switch_state" ]]; then
+  mv "$switch_state" "$backup_dir/retired-state"
+  state_moved=1
+fi
+
+if grep -Eq 'proxy_pass[[:space:]]+https?://' "$runtime_path" &&
+  grep -E 'proxy_pass[[:space:]]+https?://' "$runtime_path" |
+    grep -Ev 'https?://127[.]0[.]0[.]1(:[0-9]+)?/' >/dev/null; then
+  echo "Runtime snippet contains an external proxy target" >&2
+  exit 1
+fi
+if [[ "$api_tombstone_enabled" -eq 1 ]] &&
+  grep -Eq 'proxy_pass|supabase[.]co|vercel[.]app' "$api_site_available"; then
+  echo "Retired API vhost still contains an upstream" >&2
+  exit 1
+fi
+
+[[ "$(readlink -f "$site_enabled")" == "$site_available" ]] || {
+  echo "Production site does not resolve to the self-hosted vhost" >&2
+  exit 1
+}
+[[ ! -e "$old_site_enabled" && ! -L "$old_site_enabled" ]] || {
+  echo "Retired production vhost is still enabled" >&2
+  exit 1
+}
+[[ ! -e "$path_unit" && ! -e "$service_unit" ]] || {
+  echo "Retired traffic-switch units are still installed" >&2
+  exit 1
+}
+if systemctl is-active --quiet komui-traffic-switch.path 2>/dev/null ||
+  systemctl is-active --quiet komui-traffic-switch.service 2>/dev/null ||
+  systemctl is-enabled --quiet komui-traffic-switch.path 2>/dev/null; then
+  echo "Retired traffic-switch unit is still active or enabled" >&2
+  exit 1
+fi
+
+nginx_dump="$(mktemp)"
+nginx -T >"$nginx_dump" 2>&1
+if grep -Fq "$old_site_enabled" "$nginx_dump"; then
+  rm -f "$nginx_dump"
+  echo "Nginx still loads the retired production vhost" >&2
+  exit 1
+fi
+rm -f "$nginx_dump"
+systemctl reload nginx
+
+services_restarted=1
+for managed_unit in "${restart_units[@]}"; do
+  systemctl restart "$managed_unit"
+done
+
+wait_for_backend() {
+  local unit="$1"
+  local ready_url="$2"
+  local attempt
+  for attempt in $(seq 1 30); do
+    if systemctl is-active --quiet "$unit" &&
+      curl -fsS --max-time 3 "$ready_url" >/dev/null; then
+      return 0
+    fi
+    sleep 1
+  done
+  echo "Service did not become ready: $unit" >&2
+  return 1
+}
+
+for managed_unit in "${restart_units[@]}"; do
+  case "$managed_unit" in
+    komui-backend.service)
+      wait_for_backend "$managed_unit" "http://127.0.0.1:3000/health/ready"
+      ;;
+    komui-production-backend.service)
+      wait_for_backend "$managed_unit" "http://127.0.0.1:3001/health/ready"
+      ;;
+    *)
+      systemctl is-active --quiet "$managed_unit" || {
+        echo "Service did not remain active: $managed_unit" >&2
+        exit 1
+      }
+      ;;
+  esac
+done
+
+retired_process_keys=(
+  ENABLE_TRAFFIC_SWITCH
+  TRAFFIC_SWITCH_STATE_DIR
+  TRAFFIC_SWITCH_REQUEST_TIMEOUT_MS
+  LEGACY_ORIGIN
+  LEGACY_FUNCTION_API_KEY_PREFIX
+  SUPABASE_URL
+  SUPABASE_SERVICE_KEY
+  OZON_IMPORT_WRITE_SUPABASE
+)
+for managed_unit in "${restart_units[@]}"; do
+  main_pid="$(systemctl show --property MainPID --value "$managed_unit")"
+  [[ "$main_pid" =~ ^[1-9][0-9]*$ && -r "/proc/$main_pid/environ" ]] || {
+    echo "Could not inspect process environment: $managed_unit" >&2
+    exit 1
+  }
+  process_keys="$(tr '\0' '\n' <"/proc/$main_pid/environ" | sed 's/=.*//')"
+  for retired_key in "${retired_process_keys[@]}"; do
+    if grep -Fxq "$retired_key" <<<"$process_keys"; then
+      echo "Retired environment key remains in process $managed_unit: $retired_key" >&2
+      exit 1
+    fi
+  done
+done
+
+curl --noproxy "*" -fsS --max-time 10 \
+  --resolve komui.ru:443:127.0.0.1 \
+  'https://komui.ru/api/v1/products?limit=1' >/dev/null
+
+legacy_status="$(curl --noproxy "*" -sS -o /dev/null -w '%{http_code}' \
+  --max-time 10 --resolve komui.ru:443:127.0.0.1 \
+  -X POST 'https://komui.ru/api/supabase-function?name=promo-validate')"
+[[ "$legacy_status" == "404" ]] || {
+  echo "Retired compatibility endpoint returned HTTP $legacy_status" >&2
+  exit 1
+}
+
+if [[ "$api_tombstone_enabled" -eq 1 ]]; then
+  for retired_request in \
+    'GET|https://api.komui.ru/' \
+    'GET|https://api.komui.ru/rest/v1/' \
+    'POST|https://api.komui.ru/functions/v1/promo-validate' \
+    'GET|https://api.komui.ru/healthz'; do
+    retired_method="${retired_request%%|*}"
+    retired_url="${retired_request#*|}"
+    api_retired_status="$(curl --noproxy "*" -sS -o /dev/null -w '%{http_code}' \
+      --max-time 10 --resolve api.komui.ru:443:127.0.0.1 \
+      -X "$retired_method" "$retired_url")"
+    [[ "$api_retired_status" == "410" ]] || {
+      echo "Retired api.komui.ru endpoint returned HTTP $api_retired_status: $retired_method $retired_url" >&2
+      exit 1
+    }
+  done
+else
+  [[ ! -e "$api_site_enabled" && ! -L "$api_site_enabled" ]] || {
+    echo "Finalized api.komui.ru vhost is still enabled" >&2
+    exit 1
+  }
+fi
+
+committed=1
+trap - EXIT
+printf 'DECOMMISSION_OK backup=%s api_tombstone=%s\n' \
+  "$backup_dir" "$api_tombstone_enabled"

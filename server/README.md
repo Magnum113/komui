@@ -5,7 +5,7 @@ Production backend self-hosted витрины KOMUI. Один Fastify/TypeScript
 и PostgreSQL databases.
 
 Актуальная серверная архитектура и эксплуатационные пути описаны в
-[`docs/server-migration/SERVER_PROJECT_OVERVIEW.md`](../docs/server-migration/SERVER_PROJECT_OVERVIEW.md).
+[`SERVER_PROJECT_OVERVIEW.md`](../SERVER_PROJECT_OVERVIEW.md).
 
 ## Runtime
 
@@ -84,8 +84,8 @@ Nginx удаляет этот префикс перед передачей за�
 
 ## Admin API
 
-Admin routes включают runtime status/fallback, storefront products/orders,
-Ozon import jobs и ручной CDEK retry. Они требуют server-side
+Admin routes включают runtime status, storefront products/orders, Ozon import
+jobs и ручной CDEK retry. Они требуют server-side
 `ADMIN_API_TOKEN`; токен нельзя передавать браузерному приложению. Контракты
 редактирования описаны в:
 
@@ -93,9 +93,8 @@ Ozon import jobs и ручной CDEK retry. Они требуют server-side
 - [`docs/admin-storefront-orders-api.md`](../docs/admin-storefront-orders-api.md);
 - [`docs/server-migration/ADMIN_SERVER_DEPLOYMENT_PLAN.md`](../docs/server-migration/ADMIN_SERVER_DEPLOYMENT_PLAN.md).
 
-Traffic fallback реализован как контролируемая admin-операция: он проверяет
-конфигурацию, применяет заранее заданный runtime mode и пишет audit event.
-Переключение live traffic требует отдельной операционной проверки.
+Runtime status только сообщает текущий self-hosted режим. Переключение трафика
+на прежний hosting через backend не поддерживается.
 
 ## Yandex Direct feed
 

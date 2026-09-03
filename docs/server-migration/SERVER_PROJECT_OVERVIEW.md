@@ -1,5 +1,10 @@
 # KOMUI self-hosted server project overview
 
+> Исторический журнал миграции. Он сохраняет исходные решения, пути и проверки
+> на момент переезда, включая уже удалённые legacy-интеграции. Текущее состояние
+> и действующие инструкции находятся в
+> [`/SERVER_PROJECT_OVERVIEW.md`](../../SERVER_PROJECT_OVERVIEW.md).
+
 Дата актуализации: 3 сентября 2026 года.
 
 Этот документ описывает, как устроена текущая серверная реализация KOMUI на
@@ -203,7 +208,7 @@ server/src/cdekShipments.ts
 server/test/tbankWebhook.test.ts
 server/test/tbankReconciliation.test.ts
 server/test/cdekEffects.test.ts
-supabase/migrations/20260830143000_harden_payment_consistency.sql
+db/migrations/20260830143000_harden_payment_consistency.sql
 ```
 
 Migration добавляет:

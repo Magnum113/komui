@@ -21,29 +21,13 @@ const envSchema = z.object({
     .max(10_000)
     .default(2_000),
   ADMIN_API_TOKEN: z.string().min(24).optional(),
-  RUNTIME_MODE: z.enum(["staging", "server", "legacy"]).default("staging"),
-  LEGACY_ORIGIN: z.string().url().optional(),
-  ENABLE_TRAFFIC_SWITCH: z
-    .enum(["true", "false"])
-    .default("false")
-    .transform((value) => value === "true"),
-  TRAFFIC_SWITCH_STATE_DIR: z
-    .string()
-    .min(1)
-    .default("/var/lib/komui/traffic-switch"),
-  TRAFFIC_SWITCH_REQUEST_TIMEOUT_MS: z.coerce
-    .number()
-    .int()
-    .min(500)
-    .max(30_000)
-    .default(8_000),
+  RUNTIME_MODE: z.enum(["staging", "server"]).default("staging"),
   AUDIT_LOG_PATH: z.string().min(1).default("/var/lib/komui/admin-audit.log"),
   SITE_URL: z.string().url().default("https://komui.ru"),
   PUBLIC_API_BASE_URL: z.string().url().optional(),
   yandexMapsApiKey: z.string().min(1).optional(),
   YANDEX_MAPS_API_KEY: z.string().min(1).optional(),
   NEXT_PUBLIC_YANDEX_MAPS_API_KEY: z.string().min(1).optional(),
-  LEGACY_FUNCTION_API_KEY_PREFIX: z.string().min(1).default("sb_publishable_"),
   TBANK_MODE: z.enum(["demo", "production"]).default("demo"),
   TBANK_DEMO_TERMINAL_KEY: z.string().min(1).optional(),
   TBANK_DEMO_PASSWORD: z.string().min(1).optional(),
@@ -209,10 +193,7 @@ export function publicConfig(config: AppConfig) {
     port: config.PORT,
     databasePoolMax: config.DATABASE_POOL_MAX,
     runtimeMode: config.RUNTIME_MODE,
-    legacyFallbackConfigured: Boolean(config.LEGACY_ORIGIN),
     adminEnabled: Boolean(config.ADMIN_API_TOKEN),
-    trafficSwitchEnabled: config.ENABLE_TRAFFIC_SWITCH,
-    trafficSwitchStateDirConfigured: Boolean(config.TRAFFIC_SWITCH_STATE_DIR),
     siteUrl: config.SITE_URL,
     publicApiBaseUrlConfigured: Boolean(config.PUBLIC_API_BASE_URL),
     yandexMapsConfigured: Boolean(yandexMapsApiKey(config)),

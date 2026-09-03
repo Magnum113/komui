@@ -206,7 +206,7 @@ SQL
 
 enforce_payment_consistency_compatibility() {
   local required_source_files=(
-    "supabase/migrations/20260830143000_harden_payment_consistency.sql"
+    "db/migrations/20260830143000_harden_payment_consistency.sql"
     "server/src/cdekEffects.ts"
     "server/src/tbankPaymentIdentity.ts"
     "server/src/tbankReconciliation.ts"
@@ -321,7 +321,7 @@ SQL
 
 enforce_email_mvp_compatibility() {
   local required_source_files=(
-    "supabase/migrations/20260831193000_add_email_mvp_foundation.sql"
+    "db/migrations/20260831193000_add_email_mvp_foundation.sql"
     "server/src/email/orderPaidOutbox.ts"
     "server/src/email/outboxWorker.ts"
     "server/src/email/unisenderGo.ts"
@@ -452,7 +452,7 @@ SQL
 
 enforce_email_contacts_compatibility() {
   local required_source_files=(
-    "supabase/migrations/20260901170000_add_email_contacts_and_subscriptions.sql"
+    "db/migrations/20260901170000_add_email_contacts_and_subscriptions.sql"
     "server/src/email/contacts.ts"
     "server/src/email/subscriptions.ts"
     "server/src/email/templates/subscription-confirmation/index.ts"
@@ -606,7 +606,7 @@ SQL
 
 enforce_hoodie_variants_compatibility() {
   local required_source_files=(
-    "supabase/migrations/20260903125110_split_hoodie_storefront_variants.sql"
+    "db/migrations/20260903125110_split_hoodie_storefront_variants.sql"
     "assets/product-offers.js"
   )
   local present_source_files=0
@@ -863,6 +863,24 @@ enforce_hoodie_variants_compatibility() {
         systemctl restart "$email_worker_unit" || true
       fi
       fail "email worker activation failed"
+    fi
+  fi
+
+  if [[ "$target" == "prod" ]]; then
+    [[ -x "$source_dir/ops/server/komui-decommission-hosted-platforms" ]] ||
+      fail "origin/$branch does not contain the executable hosted-platform decommission gate"
+    log "decommissioning retired hosted-platform runtime"
+    if ! KOMUI_DEPLOY_LOCK_HELD=1 \
+      "$source_dir/ops/server/komui-decommission-hosted-platforms" "$source_dir"; then
+      log "hosted-platform decommission failed, restoring previous backend"
+      if [[ -n "$previous_backend" && -d "$previous_backend" ]]; then
+        ln -sfnT "$previous_backend" "$backend_current"
+        systemctl restart "$backend_unit" || true
+        if [[ "$email_worker_managed" -eq 1 ]]; then
+          systemctl restart "$email_worker_unit" || true
+        fi
+      fi
+      fail "hosted-platform decommission failed"
     fi
   fi
 

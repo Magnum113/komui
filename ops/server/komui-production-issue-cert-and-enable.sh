@@ -3,7 +3,8 @@ set -Eeuo pipefail
 
 server_ip="${KOMUI_PRODUCTION_SERVER_IP:-89.111.152.112}"
 http_site="/etc/nginx/sites-enabled/komui-production-http-precutover"
-tls_site="/etc/nginx/sites-enabled/komui-production-switch"
+tls_site="/etc/nginx/sites-enabled/komui-production"
+retired_tls_site="/etc/nginx/sites-enabled/komui-production-switch"
 
 require_dns() {
   local name="$1"
@@ -21,8 +22,8 @@ certbot certonly --webroot -w /var/lib/komui/acme \
   -d komui.ru -d www.komui.ru \
   --non-interactive --agree-tos --keep-until-expiring
 
-rm -f "$http_site"
-ln -sfn /etc/nginx/sites-available/komui-production-switch "$tls_site"
+rm -f "$http_site" "$retired_tls_site"
+ln -sfn /etc/nginx/sites-available/komui-production "$tls_site"
 nginx -t
 systemctl reload nginx
 curl --noproxy "*" -fsS --resolve komui.ru:443:127.0.0.1 https://komui.ru/api/v1/products?limit=1 >/dev/null

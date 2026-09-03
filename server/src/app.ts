@@ -4,6 +4,7 @@ import Fastify, {
   type FastifyRequest,
 } from "fastify";
 import { randomUUID } from "node:crypto";
+import { ZodError } from "zod";
 import type { AppConfig } from "./config";
 import { publicConfig, yandexMapsApiKey } from "./config";
 import { createDb, type Db } from "./db";
@@ -18,7 +19,6 @@ import {
 import {
   handleCdekDeliveryPoints,
   handleCdekDeliveryQuote,
-  handleCompatibilityFunction,
   handlePromoValidate,
   handleTbankCreatePayment,
   handleTbankPaymentStatus,
@@ -42,10 +42,7 @@ import {
   handleOzonProductsImport,
   handleOzonProductsImportPreview,
 } from "./ozonImport";
-import {
-  handleRuntimeFallbackSwitch,
-  handleRuntimeRead,
-} from "./runtimeSwitch";
+import { handleRuntimeRead } from "./runtimeStatus";
 import { handleAdminCreateCdekShipment } from "./cdekShipments";
 import {
   decodeReviewCursor,
@@ -154,7 +151,10 @@ export function buildApp({ config, db = createDb(config) }: AppOptions) {
 
   app.setErrorHandler((error, request, reply) => {
     request.log.error({ err: error }, "request failed");
-    if ((error as { validation?: unknown }).validation) {
+    if (
+      (error as { validation?: unknown }).validation ||
+      error instanceof ZodError
+    ) {
       return jsonError(reply, 400, "bad_request", "Invalid request");
     }
     if (error instanceof HttpError) {
@@ -331,26 +331,11 @@ export function buildApp({ config, db = createDb(config) }: AppOptions) {
     await registerUnisenderGoWebhook(webhookApp, stage5Context);
   });
 
-  app.post("/supabase-function", async (request, reply) =>
-    handleCompatibilityFunction(request, reply, stage5Context),
-  );
-
-  app.post("/api/supabase-function", async (request, reply) =>
-    handleCompatibilityFunction(request, reply, stage5Context),
-  );
-
   app.get("/admin/runtime", async (request, reply) => {
     const authResult = await requireAdmin(config, request, reply);
     if (reply.sent) return authResult;
 
     return handleRuntimeRead(request, reply, config);
-  });
-
-  app.post("/admin/runtime/fallback", async (request, reply) => {
-    const authResult = await requireAdmin(config, request, reply);
-    if (reply.sent) return authResult;
-
-    return handleRuntimeFallbackSwitch(request, reply, config);
   });
 
   app.get("/admin/storefront/products", async (request, reply) => {

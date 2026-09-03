@@ -1472,7 +1472,7 @@ function compactRatingHtml(product,className='',href=''){
   const aria=`Рейтинг ${ratingText} из 5, ${reviewCountText(count)}`;
   return href?`<a class="p-rating-compact ${className}" href="${href}" aria-label="${aria}">${body}</a>`:`<div class="p-rating-compact ${className}" aria-label="${aria}">${body}</div>`;
 }
-function supabaseProduct(row,i){
+function apiProduct(row,i){
   const price=Number(row.price_min||row.price_max||0);
   const compareAt=row.compare_at_price!=null?Number(row.compare_at_price):null;
   const mediaImages=(row.image_urls||[]).filter(Boolean);
@@ -1509,13 +1509,13 @@ function supabaseProduct(row,i){
     storefront_variant:row.storefront_variant||row.storefrontVariant||null,
     requires_offer_id_sizes:row.requires_offer_id_sizes||row.requiresOfferIdSizes||[],
     ...reviewSummary,
-    source:'supabase'
+    source:'api'
   };
   product.sizes=sortSizes(productAvailableSizes(product));
   return product;
 }
 function setProducts(products,stats={}){
-  P=products.map((p,i)=>p.design_key?supabaseProduct(p,i):localProduct(p,i));
+  P=products.map((p,i)=>p.design_key?apiProduct(p,i):localProduct(p,i));
   OSTAT=stats||{};
   CATS=[...new Set(P.map(p=>p.cat).filter(Boolean))];
   COLS=[...new Set(P.map(p=>p.col).filter(Boolean))];

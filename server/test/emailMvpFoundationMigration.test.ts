@@ -4,7 +4,7 @@ import test from "node:test";
 
 const migration = readFileSync(
   new URL(
-    "../../supabase/migrations/20260831193000_add_email_mvp_foundation.sql",
+    "../../db/migrations/20260831193000_add_email_mvp_foundation.sql",
     import.meta.url,
   ),
   "utf8",

@@ -184,7 +184,7 @@ project key разрешён для обычных API-методов, но за
 - [x] миграция выполнена на реальной схеме `komui_staging` внутри транзакции и
   успешно отменена через `ROLLBACK`;
 - [x] полный backend-набор из 233 тестов и TypeScript-сборка проходят;
-- [x] Supabase Edge Function и Supabase checkout RPC не изменялись.
+- [x] legacy checkout flow не изменялись.
 
 До контролируемого развёртывания этапа 2 остаётся:
 
@@ -220,7 +220,7 @@ project key разрешён для обычных API-методов, но за
   рекомендаций;
 - [x] контракт API, ошибки, allowlist и шаблон покрыты автоматическими тестами;
   полный набор из 249 backend-тестов и TypeScript-сборка проходят;
-- [x] Supabase-флоу не изменялся, фактическая отправка не подключена.
+- [x] legacy checkout flow не изменялся, фактическая отправка не подключена.
 
 Официальная спецификация:
 
@@ -274,7 +274,7 @@ payload.
   запущен, поэтому текущий production не меняет поведение;
 - [x] worker по умолчанию выключен через `EMAIL_WORKER_ENABLED=false`;
 - [x] полный набор из 262 backend-тестов и TypeScript-сборка проходят;
-- [x] Supabase Edge Function и Supabase checkout RPC не изменялись.
+- [x] legacy checkout flow не изменялись.
 
 До контролируемого развёртывания этапа 4 остаётся:
 
@@ -326,7 +326,7 @@ payload.
 - [x] контракт подписи, tamper, disabled mode, replay, приоритеты причин,
   poison events и лимит пакета покрыты тестами; полный набор из 268
   backend-тестов и TypeScript-сборка проходят;
-- [x] Supabase Edge Function и Supabase checkout RPC не изменялись; новая
+- [x] legacy checkout flow не изменялись; новая
   миграция для этапа 5 не требуется.
 
 Контролируемое развёртывание этапа 5 на staging выполнено в составе этапа 7.
@@ -367,7 +367,7 @@ Production callback не регистрировался и production-флаг w
 - [x] shell-контракт healthcheck, маскирование и Telegram-текст покрыты
   тестами; проходят 270 backend-тестов, 69 ops-тестов, TypeScript-сборка и
   `git diff --check`;
-- [x] Supabase Edge Function и Supabase checkout RPC не изменялись.
+- [x] legacy checkout flow не изменялись.
 
 Контролируемое развёртывание этапа 6 выполнено в составе этапа 7. Production
 worker и production email-флаги оставлены выключенными. Проверка отображения
@@ -411,7 +411,7 @@ worker и production email-флаги оставлены выключенным�
   служебные секреты;
 - [x] автоматическая приёмка включает 273 backend-теста, 69 ops-тестов,
   TypeScript-сборку и `git diff --check`;
-- [x] Supabase Edge Function и Supabase checkout RPC не изменялись.
+- [x] legacy checkout flow не изменялись.
 - [x] письмо доставлено в Gmail за одну секунду; в исходных заголовках
   подтверждены `SPF=PASS`, `DKIM=PASS` для `komui.ru` и `DMARC=PASS`;
 - [x] обнаруженный в поле получателя буквальный placeholder `${to_name}`
@@ -459,7 +459,7 @@ Production-часть `order_paid` включена 1 сентября 2026 го
 - [x] синтетический production-заказ не создавался, старые оплаченные заказы
   намеренно не backfill-ятся: первое письмо уйдёт только при новом первом
   переходе реального заказа в `paid`;
-- [x] Supabase Edge Function и Supabase checkout RPC не изменялись.
+- [x] legacy checkout flow не изменялись.
 
 До полного закрытия наблюдения за этапом 8 остаётся:
 

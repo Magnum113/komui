@@ -29,12 +29,13 @@ const LEGACY_DESIGN_KEY_ALIASES: Record<string, string[]> = {
   "var7|print|tshirt|white": ["var7|print|tshirt|other"],
 };
 
-const targetSchema = z
-  .object({
-    serverPostgres: z.boolean().optional(),
-    supabase: z.boolean().optional(),
-  })
-  .default({});
+// GetoMerch versions deployed before the hosted platforms were retired still
+// send this object. Accept only the self-hosted choice so a stale UI can never
+// turn an obsolete target selection into an unintended PostgreSQL write.
+const retiredTargetsCompatibilitySchema = z.object({
+  serverPostgres: z.literal(true).optional(),
+  supabase: z.literal(false).optional(),
+});
 
 const previewRequestSchema = z
   .object({
@@ -47,14 +48,14 @@ const previewRequestSchema = z
     // "add" only adds newly detected Ozon sizes to storefront products.
     // It does not remove sizes when Ozon items disappear or are archived.
     syncSizes: z.enum(["add", "off"]).optional(),
-    targets: targetSchema.optional(),
+    targets: retiredTargetsCompatibilitySchema.optional(),
   })
   .default({});
 
 const importRequestSchema = z.object({
   previewId: z.string().uuid(),
   confirm: z.literal(true),
-  targets: targetSchema.optional(),
+  targets: retiredTargetsCompatibilitySchema.optional(),
   itemIds: z.array(z.string().trim().min(1).max(64)).max(10_000).optional(),
   offerIds: z.array(z.string().trim().min(1).max(160)).max(10_000).optional(),
 });
@@ -127,19 +128,11 @@ const linkStorefrontOffersRequestSchema = z.object({
   syncSizes: z.enum(["add", "off"]).optional(),
 });
 
-type Targets = {
-  serverPostgres: boolean;
-  supabase: boolean;
-};
-
 type OzonImportEnv = {
   configured: boolean;
   clientId?: string;
   apiKey?: string;
   apiBaseUrl: string;
-  supabaseUrl?: string;
-  supabaseServiceKey?: string;
-  supabaseWriteEnabled: boolean;
   mode: string;
 };
 
@@ -233,7 +226,7 @@ export type OzonPreviewItem = {
     sku?: string;
   };
   plannedActions: Array<{
-    target: "serverPostgres" | "supabase";
+    target: "serverPostgres";
     action:
       | "create_storefront_offer"
       | "update_storefront_offer"
@@ -312,7 +305,9 @@ type PreviewBuildResult = {
     unmatched: number;
     newProductGroups: number;
     actionableServerPostgres: number;
-    actionableSupabase: number;
+    // Deprecated response field kept temporarily for the deployed GetoMerch
+    // client. It is always zero and has no corresponding integration.
+    actionableSupabase: 0;
     noop: number;
   };
   canImport: boolean;
@@ -382,12 +377,6 @@ type JobRow = {
   updated_at: Date | string;
 };
 
-type SupabasePatch = {
-  table: string;
-  id: string | number;
-  patch: Record<string, unknown>;
-};
-
 type StorefrontUpdateResult = {
   table: "merch_storefront_products";
   id: string;
@@ -407,11 +396,6 @@ type OzonImportContext = {
   db: Db;
   fetchImpl?: typeof fetch;
 };
-
-function parseBoolean(value: string | undefined, fallback = false) {
-  if (!value) return fallback;
-  return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
-}
 
 function stripEnvQuotes(value: string) {
   const trimmed = value.trim();
@@ -445,7 +429,6 @@ async function loadOzonImportEnv(config: AppConfig): Promise<OzonImportEnv> {
     return {
       configured: false,
       apiBaseUrl: OZON_DEFAULT_BASE_URL,
-      supabaseWriteEnabled: false,
       mode: "missing_env_file",
     };
   }
@@ -458,17 +441,7 @@ async function loadOzonImportEnv(config: AppConfig): Promise<OzonImportEnv> {
     clientId,
     apiKey,
     apiBaseUrl: env.OZON_API_BASE_URL || OZON_DEFAULT_BASE_URL,
-    supabaseUrl: env.SUPABASE_URL,
-    supabaseServiceKey: env.SUPABASE_SERVICE_KEY,
-    supabaseWriteEnabled: parseBoolean(env.OZON_IMPORT_WRITE_SUPABASE),
     mode: env.OZON_IMPORT_MODE || "dry_run",
-  };
-}
-
-function normalizeTargets(input: Partial<Targets> | undefined): Targets {
-  return {
-    serverPostgres: input?.serverPostgres !== false,
-    supabase: input?.supabase === true,
   };
 }
 
@@ -1711,10 +1684,6 @@ export function buildOzonPreview(
   ozonItems: OzonPriceItem[],
   storefrontRows: StorefrontRow[],
   merchRows: MerchProductRow[],
-  targets: Targets,
-  settings: Pick<OzonImportEnv, "supabaseWriteEnabled"> = {
-    supabaseWriteEnabled: false,
-  },
   options: { updatePrices?: boolean; syncSizes?: "add" | "off" } = {},
 ): PreviewBuildResult {
   const updatePrices = options.updatePrices === true;
@@ -1726,7 +1695,6 @@ export function buildOzonPreview(
   let matchedMerchProducts = 0;
   let unmatched = 0;
   let actionableServerPostgres = 0;
-  let actionableSupabase = 0;
   let noop = 0;
 
   for (const ozonItem of ozonItems) {
@@ -1802,91 +1770,39 @@ export function buildOzonPreview(
 
     if (storefrontMatch) {
       matchedStorefront += 1;
-      if (targets.serverPostgres) {
-        if (diff?.changed && diff.operation !== "noop") {
-          plannedActions.push({
-            target: "serverPostgres",
-            action: diff.operation,
-            reason: diffActionReason(diff),
-          });
-          actionableServerPostgres += 1;
-        } else {
-          plannedActions.push({
-            target: "serverPostgres",
-            action: "skip",
-            reason: "no_changes",
-          });
-        }
-      }
-      if (targets.supabase) {
-        if (!diff?.changed || diff.operation === "noop") {
-          plannedActions.push({
-            target: "supabase",
-            action: "skip",
-            reason: "no_changes",
-          });
-        } else if (settings.supabaseWriteEnabled) {
-          plannedActions.push({
-            target: "supabase",
-            action: diff.operation,
-            reason: diffActionReason(diff),
-          });
-          actionableSupabase += 1;
-        } else {
-          plannedActions.push({
-            target: "supabase",
-            action: "skip",
-            reason: "supabase_write_disabled",
-          });
-        }
+      if (diff?.changed && diff.operation !== "noop") {
+        plannedActions.push({
+          target: "serverPostgres",
+          action: diff.operation,
+          reason: diffActionReason(diff),
+        });
+        actionableServerPostgres += 1;
+      } else {
+        plannedActions.push({
+          target: "serverPostgres",
+          action: "skip",
+          reason: "no_changes",
+        });
       }
     } else if (merchMatch) {
       matchedMerchProducts += 1;
-      if (targets.serverPostgres) {
-        if (diff?.changed && diff.operation !== "noop") {
-          plannedActions.push({
-            target: "serverPostgres",
-            action: diff.operation,
-            reason: diffActionReason(diff),
-          });
-          actionableServerPostgres += 1;
-        } else {
-          plannedActions.push({
-            target: "serverPostgres",
-            action: "skip",
-            reason: updatePrices
-              ? price === undefined
-                ? "missing_price"
-                : "no_changes"
-              : "price_updates_disabled",
-          });
-        }
-      }
-      if (targets.supabase) {
-        if (!diff?.changed || diff.operation === "noop") {
-          plannedActions.push({
-            target: "supabase",
-            action: "skip",
-            reason: updatePrices
-              ? price === undefined
-                ? "missing_price"
-                : "no_changes"
-              : "price_updates_disabled",
-          });
-        } else if (settings.supabaseWriteEnabled) {
-          plannedActions.push({
-            target: "supabase",
-            action: diff.operation,
-            reason: diffActionReason(diff),
-          });
-          actionableSupabase += 1;
-        } else {
-          plannedActions.push({
-            target: "supabase",
-            action: "skip",
-            reason: "supabase_write_disabled",
-          });
-        }
+      if (diff?.changed && diff.operation !== "noop") {
+        plannedActions.push({
+          target: "serverPostgres",
+          action: diff.operation,
+          reason: diffActionReason(diff),
+        });
+        actionableServerPostgres += 1;
+      } else {
+        plannedActions.push({
+          target: "serverPostgres",
+          action: "skip",
+          reason: updatePrices
+            ? price === undefined
+              ? "missing_price"
+              : "no_changes"
+            : "price_updates_disabled",
+        });
       }
     } else {
       unmatched += 1;
@@ -1897,15 +1813,6 @@ export function buildOzonPreview(
           ? "new_product_requires_creation"
           : "unmatched_requires_mapping",
       });
-      if (targets.supabase) {
-        plannedActions.push({
-          target: "supabase",
-          action: "skip",
-          reason: settings.supabaseWriteEnabled
-            ? "unmatched_requires_mapping"
-            : "supabase_write_disabled",
-        });
-      }
     }
 
     const hasImportAction = plannedActions.some((action) => action.action !== "skip");
@@ -1978,13 +1885,6 @@ export function buildOzonPreview(
       count: productGroupSizeChartConflicts,
     });
   }
-  if (targets.supabase && !settings.supabaseWriteEnabled) {
-    warnings.push({
-      code: "supabase_write_disabled",
-      message:
-        "Запись в Supabase отключена на сервере флагом OZON_IMPORT_WRITE_SUPABASE=false.",
-    });
-  }
   if (!updatePrices) {
     warnings.push({
       code: "price_updates_disabled",
@@ -2000,13 +1900,13 @@ export function buildOzonPreview(
     unmatched,
     newProductGroups: productGroups.length,
     actionableServerPostgres,
-    actionableSupabase,
+    actionableSupabase: 0 as const,
     noop,
   };
 
   return {
     summary,
-    canImport: actionableServerPostgres > 0 || actionableSupabase > 0,
+    canImport: actionableServerPostgres > 0,
     warnings,
     items,
     newProductGroups: productGroups,
@@ -3006,43 +2906,6 @@ export async function handleAdminLinkOzonStorefrontOffers(
   };
 }
 
-async function patchSupabase(
-  settings: OzonImportEnv,
-  patch: SupabasePatch,
-  fetchImpl: typeof fetch,
-) {
-  if (!settings.supabaseUrl || !settings.supabaseServiceKey) {
-    throw new HttpError(
-      503,
-      "supabase_not_configured",
-      "Supabase service credentials are not configured",
-    );
-  }
-  const url = new URL(
-    `/rest/v1/${patch.table}?id=eq.${encodeURIComponent(String(patch.id))}`,
-    settings.supabaseUrl,
-  ).toString();
-  const response = await fetchImpl(url, {
-    method: "PATCH",
-    headers: {
-      apikey: settings.supabaseServiceKey,
-      Authorization: `Bearer ${settings.supabaseServiceKey}`,
-      "Content-Type": "application/json",
-      Prefer: "return=minimal",
-    },
-    body: JSON.stringify(patch.patch),
-  });
-
-  if (!response.ok) {
-    const body = await response.text().catch(() => "");
-    throw new HttpError(502, "supabase_write_failed", "Supabase write failed", {
-      status: response.status,
-      table: patch.table,
-      body: body.slice(0, 500),
-    });
-  }
-}
-
 async function createJob(
   db: Db,
   previewId: string,
@@ -3172,7 +3035,6 @@ export async function handleOzonProductsImportPreview(
   context: OzonImportContext,
 ) {
   const parsed = previewRequestSchema.parse(request.body || {});
-  const targets = normalizeTargets(parsed.targets);
   const settings = await loadOzonImportEnv(context.config);
   const limit = Math.min(
     parsed.limit || context.config.OZON_IMPORT_MAX_ITEMS,
@@ -3196,15 +3058,12 @@ export async function handleOzonProductsImportPreview(
     ozonItems,
     storefrontRows,
     merchRows,
-    targets,
-    settings,
     { updatePrices, syncSizes },
   );
   const saved = await savePreview(
     context.db,
     {
       ...parsed,
-      targets,
       limit,
       updatePrices,
       syncSizes,
@@ -3230,9 +3089,11 @@ export async function handleOzonProductsImportPreview(
     createdAt: saved.created_at,
     importType: "ozon_products",
     mode: {
-      serverPostgres: targets.serverPostgres,
-      supabaseRequested: targets.supabase,
-      supabaseWriteEnabled: settings.supabaseWriteEnabled,
+      serverPostgres: true,
+      // Deprecated compatibility flags for the deployed admin client. They do
+      // not enable credentials, network access or a second write target.
+      supabaseRequested: false,
+      supabaseWriteEnabled: false,
       ozonImportMode: settings.mode,
       updatePrices,
       syncSizes,
@@ -3251,7 +3112,6 @@ export async function handleOzonProductsImport(
   context: OzonImportContext,
 ) {
   const parsed = importRequestSchema.parse(request.body || {});
-  const targets = normalizeTargets(parsed.targets);
   const preview = await loadPreview(context.db, parsed.previewId);
   const items = selectPreviewItems(safeJsonArray(preview.items), parsed);
   if (!items.length) {
@@ -3280,14 +3140,10 @@ export async function handleOzonProductsImport(
     return jobResponse(row);
   }
 
-  const settings = await loadOzonImportEnv(context.config);
-  const fetchImpl = context.fetchImpl || fetch;
   const syncedAt = new Date().toISOString();
   const errors: unknown[] = [];
   const applied: AppliedUpdate[] = [];
   let skipped = 0;
-  let supabasePatched = 0;
-  let supabaseSkipped = 0;
 
   try {
     const transactionResult = await context.db.withTransaction(async (client) => {
@@ -3297,7 +3153,7 @@ export async function handleOzonProductsImport(
           (action) =>
             action.target === "serverPostgres" && action.action !== "skip",
         );
-        if (!targets.serverPostgres || !hasServerAction) {
+        if (!hasServerAction) {
           skipped += 1;
           continue;
         }
@@ -3316,30 +3172,9 @@ export async function handleOzonProductsImport(
     });
     applied.push(...transactionResult);
 
-    if (targets.supabase) {
-      if (!settings.supabaseWriteEnabled) {
-        supabaseSkipped = applied.length;
-      } else {
-        for (const update of applied) {
-          await patchSupabase(
-            settings,
-            {
-              table: update.table,
-              id: update.id,
-              patch: update.patch,
-            },
-            fetchImpl,
-          );
-          supabasePatched += 1;
-        }
-      }
-    }
-
     const resultPayload = {
       appliedServerPostgres: applied.length,
       skipped,
-      supabasePatched,
-      supabaseSkipped,
       syncedAt,
     };
     await finishJob(
@@ -3361,8 +3196,6 @@ export async function handleOzonProductsImport(
         jobId: job.id,
         previewId: preview.id,
         appliedServerPostgres: applied.length,
-        supabasePatched,
-        supabaseSkipped,
       },
     );
 
@@ -3379,8 +3212,6 @@ export async function handleOzonProductsImport(
       {
         appliedServerPostgres: applied.length,
         skipped,
-        supabasePatched,
-        supabaseSkipped,
         syncedAt,
       },
       errors,

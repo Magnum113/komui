@@ -1,17 +1,22 @@
 # KOMUI server project overview
 
-Основной актуальный документ по серверной реализации находится здесь:
+Это основной актуальный документ по серверной реализации. Подробный дневник
+переезда сохранён отдельно как исторический материал:
+[docs/server-migration/SERVER_PROJECT_OVERVIEW.md](docs/server-migration/SERVER_PROJECT_OVERVIEW.md).
 
-- [docs/server-migration/SERVER_PROJECT_OVERVIEW.md](docs/server-migration/SERVER_PROJECT_OVERVIEW.md)
-
-Этот корневой файл оставлен как стабильная точка входа для разработчиков и
-агентов. Все существенные изменения серверной реализации нужно описывать в
-основном документе выше.
-
-Последняя проверка актуального состояния: 3 сентября 2026 года.
+Последняя проверка актуального состояния: 4 сентября 2026 года.
 
 - `komui.ru` и `stage.komui.ru` обслуживаются self-hosted
   Nginx/Fastify/PostgreSQL;
+- код runtime, storefront build и Ozon import в этом репозитории не имеет
+  зависимости от Supabase или Vercel; аварийный proxy/fallback на старый
+  hosting удалён из исходников и rollout-конфигурации;
+- production deploy содержит обязательный fail-closed decommission gate: он
+  отключает legacy systemd watcher, устанавливает отдельный server-only Nginx
+  snippet, очищает точные устаревшие env-ключи и переводит `api.komui.ru` в
+  HTTP 410 tombstone без upstream;
+- SQL схемы хранятся в `db/migrations` и применяются к PostgreSQL через
+  контролируемый server rollout;
 - payment/CDEK consistency hardening из первых трёх пунктов P1 и совместимая
   схема работают в staging и production;
 - PostgreSQL обновлён внутри ветки 17.x до версии 17.11;
@@ -61,8 +66,9 @@ CDEK create `POST` запрещён, `accepted` сверяется до коне
 конкурентные create/cancel updates защищены compare-and-set. Добавлена
 forward-only migration
 `20260830143000_harden_payment_consistency.sql`, фоновые workers, operator
-visibility и regression tests. Migration условно поддерживает managed
-Supabase roles и self-hosted backend role `komui_app` при включённом RLS.
+visibility и regression tests. Исторический SQL сохраняет условную
+совместимость со старыми managed-ролями, а self-hosted PostgreSQL использует
+backend role `komui_app` при включённом RLS.
 Staging backend/frontend работает из release
 `20260830T175312Z-stage-ac2567bb42ae` (commit `ac2567b`), а migration применена
 только к `komui_staging`. Перед migration закрывались POST/webhook ingress и

@@ -1,6 +1,11 @@
 # Ozon import API для внешней админки
 
-Этот документ описывает работу с Ozon-товарами через отдельный Komui backend и server PostgreSQL. Supabase для этого сценария не нужен.
+Этот документ описывает работу с Ozon-товарами через Komui backend и серверный PostgreSQL.
+
+Импорт всегда пишет только в серверный PostgreSQL. Для плавного обновления
+уже развёрнутой админки backend временно принимает прежний объект
+`targets` только в безопасном виде `{ "serverPostgres": true, "supabase": false }`;
+любая попытка выбрать другой target отклоняется с HTTP 400 и ничего не пишет.
 
 Base URL в production обычно:
 
@@ -81,11 +86,7 @@ Authorization: Bearer <ADMIN_API_TOKEN>
   "limit": 10000,
   "includeArchived": false,
   "updatePrices": false,
-  "syncSizes": "add",
-  "targets": {
-    "serverPostgres": true,
-    "supabase": false
-  }
+  "syncSizes": "add"
 }
 ```
 
@@ -168,10 +169,6 @@ Payload:
 {
   "previewId": "uuid-from-preview",
   "confirm": true,
-  "targets": {
-    "serverPostgres": true,
-    "supabase": false
-  },
   "itemIds": ["preview-item-id-1", "preview-item-id-2"]
 }
 ```
@@ -182,10 +179,6 @@ Payload:
 {
   "previewId": "uuid-from-preview",
   "confirm": true,
-  "targets": {
-    "serverPostgres": true,
-    "supabase": false
-  },
   "offerIds": ["D8-TSH-PRT-WHT-XXL"]
 }
 ```

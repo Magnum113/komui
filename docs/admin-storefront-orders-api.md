@@ -2,12 +2,9 @@
 
 Документ для внедрения раздела заказов в отдельной админке. Визуал можно делать любым, но читать и менять заказы нужно через Komui backend `/admin/...`, а не напрямую из браузера в базу.
 
-В проекте есть два контура данных:
-
-- server PostgreSQL на отдельном сервере, подключается Komui backend через `DATABASE_URL`;
-- Supabase project `bkxpzfnglihxpbnhtjjq`, исторический/legacy контур и источник Edge Functions.
-
-Этот API заказов работает с server PostgreSQL. Миграцию из этого документа нужно применить к той базе, которую реально читает Komui backend. Если production-заказы всё ещё создаются/читаются через Supabase Edge Functions напрямую, такой же schema change нужен и в Supabase, либо нужно сначала перевести checkout на Komui backend `/api`.
+Единственный рабочий контур данных — PostgreSQL на сервере, к которому Komui
+backend подключается через `DATABASE_URL`. Миграцию из этого документа нужно
+применять к той базе, которую реально читает backend.
 
 ## Что уже было в заказах
 
@@ -45,7 +42,7 @@
 Добавлена миграция:
 
 ```text
-supabase/migrations/20260630130000_add_storefront_order_fulfillment.sql
+db/migrations/20260630130000_add_storefront_order_fulfillment.sql
 ```
 
 Она добавляет в `public.merch_customer_orders` отдельные поля обработки заказа:
