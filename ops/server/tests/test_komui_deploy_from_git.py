@@ -93,6 +93,35 @@ class KomuiDeployFromGitCompatibilityTest(unittest.TestCase):
         self.assertLess(build_offset, final_guard_offset)
         self.assertLess(final_guard_offset, activation_offset)
 
+    def test_hoodie_variant_guard_requires_exact_schema_and_partition(self) -> None:
+        self.assertIn(
+            "20260903125110_split_hoodie_storefront_variants.sql",
+            self.script,
+        )
+        self.assertIn('"assets/product-offers.js"', self.script)
+        self.assertIn("indisunique", self.script)
+        self.assertIn("indisvalid", self.script)
+        self.assertIn("indisready", self.script)
+        self.assertIn("to_jsonb(product) ->> 'variant_group_key'", self.script)
+        self.assertIn("D18-HDY-EMB-BLK-CRP-NF-S", self.script)
+        self.assertIn("D18-HDY-EMB-BLK-REG-NF-2XL", self.script)
+        self.assertIn("D8-HDY-EMB-WHT-REG-FLC-S", self.script)
+        self.assertIn("D8-HDY-EMB-WHT-REG-NF-2XL", self.script)
+        self.assertIn("partial or invalid hoodie-variants state", self.script)
+        self.assertIn("hoodie-variants source/schema mismatch", self.script)
+
+        guard_offset = self.script.index("enforce_hoodie_variants_compatibility\n")
+        final_guard_offset = self.script.rindex("enforce_hoodie_variants_compatibility\n")
+        build_offset = self.script.index('log "removing stale backend dependency/build artifacts"')
+        activation_offset = self.script.index('log "activating backend"')
+        self.assertEqual(
+            self.script.count("  enforce_hoodie_variants_compatibility\n"),
+            2,
+        )
+        self.assertLess(guard_offset, build_offset)
+        self.assertLess(build_offset, final_guard_offset)
+        self.assertLess(final_guard_offset, activation_offset)
+
     def test_staging_credentials_are_passed_on_stdin_not_in_curl_argv(self) -> None:
         self.assertNotRegex(self.script, r"curl[^\n]*(?:^|\s)(?:-u|--user)(?:\s|=)")
         self.assertIn('curl -q --config - "$@" "$url"', self.script)

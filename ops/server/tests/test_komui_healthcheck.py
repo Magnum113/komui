@@ -45,6 +45,15 @@ class KomuiHealthcheckContractTest(unittest.TestCase):
         self.assertNotIn("recipient_email", self.script)
         self.assertNotIn("customer_email", self.script)
 
+    def test_storefront_offer_check_covers_size_and_global_offer_identity(self) -> None:
+        self.assertIn("check storefront_offers_unambiguous", self.script)
+        self.assertIn("invalid_sizes", self.script)
+        self.assertIn("invalid_offer_ids", self.script)
+        self.assertIn("upper(btrim(item.offer ->> 'size'))", self.script)
+        self.assertIn("btrim(item.offer ->> 'offer_id')", self.script)
+        self.assertIn("item.offer -> 'archived' is distinct from 'true'::jsonb", self.script)
+        self.assertIn("item.offer -> 'visible' is distinct from 'false'::jsonb", self.script)
+
     def test_staging_credentials_are_passed_on_stdin_not_in_curl_argv(self) -> None:
         self.assertNotRegex(self.script, r"curl[^\n]*(?:^|\s)(?:-u|--user)(?:\s|=)")
         self.assertIn('curl -q --config - "$@" "$url"', self.script)

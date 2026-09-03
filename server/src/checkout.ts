@@ -7,6 +7,7 @@ export type CartItemInput = {
   id: string;
   size: string;
   qty: number;
+  offerId?: string;
 };
 
 export type ProductRow = {
@@ -20,6 +21,7 @@ export type ProductRow = {
   primary_image_url: string | null;
   product_type_slug: string | null;
   category_slug: string | null;
+  source_payload: unknown;
 };
 
 export type OrderItemInput = {
@@ -106,11 +108,23 @@ export function validatedCart(value: unknown): CartItemInput[] {
     const id = text(raw.id, 36);
     const size = text(raw.size, 12).toUpperCase();
     const qty = Number(raw.qty);
+    const rawOfferId = raw.offerId;
+    const offerId =
+      rawOfferId === undefined || rawOfferId === null
+        ? undefined
+        : typeof rawOfferId === "string"
+          ? rawOfferId.trim()
+          : "";
     if (
       !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
         id,
       ) ||
       !size ||
+      (rawOfferId !== undefined &&
+        rawOfferId !== null &&
+        (!offerId ||
+          offerId.length > 120 ||
+          /[\u0000-\u001f\u007f]/.test(offerId))) ||
       !Number.isInteger(qty) ||
       qty < 1 ||
       qty > 10
@@ -121,7 +135,7 @@ export function validatedCart(value: unknown): CartItemInput[] {
         "В корзине есть некорректная позиция",
       );
     }
-    return { id, size, qty };
+    return { id, size, qty, ...(offerId ? { offerId } : {}) };
   });
 
   const units = items.reduce((sum, item) => sum + item.qty, 0);
@@ -135,15 +149,84 @@ export function validatedCart(value: unknown): CartItemInput[] {
   return items;
 }
 
-function offerForSize(
-  product: ProductRow,
-  size: string,
-): Record<string, unknown> | null {
-  return (
-    (product.offers ?? []).find(
-      (offer) => String(offer.size ?? "").toUpperCase() === size,
-    ) ?? null
+function objectValue(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function legacyAmbiguousSizes(product: ProductRow): Set<string> {
+  const sourcePayload = objectValue(product.source_payload);
+  const checkout = objectValue(sourcePayload?.checkout);
+  const sizes = checkout?.legacy_ambiguous_sizes;
+  return new Set(
+    (Array.isArray(sizes) ? sizes : [])
+      .filter((value): value is string => typeof value === "string")
+      .map((value) => value.trim().toUpperCase())
+      .filter(Boolean),
   );
+}
+
+function selectableOfferForSize(
+  offer: Record<string, unknown>,
+  size: string,
+): boolean {
+  return (
+    offer.archived !== true &&
+    offer.visible !== false &&
+    text(offer.size, 12).toUpperCase() === size
+  );
+}
+
+function offerIdOf(offer: Record<string, unknown>): string {
+  if (typeof offer.offer_id !== "string") return "";
+  const offerId = offer.offer_id.trim();
+  return offerId.length <= 120 ? offerId : "";
+}
+
+export function resolveCartOffer(
+  product: ProductRow,
+  cartItem: Pick<CartItemInput, "size" | "offerId">,
+): Record<string, unknown> {
+  const size = text(cartItem.size, 12).toUpperCase();
+  const candidates = (product.offers ?? []).filter((offer) =>
+    selectableOfferForSize(offer, size),
+  );
+
+  if (cartItem.offerId) {
+    const exactMatches = candidates.filter(
+      (offer) => offerIdOf(offer) === cartItem.offerId,
+    );
+    if (exactMatches.length === 1) return exactMatches[0];
+    if (exactMatches.length > 1) {
+      throw new HttpError(
+        409,
+        "ambiguous_offer",
+        `Вариант размера ${size} товара «${product.name}» определён неоднозначно`,
+      );
+    }
+    throw new HttpError(
+      409,
+      "offer_unavailable",
+      `Выбранный вариант размера ${size} товара «${product.name}» больше недоступен`,
+    );
+  }
+
+  if (legacyAmbiguousSizes(product).has(size) || candidates.length > 1) {
+    throw new HttpError(
+      409,
+      "ambiguous_offer",
+      `Выберите вариант товара «${product.name}» заново`,
+    );
+  }
+  if (candidates.length === 0 || !offerIdOf(candidates[0])) {
+    throw new HttpError(
+      409,
+      "offer_unavailable",
+      `Вариант размера ${size} товара «${product.name}» больше недоступен`,
+    );
+  }
+  return candidates[0];
 }
 
 export class CheckoutRepository {
@@ -163,7 +246,8 @@ export class CheckoutRepository {
           main_image_path,
           primary_image_url,
           product_type_slug,
-          category_slug
+          category_slug,
+          source_payload
         from public.merch_storefront_products
         where id = any($1::uuid[])
           and is_active is true
@@ -193,7 +277,13 @@ export class CheckoutRepository {
         );
       }
 
-      const priceRub = Number(product.price_min);
+      const offer = resolveCartOffer(product, cartItem);
+      const offerPriceRub = Number(offer.price);
+      const productPriceRub = Number(product.price_min);
+      const priceRub =
+        Number.isFinite(offerPriceRub) && offerPriceRub > 0
+          ? offerPriceRub
+          : productPriceRub;
       if (!Number.isFinite(priceRub) || priceRub <= 0) {
         throw new HttpError(
           400,
@@ -203,13 +293,13 @@ export class CheckoutRepository {
       }
 
       const unitPrice = Math.round(priceRub * 100);
-      const offer = offerForSize(product, cartItem.size);
+      const offerId = offerIdOf(offer);
       const cdekProfile = cdekProfileForProduct(product);
 
       return {
         product_id: product.id,
-        offer_id: offer ? text(offer.offer_id, 120) || null : null,
-        sku: offer ? text(offer.sku, 120) || null : null,
+        offer_id: offerId,
+        sku: text(offer.sku, 120) || null,
         product_name: product.name.slice(0, 128),
         size: cartItem.size,
         quantity: cartItem.qty,
@@ -218,8 +308,8 @@ export class CheckoutRepository {
         image_url: product.main_image_path ?? product.primary_image_url,
         product_snapshot: {
           storefront_product_id: product.id,
-          offer_id: offer?.offer_id ?? null,
-          sku: offer?.sku ?? null,
+          offer_id: offerId,
+          sku: offer.sku ?? null,
           product_type_slug: product.product_type_slug,
           category_slug: product.category_slug,
           cdek_profile: cdekProfile.key,

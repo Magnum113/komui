@@ -501,6 +501,157 @@ enforce_email_contacts_compatibility() {
   fi
 }
 
+hoodie_variants_database_signature() {
+  runuser -u postgres -- psql -X -v ON_ERROR_STOP=1 -At -d "$database_name" <<'SQL'
+select concat_ws('|',
+  ((select count(*)
+      from information_schema.columns
+     where table_schema = 'public'
+       and table_name = 'merch_storefront_products'
+       and column_name in (
+         'variant_group_key',
+         'hoodie_fit_slug',
+         'hoodie_fleece_slug'
+       )) = 3)::int,
+  (to_regprocedure(
+    'private.merch_storefront_offers_have_unique_selectable_sizes(jsonb)'
+  ) is not null)::int,
+  ((select count(*)
+      from pg_constraint
+     where conrelid = 'public.merch_storefront_products'::regclass
+       and conname in (
+         'merch_storefront_products_hoodie_variant_check',
+         'merch_storefront_products_unique_selectable_offer_size_check'
+       )
+       and convalidated) = 2)::int,
+  (exists (
+    select 1
+    from pg_index
+    where indexrelid = to_regclass(
+      'public.merch_storefront_products_hoodie_variant_unique_idx'
+    )
+      and indisunique
+      and indisvalid
+      and indisready
+  ))::int,
+  ((select count(*)
+      from public.merch_storefront_products as product
+     where is_active
+       and (
+         (id = '8d6fe381-f203-4861-8108-60d3251dae18'::uuid
+           and design_key = 'var18|embroidery|hoodie|black|reg|nf'
+           and to_jsonb(product) ->> 'variant_group_key' = 'var18|embroidery|hoodie|black'
+           and to_jsonb(product) ->> 'hoodie_fit_slug' = 'regular'
+           and to_jsonb(product) ->> 'hoodie_fleece_slug' = 'no-fleece'
+           and source_payload #> '{checkout,legacy_ambiguous_sizes}' = '["S", "M", "L"]'::jsonb
+           and (select array_agg(item.offer ->> 'offer_id' order by item.offer ->> 'offer_id')
+                  from jsonb_array_elements(offers) as item(offer)) = array[
+             'D18-HDY-EMB-BLK-REG-NF-2XL',
+             'D18-HDY-EMB-BLK-REG-NF-L',
+             'D18-HDY-EMB-BLK-REG-NF-M',
+             'D18-HDY-EMB-BLK-REG-NF-S',
+             'D18-HDY-EMB-BLK-REG-NF-XL'
+           ]::text[])
+         or
+         (id = '33744741-8c0f-5b69-a7cb-766c16b88e0f'::uuid
+           and design_key = 'var18|embroidery|hoodie|black|crp|nf'
+           and to_jsonb(product) ->> 'variant_group_key' = 'var18|embroidery|hoodie|black'
+           and to_jsonb(product) ->> 'hoodie_fit_slug' = 'cropped'
+           and to_jsonb(product) ->> 'hoodie_fleece_slug' = 'no-fleece'
+           and (select array_agg(item.offer ->> 'offer_id' order by item.offer ->> 'offer_id')
+                  from jsonb_array_elements(offers) as item(offer)) = array[
+             'D18-HDY-EMB-BLK-CRP-NF-L',
+             'D18-HDY-EMB-BLK-CRP-NF-M',
+             'D18-HDY-EMB-BLK-CRP-NF-S'
+           ]::text[])
+         or
+         (id = '4d4af0f7-6c22-48b1-bc76-3e5803d9bf9e'::uuid
+           and design_key = 'var8|embroidery|hoodie|white|reg|nf'
+           and to_jsonb(product) ->> 'variant_group_key' = 'var8|embroidery|hoodie|white'
+           and to_jsonb(product) ->> 'hoodie_fit_slug' = 'regular'
+           and to_jsonb(product) ->> 'hoodie_fleece_slug' = 'no-fleece'
+           and source_payload #> '{checkout,legacy_ambiguous_sizes}' = '["S"]'::jsonb
+           and (select array_agg(item.offer ->> 'offer_id' order by item.offer ->> 'offer_id')
+                  from jsonb_array_elements(offers) as item(offer)) = array[
+             'D8-HDY-EMB-WHT-REG-NF-2XL',
+             'D8-HDY-EMB-WHT-REG-NF-L',
+             'D8-HDY-EMB-WHT-REG-NF-M',
+             'D8-HDY-EMB-WHT-REG-NF-S',
+             'D8-HDY-EMB-WHT-REG-NF-XL'
+           ]::text[])
+         or
+         (id = 'f3986f1d-c338-589a-bd90-e6745fced385'::uuid
+           and design_key = 'var8|embroidery|hoodie|white|reg|flc'
+           and to_jsonb(product) ->> 'variant_group_key' = 'var8|embroidery|hoodie|white'
+           and to_jsonb(product) ->> 'hoodie_fit_slug' = 'regular'
+           and to_jsonb(product) ->> 'hoodie_fleece_slug' = 'fleece'
+           and (select array_agg(item.offer ->> 'offer_id' order by item.offer ->> 'offer_id')
+                  from jsonb_array_elements(offers) as item(offer)) = array[
+             'D8-HDY-EMB-WHT-REG-FLC-S'
+           ]::text[])
+       )) = 4)::int,
+  (not exists (
+    select 1
+    from public.merch_storefront_products as product
+    cross join lateral jsonb_array_elements(product.offers) as item(offer)
+    where product.is_active
+      and item.offer -> 'archived' is distinct from 'true'::jsonb
+      and item.offer -> 'visible' is distinct from 'false'::jsonb
+    group by product.id, upper(btrim(item.offer ->> 'size'))
+    having count(*) > 1
+  ))::int
+);
+SQL
+}
+
+enforce_hoodie_variants_compatibility() {
+  local required_source_files=(
+    "supabase/migrations/20260903125110_split_hoodie_storefront_variants.sql"
+    "assets/product-offers.js"
+  )
+  local present_source_files=0
+  local required_file
+  local source_state
+  local database_signature
+  local database_state
+
+  for required_file in "${required_source_files[@]}"; do
+    if [[ -f "$source_dir/$required_file" ]]; then
+      present_source_files=$((present_source_files + 1))
+    fi
+  done
+
+  if [[ "$present_source_files" -eq 0 ]]; then
+    source_state="legacy"
+  elif [[ "$present_source_files" -eq "${#required_source_files[@]}" ]]; then
+    source_state="hoodie-variants-v1"
+  else
+    fail "origin/$branch has a partial hoodie-variants source set ($present_source_files/${#required_source_files[@]} required files); refusing deploy"
+  fi
+
+  if ! database_signature="$(hoodie_variants_database_signature)"; then
+    fail "could not verify hoodie-variants schema/data in $database_name"
+  fi
+
+  case "$database_signature" in
+    0\|0\|0\|0\|0\|0)
+      database_state="legacy"
+      ;;
+    1\|1\|1\|1\|1\|1)
+      database_state="hoodie-variants-v1"
+      ;;
+    *)
+      fail "$database_name has a partial or invalid hoodie-variants state (signature=$database_signature); refusing deploy"
+      ;;
+  esac
+
+  log "hoodie_variants_source=$source_state"
+  log "hoodie_variants_database=$database_state"
+  if [[ "$source_state" != "$database_state" ]]; then
+    fail "hoodie-variants source/schema mismatch for $target: source=$source_state database=$database_state; use the controlled migration rollout"
+  fi
+}
+
 (
   flock -n 9 || fail "another deploy is already running"
 
@@ -538,6 +689,7 @@ enforce_email_contacts_compatibility() {
   enforce_payment_consistency_compatibility
   enforce_email_mvp_compatibility
   enforce_email_contacts_compatibility
+  enforce_hoodie_variants_compatibility
   if [[ "$check_compatibility_only" -eq 1 ]]; then
     log "COMPATIBILITY_OK target=$target branch=$branch commit=$commit database=$database_name"
     exit 0
@@ -670,6 +822,8 @@ enforce_email_contacts_compatibility() {
   enforce_email_mvp_compatibility
   log "rechecking email-contacts compatibility before activation"
   enforce_email_contacts_compatibility
+  log "rechecking hoodie-variants compatibility before activation"
+  enforce_hoodie_variants_compatibility
 
   log "activating backend"
   ln -sfnT "$backend_release_dir" "$backend_current"

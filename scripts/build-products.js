@@ -17,6 +17,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { execFileSync } = require('child_process');
 const PRODUCT_FABRIC_FACTS = require('../assets/product-fabric-facts.js');
+const PRODUCT_OFFERS = require('../assets/product-offers.js');
 
 const ROOT = path.resolve(__dirname, '..');
 const SITE_ORIGIN = 'https://komui.ru';
@@ -1078,7 +1079,59 @@ function renderSizeChart(product) {
 }
 
 function visibleOffers(product) {
-  return (product.offers || []).filter(o => o && !o.archived && o.visible !== false);
+  return PRODUCT_OFFERS.selectableOffers(product);
+}
+
+function variantOptionLabel(variant, dimension) {
+  if (dimension === 'fit') return PRODUCT_OFFERS.fitLabel(variant.fit).replace(/ посадка$/i, '');
+  if (dimension === 'warmth') return PRODUCT_OFFERS.warmthLabel(variant.warmth);
+  return [PRODUCT_OFFERS.fitLabel(variant.fit), PRODUCT_OFFERS.warmthLabel(variant.warmth)]
+    .filter(Boolean)
+    .join(' · ');
+}
+
+function renderProductVariantSelector(product, products = []) {
+  const current = PRODUCT_OFFERS.storefrontVariant(product);
+  if (!current.groupKey) return '';
+  const siblings = products
+    .filter(candidate => candidate && candidate.slug
+      && PRODUCT_OFFERS.storefrontVariant(candidate).groupKey === current.groupKey)
+    .sort((a, b) => {
+      const av = PRODUCT_OFFERS.storefrontVariant(a);
+      const bv = PRODUCT_OFFERS.storefrontVariant(b);
+      const fitRank = { cropped: 0, regular: 1 };
+      const warmthRank = { fleece: 0, 'no-fleece': 1 };
+      return (fitRank[av.fit] ?? 9) - (fitRank[bv.fit] ?? 9)
+        || (warmthRank[av.warmth] ?? 9) - (warmthRank[bv.warmth] ?? 9)
+        || String(a.name || '').localeCompare(String(b.name || ''), 'ru');
+    });
+  if (siblings.length < 2) return '';
+  const fits = new Set(siblings.map(candidate => PRODUCT_OFFERS.storefrontVariant(candidate).fit).filter(Boolean));
+  const warmth = new Set(siblings.map(candidate => PRODUCT_OFFERS.storefrontVariant(candidate).warmth).filter(Boolean));
+  const dimension = fits.size > 1 && warmth.size <= 1 ? 'fit' : warmth.size > 1 && fits.size <= 1 ? 'warmth' : 'variant';
+  const heading = dimension === 'fit' ? 'Посадка' : dimension === 'warmth' ? 'Утепление' : 'Вариант худи';
+  const links = siblings.map(candidate => {
+    const variant = PRODUCT_OFFERS.storefrontVariant(candidate);
+    const active = String(candidate.id) === String(product.id);
+    return `<a class="p-variant-link${active ? ' is-active' : ''}" href="/p/${escapeAttr(candidate.slug)}"${active ? ' aria-current="page"' : ''}>${escapeHtml(variantOptionLabel(variant, dimension))}</a>`;
+  }).join('');
+  return `<nav class="p-variants" aria-label="${heading}"><div class="p-label">${heading}</div><div class="p-variant-links">${links}</div></nav>`;
+}
+
+function renderProductVariantFacts(product) {
+  const labels = PRODUCT_OFFERS.variantLabels(product);
+  return [
+    labels.fit ? `<div><span>Посадка</span><strong>${escapeHtml(labels.fit.replace(/ посадка$/i, ''))}</strong></div>` : '',
+    labels.warmth ? `<div><span>Утепление</span><strong>${escapeHtml(labels.warmth)}</strong></div>` : '',
+  ].filter(Boolean).join('\n            ');
+}
+
+function renderProductSizeOptions(product) {
+  return PRODUCT_OFFERS.sizeOptions(product).map(option => {
+    const disabled = option.status !== PRODUCT_OFFERS.STATUS.SELECTED;
+    const unavailable = disabled ? ' — недоступен' : '';
+    return `<label class="p-size-option"><input type="radio" name="product-size" value="${escapeAttr(option.size)}" data-offer-id="${escapeAttr(option.offerId)}" aria-label="Размер ${escapeAttr(option.size + unavailable)}"${disabled ? ' disabled' : ''}><span class="p-size">${escapeHtml(option.size)}</span></label>`;
+  }).join('');
 }
 
 function productSku(product) {
@@ -1775,9 +1828,9 @@ function renderProductPage(product, products = []) {
   const description = shortFrom(product);
   const canonical = `${SITE_ORIGIN}/p/${product.slug}`;
   const ogImage = heroImage ? absolutizeUrl(heroImage) : `${SITE_ORIGIN}/assets/og-image.png`;
-  const sizeButtons = product.sizes
-    .map((s, i) => `<button type="button" class="p-size${i === 0 ? ' is-active' : ''}" data-size="${escapeAttr(s)}">${escapeHtml(s)}</button>`)
-    .join('');
+  const sizeButtons = renderProductSizeOptions(product);
+  const variantSelectorHtml = renderProductVariantSelector(product, products);
+  const variantFactsHtml = renderProductVariantFacts(product);
   const sizeChartHtml = renderSizeChart(product);
   const sizeChartButtonHtml = sizeChartHtml
     ? '\n              <button type="button" class="p-size-chart-btn" id="pSizeChartOpen">Таблица размеров</button>'
@@ -1821,6 +1874,14 @@ function renderProductPage(product, products = []) {
     .filter(v => { const k = v.toLowerCase(); if (badgeSeen.has(k)) return false; badgeSeen.add(k); return true; });
   const badgesHtml = badgePool.map(v => `<span>${escapeHtml(v)}</span>`).join('');
   const analyticsProductJson = scriptJson(analyticsProduct(product));
+  const offerProductJson = scriptJson({
+    id: String(product.id),
+    price_min: Number(product.price_min || product.price_max || 0),
+    sizes: product.sizes || [],
+    offers: product.offers || [],
+    storefront_variant: product.storefront_variant || product.storefrontVariant || null,
+    requires_offer_id_sizes: product.requires_offer_id_sizes || product.requiresOfferIdSizes || [],
+  });
 
   return `<!DOCTYPE html>
 <html lang="ru">
@@ -1875,19 +1936,22 @@ ${renderHeaderPanels()}
           ${topRatingHtml}
           ${lead ? `<p class="p-lead">${escapeHtml(lead)}</p>` : ''}
           <div class="p-price-row">
-            <span class="p-price">${escapeHtml(priceText)}</span>
+            <span class="p-price" id="pPrice">${escapeHtml(priceText)}</span>
             ${oldPriceHtml}
           </div>
+          ${variantSelectorHtml}
           <div class="p-meta">
             ${product.color_name ? `<div><span>Цвет</span><strong>${escapeHtml(product.color_name)}</strong></div>` : ''}
             ${product.decoration_type ? `<div><span>Оформление</span><strong>${escapeHtml(product.decoration_type)}</strong></div>` : ''}
+${variantFactsHtml}
 ${fabricFactsHtml}
           </div>
           <div class="p-sizes-wrap">
             <div class="p-size-head">
               <div class="p-label">Размер</div>${sizeChartButtonHtml}
             </div>
-            <div class="p-sizes" id="pSizes">${sizeButtons}</div>
+            <fieldset class="p-sizes" id="pSizes" aria-describedby="pSizeError"><legend class="p-visually-hidden">Размер</legend>${sizeButtons}</fieldset>
+            <p class="p-size-error" id="pSizeError" role="alert" hidden>Выберите размер, чтобы добавить товар в корзину.</p>
           </div>
           <div class="p-actions">
             <button type="button" class="p-cta" id="pAdd" data-id="${escapeAttr(product.id)}">Добавить в корзину</button>
@@ -1904,6 +1968,7 @@ ${fabricFactsHtml}
 ${sizeChartModalHtml}
 </main>
 <script src="/data/storefront-products.js" defer></script>
+<script src="/assets/product-offers.js"></script>
 ${renderHeaderScript()}
 <footer><div class="wrap foot">
   <div><h5>KOMUI</h5><p>Аниме-мерч: футболки, худи и свитшоты с принтами и вышивкой.</p></div>
@@ -1922,8 +1987,12 @@ ${renderHeaderScript()}
   var chartOpen = document.getElementById('pSizeChartOpen');
   var chartModal = document.getElementById('pSizeChartModal');
   var chartClose = document.getElementById('pSizeChartClose');
+  var price = document.getElementById('pPrice');
+  var sizeError = document.getElementById('pSizeError');
   var lastChartFocus = null;
   var analyticsProduct = ${analyticsProductJson};
+  var offerProduct = ${offerProductJson};
+  var productOffers = window.KomuiProductOffers;
   function withAnalytics(callback){
     if (window.KomuiAnalytics) { callback(window.KomuiAnalytics); return; }
     document.addEventListener('komui:analytics-ready', function(){ callback(window.KomuiAnalytics); }, { once: true });
@@ -1960,11 +2029,21 @@ ${renderHeaderScript()}
     if (e.key === 'Escape' && chartModal && !chartModal.hidden) closeSizeChart();
   });
   if (sizes) {
-    sizes.addEventListener('click', function(e){
-      var btn = e.target.closest('.p-size');
-      if (!btn) return;
-      sizes.querySelectorAll('.p-size').forEach(function(b){ b.classList.remove('is-active'); });
-      btn.classList.add('is-active');
+    sizes.addEventListener('change', function(e){
+      var input = e.target.closest('input[type="radio"][data-offer-id]');
+      if (!input) return;
+      var resolved = productOffers.resolve(offerProduct, { offerId: input.getAttribute('data-offer-id'), size: input.value });
+      if (resolved.status !== productOffers.STATUS.SELECTED) return;
+      sizes.removeAttribute('aria-invalid');
+      if (sizeError) sizeError.hidden = true;
+      if (price) price.textContent = Number(resolved.offer.price != null ? resolved.offer.price : offerProduct.price_min).toLocaleString('ru-RU') + ' ₽';
+      if (addedToCart) {
+        addedToCart = false;
+        add.textContent = 'Добавить в корзину';
+        if (addFloat) addFloat.textContent = 'Добавить в корзину';
+        add.classList.remove('is-added');
+        if (addFloat) addFloat.classList.remove('is-added');
+      }
     });
   }
   var gallery = document.querySelector('[data-p-gallery]');
@@ -2059,21 +2138,36 @@ ${renderHeaderScript()}
         return;
       }
       var id = add.getAttribute('data-id');
-      var activeSize = sizes && sizes.querySelector('.p-size.is-active');
-      var size = activeSize ? activeSize.getAttribute('data-size') : null;
-      if (!id || !size) return;
+      var activeSize = sizes && sizes.querySelector('input[type="radio"]:checked');
+      var selection = activeSize ? { offerId: activeSize.getAttribute('data-offer-id'), size: activeSize.value } : {};
+      var resolved = productOffers.resolve(offerProduct, selection);
+      if (!id || resolved.status !== productOffers.STATUS.SELECTED) {
+        if (sizes) sizes.setAttribute('aria-invalid', 'true');
+        if (sizeError) {
+          sizeError.textContent = sizes && sizes.querySelector('input:not(:disabled)')
+            ? 'Выберите размер, чтобы добавить товар в корзину.'
+            : 'Товар сейчас недоступен.';
+          sizeError.hidden = false;
+        }
+        var firstSize = sizes && sizes.querySelector('input:not(:disabled)');
+        if (firstSize) firstSize.focus();
+        return;
+      }
+      var size = resolved.size;
+      var selectedOfferId = resolved.offerId;
       var cart = [];
       try { cart = JSON.parse(localStorage.getItem(CART_KEY) || '[]'); } catch(e){ cart = []; }
-      var key = id + '-' + size;
+      var key = productOffers.cartKey(id, selectedOfferId);
       var existing = cart.find(function(c){ return c.key === key; });
       if (existing) existing.qty += 1;
-      else cart.push({ key: key, id: id, size: size, qty: 1 });
+      else cart.push({ key: key, id: id, offerId: selectedOfferId, size: size, qty: 1 });
       try { localStorage.setItem(CART_KEY, JSON.stringify(cart)); } catch(e){}
       document.dispatchEvent(new CustomEvent('komui:cart-updated'));
       withAnalytics(function(analytics){
-        analytics.ecommerce.add(analyticsProduct, { size: size, quantity: 1, list: 'product_page' });
+        analytics.ecommerce.add(Object.assign({}, analyticsProduct, { offer_id: selectedOfferId }), { size: size, offerId: selectedOfferId, price: Number(resolved.offer.price != null ? resolved.offer.price : offerProduct.price_min), quantity: 1, list: 'product_page' });
         analytics.goal('add_to_cart', {
           product_id: analyticsProduct.id,
+          offer_id: selectedOfferId,
           variant: size,
           quantity: 1,
           source: 'product_page'
@@ -2770,7 +2864,15 @@ async function main() {
   console.log('✓ Wrote robots.txt');
 }
 
-main().catch(err => {
-  console.error('Build failed:', err);
-  process.exit(1);
-});
+module.exports = {
+  renderProductVariantSelector,
+  renderProductVariantFacts,
+  renderProductSizeOptions,
+};
+
+if (require.main === module) {
+  main().catch(err => {
+    console.error('Build failed:', err);
+    process.exit(1);
+  });
+}

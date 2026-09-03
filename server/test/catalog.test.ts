@@ -54,6 +54,12 @@ test("sanitizeProduct does not leak raw offer fields", () => {
     is_active: true,
     sort_order: 1,
     badges: [],
+    storefront_variant: {
+      group_key: "var18|embroidery|hoodie|black",
+      fit: "cropped",
+      warmth: "no-fleece",
+    },
+    requires_offer_id_sizes: ["m", " M ", "XXL", 123],
     review_summary: {
       count: 3,
       averageRating: 4.67,
@@ -73,6 +79,12 @@ test("sanitizeProduct does not leak raw offer fields", () => {
   });
   assert.equal(product.fabric_composition, "100% хлопок");
   assert.equal(product.fabric_density_gsm, 240);
+  assert.deepEqual(product.storefront_variant, {
+    group_key: "var18|embroidery|hoodie|black",
+    fit: "cropped",
+    warmth: "no-fleece",
+  });
+  assert.deepEqual(product.requires_offer_id_sizes, ["M"]);
   assert.equal(
     product.description,
     "Плотность ткани 240 г/м², состав 100% хлопок.",
@@ -81,6 +93,51 @@ test("sanitizeProduct does not leak raw offer fields", () => {
     product.ozon_description,
     "100% хлопок; плотность 240 г/м².",
   );
+});
+
+test("sanitizeProduct rejects malformed variant metadata and never leaks source payload", () => {
+  const product = sanitizeProduct({
+    id: "7c169f01-b459-4e25-b74f-a4909a1b4149",
+    design_key: "design",
+    name: "Hoodie",
+    slug: "hoodie",
+    category: "Худи",
+    category_slug: "hoodies",
+    product_type: "Худи",
+    product_type_slug: "hoodie",
+    decoration_type: "Вышивка",
+    decoration_slug: "embroidery",
+    franchise_type: "anime",
+    tags: [],
+    sizes: ["S", "M"],
+    currency: "RUB",
+    image_urls: [],
+    offers: [],
+    is_active: true,
+    sort_order: 1,
+    badges: [],
+    storefront_variant: {
+      group_key: "var18|embroidery|hoodie|black",
+      fit: "unknown",
+      warmth: "no-fleece",
+      private_note: "must-not-leak",
+    },
+    requires_offer_id_sizes: ["XL", null, { size: "S" }],
+    source_payload: {
+      checkout: { legacy_ambiguous_sizes: ["S"] },
+      raw: "must-not-leak",
+    },
+    variant_group_key: "must-not-leak",
+    hoodie_fit_slug: "must-not-leak",
+    hoodie_fleece_slug: "must-not-leak",
+  } as never);
+
+  assert.equal(product.storefront_variant, undefined);
+  assert.deepEqual(product.requires_offer_id_sizes, []);
+  assert.equal("source_payload" in product, false);
+  assert.equal("variant_group_key" in product, false);
+  assert.equal("hoodie_fit_slug" in product, false);
+  assert.equal("hoodie_fleece_slug" in product, false);
 });
 
 test("sanitizeProduct does not attach T-shirt facts when explicit type is hoodie", () => {

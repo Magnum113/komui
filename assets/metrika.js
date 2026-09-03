@@ -115,7 +115,7 @@
     var position = finiteNumber(options.position !== undefined ? options.position : raw.position);
     var category = options.category || raw.category || raw.cat || raw.product_type || '';
     var collection = options.collection || raw.collection || raw.collection_name || raw.col || raw.title_name || '';
-    var variant = options.variant || [options.size || raw.size, options.color || raw.color || raw.color_name]
+    var variant = options.offerId || raw.offerId || raw.offer_id || options.variant || [options.size || raw.size, options.color || raw.color || raw.color_name]
       .filter(Boolean)
       .join(' / ');
     var categoryPath = [category, collection].filter(Boolean).join(' / ');
@@ -141,6 +141,7 @@
           position: item && item.position ? item.position : (options.withPositions ? index + 1 : options.position),
           quantity: item && item.quantity !== undefined ? item.quantity : (item && item.qty !== undefined ? item.qty : options.quantity),
           size: item && item.size !== undefined ? item.size : options.size,
+          offerId: item && item.offerId !== undefined ? item.offerId : (item && item.offer_id !== undefined ? item.offer_id : options.offerId),
         }));
       })
       .filter(function (item) { return item.id && item.name; });

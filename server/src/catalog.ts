@@ -51,6 +51,21 @@ const PUBLIC_PRODUCT_COLUMNS = `
   p.short_description,
   p.badges,
   p.compare_at_price,
+  case
+    when p.variant_group_key is not null
+      and p.hoodie_fit_slug is not null
+      and p.hoodie_fleece_slug is not null
+    then jsonb_build_object(
+      'group_key', p.variant_group_key,
+      'fit', p.hoodie_fit_slug,
+      'warmth', p.hoodie_fleece_slug
+    )
+    else null
+  end as storefront_variant,
+  coalesce(
+    p.source_payload #> '{checkout,legacy_ambiguous_sizes}',
+    '[]'::jsonb
+  ) as requires_offer_id_sizes,
   coalesce(
     (
       select jsonb_agg(r.old_slug order by r.created_at asc, r.old_slug asc)
@@ -170,8 +185,16 @@ export type PublicProduct = {
   compare_at_price?: string | number | null;
   fabric_composition?: string;
   fabric_density_gsm?: number;
+  storefront_variant?: PublicStorefrontVariant;
+  requires_offer_id_sizes: string[];
   slug_redirects?: string[];
   review_summary: PublicReviewSummary;
+};
+
+export type PublicStorefrontVariant = {
+  group_key: string;
+  fit: "regular" | "cropped";
+  warmth: "fleece" | "no-fleece";
 };
 
 export type PublicReviewSummary = {
@@ -212,8 +235,13 @@ export type YandexFeedProduct = {
   compare_at_price?: string | number | null;
 };
 
-type ProductRow = PublicProduct & {
+type ProductRow = Omit<
+  PublicProduct,
+  "offers" | "storefront_variant" | "requires_offer_id_sizes" | "review_summary"
+> & {
   offers: unknown;
+  storefront_variant?: unknown;
+  requires_offer_id_sizes?: unknown;
   slug_redirects?: unknown;
   review_summary?: unknown;
 };
@@ -260,6 +288,45 @@ export function sanitizeOffer(value: unknown): PublicOffer | null {
   return sanitized;
 }
 
+function sanitizeStorefrontVariant(value: unknown): PublicStorefrontVariant | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const candidate = value as Record<string, unknown>;
+  const groupKey = typeof candidate.group_key === "string"
+    ? candidate.group_key.trim()
+    : "";
+  const fit = candidate.fit;
+  const warmth = candidate.warmth;
+
+  if (
+    !groupKey ||
+    groupKey.length > 200 ||
+    (fit !== "regular" && fit !== "cropped") ||
+    (warmth !== "fleece" && warmth !== "no-fleece")
+  ) {
+    return undefined;
+  }
+
+  return { group_key: groupKey, fit, warmth };
+}
+
+function sanitizeRequiredOfferIdSizes(value: unknown, productSizes: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const availableSizes = Array.isArray(productSizes)
+    ? productSizes
+        .filter((size): size is string => typeof size === "string")
+        .map((size) => size.trim().toUpperCase())
+        .filter(Boolean)
+    : [];
+  const requestedSizes = new Set<string>();
+
+  for (const item of value) {
+    if (typeof item !== "string") continue;
+    const size = item.trim().toUpperCase();
+    if (size && size.length <= 32) requestedSizes.add(size);
+  }
+  return [...new Set(availableSizes)].filter((size) => requestedSizes.has(size));
+}
+
 export function sanitizeProduct(row: ProductRow): PublicProduct {
   const offers = Array.isArray(row.offers)
     ? row.offers
@@ -287,10 +354,17 @@ export function sanitizeProduct(row: ProductRow): PublicProduct {
     4: Math.max(0, Number(rawRatingCounts["4"]) || 0),
     5: Math.max(0, Number(rawRatingCounts["5"]) || 0),
   };
+  const storefrontVariant = sanitizeStorefrontVariant(row.storefront_variant);
+  const requiresOfferIdSizes = sanitizeRequiredOfferIdSizes(
+    row.requires_offer_id_sizes,
+    row.sizes,
+  );
 
   const product: PublicProduct = {
     ...row,
     offers,
+    storefront_variant: storefrontVariant,
+    requires_offer_id_sizes: requiresOfferIdSizes,
     slug_redirects: slugRedirects,
     review_summary: {
       count: reviewCount,
@@ -301,6 +375,11 @@ export function sanitizeProduct(row: ProductRow): PublicProduct {
       ratingCounts,
     },
   };
+  const productRecord = product as PublicProduct & Record<string, unknown>;
+  delete productRecord.source_payload;
+  delete productRecord.variant_group_key;
+  delete productRecord.hoodie_fit_slug;
+  delete productRecord.hoodie_fleece_slug;
   const fabricFacts = productFabricFactsFor(product);
 
   return {

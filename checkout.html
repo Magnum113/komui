@@ -190,6 +190,9 @@ img,svg{display:block}
 .item-copy{min-width:0}
 .item-copy h3{font-size:13px;line-height:1.35;font-weight:700}
 .item-copy p{margin-top:6px;color:var(--txt-3);font-size:11px;line-height:1.45}
+.item-selection-error{margin-top:8px;color:var(--red);font-size:11px;font-weight:700;line-height:1.4}
+.item-selection-error a{display:inline-block;margin-top:5px;color:var(--blue);text-decoration:underline;text-underline-offset:3px}
+.item-selection-error a:focus-visible{outline:2px solid var(--blue);outline-offset:3px;border-radius:3px}
 .item-price{text-align:right;font-family:'Unbounded',sans-serif;font-size:12px;font-weight:700;white-space:nowrap}
 .item-price span{display:block;margin-top:6px;color:var(--txt-3);font-family:'Inter',sans-serif;font-size:11px;font-weight:600}
 .promo{padding:16px 0;border-bottom:1px solid var(--line)}
@@ -633,6 +636,7 @@ img,svg{display:block}
 
 <script src="./data/storefront-products.js"></script>
 <script src="./data/api-config.js"></script>
+<script src="./assets/product-offers.js"></script>
 <script>
 (function(){
 'use strict';
@@ -644,6 +648,7 @@ const PAYMENT_DRAFT_KEY='komui-payment-draft-v1';
 const $=s=>document.querySelector(s);
 const money=n=>Math.round(Number(n)||0).toLocaleString('ru-RU')+' ₽';
 const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const PRODUCT_OFFERS=window.KomuiProductOffers;
 function withAnalytics(callback){
   if(window.KomuiAnalytics){callback(window.KomuiAnalytics);return;}
   document.addEventListener('komui:analytics-ready',()=>callback(window.KomuiAnalytics),{once:true});
@@ -684,26 +689,51 @@ const localProducts=(window.KOMUI_PRODUCTS||[]).map(p=>({
   category:p.category||p.cat||p.product_type||'',
   collection:p.col||p.collection_name||p.title_name||p.design_name,
   type:p.type||p.product_type||p.decoration_type,
-  color:p.color||p.color_name||''
+  color:p.color||p.color_name||'',
+  sizes:Array.isArray(p.sizes)?p.sizes:[],
+  offers:Array.isArray(p.offers)?p.offers:[],
+  storefrontVariant:p.storefront_variant||p.storefrontVariant||null,
+  requiresOfferIdSizes:p.requires_offer_id_sizes||p.requiresOfferIdSizes||[]
 }));
+
+function hydrateItem(item){
+  const product=localProducts.find(p=>p.id===String(item?.id));
+  if(!product)return null;
+  const resolved=PRODUCT_OFFERS.resolve(product,{offerId:item.offerId||item.offer_id,size:item.size});
+  const variant=PRODUCT_OFFERS.storefrontVariant(product);
+  const labels=PRODUCT_OFFERS.variantLabels(product);
+  return {
+    ...item,...product,
+    key:item.key||['legacy',product.id,PRODUCT_OFFERS.normalizeSize(item.size)].join(':'),
+    id:product.id,
+    offerId:resolved.offerId||String(item.offerId||item.offer_id||''),
+    size:resolved.size||PRODUCT_OFFERS.normalizeSize(item.size),
+    qty:Math.max(1,Number(item.qty)||1),
+    price:Number(resolved.offer?.price??item.price??product.price)||0,
+    storefrontVariant:variant,
+    fit:variant.fit,
+    warmth:variant.warmth,
+    fitLabel:labels.fit,
+    warmthLabel:labels.warmth,
+    selectionStatus:resolved.status
+  };
+}
 
 function loadItems(){
   const snapshot=readJson(CHECKOUT_KEY,[]);
-  if(Array.isArray(snapshot)&&snapshot.length)return snapshot.filter(item=>item&&Number(item.qty)>0);
+  if(Array.isArray(snapshot)&&snapshot.length)return snapshot.filter(item=>item&&Number(item.qty)>0).map(hydrateItem).filter(Boolean);
   const cart=readJson(CART_KEY,[]);
   if(!Array.isArray(cart))return [];
-  return cart.map(item=>{
-    const product=localProducts.find(p=>p.id===String(item.id));
-    return product?{...product,key:item.key,id:String(item.id),size:item.size,qty:Number(item.qty)||1}:null;
-  }).filter(Boolean);
+  return cart.map(hydrateItem).filter(Boolean);
 }
 
 let items=loadItems();
 const previewMode=new URLSearchParams(location.search).get('preview')==='1'||location.protocol==='file:';
 if(!items.length&&previewMode){
-  items=localProducts.slice(0,2).map((item,index)=>({
-    ...item,key:'preview-'+index,size:index===0?'M':'L',qty:1
-  }));
+  items=localProducts.slice(0,2).map((product,index)=>{
+    const option=PRODUCT_OFFERS.sizeOptions(product).find(item=>item.status==='selected');
+    return option?hydrateItem({...product,key:'preview-'+index,offerId:option.offerId,size:option.size,qty:1}):null;
+  }).filter(Boolean);
 }
 let selectedPoint=null;
 let pendingPoint=null;
@@ -771,8 +801,21 @@ function orderTotal(){return Math.max(0,itemsSubtotal()-discount()+chargedDelive
 function analyticsItems(){
   return items.map(item=>({
     id:String(item.id),name:item.name,price:Number(item.price)||0,category:item.category||'',collection:item.collection||'',
-    color:item.color||'',size:item.size,quantity:Number(item.qty)||1,qty:Number(item.qty)||1
+    color:item.color||'',size:item.size,offer_id:item.offerId||'',quantity:Number(item.qty)||1,qty:Number(item.qty)||1
   }));
+}
+
+function apiItems(){
+  return items.map(item=>({id:String(item.id),offerId:String(item.offerId||''),size:String(item.size),qty:Number(item.qty)}));
+}
+
+function invalidOfferSelection(){
+  return items.find(item=>item.selectionStatus!=='selected'||!item.offerId)||null;
+}
+
+function itemVariantDescription(item){
+  const variant=[item.fitLabel,item.warmthLabel].filter(Boolean).join(' · ');
+  return [item.collection,item.type,item.color,variant,'размер '+item.size].filter(Boolean).join(' · ');
 }
 
 function renderItems(){
@@ -781,7 +824,8 @@ function renderItems(){
       <div class="item-image"><img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}"></div>
       <div class="item-copy">
         <h3>${escapeHtml(item.name)}</h3>
-        <p>${escapeHtml([item.collection,item.type,item.color,'размер '+item.size].filter(Boolean).join(' · '))}</p>
+        <p>${escapeHtml(itemVariantDescription(item))}</p>
+        ${item.selectionStatus!=='selected'?`<div class="item-selection-error" data-selection-error>Нужно заново выбрать вариант.<br><a href="/#cart">Вернуться в корзину</a></div>`:''}
       </div>
       <div class="item-price">${money((Number(item.price)||0)*(Number(item.qty)||1))}<span>${item.qty} шт.</span></div>
     </article>`).join('');
@@ -1113,6 +1157,13 @@ function setFieldError(id,invalid){
 }
 
 function validate(){
+  const invalidSelection=invalidOfferSelection();
+  if(invalidSelection){
+    showToast('Заново выберите вариант товара в корзине');
+    const link=document.querySelector('[data-selection-error] a');
+    link?.focus();link?.scrollIntoView({behavior:'smooth',block:'center'});
+    return false;
+  }
   const checks={
     lastName:$('#lastName').value.trim().length<2,
     firstName:$('#firstName').value.trim().length<2,
@@ -1136,6 +1187,7 @@ function validate(){
 
 async function quotePendingPoint(){
   if(!pendingPoint)return null;
+  if(invalidOfferSelection())throw new Error('Заново выберите вариант товара в корзине');
   const config=apiConfig();
   if(!config||previewMode){
     throw new Error('Расчёт СДЭК доступен только на опубликованном сайте');
@@ -1146,7 +1198,7 @@ async function quotePendingPoint(){
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
       delivery:{code:pendingPoint.code,cityCode:pendingPoint.cityCode},
-      items:items.map(item=>({id:String(item.id),size:String(item.size),qty:Number(item.qty)}))
+      items:apiItems()
     })
   });
   const result=await response.json().catch(()=>({}));
@@ -1202,7 +1254,7 @@ function clearPaymentDraft(){
 
 function paymentIdentity(forceNew=false){
   const fingerprint=JSON.stringify({
-    items:items.map(item=>[String(item.id),String(item.size),Number(item.qty)]),
+    items:items.map(item=>[String(item.id),String(item.offerId||''),String(item.size),Number(item.qty)]),
     point:selectedPoint?.code||'',
     delivery:selectedPoint?[Number(selectedPoint.price)||0,selectedPoint.tariffCode||'',selectedPoint.cityCode||'']:'',
     promo:appliedPromo?[appliedPromo.code,discount(),deliveryDiscount()]:'',
@@ -1291,7 +1343,7 @@ async function submitCheckout(){
           tariffName:selectedPoint.tariffName,
           deliveryMode:selectedPoint.deliveryMode
         },
-        items:items.map(item=>({id:String(item.id),size:String(item.size),qty:Number(item.qty)})),
+        items:apiItems(),
         promoCode:appliedPromo?.code||null
       })
     });
@@ -1369,7 +1421,7 @@ function showToast(message){
 function promoPayload(code){
   return {
     promoCode:code,
-    items:items.map(item=>({id:String(item.id),size:String(item.size),qty:Number(item.qty)})),
+    items:apiItems(),
     delivery:{amount:selectedPoint?Math.round(deliveryCost()*100):0}
   };
 }
@@ -1401,6 +1453,10 @@ function resetPromo(messageText=''){
 
 async function validateAppliedPromo({silent=false}={}){
   if(!appliedPromo?.code)return null;
+  if(invalidOfferSelection()){
+    resetPromo(silent?'':'Сначала заново выберите вариант товара в корзине');
+    return null;
+  }
   const config=apiConfig();
   if(!config||previewMode){
     if(!silent)resetPromo('Промокоды доступны только на опубликованном сайте');

@@ -198,6 +198,49 @@ email_queues_healthy() {
     email_queue_is_healthy http://127.0.0.1:3001/health/ready "$PRODUCTION_DB_NAME" 0
 }
 
+storefront_offers_unambiguous() {
+  local database invalid_count
+
+  for database in "$DB_NAME" "$PRODUCTION_DB_NAME"; do
+    [[ "$database" =~ ^[A-Za-z0-9_]+$ ]] || return 1
+    invalid_count="$(
+      runuser -u postgres -- psql -X -At -d "$database" <<'SQL'
+with selectable as (
+  select
+    product.id,
+    upper(btrim(item.offer ->> 'size')) as normalized_size,
+    btrim(item.offer ->> 'offer_id') as offer_id
+  from public.merch_storefront_products as product
+  cross join lateral jsonb_array_elements(product.offers) as item(offer)
+  where product.is_active
+    and item.offer -> 'archived' is distinct from 'true'::jsonb
+    and item.offer -> 'visible' is distinct from 'false'::jsonb
+), invalid_sizes as (
+  select id, normalized_size
+  from selectable
+  group by id, normalized_size
+  having normalized_size is null
+    or normalized_size = ''
+    or count(*) <> 1
+
+), invalid_offer_ids as (
+  select offer_id
+  from selectable
+  group by offer_id
+  having offer_id is null
+    or offer_id = ''
+    or count(*) <> 1
+)
+select
+  (select count(*) from invalid_sizes)
+  + (select count(*) from invalid_offer_ids);
+SQL
+    )" || return 1
+    [[ "${invalid_count:-}" =~ ^[0-9]+$ ]] || return 1
+    [[ "$invalid_count" -eq 0 ]] || return 1
+  done
+}
+
 check postgresql_active systemctl is-active --quiet postgresql
 check nginx_active systemctl is-active --quiet nginx
 check backend_active systemctl is-active --quiet komui-backend
@@ -209,6 +252,7 @@ check backend_ready curl -fsS --max-time 5 http://127.0.0.1:3000/health/ready -o
 check production_backend_ready curl -fsS --max-time 5 http://127.0.0.1:3001/health/ready -o /dev/null
 check email_worker_active email_workers_active
 check email_failed_or_stale_jobs email_queues_healthy
+check storefront_offers_unambiguous storefront_offers_unambiguous
 check tbank_ca_readable runuser -u komui -- test -r /etc/komui/certs/komui-node-ca-bundle.pem
 
 check stage_root_https stage_root_https

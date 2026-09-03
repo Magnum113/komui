@@ -25,20 +25,15 @@ import {
   reservePromoRedemption,
   validatePromoCode,
 } from "../_shared/promo.ts";
+import {
+  CheckoutCartError,
+  type CheckoutProductRow,
+  resolveCartItems,
+  text,
+  validatedCart,
+} from "../_shared/checkout.ts";
 
-type CartItemInput = {
-  id: string;
-  size: string;
-  qty: number;
-};
-
-type ProductRow = {
-  id: string;
-  name: string;
-  price_min: number | string | null;
-  is_active: boolean;
-  sizes: string[];
-  offers: Array<Record<string, unknown>>;
+type ProductRow = CheckoutProductRow & {
   main_image_path: string | null;
   primary_image_url: string | null;
   product_type_slug: string | null;
@@ -57,10 +52,6 @@ type OrderItem = {
   image_url: string | null;
   product_snapshot: Record<string, unknown>;
 };
-
-function text(value: unknown, maxLength: number): string {
-  return String(value ?? "").trim().slice(0, maxLength);
-}
 
 function normalizePhone(value: unknown): string {
   const digits = String(value ?? "").replace(/\D/g, "");
@@ -84,43 +75,6 @@ function normalizeEmail(value: unknown): string {
 function orderNumber(): string {
   const randomValue = crypto.getRandomValues(new Uint32Array(1))[0];
   return `KOM-${100_000_000 + (randomValue % 900_000_000)}`;
-}
-
-function validatedCart(value: unknown): CartItemInput[] {
-  if (!Array.isArray(value) || value.length < 1 || value.length > 20) {
-    throw new Error("Корзина пуста или содержит слишком много позиций");
-  }
-
-  const items = value.map((item) => {
-    const raw = item as Record<string, unknown>;
-    const id = text(raw.id, 36);
-    const size = text(raw.size, 12).toUpperCase();
-    const qty = Number(raw.qty);
-    if (
-      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-        .test(id) ||
-      !size ||
-      !Number.isInteger(qty) ||
-      qty < 1 ||
-      qty > 10
-    ) {
-      throw new Error("В корзине есть некорректная позиция");
-    }
-    return { id, size, qty };
-  });
-
-  const units = items.reduce((sum, item) => sum + item.qty, 0);
-  if (units > 50) throw new Error("В одном заказе может быть не более 50 вещей");
-  return items;
-}
-
-function offerForSize(
-  product: ProductRow,
-  size: string,
-): Record<string, unknown> | null {
-  return (product.offers ?? []).find((offer) =>
-    String(offer.size ?? "").toUpperCase() === size
-  ) ?? null;
 }
 
 function buildReceipt(
@@ -294,44 +248,33 @@ Deno.serve(async (request) => {
     const { data: products, error: productsError } = await admin
       .from("merch_storefront_products")
       .select(
-        "id,name,price_min,is_active,sizes,offers,main_image_path,primary_image_url,product_type_slug,category_slug",
+        "id,name,price_min,is_active,sizes,offers,main_image_path,primary_image_url,product_type_slug,category_slug,source_payload",
       )
       .in("id", productIds)
       .eq("is_active", true);
     if (productsError) throw productsError;
 
-    const productMap = new Map(
-      ((products ?? []) as ProductRow[]).map((product) => [product.id, product]),
-    );
-    const orderItems: OrderItem[] = cart.map((cartItem) => {
-      const product = productMap.get(cartItem.id);
-      if (!product) throw new Error("Один из товаров больше недоступен");
-      if (!(product.sizes ?? []).map(String).includes(cartItem.size)) {
-        throw new Error(`Размер ${cartItem.size} товара «${product.name}» недоступен`);
-      }
-
-      const priceRub = Number(product.price_min);
-      if (!Number.isFinite(priceRub) || priceRub <= 0) {
-        throw new Error(`Для товара «${product.name}» не задана цена`);
-      }
-      const unitPrice = Math.round(priceRub * 100);
-      const offer = offerForSize(product, cartItem.size);
+    const orderItems: OrderItem[] = resolveCartItems(
+      cart,
+      (products ?? []) as ProductRow[],
+    ).map((item) => {
+      const { cartItem, product } = item;
       const cdekProfile = cdekProfileForProduct(product);
 
       return {
         product_id: product.id,
-        offer_id: offer ? text(offer.offer_id, 120) || null : null,
-        sku: offer ? text(offer.sku, 120) || null : null,
+        offer_id: item.offerId,
+        sku: item.sku,
         product_name: product.name.slice(0, 128),
         size: cartItem.size,
         quantity: cartItem.qty,
-        unit_price_amount: unitPrice,
-        line_total_amount: unitPrice * cartItem.qty,
+        unit_price_amount: item.unitPriceAmount,
+        line_total_amount: item.lineTotalAmount,
         image_url: product.main_image_path ?? product.primary_image_url,
         product_snapshot: {
           storefront_product_id: product.id,
-          offer_id: offer?.offer_id ?? null,
-          sku: offer?.sku ?? null,
+          offer_id: item.offerId,
+          sku: item.sku,
           product_type_slug: product.product_type_slug,
           category_slug: product.category_slug,
           cdek_profile: cdekProfile.key,
@@ -621,6 +564,13 @@ Deno.serve(async (request) => {
     }, 200, cors);
   } catch (error) {
     console.error("tbank-create-payment", error);
-    return jsonResponse({ error: errorMessage(error) }, 400, cors);
+    return jsonResponse(
+      {
+        error: errorMessage(error),
+        ...(error instanceof CheckoutCartError ? { code: error.code } : {}),
+      },
+      error instanceof CheckoutCartError ? error.status : 400,
+      cors,
+    );
   }
 });

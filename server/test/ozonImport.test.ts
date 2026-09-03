@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   buildOzonPreview,
   designKeyCandidatesFromOfferId,
+  handleAdminCreateOzonStorefrontProduct,
   normalizeOfferId,
   priceFromOzonItem,
   type OzonPriceItem,
@@ -35,6 +36,30 @@ test("designKeyCandidatesFromOfferId includes known legacy storefront aliases", 
     "var7|print|tshirt|white",
     "var7|print|tshirt|other",
   ]);
+});
+
+test("designKeyCandidatesFromOfferId prefers an exact hoodie variant before the base card", () => {
+  assert.deepEqual(
+    designKeyCandidatesFromOfferId("D018-HDY-EMB-BLK-CRP-NF-V01-M"),
+    [
+      "var18|embroidery|hoodie|black|crp|nf",
+      "var18|embroidery|hoodie|black",
+    ],
+  );
+  assert.deepEqual(
+    designKeyCandidatesFromOfferId("D008-HDY-EMB-WHT-REG-FLC-V01-S"),
+    [
+      "var8|embroidery|hoodie|white|reg|flc",
+      "var8|embroidery|hoodie|white",
+    ],
+  );
+  assert.deepEqual(
+    designKeyCandidatesFromOfferId("D008-HDY-EMB-WHT-REG-NF-V01-S"),
+    [
+      "var8|embroidery|hoodie|white|reg|nf",
+      "var8|embroidery|hoodie|white",
+    ],
+  );
 });
 
 test("priceFromOzonItem prefers marketing seller price", () => {
@@ -94,6 +119,122 @@ test("buildOzonPreview matches storefront by normalized offer id and skips unmap
   assert.equal(preview.items[0].plannedActions[0]?.action, "create_storefront_offer");
   assert.equal(preview.items[1].status, "unmatched");
   assert.equal(preview.warnings.some((item) => item.code === "supabase_write_disabled"), true);
+});
+
+test("buildOzonPreview maps a hoodie to its exact variant before the legacy base fallback", () => {
+  const exactPreview = buildOzonPreview(
+    [
+      {
+        offer_id: "D018-HDY-EMB-BLK-CRP-NF-M",
+        sku: 1802,
+        product_id: 18002,
+        name: "Худи GTA укороченное без начёса M",
+      },
+    ],
+    [
+      {
+        id: "11111111-1111-1111-1111-111111111111",
+        design_key: "var18|embroidery|hoodie|black",
+        name: "Худи GTA",
+        slug: "hudi-gta",
+        ozon_product_ids: [],
+        ozon_skus: [],
+        ozon_offer_ids: [],
+        offers: [],
+      },
+      {
+        id: "22222222-2222-2222-2222-222222222222",
+        design_key: "var18|embroidery|hoodie|black|crp|nf",
+        variant_group_key: "var18|embroidery|hoodie|black",
+        hoodie_fit_slug: "cropped",
+        hoodie_fleece_slug: "no-fleece",
+        name: "Худи GTA — укороченное, без начёса",
+        slug: "hudi-gta-ukorochennoe-bez-nachesa",
+        ozon_product_ids: [],
+        ozon_skus: [],
+        ozon_offer_ids: [],
+        offers: [],
+      },
+    ],
+    [],
+    { serverPostgres: true, supabase: false },
+  );
+
+  assert.equal(
+    exactPreview.items[0].targetProduct?.id,
+    "22222222-2222-2222-2222-222222222222",
+  );
+  assert.equal(exactPreview.items[0].matchReason, "offer_id_design_key");
+
+  const fallbackPreview = buildOzonPreview(
+    [
+      {
+        offer_id: "D018-HDY-EMB-BLK-CRP-NF-M",
+        sku: 1802,
+        product_id: 18002,
+        name: "Худи GTA укороченное без начёса M",
+      },
+    ],
+    [
+      {
+        id: "11111111-1111-1111-1111-111111111111",
+        design_key: "var18|embroidery|hoodie|black",
+        name: "Худи GTA",
+        slug: "hudi-gta",
+        ozon_product_ids: [],
+        ozon_skus: [],
+        ozon_offer_ids: [],
+        offers: [],
+      },
+    ],
+    [],
+    { serverPostgres: true, supabase: false },
+  );
+
+  assert.equal(
+    fallbackPreview.items[0].targetProduct?.id,
+    "11111111-1111-1111-1111-111111111111",
+  );
+});
+
+test("buildOzonPreview fails closed on duplicate active storefront offer mappings", () => {
+  assert.throws(
+    () =>
+      buildOzonPreview(
+        [],
+        [
+          {
+            id: "11111111-1111-1111-1111-111111111111",
+            design_key: "var18|embroidery|hoodie|black|reg|nf",
+            name: "Худи GTA — обычное",
+            slug: "hudi-gta-obychnoe",
+            ozon_product_ids: [],
+            ozon_skus: [],
+            ozon_offer_ids: ["D018-HDY-EMB-BLK-REG-NF-S"],
+            offers: [],
+          },
+          {
+            id: "22222222-2222-2222-2222-222222222222",
+            design_key: "var18|embroidery|hoodie|black|crp|nf",
+            name: "Худи GTA — укороченное",
+            slug: "hudi-gta-ukorochennoe",
+            ozon_product_ids: [],
+            ozon_skus: [],
+            ozon_offer_ids: ["d18_hdy_emb_blk_reg_nf_s"],
+            offers: [],
+          },
+        ],
+        [],
+        { serverPostgres: true, supabase: false },
+      ),
+    (error: unknown) => {
+      assert.equal(
+        (error as { code?: string }).code,
+        "ambiguous_storefront_mapping",
+      );
+      return true;
+    },
+  );
 });
 
 test("buildOzonPreview marks unchanged storefront offer as noop", () => {
@@ -850,6 +991,223 @@ test("buildOzonPreview groups unmatched structured Ozon offers as new product ca
   assert.equal(
     preview.warnings.some((warning) => warning.code === "new_products_require_creation"),
     true,
+  );
+});
+
+test("buildOzonPreview keeps unmatched hoodie fit and fleece variants in separate product groups", () => {
+  const preview = buildOzonPreview(
+    [
+      {
+        offer_id: "D018-HDY-EMB-BLK-CRP-NF-V01-S",
+        sku: 1801,
+        product_id: 18001,
+        name: "Худи GTA укороченное без начёса S",
+      },
+      {
+        offer_id: "D018-HDY-EMB-BLK-CRP-NF-V01-M",
+        sku: 1802,
+        product_id: 18002,
+        name: "Худи GTA укороченное без начёса M",
+      },
+      {
+        offer_id: "D018-HDY-EMB-BLK-REG-NF-V02-S",
+        sku: 1803,
+        product_id: 18003,
+        name: "Худи GTA обычное без начёса S",
+      },
+      {
+        offer_id: "D008-HDY-EMB-WHT-REG-FLC-V01-S",
+        sku: 801,
+        product_id: 8001,
+        name: "Худи Gravity с начёсом S",
+      },
+      {
+        offer_id: "D008-HDY-EMB-WHT-REG-NF-V01-S",
+        sku: 802,
+        product_id: 8002,
+        name: "Худи Gravity без начёса S",
+      },
+    ],
+    [],
+    [],
+    { serverPostgres: true, supabase: false },
+  );
+
+  assert.equal(preview.summary.newProductGroups, 4);
+  const groupsByDesignKey = new Map(
+    preview.newProductGroups.map((group) => [group.designKey, group]),
+  );
+  const gtaCropped = groupsByDesignKey.get(
+    "var18|embroidery|hoodie|black|crp|nf",
+  );
+  assert.ok(gtaCropped);
+  assert.deepEqual(
+    {
+      variantGroupKey: gtaCropped.variantGroupKey,
+      hoodieFitSlug: gtaCropped.hoodieFitSlug,
+      hoodieFleeceSlug: gtaCropped.hoodieFleeceSlug,
+      sizes: gtaCropped.sizes,
+    },
+    {
+      variantGroupKey: "var18|embroidery|hoodie|black",
+      hoodieFitSlug: "cropped",
+      hoodieFleeceSlug: "no-fleece",
+      sizes: ["S", "M"],
+    },
+  );
+  assert.deepEqual(
+    {
+      variantGroupKey: groupsByDesignKey.get(
+        "var18|embroidery|hoodie|black|reg|nf",
+      )?.variantGroupKey,
+      hoodieFitSlug: groupsByDesignKey.get(
+        "var18|embroidery|hoodie|black|reg|nf",
+      )?.hoodieFitSlug,
+      hoodieFleeceSlug: groupsByDesignKey.get(
+        "var18|embroidery|hoodie|black|reg|nf",
+      )?.hoodieFleeceSlug,
+    },
+    {
+      variantGroupKey: "var18|embroidery|hoodie|black",
+      hoodieFitSlug: "regular",
+      hoodieFleeceSlug: "no-fleece",
+    },
+  );
+  assert.deepEqual(
+    {
+      variantGroupKey: groupsByDesignKey.get(
+        "var8|embroidery|hoodie|white|reg|flc",
+      )?.variantGroupKey,
+      hoodieFitSlug: groupsByDesignKey.get(
+        "var8|embroidery|hoodie|white|reg|flc",
+      )?.hoodieFitSlug,
+      hoodieFleeceSlug: groupsByDesignKey.get(
+        "var8|embroidery|hoodie|white|reg|flc",
+      )?.hoodieFleeceSlug,
+    },
+    {
+      variantGroupKey: "var8|embroidery|hoodie|white",
+      hoodieFitSlug: "regular",
+      hoodieFleeceSlug: "fleece",
+    },
+  );
+  assert.equal(
+    groupsByDesignKey.get("var8|embroidery|hoodie|white|reg|nf")
+      ?.hoodieFleeceSlug,
+    "no-fleece",
+  );
+});
+
+test("Ozon storefront creation persists inferred hoodie variant columns", async () => {
+  const previewId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const preview = buildOzonPreview(
+    [
+      {
+        offer_id: "D018-HDY-EMB-BLK-CRP-NF-V01-S",
+        sku: 1801,
+        product_id: 18001,
+        name: "Худи GTA укороченное без начёса S",
+      },
+    ],
+    [],
+    [],
+    { serverPostgres: true, supabase: false },
+  );
+  let insertSql = "";
+  let insertValues: unknown[] = [];
+  const db = {
+    query: async (sql: string, values: unknown[] = []) => {
+      if (sql.includes("from public.merch_admin_import_previews")) {
+        return {
+          rows: [
+            {
+              id: previewId,
+              import_type: "ozon_products",
+              request_payload: {},
+              summary: preview.summary,
+              items: preview.items,
+              can_import: preview.canImport,
+              warnings: preview.warnings,
+              created_at: "2026-09-03T00:00:00.000Z",
+            },
+          ],
+        };
+      }
+      if (sql.includes("insert into public.merch_storefront_products")) {
+        insertSql = sql;
+        insertValues = values;
+        return {
+          rows: [
+            {
+              id: "33744741-8c0f-5b69-a7cb-766c16b88e0f",
+              design_key: values[0],
+              variant_group_key: values[1],
+              hoodie_fit_slug: values[2],
+              hoodie_fleece_slug: values[3],
+              slug: values[6],
+              name: values[5],
+              sizes: values[30],
+              price_min: values[31],
+              price_max: values[32],
+              primary_image_url: values[33],
+              image_urls: values[35],
+              size_chart_json: null,
+              offers: JSON.parse(String(values[40])),
+              is_active: values[42],
+              sort_order: values[43],
+              updated_at: values[47],
+            },
+          ],
+        };
+      }
+      throw new Error(`Unexpected query in test: ${sql}`);
+    },
+  };
+
+  const result = await handleAdminCreateOzonStorefrontProduct(
+    {
+      id: "request-1",
+      ip: "127.0.0.1",
+      method: "POST",
+      url: "/admin/import/ozon/products",
+      body: {
+        previewId,
+        product: {
+          name: "Худи GTA — укороченное, без начёса",
+          salePrice: 4200,
+          imageUrls: ["https://img.test/gta-cropped.jpg"],
+        },
+      },
+    } as never,
+    {} as never,
+    {
+      config: { AUDIT_LOG_PATH: "/dev/null" } as never,
+      db: db as never,
+    },
+  );
+
+  assert.match(insertSql, /variant_group_key/);
+  assert.match(insertSql, /hoodie_fit_slug/);
+  assert.match(insertSql, /hoodie_fleece_slug/);
+  assert.deepEqual(insertValues.slice(0, 4), [
+    "var18|embroidery|hoodie|black|crp|nf",
+    "var18|embroidery|hoodie|black",
+    "cropped",
+    "no-fleece",
+  ]);
+  assert.deepEqual(
+    {
+      designKey: result.product.designKey,
+      variantGroupKey: result.product.variantGroupKey,
+      hoodieFitSlug: result.product.hoodieFitSlug,
+      hoodieFleeceSlug: result.product.hoodieFleeceSlug,
+    },
+    {
+      designKey: "var18|embroidery|hoodie|black|crp|nf",
+      variantGroupKey: "var18|embroidery|hoodie|black",
+      hoodieFitSlug: "cropped",
+      hoodieFleeceSlug: "no-fleece",
+    },
   );
 });
 

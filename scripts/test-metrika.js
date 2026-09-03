@@ -104,14 +104,29 @@ const analytics = windowStub.KomuiAnalytics;
 assert(analytics, 'KomuiAnalytics API is not exposed');
 analytics.ecommerce.add({ id: 'p1', name: 'Товар', price: 2900, category: 'Футболки' }, { size: 'M', quantity: 1 });
 assert.strictEqual(windowStub.dataLayer.at(-1).ecommerce.add.products[0].variant, 'M');
+analytics.ecommerce.add(
+  { id: 'p1', name: 'Худи', price: 3900, category: 'Худи' },
+  { size: 'M', offerId: 'D18-HDY-EMB-BLK-REG-NF-M', quantity: 1 },
+);
+assert.strictEqual(
+  windowStub.dataLayer.at(-1).ecommerce.add.products[0].id,
+  'p1',
+  'Storefront UUID must remain the ecommerce product ID',
+);
+assert.strictEqual(
+  windowStub.dataLayer.at(-1).ecommerce.add.products[0].variant,
+  'D18-HDY-EMB-BLK-REG-NF-M',
+  'Selected offer ID must be the ecommerce variant',
+);
 
 const purchase = {
-  products: [{ id: 'p1', name: 'Товар', price: 2900, size: 'M', quantity: 1 }],
+  products: [{ id: 'p1', name: 'Товар', price: 2900, size: 'M', offerId: 'D1-M', quantity: 1 }],
   revenue: 2900,
 };
 assert.strictEqual(analytics.ecommerce.purchaseOnce('KOM-TEST', purchase), true);
 assert.strictEqual(analytics.ecommerce.purchaseOnce('KOM-TEST', purchase), false);
 assert.strictEqual(windowStub.dataLayer.filter(item => item.ecommerce && item.ecommerce.purchase).length, 1);
+assert.strictEqual(windowStub.dataLayer.at(-1).ecommerce.purchase.products[0].variant, 'D1-M');
 const paidGoal = ymCalls.find(call => call[2] === 'order_paid');
 assert(paidGoal, 'order_paid goal was not sent');
 assert.strictEqual(paidGoal[3].order_price, 2900, 'order_paid must use the Yandex revenue parameter order_price');

@@ -168,6 +168,9 @@ export type OzonPriceItem = {
 type StorefrontRow = {
   id: string;
   design_key: string;
+  variant_group_key?: string | null;
+  hoodie_fit_slug?: "regular" | "cropped" | null;
+  hoodie_fleece_slug?: "fleece" | "no-fleece" | null;
   name: string;
   slug: string;
   sizes: unknown;
@@ -320,6 +323,9 @@ type PreviewBuildResult = {
 
 type OzonInferredProduct = {
   designKey: string;
+  variantGroupKey?: string;
+  hoodieFitSlug?: "regular" | "cropped";
+  hoodieFleeceSlug?: "fleece" | "no-fleece";
   slug: string;
   ozonVariant: string;
   productType: string;
@@ -822,6 +828,27 @@ function offerPartsFromOfferId(value: unknown) {
     .reverse()
     .map(normalizeSize)
     .find((item): item is string => item !== undefined);
+  const variantTokens = new Set(parts.slice(4).map((part) => part.toUpperCase()));
+  const hoodieFitCode: "crp" | "reg" | undefined = variantTokens.has("CRP")
+    ? "crp"
+    : variantTokens.has("REG")
+      ? "reg"
+      : undefined;
+  const hoodieFleeceCode: "flc" | "nf" | undefined = variantTokens.has("FLC")
+    ? "flc"
+    : variantTokens.has("NF")
+      ? "nf"
+      : undefined;
+  const hoodieFitSlug: "cropped" | "regular" | undefined = hoodieFitCode === "crp"
+    ? "cropped"
+    : hoodieFitCode === "reg"
+      ? "regular"
+      : undefined;
+  const hoodieFleeceSlug: "fleece" | "no-fleece" | undefined = hoodieFleeceCode === "flc"
+    ? "fleece"
+    : hoodieFleeceCode === "nf"
+      ? "no-fleece"
+      : undefined;
 
   return {
     designNumber: Number(modern[1]),
@@ -829,6 +856,10 @@ function offerPartsFromOfferId(value: unknown) {
     decorationSlug,
     colorSlug,
     size,
+    hoodieFitCode,
+    hoodieFleeceCode,
+    hoodieFitSlug,
+    hoodieFleeceSlug,
   };
 }
 
@@ -845,7 +876,22 @@ function inferredProductFromOfferId(value: unknown): OzonInferredProduct | undef
   if (!product || !decorationType || !color) return undefined;
 
   const ozonVariant = `var${parts.designNumber}`;
-  const designKey = `${ozonVariant}|${parts.decorationSlug}|${parts.productTypeSlug}|${parts.colorSlug}`;
+  const variantGroupKey = `${ozonVariant}|${parts.decorationSlug}|${parts.productTypeSlug}|${parts.colorSlug}`;
+  const hoodieVariant = parts.productTypeSlug === "hoodie" &&
+      parts.hoodieFitCode &&
+      parts.hoodieFleeceCode &&
+      parts.hoodieFitSlug &&
+      parts.hoodieFleeceSlug
+    ? {
+        fitCode: parts.hoodieFitCode,
+        fleeceCode: parts.hoodieFleeceCode,
+        fitSlug: parts.hoodieFitSlug,
+        fleeceSlug: parts.hoodieFleeceSlug,
+      }
+    : undefined;
+  const designKey = hoodieVariant
+    ? `${variantGroupKey}|${hoodieVariant.fitCode}|${hoodieVariant.fleeceCode}`
+    : variantGroupKey;
   const slug = [
     ozonVariant,
     parts.decorationSlug,
@@ -858,6 +904,13 @@ function inferredProductFromOfferId(value: unknown): OzonInferredProduct | undef
 
   return {
     designKey,
+    ...(hoodieVariant
+      ? {
+          variantGroupKey,
+          hoodieFitSlug: hoodieVariant.fitSlug,
+          hoodieFleeceSlug: hoodieVariant.fleeceSlug,
+        }
+      : {}),
     slug,
     ozonVariant,
     productType: product.productType,
@@ -898,7 +951,18 @@ export function designKeyCandidatesFromOfferId(value: unknown): string[] {
     const decoration = DECORATION_CODE_TO_SLUG[decorationCode];
     const color = COLOR_CODE_TO_SLUG[colorCode];
     if (product && decoration && color) {
-      addCandidate(`var${Number(designNumber)}|${decoration}|${product}|${color}`);
+      const baseDesignKey = `var${Number(designNumber)}|${decoration}|${product}|${color}`;
+      const parts = offerPartsFromOfferId(normalized);
+      if (
+        product === "hoodie" &&
+        parts?.hoodieFitCode &&
+        parts.hoodieFleeceCode
+      ) {
+        candidates.add(
+          `${baseDesignKey}|${parts.hoodieFitCode}|${parts.hoodieFleeceCode}`,
+        );
+      }
+      addCandidate(baseDesignKey);
     }
   }
 
@@ -1369,27 +1433,55 @@ function buildIndexes(
   const byDesignKey = new Map<string, StorefrontRow>();
   const merchBySku = new Map<string, MerchProductRow>();
 
+  const addUniqueStorefrontMapping = (
+    index: Map<string, StorefrontRow>,
+    key: string | undefined,
+    row: StorefrontRow,
+    kind: "design_key" | "ozon_sku" | "ozon_product_id" | "ozon_offer_id",
+  ) => {
+    if (!key) return;
+    const existing = index.get(key);
+    if (existing && existing.id !== row.id) {
+      throw new HttpError(
+        409,
+        "ambiguous_storefront_mapping",
+        `Active storefront products contain a duplicate ${kind} mapping`,
+      );
+    }
+    index.set(key, row);
+  };
+
   for (const row of storefrontRows) {
-    byDesignKey.set(row.design_key.toLowerCase(), row);
+    addUniqueStorefrontMapping(
+      byDesignKey,
+      row.design_key.toLowerCase(),
+      row,
+      "design_key",
+    );
     for (const sku of stringArray(row.ozon_skus)) {
       const key = normalizeKey(sku);
-      if (key) bySku.set(key, row);
+      addUniqueStorefrontMapping(bySku, key, row, "ozon_sku");
     }
     for (const productId of stringArray(row.ozon_product_ids)) {
       const key = normalizeKey(productId);
-      if (key) byProductId.set(key, row);
+      addUniqueStorefrontMapping(byProductId, key, row, "ozon_product_id");
     }
     for (const offerId of stringArray(row.ozon_offer_ids)) {
       const key = normalizeOfferId(offerId);
-      if (key) byOfferId.set(key, row);
+      addUniqueStorefrontMapping(byOfferId, key, row, "ozon_offer_id");
     }
     for (const offer of getOfferArray(row)) {
       const offerKey = normalizeOfferId(offer.offer_id);
-      if (offerKey) byOfferId.set(offerKey, row);
+      addUniqueStorefrontMapping(byOfferId, offerKey, row, "ozon_offer_id");
       const skuKey = normalizeKey(offer.sku);
-      if (skuKey) bySku.set(skuKey, row);
+      addUniqueStorefrontMapping(bySku, skuKey, row, "ozon_sku");
       const productIdKey = normalizeKey(offer.product_id);
-      if (productIdKey) byProductId.set(productIdKey, row);
+      addUniqueStorefrontMapping(
+        byProductId,
+        productIdKey,
+        row,
+        "ozon_product_id",
+      );
     }
   }
 
@@ -2195,6 +2287,9 @@ async function loadStorefrontRows(db: Db) {
       select
         id,
         design_key,
+        variant_group_key,
+        hoodie_fit_slug,
+        hoodie_fleece_slug,
         name,
         slug,
         sizes,
@@ -2359,6 +2454,9 @@ async function applyStorefrontUpdate(
       select
         id,
         design_key,
+        variant_group_key,
+        hoodie_fit_slug,
+        hoodie_fleece_slug,
         name,
         slug,
         sizes,
@@ -2586,6 +2684,9 @@ export async function handleAdminCreateOzonStorefrontProduct(
   validateRegularPrice(product.salePrice, product.regularPrice);
 
   const designKey = requiredText(product.designKey, group?.designKey, "designKey");
+  const variantGroupKey = group?.variantGroupKey ?? null;
+  const hoodieFitSlug = group?.hoodieFitSlug ?? null;
+  const hoodieFleeceSlug = group?.hoodieFleeceSlug ?? null;
   const slug = requiredText(product.slug, group?.slug, "slug");
   const ozonVariant = requiredText(
     product.ozonVariant,
@@ -2631,6 +2732,9 @@ export async function handleAdminCreateOzonStorefrontProduct(
   const result = await context.db.query<{
     id: string;
     design_key: string;
+    variant_group_key: string | null;
+    hoodie_fit_slug: "regular" | "cropped" | null;
+    hoodie_fleece_slug: "fleece" | "no-fleece" | null;
     slug: string;
     name: string;
     sizes: string[];
@@ -2647,6 +2751,9 @@ export async function handleAdminCreateOzonStorefrontProduct(
     `
       insert into public.merch_storefront_products (
         design_key,
+        variant_group_key,
+        hoodie_fit_slug,
+        hoodie_fleece_slug,
         ozon_variant,
         name,
         slug,
@@ -2695,15 +2802,18 @@ export async function handleAdminCreateOzonStorefrontProduct(
       ) values (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
         $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
-        $21, $22, $23, $24, $25, $26, $27::text[], $28::text[],
-        $29, $30, 'RUB', $31, $32, $33::text[], $34::jsonb,
-        $35::bigint[], $36::bigint[], $37::text[], $38::jsonb,
-        $39::jsonb, $40, $41, $42, $43::text[], $44,
-        $45::timestamptz
+        $21, $22, $23, $24, $25, $26, $27, $28, $29,
+        $30::text[], $31::text[], $32, $33, 'RUB', $34, $35,
+        $36::text[], $37::jsonb, $38::bigint[], $39::bigint[],
+        $40::text[], $41::jsonb, $42::jsonb, $43, $44, $45,
+        $46::text[], $47, $48::timestamptz
       )
       returning
         id,
         design_key,
+        variant_group_key,
+        hoodie_fit_slug,
+        hoodie_fleece_slug,
         slug,
         name,
         sizes,
@@ -2719,6 +2829,9 @@ export async function handleAdminCreateOzonStorefrontProduct(
     `,
     [
       designKey,
+      variantGroupKey,
+      hoodieFitSlug,
+      hoodieFleeceSlug,
       ozonVariant,
       product.name.trim(),
       slug,
@@ -2784,6 +2897,9 @@ export async function handleAdminCreateOzonStorefrontProduct(
     product: {
       id: row.id,
       designKey: row.design_key,
+      variantGroupKey: row.variant_group_key,
+      hoodieFitSlug: row.hoodie_fit_slug,
+      hoodieFleeceSlug: row.hoodie_fleece_slug,
       slug: row.slug,
       name: row.name,
       sizes: stringArray(row.sizes),
