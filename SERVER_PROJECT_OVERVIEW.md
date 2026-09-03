@@ -8,7 +8,7 @@
 агентов. Все существенные изменения серверной реализации нужно описывать в
 основном документе выше.
 
-Последняя проверка актуального состояния: 2 сентября 2026 года.
+Последняя проверка актуального состояния: 3 сентября 2026 года.
 
 - `komui.ru` и `stage.komui.ru` обслуживаются self-hosted
   Nginx/Fastify/PostgreSQL;
@@ -22,6 +22,12 @@
 - backup v2 сохраняет обе KOMUI DB с owners/ACL и staging/production runtime,
   а публикация во внешнее хранилище завершается только после обратного
   скачивания и проверки checksum.
+- hoodie variant contract `hoodie-variants-v1` проверен на staging: checkout
+  использует точный `offerId`, разная посадка/начёс представлены связанными
+  карточками, неоднозначный legacy выбор требует повторного выбора, а deploy
+  fail-closed проверяет совместимость source/schema. Production state нужно
+  подтвердить датированным rollout evidence и
+  `/usr/local/sbin/komui-deploy-status`.
 
 Точные активные release paths и Git revision не фиксируются здесь как
 долгоживущая константа: их нужно получать через

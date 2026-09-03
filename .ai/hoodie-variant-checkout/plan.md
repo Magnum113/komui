@@ -70,13 +70,18 @@
    transaction; verify row counts, exact offer partition, constraints and review
    ownership.
 3. Apply to staging, build/deploy the candidate, then verify:
-   - 37 cards and zero duplicate selectable sizes;
+   - the environment-specific catalog count (32 active cards on the current
+     staging dataset; 37 after the same split on production) and zero duplicate
+     selectable sizes;
    - all four sibling pages and selectors;
    - cart/quote/promo/checkout request payloads include the exact offer ID;
    - transaction-safe checkout repository smoke with the real app role;
    - no real payment and no production/customer alerts.
 4. After staging gates pass, take a fresh backup, apply the same migration to
-   production, deploy the exact reviewed commit, and repeat public/read-only and
-   transaction-safe postflight checks.
+   production, deploy the exact reviewed commit, rebuild the canonical static
+   fallback from the migrated production catalog, deploy that generated
+   artifact commit, and repeat public/read-only and transaction-safe postflight
+   checks. Keep checkout/API ingress closed between the schema change and the
+   final compatible release.
 5. Confirm Git branch/remote/main and active stage/prod release hashes are
    synchronized; retain rollback evidence and remove synthetic test state.

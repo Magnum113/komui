@@ -1,6 +1,6 @@
 # Hoodie variant checkout — context
 
-## Verified live state
+## Verified pre-migration production baseline
 
 - Baseline Git/deploy commit: `bc3d5acd2a52a501ce9b28e4d320fbf026b75968`.
 - Production exposes 35 active products.
@@ -58,3 +58,18 @@
   genuinely unambiguous. Previously ambiguous sizes must be reselected.
 - Add a database constraint which rejects duplicate selectable sizes inside a
   product row, while allowing archived or explicitly hidden historical offers.
+
+## Verified staging state — 2026-09-03
+
+- The migration and candidate revision are deployed; total/active catalog rows
+  changed from 31/30 to 33/32.
+- The four target cards are distinct and there are zero duplicate selectable
+  sizes, duplicate global active offer IDs, or active hoodies with incomplete
+  variant metadata.
+- A read-only transaction under the real `komui_app` role accepted all four
+  exact offer selections and legacy GTA XL, rejected legacy GTA S as
+  `ambiguous_offer`, and rejected a cross-card offer as `offer_unavailable`.
+- A real browser verified no preselected size, exact offer ID persistence in
+  cart and checkout, visible variant text, zero console errors, and no mobile
+  horizontal overflow.
+- Verification created no order, payment, provider call, or customer alert.

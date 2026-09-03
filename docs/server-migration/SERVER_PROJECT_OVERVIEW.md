@@ -1,6 +1,6 @@
 # KOMUI self-hosted server project overview
 
-Дата актуализации: 2 сентября 2026 года.
+Дата актуализации: 3 сентября 2026 года.
 
 Этот документ описывает, как устроена текущая серверная реализация KOMUI на
 `89.111.152.112`, какие компоненты уже перенесены с Supabase/Vercel, где лежит
@@ -47,6 +47,12 @@ Production cutover выполнен, а staging сохранён как отде
 - backup v2 сохраняет обе KOMUI DB с owners/ACL и staging/production runtime;
   внешний объект принимается только после обратного скачивания и проверки
   checksum.
+- hoodie variant contract `hoodie-variants-v1` проверен на staging: физический
+  SKU checkout определяется точной парой product UUID + `offerId`, а не первым
+  совпавшим размером; посадка (`CRP`/`REG`) и наличие начёса (`FLC`/`NF`)
+  разделены на связанные карточки; неоднозначная legacy позиция требует
+  повторного выбора. Production rollout пока ожидает отдельного
+  контролируемого maintenance-шага.
 
 Проверенные safe-флаги production (значения секретов не читались):
 
@@ -83,6 +89,26 @@ Ozon dual-write в legacy Supabase остаётся выключенным; impo
 работает с локальным server PostgreSQL.
 
 ### 1.1. Последние существенные обновления
+
+#### 3 сентября 2026 — staging rollout checkout-safe вариантов худи
+
+- Введён единый физический variant contract для PostgreSQL, Ozon importer,
+  catalog API, generated storefront, корзины и checkout.
+- Один активный товар не может содержать два selectable offers одного
+  нормализованного размера; активный hoodie обязан иметь группу варианта,
+  посадку и признак начёса. Повтор активной физической комбинации запрещён
+  уникальным индексом.
+- Корзина, delivery quote, promo validation, payment fingerprint и order
+  snapshots передают точный `offerId`. Backend принимает legacy-запись без него
+  только при единственном совпадении; неоднозначность завершается безопасной
+  ошибкой `ambiguous_offer`.
+- GTA regular/cropped и Gravity fleece/no-fleece представлены отдельными
+  связанными карточками. Выбор размера не предустановлен; посадка и начёс явно
+  показаны покупателю.
+- Миграция прошла полный forward/rollback rehearsal на одноразовой копии
+  production и staging rollout с реальным `komui_app` и браузерным smoke без
+  создания платежа. Production rollout выполняется тем же migration-first
+  maintenance-процессом с закрытым API ingress и совместимостью source/schema.
 
 #### 1–2 сентября 2026 — production convergence
 
@@ -997,9 +1023,9 @@ server/src/app.ts            Fastify app, routes, admin auth, error handler
 server/src/config.ts         env schema and public config
 server/src/db.ts             pg Pool and transaction helper
 server/src/catalog.ts        storefront product read API
+server/src/checkout.ts       exact product/offer/size resolution and order persistence
 server/src/reviews.ts        public product reviews API
 server/src/importOzonReviews.ts  idempotent Ozon Seller CSV/media importer
-server/src/checkout.ts       order/cart validation and repository
 server/src/stage5.ts         CDEK, promo, T-Bank handlers, compatibility route
 server/src/cdek.ts           CDEK client and package calculations
 server/src/cdekEffects.ts    durable CDEK effect queue/worker/reconciliation
@@ -1061,6 +1087,11 @@ Uses `public.merch_storefront_products`.
 Only public storefront fields are returned. Raw/internal fields such as
 `source_payload`, `ozon_attributes`, internal costs and warehouse data are not
 returned to the browser.
+
+For hoodie variants the sanitized response includes `storefront_variant` and
+`requires_offer_id_sizes`. Raw variant columns and the transitional source
+payload remain server-side. A selectable size must resolve to one exact offer;
+archived or explicitly hidden offers are excluded.
 
 The reviews route returns only approved, published, matched reviews and locally
 served media. Source URLs, raw Ozon order references and internal mapping data
@@ -1981,6 +2012,14 @@ build or activation:
 несовместимая source/schema комбинация блокируется до build/activation. Guard
 не применяет migrations и не заменяет maintenance/drain procedure из
 `CUTOVER_RUNBOOK.md` для будущих schema changes.
+
+`hoodie-variants-v1` adds another fail-closed source/schema signature. Its
+production rollout is migration-first: keep `/api` ingress closed, apply and
+verify the migration, activate the variant-aware backend once, regenerate the
+canonical static fallback from the migrated production API, commit that exact
+generated delta, then activate the final descendant revision. Reopen ingress
+only after database, backend, static, healthcheck and browser postflights agree.
+The generic deploy script does not apply this migration.
 
 ### Backend release pattern
 
