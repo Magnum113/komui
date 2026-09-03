@@ -47,12 +47,12 @@ Production cutover выполнен, а staging сохранён как отде
 - backup v2 сохраняет обе KOMUI DB с owners/ACL и staging/production runtime;
   внешний объект принимается только после обратного скачивания и проверки
   checksum.
-- hoodie variant contract `hoodie-variants-v1` проверен на staging: физический
+- hoodie variant contract `hoodie-variants-v1` проверен в staging и production:
+  физический
   SKU checkout определяется точной парой product UUID + `offerId`, а не первым
   совпавшим размером; посадка (`CRP`/`REG`) и наличие начёса (`FLC`/`NF`)
   разделены на связанные карточки; неоднозначная legacy позиция требует
-  повторного выбора. Production rollout пока ожидает отдельного
-  контролируемого maintenance-шага.
+  повторного выбора.
 
 Проверенные safe-флаги production (значения секретов не читались):
 
@@ -90,7 +90,7 @@ Ozon dual-write в legacy Supabase остаётся выключенным; impo
 
 ### 1.1. Последние существенные обновления
 
-#### 3 сентября 2026 — staging rollout checkout-safe вариантов худи
+#### 3 сентября 2026 — production rollout checkout-safe вариантов худи
 
 - Введён единый физический variant contract для PostgreSQL, Ozon importer,
   catalog API, generated storefront, корзины и checkout.
@@ -107,8 +107,13 @@ Ozon dual-write в legacy Supabase остаётся выключенным; impo
   показаны покупателю.
 - Миграция прошла полный forward/rollback rehearsal на одноразовой копии
   production и staging rollout с реальным `komui_app` и браузерным smoke без
-  создания платежа. Production rollout выполняется тем же migration-first
-  maintenance-процессом с закрытым API ingress и совместимостью source/schema.
+  создания платежа. Затем тот же migration-first процесс выполнен в production:
+  внешний API/webhook был закрыт, создан и проверен свежий offsite backup,
+  migration дала 40/37 total/active rows, а новый backend прошёл read-only
+  repository smoke под реальной ролью приложения.
+- Canonical static fallback пересобран из migrated production API и активирован
+  отдельным descendant revision. Публичный browser smoke подтвердил точный
+  вариант в карточке, корзине и checkout без клика по оплате или provider call.
 
 #### 1–2 сентября 2026 — production convergence
 

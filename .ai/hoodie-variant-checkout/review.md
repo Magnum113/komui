@@ -2,9 +2,9 @@
 
 ## Verdict
 
-GO for the controlled production rollout; this is not yet a
-production-complete verdict. No P0/P1 implementation blocker remains after
-local, database-rehearsal, and staging verification.
+Production-complete verdict: PASS. No P0/P1 implementation blocker remains
+after local checks, full database rehearsal, staging verification, controlled
+production migration/deployment, and public browser postflight.
 
 ## Correctness and safety review
 
@@ -18,13 +18,12 @@ local, database-rehearsal, and staging verification.
   snapshots, and generated storefront enforce the same variant model.
 - The schema change is transactional, fails closed on data drift or existing
   target-order history, and has a rehearsed exact rollback.
-- Native radios, visible fit/fleece labels, and no implicit size selection make
-  the choice explicit for keyboard, screen-reader, and pointer users.
+- Native radios, sibling-scoped fit/fleece labels, and no implicit size
+  selection make the choice explicit for keyboard, screen-reader, and pointer
+  users without exposing unverified internal labels on singleton cards.
 
 ## Remaining non-blocking work
 
-- Static generation runs before backend activation, so the schema change needs
-  the documented two-deploy sequence while API ingress remains closed.
 - Cross-card active offer ID uniqueness is enforced by importer, deploy, and
   healthcheck validation rather than a global relational unique constraint.
 - The rollback is safe before new orders reference the split cards; after that,
@@ -37,3 +36,9 @@ local, database-rehearsal, and staging verification.
   customer.
 - The inactive Supabase Edge compatibility functions were hardened and tested,
   but are not deployed because the production checkout runs through Fastify.
+
+## Operational invariant retained
+
+Static generation runs before backend activation. Future schema changes to the
+catalog must therefore retain the documented migration-first, two-deploy
+sequence while external API ingress is closed.

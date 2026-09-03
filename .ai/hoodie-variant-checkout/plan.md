@@ -35,10 +35,14 @@
    explicitly hidden offers and returns exactly one of: selected, unavailable,
    ambiguous, or reselection-required.
 3. On catalog modals and product pages:
-   - show the current fit and warmth in human language;
+   - show the current fit and warmth in human language only when the catalog
+     contains a customer-selectable sibling card in the same variant group;
    - show links to sibling cards only for the dimension that differs;
    - keep size as the within-card choice;
    - stop quick-add from silently choosing M.
+   Do not publish internal fit/warmth backfills as customer facts for singleton
+   groups: without a sibling choice those values are operational metadata, and
+   legacy descriptions can be a more authoritative source of product wording.
 4. Store `offerId` in cart and checkout snapshots, include it in cart keys and
    display human-readable variant details.
 5. Keep storefront product UUID as the ecommerce/feed product ID; add offer ID

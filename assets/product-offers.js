@@ -196,8 +196,28 @@
     };
   }
 
-  function cartDescription(product, size) {
+  function hasVariantSiblings(product, products) {
+    var current = storefrontVariant(product);
+    if (!current.groupKey || !Array.isArray(products)) return false;
+    var currentId = text(product && product.id);
+    return products.some(function (candidate) {
+      if (!candidate || candidate === product || !text(candidate.slug)) return false;
+      var candidateId = text(candidate.id);
+      if (currentId && candidateId && candidateId === currentId) return false;
+      return storefrontVariant(candidate).groupKey === current.groupKey;
+    });
+  }
+
+  function displayVariantLabels(product, products) {
     var labels = variantLabels(product);
+    if (!hasVariantSiblings(product, products)) {
+      return { groupKey: labels.groupKey, fit: '', warmth: '' };
+    }
+    return labels;
+  }
+
+  function cartDescription(product, size, products) {
+    var labels = displayVariantLabels(product, products);
     return [labels.fit, labels.warmth, normalizeSize(size) ? 'Размер ' + normalizeSize(size) : '']
       .filter(Boolean)
       .join(' · ');
@@ -222,6 +242,8 @@
     fitLabel: fitLabel,
     warmthLabel: warmthLabel,
     variantLabels: variantLabels,
+    hasVariantSiblings: hasVariantSiblings,
+    displayVariantLabels: displayVariantLabels,
     cartDescription: cartDescription,
     cartKey: cartKey
   });

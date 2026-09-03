@@ -682,6 +682,7 @@ function readJson(key,fallback){
 
 const localProducts=(window.KOMUI_PRODUCTS||[]).map(p=>({
   id:String(p.id),
+  slug:p.slug||'',
   name:p.name,
   price:Number(p.price??p.price_min??p.price_max)||0,
   priceOld:Number(p.priceOld??p.compare_at_price)||null,
@@ -701,7 +702,7 @@ function hydrateItem(item){
   if(!product)return null;
   const resolved=PRODUCT_OFFERS.resolve(product,{offerId:item.offerId||item.offer_id,size:item.size});
   const variant=PRODUCT_OFFERS.storefrontVariant(product);
-  const labels=PRODUCT_OFFERS.variantLabels(product);
+  const labels=PRODUCT_OFFERS.displayVariantLabels(product,localProducts);
   return {
     ...item,...product,
     key:item.key||['legacy',product.id,PRODUCT_OFFERS.normalizeSize(item.size)].join(':'),

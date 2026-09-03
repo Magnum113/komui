@@ -6,6 +6,7 @@ const offers = require('../assets/product-offers.js');
 
 const base = {
   id: 'product-1',
+  slug: 'hoodie-gta-cropped',
   storefront_variant: { group_key: 'hoodie-gta', fit: 'cropped', warmth: 'no-fleece' },
   requires_offer_id_sizes: [],
   sizes: ['S', 'M', 'L'],
@@ -65,10 +66,31 @@ assert.deepEqual(offers.variantLabels(base), {
   fit: 'Укороченная посадка',
   warmth: 'Без начёса'
 });
+assert.deepEqual(offers.displayVariantLabels(base, [base]), {
+  groupKey: 'hoodie-gta',
+  fit: '',
+  warmth: ''
+});
+const regularSibling = {
+  id: 'product-2',
+  slug: 'hoodie-gta-regular',
+  storefront_variant: { group_key: 'hoodie-gta', fit: 'regular', warmth: 'no-fleece' }
+};
+assert.deepEqual(offers.displayVariantLabels(base, [base, regularSibling]), {
+  groupKey: 'hoodie-gta',
+  fit: 'Укороченная посадка',
+  warmth: 'Без начёса'
+});
+assert.deepEqual(offers.displayVariantLabels(base, [base, { ...regularSibling, slug: '' }]), {
+  groupKey: 'hoodie-gta',
+  fit: '',
+  warmth: ''
+});
 assert.equal(
-  offers.cartDescription(base, 'm'),
+  offers.cartDescription(base, 'm', [base, regularSibling]),
   'Укороченная посадка · Без начёса · Размер M'
 );
+assert.equal(offers.cartDescription(base, 'm', [base]), 'Размер M');
 assert.equal(offers.cartKey('product-1', 'GTA-CRP-NF-M'), 'product-1:GTA-CRP-NF-M');
 
 const options = offers.sizeOptions(base);

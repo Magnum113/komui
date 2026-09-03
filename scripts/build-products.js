@@ -1118,8 +1118,8 @@ function renderProductVariantSelector(product, products = []) {
   return `<nav class="p-variants" aria-label="${heading}"><div class="p-label">${heading}</div><div class="p-variant-links">${links}</div></nav>`;
 }
 
-function renderProductVariantFacts(product) {
-  const labels = PRODUCT_OFFERS.variantLabels(product);
+function renderProductVariantFacts(product, products = []) {
+  const labels = PRODUCT_OFFERS.displayVariantLabels(product, products);
   return [
     labels.fit ? `<div><span>Посадка</span><strong>${escapeHtml(labels.fit.replace(/ посадка$/i, ''))}</strong></div>` : '',
     labels.warmth ? `<div><span>Утепление</span><strong>${escapeHtml(labels.warmth)}</strong></div>` : '',
@@ -1830,7 +1830,7 @@ function renderProductPage(product, products = []) {
   const ogImage = heroImage ? absolutizeUrl(heroImage) : `${SITE_ORIGIN}/assets/og-image.png`;
   const sizeButtons = renderProductSizeOptions(product);
   const variantSelectorHtml = renderProductVariantSelector(product, products);
-  const variantFactsHtml = renderProductVariantFacts(product);
+  const variantFactsHtml = renderProductVariantFacts(product, products);
   const sizeChartHtml = renderSizeChart(product);
   const sizeChartButtonHtml = sizeChartHtml
     ? '\n              <button type="button" class="p-size-chart-btn" id="pSizeChartOpen">Таблица размеров</button>'
@@ -1939,7 +1939,7 @@ ${renderHeaderPanels()}
             <span class="p-price" id="pPrice">${escapeHtml(priceText)}</span>
             ${oldPriceHtml}
           </div>
-          ${variantSelectorHtml}
+${variantSelectorHtml ? `          ${variantSelectorHtml}` : ''}
           <div class="p-meta">
             ${product.color_name ? `<div><span>Цвет</span><strong>${escapeHtml(product.color_name)}</strong></div>` : ''}
             ${product.decoration_type ? `<div><span>Оформление</span><strong>${escapeHtml(product.decoration_type)}</strong></div>` : ''}

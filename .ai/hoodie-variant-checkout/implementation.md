@@ -1,8 +1,7 @@
 # Hoodie variant checkout — implementation record
 
-Status at 2026-09-03 before production rollout: implementation and staging
-verification complete; production migration and rollout pending the controlled
-maintenance sequence in `plan.md`.
+Status at 2026-09-03: implementation, migration rehearsal, staging verification,
+and controlled production rollout complete.
 
 ## Implemented contract
 
@@ -23,8 +22,10 @@ maintenance sequence in `plan.md`.
 - Cart identity, checkout snapshots, delivery quote, promo validation, payment
   identity, order items, analytics, and buyer session state preserve the exact
   offer ID. The order price comes from that offer.
-- The storefront shows fit and fleece facts, exposes sibling-card choices, uses
-  native radio controls, and never silently preselects a size.
+- For groups with multiple active cards, the storefront shows fit and fleece
+  facts and exposes sibling-card choices. It suppresses these internal metadata
+  labels for singleton groups, uses native radio controls, and never silently
+  preselects a size.
 - Ozon offer grouping includes `CRP/REG` and `FLC/NF`, so future imports cannot
   collapse these physical variants back into one product row.
 
@@ -55,6 +56,20 @@ maintenance sequence in `plan.md`.
 - The disposable database, temporary browser proxy/config files, and one
   incomplete inactive staging release from a network-stalled pre-activation
   build were removed. Active and rollback releases were retained.
+- Before production mutation, backup v2 archive
+  `komui-backup-20260903T135701Z.tar.gz.gpg` was uploaded, downloaded back and
+  checksum-verified. A focused custom-format production dump was also validated
+  with `pg_restore --list`.
+- Production changed from 38/35 to 40/37 total/active catalog rows and passed
+  the same exact-card, constraint, global offer-ID, metadata, and read-only
+  `komui_app` repository checks as staging.
+- The production static fallback was regenerated from the new backend, produced
+  37 active product pages, and passed resolver, frontend/build, fabric-fact,
+  analytics, JavaScript, external-image and whitespace gates before final
+  activation.
+- Public production browser verification repeated the exact GTA cropped S cart
+  and checkout flow without clicking the payment button or creating customer
+  data/provider effects.
 
 ## Rollout safeguards
 

@@ -22,12 +22,10 @@
 - backup v2 сохраняет обе KOMUI DB с owners/ACL и staging/production runtime,
   а публикация во внешнее хранилище завершается только после обратного
   скачивания и проверки checksum.
-- hoodie variant contract `hoodie-variants-v1` проверен на staging: checkout
-  использует точный `offerId`, разная посадка/начёс представлены связанными
-  карточками, неоднозначный legacy выбор требует повторного выбора, а deploy
-  fail-closed проверяет совместимость source/schema. Production state нужно
-  подтвердить датированным rollout evidence и
-  `/usr/local/sbin/komui-deploy-status`.
+- hoodie variant contract `hoodie-variants-v1` работает в staging и production:
+  checkout использует точный `offerId`, разная посадка/начёс представлены
+  связанными карточками, неоднозначный legacy выбор требует повторного выбора,
+  а deploy fail-closed проверяет совместимость source/schema.
 
 Точные активные release paths и Git revision не фиксируются здесь как
 долгоживущая константа: их нужно получать через

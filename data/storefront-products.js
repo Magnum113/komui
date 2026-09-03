@@ -242,6 +242,7 @@ window.KOMUI_PRODUCTS = [
       "hit"
     ],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [
       "var16-print-tshirt-washed-grey"
     ],
@@ -249,7 +250,6 @@ window.KOMUI_PRODUCTS = [
       "count": 42,
       "averageRating": 4.95,
       "withMedia": 6,
-      "withText": 11,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -500,6 +500,7 @@ window.KOMUI_PRODUCTS = [
       "hit"
     ],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [
       "var20-print-tshirt-washed-grey"
     ],
@@ -507,7 +508,6 @@ window.KOMUI_PRODUCTS = [
       "count": 11,
       "averageRating": 4.91,
       "withMedia": 0,
-      "withText": 2,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -743,6 +743,7 @@ window.KOMUI_PRODUCTS = [
       "hit"
     ],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [
       "var4-embroidery-tshirt-white"
     ],
@@ -750,7 +751,6 @@ window.KOMUI_PRODUCTS = [
       "count": 8,
       "averageRating": 4.63,
       "withMedia": 0,
-      "withText": 3,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -996,6 +996,7 @@ window.KOMUI_PRODUCTS = [
       "hit"
     ],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [
       "var2-embroidery-tshirt-black"
     ],
@@ -1003,7 +1004,6 @@ window.KOMUI_PRODUCTS = [
       "count": 31,
       "averageRating": 4.84,
       "withMedia": 0,
-      "withText": 11,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -1240,6 +1240,7 @@ window.KOMUI_PRODUCTS = [
       "hit"
     ],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [
       "var15-print-tshirt-white"
     ],
@@ -1247,7 +1248,6 @@ window.KOMUI_PRODUCTS = [
       "count": 10,
       "averageRating": 5,
       "withMedia": 2,
-      "withText": 4,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -1480,12 +1480,12 @@ window.KOMUI_PRODUCTS = [
       "new"
     ],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [],
     "review_summary": {
       "count": 0,
       "averageRating": null,
       "withMedia": 0,
-      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -1653,12 +1653,12 @@ window.KOMUI_PRODUCTS = [
       "new"
     ],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [],
     "review_summary": {
       "count": 0,
       "averageRating": null,
       "withMedia": 0,
-      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -1854,12 +1854,12 @@ window.KOMUI_PRODUCTS = [
       "new"
     ],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [],
     "review_summary": {
       "count": 0,
       "averageRating": null,
       "withMedia": 0,
-      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -1873,7 +1873,7 @@ window.KOMUI_PRODUCTS = [
   },
   {
     "id": "c5f5244c-33b1-4c83-8179-f0d18f91b99b",
-    "design_key": "var2|embroidery|hoodie|black",
+    "design_key": "var2|embroidery|hoodie|black|reg|flc",
     "ozon_variant": "var2",
     "name": "Худи Итачи",
     "slug": "hudi-naruto-itachi-uchiha-vyshivka-chernaya",
@@ -2086,6 +2086,12 @@ window.KOMUI_PRODUCTS = [
       "hit"
     ],
     "compare_at_price": "6000",
+    "storefront_variant": {
+      "group_key": "var2|embroidery|hoodie|black",
+      "fit": "regular",
+      "warmth": "fleece"
+    },
+    "requires_offer_id_sizes": [],
     "slug_redirects": [
       "var2-embroidery-hoodie-black"
     ],
@@ -2093,7 +2099,6 @@ window.KOMUI_PRODUCTS = [
       "count": 3,
       "averageRating": 4.67,
       "withMedia": 0,
-      "withText": 1,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -2324,12 +2329,12 @@ window.KOMUI_PRODUCTS = [
     "short_description": "Серая футболка-варёнка оверсайз с дерзким принтом языка Сукуны из Jujutsu Kaisen. Плотный хлопок, свободная посадка и винтажный эффект кислотной стирки для streetwear-образов.",
     "badges": [],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [],
     "review_summary": {
       "count": 1,
       "averageRating": 5,
       "withMedia": 0,
-      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -2544,12 +2549,12 @@ window.KOMUI_PRODUCTS = [
     "short_description": "Серая футболка-варёнка оверсайз с принтом Мадары Учихи из Naruto. Плотный 100% хлопок, свободная посадка и выразительная графика для аниме- и streetwear-луков.",
     "badges": [],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [],
     "review_summary": {
       "count": 2,
       "averageRating": 5,
       "withMedia": 0,
-      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -2764,12 +2769,12 @@ window.KOMUI_PRODUCTS = [
     "short_description": "Серая футболка-варёнка оверсайз с крупным принтом языка и глаза Сукуны из Jujutsu Kaisen. Плотный хлопок, свободный силуэт и эффект кислотной стирки.",
     "badges": [],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [],
     "review_summary": {
       "count": 3,
       "averageRating": 5,
       "withMedia": 1,
-      "withText": 2,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -2984,12 +2989,12 @@ window.KOMUI_PRODUCTS = [
     "short_description": "Серая футболка-варёнка оверсайз с двусторонним принтом татуировок Сукуны из Jujutsu Kaisen. Плотный хлопок, свободная посадка и акцентная красная графика.",
     "badges": [],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [],
     "review_summary": {
       "count": 1,
       "averageRating": 5,
       "withMedia": 1,
-      "withText": 1,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -3231,6 +3236,7 @@ window.KOMUI_PRODUCTS = [
     "short_description": "Тёплый бежевый с эффектом варёнки — спокойная база, на которой Годжо смотрится мягко, без крика. Для образов в нюдовой и пастельной гамме.",
     "badges": [],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [
       "var16-print-tshirt-washed-beige"
     ],
@@ -3238,7 +3244,6 @@ window.KOMUI_PRODUCTS = [
       "count": 2,
       "averageRating": 4.5,
       "withMedia": 0,
-      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -3251,10 +3256,152 @@ window.KOMUI_PRODUCTS = [
     "fabric_density_gsm": 240
   },
   {
-    "id": "8d6fe381-f203-4861-8108-60d3251dae18",
-    "design_key": "var18|embroidery|hoodie|black",
+    "id": "33744741-8c0f-5b69-a7cb-766c16b88e0f",
+    "design_key": "var18|embroidery|hoodie|black|crp|nf",
     "ozon_variant": "var18",
-    "name": "Худи без начёса GTA",
+    "name": "Худи GTA — укороченное, без начёса",
+    "slug": "ukorochennoe-hudi-grand-theft-auto-gta-bez-nachesa-vyshivka-chernaya",
+    "description": "Укороченное чёрное худи без начёса с машинной вышивкой по мотивам GTA. Плотный футер трёхнитка держит форму, а укороченная посадка создаёт более компактный силуэт. Состав: 100% хлопок (пенье). Плотность: 370 г/м². Уход: машинная стирка при 30 °C, гладить с изнанки, не отбеливать.",
+    "ozon_description": "Укороченное чёрное худи без начёса с машинной вышивкой по мотивам GTA. Плотный футер трёхнитка держит форму, а укороченная посадка создаёт более компактный силуэт. Состав: 100% хлопок (пенье). Плотность: 370 г/м². Уход: машинная стирка при 30 °C, гладить с изнанки, не отбеливать.",
+    "category": "Худи",
+    "category_slug": "hoodies",
+    "product_type": "Худи",
+    "product_type_slug": "hoodie",
+    "decoration_type": "Вышивка",
+    "decoration_slug": "embroidery",
+    "color_name": "Черный",
+    "color_slug": "black",
+    "color_hex": "#111111",
+    "franchise_type": "game",
+    "title_name": "Grand Theft Auto",
+    "title_slug": "grand-theft-auto",
+    "anime_title": null,
+    "anime_slug": "",
+    "character_name": null,
+    "character_slug": "",
+    "collection_name": "GTA",
+    "collection_slug": "gta",
+    "design_name": "GTA",
+    "design_slug": "gta",
+    "tags": [
+      "black",
+      "embroidery",
+      "game",
+      "gta",
+      "hoodie",
+      "streetwear",
+      "cropped",
+      "no-fleece"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "price_min": "3900.00",
+    "price_max": "3900.00",
+    "currency": "RUB",
+    "primary_image_url": "/media/products/48/481d412f4ecd074b/800.webp",
+    "main_image_path": "/media/products/48/481d412f4ecd074b/800.webp",
+    "image_urls": [
+      "/media/products/48/481d412f4ecd074b/800.webp",
+      "/media/products/50/501744262ea35493/800.webp",
+      "/media/products/1a/1a4bbbf5bc334ed9/800.webp",
+      "/media/products/2d/2dc1028ee9e160f0/800.webp",
+      "/media/products/c6/c69210ab1d76bdc0/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/4f/4fd775f10e78995d/800.webp"
+    ],
+    "size_chart_json": null,
+    "offers": [
+      {
+        "sku": 3134088448,
+        "offer_id": "D18-HDY-EMB-BLK-CRP-NF-M",
+        "name": "Худи укороченное с вышивкой GTA Черная M",
+        "size": "M",
+        "price": 3900,
+        "images": [
+          "/media/products/48/481d412f4ecd074b/800.webp",
+          "/media/products/50/501744262ea35493/800.webp",
+          "/media/products/1a/1a4bbbf5bc334ed9/800.webp",
+          "/media/products/2d/2dc1028ee9e160f0/800.webp",
+          "/media/products/c6/c69210ab1d76bdc0/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp"
+        ],
+        "primary_image": "/media/products/48/481d412f4ecd074b/800.webp",
+        "archived": false,
+        "visible": null
+      },
+      {
+        "sku": 3134088915,
+        "offer_id": "D18-HDY-EMB-BLK-CRP-NF-S",
+        "name": "Худи укороченное с вышивкой GTA Черная S",
+        "size": "S",
+        "price": 3900,
+        "images": [
+          "/media/products/48/481d412f4ecd074b/800.webp",
+          "/media/products/50/501744262ea35493/800.webp",
+          "/media/products/1a/1a4bbbf5bc334ed9/800.webp",
+          "/media/products/2d/2dc1028ee9e160f0/800.webp",
+          "/media/products/c6/c69210ab1d76bdc0/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp"
+        ],
+        "primary_image": "/media/products/48/481d412f4ecd074b/800.webp",
+        "archived": false,
+        "visible": null
+      },
+      {
+        "sku": 3134088781,
+        "offer_id": "D18-HDY-EMB-BLK-CRP-NF-L",
+        "name": "Худи укороченное с вышивкой GTA Черная L",
+        "size": "L",
+        "price": 3900,
+        "images": [
+          "/media/products/4f/4fd775f10e78995d/800.webp",
+          "/media/products/50/501744262ea35493/800.webp",
+          "/media/products/1a/1a4bbbf5bc334ed9/800.webp",
+          "/media/products/2d/2dc1028ee9e160f0/800.webp",
+          "/media/products/c6/c69210ab1d76bdc0/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp"
+        ],
+        "primary_image": "/media/products/4f/4fd775f10e78995d/800.webp",
+        "archived": false,
+        "visible": null
+      }
+    ],
+    "is_active": true,
+    "sort_order": 15,
+    "short_description": "Укороченная посадка, плотный футер без начёса и аккуратная вышивка GTA.",
+    "badges": [
+      "Укороченное",
+      "Без начёса"
+    ],
+    "compare_at_price": "6000",
+    "storefront_variant": {
+      "group_key": "var18|embroidery|hoodie|black",
+      "fit": "cropped",
+      "warmth": "no-fleece"
+    },
+    "requires_offer_id_sizes": [],
+    "slug_redirects": [],
+    "review_summary": {
+      "count": 1,
+      "averageRating": 5,
+      "withMedia": 0,
+      "ratingCounts": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 1
+      }
+    }
+  },
+  {
+    "id": "8d6fe381-f203-4861-8108-60d3251dae18",
+    "design_key": "var18|embroidery|hoodie|black|reg|nf",
+    "ozon_variant": "var18",
+    "name": "Худи GTA — обычное, без начёса",
     "slug": "hudi-grand-theft-auto-gta-bez-nachesa-vyshivka-chernaya",
     "description": "Стильное чёрное худи с вышивкой GTA — выбор тех, кто ценит комфорт, качество и уличную эстетику.\nИзделие выполнено из плотного хлопкового футера трёхнитки премиум-класса (пенье, 100% хлопок), без начёса — идеально подходит для повседневной носки в любое время года.\nНа груди — аккуратная машинная вышивка по мотивам легендарной игры GTA, которая делает худи узнаваемым и добавляет характер.\nПлотная ткань держит форму, не растягивается и не закатывается даже после многочисленных стирок.\nСвободный оверсайз-крой обеспечивает комфортное прилегание и стильный силуэт. Худи унисекс — одинаково хорошо смотрится и на парнях, и на девушках.\nИдеально сочетается с джинсами, карго-брюками, кроссовками и элементами streetwear-образа.\nПодходит для прогулок, повседневных луков, фотосессий и в подарок фанатам культовой серии игр GTA и любителям уличной моды.\nСостав: 100% хлопок (пенье)\nМатериал: футер трёхнитка, без начёса, плотность 370 грамм\nТип кроя: oversize\nУход: машинная стирка при 30 °C, гладить с изнанки, не отбеливать",
     "ozon_description": "Стильное чёрное худи с вышивкой GTA — выбор тех, кто ценит комфорт, качество и уличную эстетику.\nИзделие выполнено из плотного хлопкового футера трёхнитки премиум-класса (пенье, 100% хлопок), без начёса — идеально подходит для повседневной носки в любое время года.\nНа груди — аккуратная машинная вышивка по мотивам легендарной игры GTA, которая делает худи узнаваемым и добавляет характер.\nПлотная ткань держит форму, не растягивается и не закатывается даже после многочисленных стирок.\nСвободный оверсайз-крой обеспечивает комфортное прилегание и стильный силуэт. Худи унисекс — одинаково хорошо смотрится и на парнях, и на девушках.\nИдеально сочетается с джинсами, карго-брюками, кроссовками и элементами streetwear-образа.\nПодходит для прогулок, повседневных луков, фотосессий и в подарок фанатам культовой серии игр GTA и любителям уличной моды.\nСостав: 100% хлопок (пенье)\nМатериал: футер трёхнитка, без начёса, плотность 370 грамм\nТип кроя: oversize\nУход: машинная стирка при 30 °C, гладить с изнанки, не отбеливать",
@@ -3284,7 +3431,9 @@ window.KOMUI_PRODUCTS = [
       "game",
       "gta",
       "hoodie",
-      "streetwear"
+      "streetwear",
+      "regular",
+      "no-fleece"
     ],
     "sizes": [
       "S",
@@ -3296,20 +3445,14 @@ window.KOMUI_PRODUCTS = [
     "price_min": "3900.00",
     "price_max": "3900.00",
     "currency": "RUB",
-    "primary_image_url": "/media/products/48/481d412f4ecd074b/800.webp",
-    "main_image_path": "./assets/ozon-main/02-худи-без-начеса-с-вышивкой-gta.jpg",
+    "primary_image_url": "/media/products/c7/c795bc4fdfcc1356/800.webp",
+    "main_image_path": "/media/products/c7/c795bc4fdfcc1356/800.webp",
     "image_urls": [
-      "/media/products/48/481d412f4ecd074b/800.webp",
-      "/media/products/50/501744262ea35493/800.webp",
-      "/media/products/1a/1a4bbbf5bc334ed9/800.webp",
-      "/media/products/2d/2dc1028ee9e160f0/800.webp",
-      "/media/products/c6/c69210ab1d76bdc0/800.webp",
-      "/media/products/eb/eb63be4e7c210c93/800.webp",
-      "/media/products/4f/4fd775f10e78995d/800.webp",
       "/media/products/c7/c795bc4fdfcc1356/800.webp",
       "/media/products/b4/b45f08b881fd74f3/800.webp",
       "/media/products/f8/f87122373160205e/800.webp",
-      "/media/products/90/909d3748cd95d738/800.webp"
+      "/media/products/90/909d3748cd95d738/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -3385,60 +3528,6 @@ window.KOMUI_PRODUCTS = [
       "version": 0.1
     },
     "offers": [
-      {
-        "sku": 3134088448,
-        "offer_id": "D18-HDY-EMB-BLK-CRP-NF-M",
-        "name": "Худи укороченное с вышивкой GTA Черная M",
-        "size": "M",
-        "price": 3900,
-        "images": [
-          "/media/products/48/481d412f4ecd074b/800.webp",
-          "/media/products/50/501744262ea35493/800.webp",
-          "/media/products/1a/1a4bbbf5bc334ed9/800.webp",
-          "/media/products/2d/2dc1028ee9e160f0/800.webp",
-          "/media/products/c6/c69210ab1d76bdc0/800.webp",
-          "/media/products/eb/eb63be4e7c210c93/800.webp"
-        ],
-        "primary_image": "/media/products/48/481d412f4ecd074b/800.webp",
-        "archived": false,
-        "visible": null
-      },
-      {
-        "sku": 3134088915,
-        "offer_id": "D18-HDY-EMB-BLK-CRP-NF-S",
-        "name": "Худи укороченное с вышивкой GTA Черная S",
-        "size": "S",
-        "price": 3900,
-        "images": [
-          "/media/products/48/481d412f4ecd074b/800.webp",
-          "/media/products/50/501744262ea35493/800.webp",
-          "/media/products/1a/1a4bbbf5bc334ed9/800.webp",
-          "/media/products/2d/2dc1028ee9e160f0/800.webp",
-          "/media/products/c6/c69210ab1d76bdc0/800.webp",
-          "/media/products/eb/eb63be4e7c210c93/800.webp"
-        ],
-        "primary_image": "/media/products/48/481d412f4ecd074b/800.webp",
-        "archived": false,
-        "visible": null
-      },
-      {
-        "sku": 3134088781,
-        "offer_id": "D18-HDY-EMB-BLK-CRP-NF-L",
-        "name": "Худи укороченное с вышивкой GTA Черная L",
-        "size": "L",
-        "price": 3900,
-        "images": [
-          "/media/products/4f/4fd775f10e78995d/800.webp",
-          "/media/products/50/501744262ea35493/800.webp",
-          "/media/products/1a/1a4bbbf5bc334ed9/800.webp",
-          "/media/products/2d/2dc1028ee9e160f0/800.webp",
-          "/media/products/c6/c69210ab1d76bdc0/800.webp",
-          "/media/products/eb/eb63be4e7c210c93/800.webp"
-        ],
-        "primary_image": "/media/products/4f/4fd775f10e78995d/800.webp",
-        "archived": false,
-        "visible": null
-      },
       {
         "sku": 3169574953,
         "offer_id": "D18-HDY-EMB-BLK-REG-NF-S",
@@ -3527,34 +3616,46 @@ window.KOMUI_PRODUCTS = [
     ],
     "is_active": true,
     "sort_order": 15,
-    "short_description": "Худи без начёса: не парит летом и держит форму к осени. Аккуратная вышивка в духе GTA вместо громких принтов — тот случай, когда решает деталь.",
-    "badges": [],
+    "short_description": "Обычная свободная посадка, плотный футер без начёса и аккуратная вышивка GTA.",
+    "badges": [
+      "Обычное",
+      "Без начёса"
+    ],
     "compare_at_price": "6000",
+    "storefront_variant": {
+      "group_key": "var18|embroidery|hoodie|black",
+      "fit": "regular",
+      "warmth": "no-fleece"
+    },
+    "requires_offer_id_sizes": [
+      "S",
+      "M",
+      "L"
+    ],
     "slug_redirects": [
       "var18-embroidery-hoodie-black"
     ],
     "review_summary": {
-      "count": 1,
-      "averageRating": 5,
+      "count": 0,
+      "averageRating": null,
       "withMedia": 0,
-      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
         "3": 0,
         "4": 0,
-        "5": 1
+        "5": 0
       }
     }
   },
   {
     "id": "4d4af0f7-6c22-48b1-bc76-3e5803d9bf9e",
-    "design_key": "var8|embroidery|hoodie|white",
+    "design_key": "var8|embroidery|hoodie|white|reg|nf",
     "ozon_variant": "var8",
-    "name": "Худи Gravity",
+    "name": "Худи Gravity белое — обычное, без начёса",
     "slug": "hudi-gravity-vyshivka-belaya",
-    "description": "Белое худи с вышивкой Gravity Defied — стильная и универсальная толстовка для повседневной носки. Модель выполнена из футера 3-х нитки плотностью 240 г/м² (хлопок 85%, полиэстер 10%, эластан 5%). Материал мягкий, приятный к телу, хорошо пропускает воздух и сохраняет форму после стирок.\nКлассический крой делает худи удобным и практичным. Универсальный белый цвет легко сочетается с джинсами, спортивными брюками или карго. Вышивка по мотивам культовой игры Gravity Defied добавляет оригинальности и станет акцентом в любом образе.\nТолстовка подходит как мужчинам, так и женщинам. Идеальна для прогулок, учёбы, работы и отдыха.\nПреимущества модели:\nХуди белого цвета с классическим кроем; Футер 3-х нитка (240 г/м²) — плотный, долговечный материал; Состав: хлопок 85%, полиэстер 10%, эластан 5%; Удобный капюшон и вместительный карман-кенгуру; Вышивка по мотивам легендарной игры Gravity Defied. Такое худи станет отличным выбором для любителей ретро-игр, коллекционеров и тех, кто ценит качественные и стильные вещи.",
-    "ozon_description": "Белое худи с вышивкой Gravity Defied — стильная и универсальная толстовка для повседневной носки. Модель выполнена из футера 3-х нитки плотностью 240 г/м² (хлопок 85%, полиэстер 10%, эластан 5%). Материал мягкий, приятный к телу, хорошо пропускает воздух и сохраняет форму после стирок.\nКлассический крой делает худи удобным и практичным. Универсальный белый цвет легко сочетается с джинсами, спортивными брюками или карго. Вышивка по мотивам культовой игры Gravity Defied добавляет оригинальности и станет акцентом в любом образе.\nТолстовка подходит как мужчинам, так и женщинам. Идеальна для прогулок, учёбы, работы и отдыха.\nПреимущества модели:\nХуди белого цвета с классическим кроем; Футер 3-х нитка (240 г/м²) — плотный, долговечный материал; Состав: хлопок 85%, полиэстер 10%, эластан 5%; Удобный капюшон и вместительный карман-кенгуру; Вышивка по мотивам легендарной игры Gravity Defied. Такое худи станет отличным выбором для любителей ретро-игр, коллекционеров и тех, кто ценит качественные и стильные вещи.",
+    "description": "Белое худи Gravity без начёса с машинной вышивкой. Обычная свободная посадка и гладкая изнанка делают модель удобной для повседневной носки в помещении и в межсезонье. Универсальный белый цвет легко сочетается с джинсами, спортивными брюками и карго. Уход: машинная стирка при 30 °C, гладить с изнанки, не отбеливать.",
+    "ozon_description": "Белое худи Gravity без начёса с машинной вышивкой. Обычная свободная посадка и гладкая изнанка делают модель удобной для повседневной носки в помещении и в межсезонье. Универсальный белый цвет легко сочетается с джинсами, спортивными брюками и карго. Уход: машинная стирка при 30 °C, гладить с изнанки, не отбеливать.",
     "category": "Худи",
     "category_slug": "hoodies",
     "product_type": "Худи",
@@ -3581,7 +3682,9 @@ window.KOMUI_PRODUCTS = [
       "hoodie",
       "line-art",
       "original",
-      "white"
+      "white",
+      "regular",
+      "no-fleece"
     ],
     "sizes": [
       "S",
@@ -3593,19 +3696,259 @@ window.KOMUI_PRODUCTS = [
     "price_min": "3500.00",
     "price_max": "3500.00",
     "currency": "RUB",
+    "primary_image_url": "/media/products/c5/c56ba224d0dfa0c8/800.webp",
+    "main_image_path": "/media/products/c5/c56ba224d0dfa0c8/800.webp",
+    "image_urls": [
+      "/media/products/c5/c56ba224d0dfa0c8/800.webp",
+      "/media/products/ab/ab2244f94c49c5c1/800.webp",
+      "/media/products/08/081c7c2bc5d221ee/800.webp",
+      "/media/products/43/43b038877bfff9b1/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp"
+    ],
+    "size_chart_json": {
+      "content": [
+        {
+          "table": {
+            "body": [
+              {
+                "data": [
+                  [
+                    "Размер",
+                    ""
+                  ],
+                  "S",
+                  "M",
+                  "L",
+                  "XL"
+                ]
+              },
+              {
+                "data": [
+                  [
+                    "Российский размер",
+                    ""
+                  ],
+                  "46",
+                  "48",
+                  "50",
+                  "52"
+                ]
+              },
+              {
+                "data": [
+                  [
+                    "A — Ширина изделия, см",
+                    ""
+                  ],
+                  "54",
+                  "56",
+                  "59",
+                  "61"
+                ]
+              },
+              {
+                "data": [
+                  [
+                    "B — Длина изделия, см",
+                    ""
+                  ],
+                  "72",
+                  "73",
+                  "74",
+                  "76"
+                ]
+              },
+              {
+                "data": [
+                  [
+                    "C — Длина рукава, см",
+                    ""
+                  ],
+                  "63",
+                  "65",
+                  "65",
+                  "66"
+                ]
+              }
+            ],
+            "title": "Размерная таблица худи с капюшоном"
+          },
+          "widgetName": "tcTable"
+        }
+      ],
+      "version": 0.1
+    },
+    "offers": [
+      {
+        "sku": 3169503419,
+        "offer_id": "D8-HDY-EMB-WHT-REG-NF-S",
+        "name": "Худи без начеса с вышивкой Gravity S",
+        "size": "S",
+        "price": 3500,
+        "images": [
+          "/media/products/c5/c56ba224d0dfa0c8/800.webp",
+          "/media/products/ab/ab2244f94c49c5c1/800.webp",
+          "/media/products/08/081c7c2bc5d221ee/800.webp",
+          "/media/products/43/43b038877bfff9b1/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp"
+        ],
+        "primary_image": "/media/products/c5/c56ba224d0dfa0c8/800.webp",
+        "archived": false,
+        "visible": null
+      },
+      {
+        "sku": 3176809802,
+        "offer_id": "D8-HDY-EMB-WHT-REG-NF-2XL",
+        "name": "Худи без начеса с вышивкой Gravity XXL",
+        "size": "XXL",
+        "price": 3500,
+        "images": [
+          "/media/products/c5/c56ba224d0dfa0c8/800.webp",
+          "/media/products/ab/ab2244f94c49c5c1/800.webp",
+          "/media/products/08/081c7c2bc5d221ee/800.webp",
+          "/media/products/43/43b038877bfff9b1/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp"
+        ],
+        "primary_image": "/media/products/c5/c56ba224d0dfa0c8/800.webp",
+        "archived": false,
+        "visible": null
+      },
+      {
+        "sku": 3176809894,
+        "offer_id": "D8-HDY-EMB-WHT-REG-NF-L",
+        "name": "Худи без начеса с вышивкой Gravity L",
+        "size": "L",
+        "price": 3500,
+        "images": [
+          "/media/products/c5/c56ba224d0dfa0c8/800.webp",
+          "/media/products/ab/ab2244f94c49c5c1/800.webp",
+          "/media/products/08/081c7c2bc5d221ee/800.webp",
+          "/media/products/43/43b038877bfff9b1/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp"
+        ],
+        "primary_image": "/media/products/c5/c56ba224d0dfa0c8/800.webp",
+        "archived": false,
+        "visible": null
+      },
+      {
+        "sku": 3176809914,
+        "offer_id": "D8-HDY-EMB-WHT-REG-NF-XL",
+        "name": "Худи без начеса с вышивкой Gravity XL",
+        "size": "XL",
+        "price": 3500,
+        "images": [
+          "/media/products/c5/c56ba224d0dfa0c8/800.webp",
+          "/media/products/ab/ab2244f94c49c5c1/800.webp",
+          "/media/products/08/081c7c2bc5d221ee/800.webp",
+          "/media/products/43/43b038877bfff9b1/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp"
+        ],
+        "primary_image": "/media/products/c5/c56ba224d0dfa0c8/800.webp",
+        "archived": false,
+        "visible": null
+      },
+      {
+        "sku": 3176809807,
+        "offer_id": "D8-HDY-EMB-WHT-REG-NF-M",
+        "name": "Худи без начеса с вышивкой Gravity M",
+        "size": "M",
+        "price": 3500,
+        "images": [
+          "/media/products/c5/c56ba224d0dfa0c8/800.webp",
+          "/media/products/ab/ab2244f94c49c5c1/800.webp",
+          "/media/products/08/081c7c2bc5d221ee/800.webp",
+          "/media/products/43/43b038877bfff9b1/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp"
+        ],
+        "primary_image": "/media/products/c5/c56ba224d0dfa0c8/800.webp",
+        "archived": false,
+        "visible": null
+      }
+    ],
+    "is_active": true,
+    "sort_order": 16,
+    "short_description": "Обычная посадка, гладкая изнанка без начёса и минималистичная вышивка Gravity.",
+    "badges": [
+      "Без начёса"
+    ],
+    "compare_at_price": "6000",
+    "storefront_variant": {
+      "group_key": "var8|embroidery|hoodie|white",
+      "fit": "regular",
+      "warmth": "no-fleece"
+    },
+    "requires_offer_id_sizes": [
+      "S"
+    ],
+    "slug_redirects": [
+      "var8-embroidery-hoodie-white"
+    ],
+    "review_summary": {
+      "count": 1,
+      "averageRating": 4,
+      "withMedia": 0,
+      "ratingCounts": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 1,
+        "5": 0
+      }
+    }
+  },
+  {
+    "id": "f3986f1d-c338-589a-bd90-e6745fced385",
+    "design_key": "var8|embroidery|hoodie|white|reg|flc",
+    "ozon_variant": "var8",
+    "name": "Худи Gravity белое — обычное, с начёсом",
+    "slug": "hudi-gravity-s-nachesom-vyshivka-belaya",
+    "description": "Белое худи Gravity с начёсом и машинной вышивкой. Обычная свободная посадка, мягкая утеплённая изнанка и размер S. Подходит для прохладной погоды и спокойных повседневных образов. Уход: машинная стирка при 30 °C, гладить с изнанки, не отбеливать.",
+    "ozon_description": "Белое худи Gravity с начёсом и машинной вышивкой. Обычная свободная посадка, мягкая утеплённая изнанка и размер S. Подходит для прохладной погоды и спокойных повседневных образов. Уход: машинная стирка при 30 °C, гладить с изнанки, не отбеливать.",
+    "category": "Худи",
+    "category_slug": "hoodies",
+    "product_type": "Худи",
+    "product_type_slug": "hoodie",
+    "decoration_type": "Вышивка",
+    "decoration_slug": "embroidery",
+    "color_name": "Белый",
+    "color_slug": "white",
+    "color_hex": "#ffffff",
+    "franchise_type": "original",
+    "title_name": "Gravity",
+    "title_slug": "gravity",
+    "anime_title": null,
+    "anime_slug": "",
+    "character_name": null,
+    "character_slug": "",
+    "collection_name": "Gravity",
+    "collection_slug": "gravity",
+    "design_name": "Gravity",
+    "design_slug": "gravity",
+    "tags": [
+      "embroidery",
+      "gravity",
+      "hoodie",
+      "line-art",
+      "original",
+      "white",
+      "regular",
+      "fleece"
+    ],
+    "sizes": [
+      "S"
+    ],
+    "price_min": "3500.00",
+    "price_max": "3500.00",
+    "currency": "RUB",
     "primary_image_url": "/media/products/5b/5b2123b9b5aa77c3/800.webp",
-    "main_image_path": "./assets/ozon-main/03-худи-с-вышивкой-gravity.jpg",
+    "main_image_path": "/media/products/5b/5b2123b9b5aa77c3/800.webp",
     "image_urls": [
       "/media/products/5b/5b2123b9b5aa77c3/800.webp",
       "/media/products/f8/f8292ef393b4beaa/800.webp",
       "/media/products/09/0990b65d3fd6fa5b/800.webp",
       "/media/products/52/52dfdc27fc532ebf/800.webp",
       "/media/products/91/91e9373073ec5eca/800.webp",
-      "/media/products/eb/eb63be4e7c210c93/800.webp",
-      "/media/products/c5/c56ba224d0dfa0c8/800.webp",
-      "/media/products/ab/ab2244f94c49c5c1/800.webp",
-      "/media/products/08/081c7c2bc5d221ee/800.webp",
-      "/media/products/43/43b038877bfff9b1/800.webp"
+      "/media/products/eb/eb63be4e7c210c93/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -3714,111 +4057,31 @@ window.KOMUI_PRODUCTS = [
         "primary_image": "/media/products/5b/5b2123b9b5aa77c3/800.webp",
         "archived": false,
         "visible": null
-      },
-      {
-        "sku": 3169503419,
-        "offer_id": "D8-HDY-EMB-WHT-REG-NF-S",
-        "name": "Худи без начеса с вышивкой Gravity S",
-        "size": "S",
-        "price": 3500,
-        "images": [
-          "/media/products/c5/c56ba224d0dfa0c8/800.webp",
-          "/media/products/ab/ab2244f94c49c5c1/800.webp",
-          "/media/products/08/081c7c2bc5d221ee/800.webp",
-          "/media/products/43/43b038877bfff9b1/800.webp",
-          "/media/products/eb/eb63be4e7c210c93/800.webp"
-        ],
-        "primary_image": "/media/products/c5/c56ba224d0dfa0c8/800.webp",
-        "archived": false,
-        "visible": null
-      },
-      {
-        "sku": 3176809802,
-        "offer_id": "D8-HDY-EMB-WHT-REG-NF-2XL",
-        "name": "Худи без начеса с вышивкой Gravity XXL",
-        "size": "XXL",
-        "price": 3500,
-        "images": [
-          "/media/products/c5/c56ba224d0dfa0c8/800.webp",
-          "/media/products/ab/ab2244f94c49c5c1/800.webp",
-          "/media/products/08/081c7c2bc5d221ee/800.webp",
-          "/media/products/43/43b038877bfff9b1/800.webp",
-          "/media/products/eb/eb63be4e7c210c93/800.webp"
-        ],
-        "primary_image": "/media/products/c5/c56ba224d0dfa0c8/800.webp",
-        "archived": false,
-        "visible": null
-      },
-      {
-        "sku": 3176809894,
-        "offer_id": "D8-HDY-EMB-WHT-REG-NF-L",
-        "name": "Худи без начеса с вышивкой Gravity L",
-        "size": "L",
-        "price": 3500,
-        "images": [
-          "/media/products/c5/c56ba224d0dfa0c8/800.webp",
-          "/media/products/ab/ab2244f94c49c5c1/800.webp",
-          "/media/products/08/081c7c2bc5d221ee/800.webp",
-          "/media/products/43/43b038877bfff9b1/800.webp",
-          "/media/products/eb/eb63be4e7c210c93/800.webp"
-        ],
-        "primary_image": "/media/products/c5/c56ba224d0dfa0c8/800.webp",
-        "archived": false,
-        "visible": null
-      },
-      {
-        "sku": 3176809914,
-        "offer_id": "D8-HDY-EMB-WHT-REG-NF-XL",
-        "name": "Худи без начеса с вышивкой Gravity XL",
-        "size": "XL",
-        "price": 3500,
-        "images": [
-          "/media/products/c5/c56ba224d0dfa0c8/800.webp",
-          "/media/products/ab/ab2244f94c49c5c1/800.webp",
-          "/media/products/08/081c7c2bc5d221ee/800.webp",
-          "/media/products/43/43b038877bfff9b1/800.webp",
-          "/media/products/eb/eb63be4e7c210c93/800.webp"
-        ],
-        "primary_image": "/media/products/c5/c56ba224d0dfa0c8/800.webp",
-        "archived": false,
-        "visible": null
-      },
-      {
-        "sku": 3176809807,
-        "offer_id": "D8-HDY-EMB-WHT-REG-NF-M",
-        "name": "Худи без начеса с вышивкой Gravity M",
-        "size": "M",
-        "price": 3500,
-        "images": [
-          "/media/products/c5/c56ba224d0dfa0c8/800.webp",
-          "/media/products/ab/ab2244f94c49c5c1/800.webp",
-          "/media/products/08/081c7c2bc5d221ee/800.webp",
-          "/media/products/43/43b038877bfff9b1/800.webp",
-          "/media/products/eb/eb63be4e7c210c93/800.webp"
-        ],
-        "primary_image": "/media/products/c5/c56ba224d0dfa0c8/800.webp",
-        "archived": false,
-        "visible": null
       }
     ],
     "is_active": true,
     "sort_order": 16,
-    "short_description": "Белое худи из авторской линейки Gravity: чистый силуэт и вышитый логотип, который проявляется только вблизи. Минимализм, который дружит с чем угодно.",
-    "badges": [],
-    "compare_at_price": "6000",
-    "slug_redirects": [
-      "var8-embroidery-hoodie-white"
+    "short_description": "Обычная посадка, мягкий начёс и минималистичная вышивка Gravity.",
+    "badges": [
+      "С начёсом"
     ],
+    "compare_at_price": "6000",
+    "storefront_variant": {
+      "group_key": "var8|embroidery|hoodie|white",
+      "fit": "regular",
+      "warmth": "fleece"
+    },
+    "requires_offer_id_sizes": [],
+    "slug_redirects": [],
     "review_summary": {
-      "count": 1,
-      "averageRating": 4,
+      "count": 0,
+      "averageRating": null,
       "withMedia": 0,
-      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
         "3": 0,
-        "4": 1,
+        "4": 0,
         "5": 0
       }
     }
@@ -4039,6 +4302,7 @@ window.KOMUI_PRODUCTS = [
     "short_description": "Варёный беж и вышивка Итачи нитью в тон — деталь, которую замечают не сразу. Для тех, кто любит отсылки шёпотом, а не капслоком.",
     "badges": [],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [
       "var2-embroidery-tshirt-washed-beige"
     ],
@@ -4046,7 +4310,6 @@ window.KOMUI_PRODUCTS = [
       "count": 5,
       "averageRating": 5,
       "withMedia": 0,
-      "withText": 2,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -4289,6 +4552,7 @@ window.KOMUI_PRODUCTS = [
     "short_description": "Белая база и контрастный принт Годжо — максимум читаемости, ноль лишнего. Та самая футболка, когда собрать образ нужно за минуту.",
     "badges": [],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [
       "var19-print-tshirt-white"
     ],
@@ -4296,7 +4560,6 @@ window.KOMUI_PRODUCTS = [
       "count": 1,
       "averageRating": 5,
       "withMedia": 0,
-      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -4533,6 +4796,7 @@ window.KOMUI_PRODUCTS = [
     "short_description": "Чёрный фон превращает принт Годжо в неоновую вспышку. Резкий графичный вариант для тёмных образов и вечерних выходов.",
     "badges": [],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [
       "var17-print-tshirt-black"
     ],
@@ -4540,7 +4804,6 @@ window.KOMUI_PRODUCTS = [
       "count": 5,
       "averageRating": 5,
       "withMedia": 0,
-      "withText": 2,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -4787,6 +5050,7 @@ window.KOMUI_PRODUCTS = [
     "short_description": "Светлая футболка с Годжо для капсулы из базовых цветов. Серый, деним, белые кроссовки — принт сам достроит образ.",
     "badges": [],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [
       "var16-print-tshirt-white"
     ],
@@ -4794,7 +5058,6 @@ window.KOMUI_PRODUCTS = [
       "count": 1,
       "averageRating": 5,
       "withMedia": 0,
-      "withText": 1,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -5031,6 +5294,7 @@ window.KOMUI_PRODUCTS = [
     "short_description": "Чёрная футболка с вышитой эмблемой Акацуки в спортивном ключе. Облака клана на груди — знак для своих, остальным просто хорошая тишка.",
     "badges": [],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [
       "var3-embroidery-tshirt-black"
     ],
@@ -5038,7 +5302,6 @@ window.KOMUI_PRODUCTS = [
       "count": 4,
       "averageRating": 4,
       "withMedia": 0,
-      "withText": 1,
       "ratingCounts": {
         "1": 1,
         "2": 0,
@@ -5273,6 +5536,7 @@ window.KOMUI_PRODUCTS = [
     "short_description": "Белое полотно и вышивка Мадары — холодный, властный характер в минимальной подаче. Для образов, где меньше значит дороже.",
     "badges": [],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [
       "var14-embroidery-tshirt-white"
     ],
@@ -5280,7 +5544,6 @@ window.KOMUI_PRODUCTS = [
       "count": 4,
       "averageRating": 5,
       "withMedia": 0,
-      "withText": 2,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -5519,6 +5782,7 @@ window.KOMUI_PRODUCTS = [
     "short_description": "Принт Акацуки на белом — крупно, контрастно, без полутонов. Алые облака читаются издалека и тянут весь образ на себя.",
     "badges": [],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [
       "var5-print-tshirt-white"
     ],
@@ -5526,7 +5790,6 @@ window.KOMUI_PRODUCTS = [
       "count": 4,
       "averageRating": 5,
       "withMedia": 0,
-      "withText": 1,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -5761,6 +6024,7 @@ window.KOMUI_PRODUCTS = [
     "short_description": "Чёрная футболка с принтом Акацуки: облака клана горят на тёмном, как угли. База, которая дружит с карго и тяжёлой обувью.",
     "badges": [],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [
       "var5-print-tshirt-black"
     ],
@@ -5768,7 +6032,6 @@ window.KOMUI_PRODUCTS = [
       "count": 4,
       "averageRating": 5,
       "withMedia": 0,
-      "withText": 1,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -5997,6 +6260,7 @@ window.KOMUI_PRODUCTS = [
     "short_description": "Лаконичная дань клану Акацуки: тёмная футболка с фирменным мотивом и прямым кроем. С неё удобно начинать гардероб по Naruto.",
     "badges": [],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [
       "var1-print-tshirt-black"
     ],
@@ -6004,7 +6268,6 @@ window.KOMUI_PRODUCTS = [
       "count": 0,
       "averageRating": null,
       "withMedia": 0,
-      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -6233,6 +6496,7 @@ window.KOMUI_PRODUCTS = [
     "short_description": "Белая футболка Gravity с вышивкой собственного дизайна KOMUI. Тихий флекс: ни одного чужого логотипа — только наш почерк.",
     "badges": [],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [
       "var8-embroidery-tshirt-white"
     ],
@@ -6240,7 +6504,6 @@ window.KOMUI_PRODUCTS = [
       "count": 13,
       "averageRating": 4.46,
       "withMedia": 4,
-      "withText": 9,
       "ratingCounts": {
         "1": 1,
         "2": 1,
@@ -6475,6 +6738,7 @@ window.KOMUI_PRODUCTS = [
     "short_description": "Принтовая версия Gravity на белом: графика чуть смелее, посыл тот же. Авторский дизайн KOMUI для будней без компромиссов.",
     "badges": [],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [
       "var8-print-tshirt-white"
     ],
@@ -6482,7 +6746,6 @@ window.KOMUI_PRODUCTS = [
       "count": 1,
       "averageRating": 5,
       "withMedia": 1,
-      "withText": 1,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -6717,6 +6980,7 @@ window.KOMUI_PRODUCTS = [
     "short_description": "Чёрный Gravity с принтом — графика проявляется контрастно и держит образ собранным. Универсальная тёмная база на каждый день.",
     "badges": [],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [
       "var8-print-tshirt-black"
     ],
@@ -6724,7 +6988,6 @@ window.KOMUI_PRODUCTS = [
       "count": 1,
       "averageRating": 4,
       "withMedia": 0,
-      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -6959,6 +7222,7 @@ window.KOMUI_PRODUCTS = [
     "short_description": "Чёрная футболка с вышивкой в стилистике GTA — деталь для своих, без громких надписей. Стежок вместо принта носится дольше и выглядит дороже.",
     "badges": [],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [
       "var18-embroidery-tshirt-black"
     ],
@@ -6966,7 +7230,6 @@ window.KOMUI_PRODUCTS = [
       "count": 2,
       "averageRating": 5,
       "withMedia": 0,
-      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -6980,7 +7243,7 @@ window.KOMUI_PRODUCTS = [
   },
   {
     "id": "b468c761-c7f8-47ab-bc15-721c2da563c4",
-    "design_key": "var8|embroidery|hoodie|black",
+    "design_key": "var8|embroidery|hoodie|black|reg|flc",
     "ozon_variant": "var8",
     "name": "Худи Gravity",
     "slug": "hudi-gravity-vyshivka-chernaya",
@@ -7182,6 +7445,12 @@ window.KOMUI_PRODUCTS = [
     "short_description": "Чёрное худи Gravity с вышивкой — тёплая база авторской линейки KOMUI. Логотип проявляется только тем, кто присмотрится.",
     "badges": [],
     "compare_at_price": "6000",
+    "storefront_variant": {
+      "group_key": "var8|embroidery|hoodie|black",
+      "fit": "regular",
+      "warmth": "fleece"
+    },
+    "requires_offer_id_sizes": [],
     "slug_redirects": [
       "var8-embroidery-hoodie-black"
     ],
@@ -7189,7 +7458,6 @@ window.KOMUI_PRODUCTS = [
       "count": 0,
       "averageRating": null,
       "withMedia": 0,
-      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -7405,6 +7673,7 @@ window.KOMUI_PRODUCTS = [
     "short_description": "Варёный серый и принт Gravity — винтажная фактура встречает авторскую графику. Та самая ношеная-любимая футболка, только новая.",
     "badges": [],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [
       "var8-print-tshirt-washed-grey"
     ],
@@ -7412,7 +7681,6 @@ window.KOMUI_PRODUCTS = [
       "count": 1,
       "averageRating": 5,
       "withMedia": 0,
-      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -7643,6 +7911,7 @@ window.KOMUI_PRODUCTS = [
     "short_description": "Светлая версия с вышивкой Итачи: тот же характер, но в дневной, лёгкой гамме. Беспроигрышная база под джинсу и белую обувь.",
     "badges": [],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [
       "var13-embroidery-tshirt-white"
     ],
@@ -7650,7 +7919,6 @@ window.KOMUI_PRODUCTS = [
       "count": 0,
       "averageRating": null,
       "withMedia": 0,
-      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -7873,6 +8141,7 @@ window.KOMUI_PRODUCTS = [
     "short_description": "Принт Акацуки с текстовым блоком — больше графики, больше характера. Сделайте её смысловым центром, остальное держите спокойным.",
     "badges": [],
     "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [
       "var7-print-tshirt-other"
     ],
@@ -7880,7 +8149,6 @@ window.KOMUI_PRODUCTS = [
       "count": 0,
       "averageRating": null,
       "withMedia": 0,
-      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -7894,7 +8162,7 @@ window.KOMUI_PRODUCTS = [
   },
   {
     "id": "f1c7a8de-1018-45e3-9be7-8e4bb16b1210",
-    "design_key": "var2|embroidery|hoodie|blue",
+    "design_key": "var2|embroidery|hoodie|blue|reg|nf",
     "ozon_variant": "var2",
     "name": "Худи Итачи",
     "slug": "hudi-naruto-itachi-uchiha-vyshivka-sinyaya",
@@ -8042,6 +8310,12 @@ window.KOMUI_PRODUCTS = [
     "short_description": "Синее худи с вышивкой Итачи — мягкий уход от привычного чёрного. Глубокий цвет, тёплый футер и деталь, ради которой и берут.",
     "badges": [],
     "compare_at_price": "6000",
+    "storefront_variant": {
+      "group_key": "var2|embroidery|hoodie|blue",
+      "fit": "regular",
+      "warmth": "no-fleece"
+    },
+    "requires_offer_id_sizes": [],
     "slug_redirects": [
       "var2-embroidery-hoodie-blue"
     ],
@@ -8049,7 +8323,6 @@ window.KOMUI_PRODUCTS = [
       "count": 1,
       "averageRating": 5,
       "withMedia": 1,
-      "withText": 1,
       "ratingCounts": {
         "1": 0,
         "2": 0,
@@ -8137,6 +8410,7 @@ window.KOMUI_PRODUCTS = [
     "short_description": "Чёрный свитшот с вышивкой Итачи. Отдельная карточка без смешения с футболками.",
     "badges": [],
     "compare_at_price": "5500",
+    "requires_offer_id_sizes": [],
     "slug_redirects": [
       "var2-embroidery-sweatshirt-black"
     ],
@@ -8144,7 +8418,6 @@ window.KOMUI_PRODUCTS = [
       "count": 0,
       "averageRating": null,
       "withMedia": 0,
-      "withText": 0,
       "ratingCounts": {
         "1": 0,
         "2": 0,

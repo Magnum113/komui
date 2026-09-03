@@ -1,6 +1,6 @@
 # KOMUI — полный каталог для AI-систем
 
-> Все товары интернет-магазина KOMUI (https://komui.ru) с актуальными ценами, размерами, цветами и типом нанесения. Обновлено: 2026-08-27. Краткая версия: https://komui.ru/llms.txt
+> Все товары интернет-магазина KOMUI (https://komui.ru) с актуальными ценами, размерами, цветами и типом нанесения. Обновлено: 2026-09-03. Краткая версия: https://komui.ru/llms.txt
 
 ## Jujutsu Kaisen (10 тов.)
 
@@ -35,14 +35,16 @@
 - [Худи Итачи](https://komui.ru/p/hudi-naruto-itachi-uchiha-vyshivka-sinyaya): 3 500 ₽; нанесение: вышивка; цвет: синий; размеры: S; категория: худи; персонаж: Itachi Uchiha
 - [Свитшот Itachi](https://komui.ru/p/svitshot-naruto-itachi-uchiha-vyshivka-chernaya): 3 200 ₽; нанесение: вышивка; цвет: черный; размеры: S; категория: свитшоты; персонаж: Itachi Uchiha
 
-## GTA (2 тов.)
+## GTA (3 тов.)
 
-- [Худи без начёса GTA](https://komui.ru/p/hudi-grand-theft-auto-gta-bez-nachesa-vyshivka-chernaya): 3 900 ₽; нанесение: вышивка; цвет: черный; размеры: S, M, L, XL, XXL; категория: худи
+- [Худи GTA — укороченное, без начёса](https://komui.ru/p/ukorochennoe-hudi-grand-theft-auto-gta-bez-nachesa-vyshivka-chernaya): 3 900 ₽; нанесение: вышивка; цвет: черный; размеры: S, M, L; категория: худи
+- [Худи GTA — обычное, без начёса](https://komui.ru/p/hudi-grand-theft-auto-gta-bez-nachesa-vyshivka-chernaya): 3 900 ₽; нанесение: вышивка; цвет: черный; размеры: S, M, L, XL, XXL; категория: худи
 - [Футболка GTA](https://komui.ru/p/futbolka-grand-theft-auto-gta-vyshivka-chernaya): 2 900 ₽; нанесение: вышивка; цвет: черный; размеры: S, M, L, XL, XXL; категория: футболки
 
-## Gravity (6 тов.)
+## Gravity (7 тов.)
 
-- [Худи Gravity](https://komui.ru/p/hudi-gravity-vyshivka-belaya): 3 500 ₽; нанесение: вышивка; цвет: белый; размеры: S, M, L, XL, XXL; категория: худи
+- [Худи Gravity белое — обычное, без начёса](https://komui.ru/p/hudi-gravity-vyshivka-belaya): 3 500 ₽; нанесение: вышивка; цвет: белый; размеры: S, M, L, XL, XXL; категория: худи
+- [Худи Gravity белое — обычное, с начёсом](https://komui.ru/p/hudi-gravity-s-nachesom-vyshivka-belaya): 3 500 ₽; нанесение: вышивка; цвет: белый; размеры: S; категория: худи
 - [Футболка Gravity](https://komui.ru/p/futbolka-gravity-vyshivka-belaya): 2 900 ₽; нанесение: вышивка; цвет: белый; размеры: S, M, L, XL, XXL; категория: футболки
 - [Футболка Gravity](https://komui.ru/p/futbolka-gravity-print-belaya): 2 900 ₽; нанесение: принт; цвет: белый; размеры: S, M, L, XL, XXL; категория: футболки
 - [Футболка Gravity](https://komui.ru/p/futbolka-gravity-print-chernaya): 2 900 ₽; нанесение: принт; цвет: черный; размеры: S, M, L, XL, XXL; категория: футболки

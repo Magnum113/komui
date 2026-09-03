@@ -56,6 +56,9 @@
   sanitized projection through the catalog API.
 - Preserve legacy carts only where their old `product + size` identity was
   genuinely unambiguous. Previously ambiguous sizes must be reselected.
+- Publish fit/warmth labels only for groups with at least two active storefront
+  cards. Singleton hoodie metadata remains available to importer and invariant
+  checks, but is not presented as an independently verified customer fact.
 - Add a database constraint which rejects duplicate selectable sizes inside a
   product row, while allowing archived or explicitly hidden historical offers.
 
@@ -73,3 +76,18 @@
   cart and checkout, visible variant text, zero console errors, and no mobile
   horizontal overflow.
 - Verification created no order, payment, provider call, or customer alert.
+
+## Verified production state — 2026-09-03
+
+- The same migration changed total/active catalog rows from 38/35 to 40/37.
+- The four target cards, validated constraints/index, complete hoodie metadata,
+  zero ambiguous selectable sizes, and zero duplicate active offer IDs match
+  the rehearsed state.
+- The variant-aware backend is active. A real `komui_app` repository smoke ran
+  with `default_transaction_read_only=on`: all exact selections and legacy GTA
+  XL were accepted; legacy GTA S and a cross-card offer were rejected with the
+  expected codes.
+- Canonical static artifacts were regenerated from the migrated production API;
+  they contain 37 active products and the two new sibling pages.
+- Public acceptance is completed only after the final generated-artifact
+  revision is active and the browser postflight passes without clicking payment.
