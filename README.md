@@ -282,6 +282,13 @@ sudo /usr/local/sbin/komui-deploy-from-git stage main
 sudo /usr/local/sbin/komui-deploy-from-git prod main
 ```
 
+Установленная копия deploy-driver не обновляет сама себя. Если
+`ops/server/komui-deploy-from-git` изменился, до первого rollout новой версии
+нужно сохранить root-only копию текущего `/usr/local/sbin/komui-deploy-from-git`,
+атомарно установить файл из точного проверенного Git commit и сверить его
+SHA-256 и `bash -n`. Иначе старый driver может не выполнить новые обязательные
+rollout-gates.
+
 Скрипт:
 
 1. подтягивает `origin/main`;
@@ -293,9 +300,10 @@ sudo /usr/local/sbin/komui-deploy-from-git prod main
 7. собирает static frontend в `KOMUI_MEDIA_STRICT=1`;
 8. проверяет, что публичные артефакты не содержат `ir.ozone.ru`;
 9. создаёт immutable backend/frontend releases;
-10. переключает symlink;
-11. перезапускает backend/nginx;
-12. проверяет public API и отсутствие `ir.ozone.ru` в catalog API.
+10. переключает backend symlink и проверяет readiness;
+11. для production выполняет обязательный server-side decommission gate;
+12. переключает frontend symlink и перезагружает Nginx;
+13. проверяет public API и отсутствие `ir.ozone.ru` в catalog API.
 
 ### Release retention
 
