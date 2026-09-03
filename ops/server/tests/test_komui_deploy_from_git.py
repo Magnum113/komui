@@ -127,6 +127,16 @@ class KomuiDeployFromGitCompatibilityTest(unittest.TestCase):
         self.assertIn('curl -q --config - "$@" "$url"', self.script)
         self.assertEqual(self.script.count("staging_curl \"$public_smoke_url\""), 2)
 
+    def test_dependency_install_does_not_block_deploy_on_remote_audit(self) -> None:
+        self.assertIn(
+            "npm --prefix server ci --no-audit --no-fund",
+            self.script,
+        )
+        self.assertIn(
+            'npm --prefix "$backend_release_dir/backend" ci --omit=dev --no-audit --no-fund',
+            self.script,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

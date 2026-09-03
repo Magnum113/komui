@@ -721,7 +721,7 @@ enforce_hoodie_variants_compatibility() {
   fi
 
   log "installing backend dependencies"
-  npm --prefix server ci
+  npm --prefix server ci --no-audit --no-fund
 
   log "running backend tests"
   npm --prefix server test
@@ -793,7 +793,7 @@ enforce_hoodie_variants_compatibility() {
   rm -rf "$backend_release_dir"
   install -d -m 0755 "$backend_release_dir/backend"
   rsync -a --delete --exclude node_modules "$source_dir/server/" "$backend_release_dir/backend/"
-  npm --prefix "$backend_release_dir/backend" ci --omit=dev
+  npm --prefix "$backend_release_dir/backend" ci --omit=dev --no-audit --no-fund
 
   log "creating frontend release $frontend_release_dir"
   rm -rf "$frontend_release_dir"
