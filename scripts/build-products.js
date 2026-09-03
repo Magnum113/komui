@@ -16,6 +16,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { execFileSync } = require('child_process');
+const PRODUCT_FABRIC_FACTS = require('../assets/product-fabric-facts.js');
 
 const ROOT = path.resolve(__dirname, '..');
 const SITE_ORIGIN = 'https://komui.ru';
@@ -858,8 +859,30 @@ function publicCopy(value) {
     .trim();
 }
 
+function productCopy(product, value) {
+  return publicCopy(PRODUCT_FABRIC_FACTS.normalizeTshirtCopy(product, value));
+}
+
+function normalizeProductFabricFacts(product) {
+  const normalized = {
+    ...product,
+    description: PRODUCT_FABRIC_FACTS.normalizeTshirtCopy(product, product.description),
+    ozon_description: PRODUCT_FABRIC_FACTS.normalizeTshirtCopy(product, product.ozon_description),
+    short_description: PRODUCT_FABRIC_FACTS.normalizeTshirtCopy(product, product.short_description),
+  };
+  const fabricFacts = PRODUCT_FABRIC_FACTS.factsFor(product);
+  if (fabricFacts) {
+    normalized.fabric_composition = fabricFacts.composition;
+    normalized.fabric_density_gsm = fabricFacts.densityGsm;
+  } else {
+    delete normalized.fabric_composition;
+    delete normalized.fabric_density_gsm;
+  }
+  return normalized;
+}
+
 function shortFrom(product) {
-  const s = publicCopy(product.short_description || product.description);
+  const s = productCopy(product, product.short_description || product.description);
   // Take first ~160 chars on a sentence-ish boundary for meta description.
   const clean = s.replace(/\s+/g, ' ').replace(/[🔹]/g, '').trim();
   if (clean.length <= 160) return clean;
@@ -869,7 +892,7 @@ function shortFrom(product) {
 }
 
 function descriptionHtml(product) {
-  const raw = publicCopy(product.description);
+  const raw = productCopy(product, product.description);
   if (!raw) return '';
   // Split into paragraphs by double newlines, then turn single newlines into <br>.
   const blocks = raw.split(/\n{2,}/).map(b => b.trim()).filter(Boolean);
@@ -1131,6 +1154,7 @@ function buildJsonLd(product) {
       shippingDetails,
       hasMerchantReturnPolicy: returnPolicy,
     }));
+  const fabricFacts = PRODUCT_FABRIC_FACTS.factsFor(product);
   const ld = {
     '@context': 'https://schema.org/',
     '@type': 'Product',
@@ -1141,7 +1165,7 @@ function buildJsonLd(product) {
     brand: { '@type': 'Brand', name: 'KOMUI' },
     category: product.category,
     color: product.color_name,
-    material: '100% хлопок',
+    material: fabricFacts ? fabricFacts.composition : undefined,
     url: `${SITE_ORIGIN}/p/${product.slug}`,
     datePublished: DATE_PUBLISHED_PLACEHOLDER,
     dateModified: DATE_MODIFIED_PLACEHOLDER,
@@ -1742,6 +1766,11 @@ function renderProductPage(product, products = []) {
   const oldPriceHtml = oldPrice && oldPrice > Number(product.price_min)
     ? `<span class="p-price-old">${oldPrice.toLocaleString('ru-RU')} ₽</span>`
     : '';
+  const fabricFacts = PRODUCT_FABRIC_FACTS.factsFor(product);
+  const fabricFactsHtml = fabricFacts
+    ? `<div><span>Плотность</span><strong>${escapeHtml(fabricFacts.densityLabel)}</strong></div>
+            <div><span>Состав</span><strong>${escapeHtml(fabricFacts.composition)}</strong></div>`
+    : '';
   const title = buildTitle(product);
   const description = shortFrom(product);
   const canonical = `${SITE_ORIGIN}/p/${product.slug}`;
@@ -1852,8 +1881,7 @@ ${renderHeaderPanels()}
           <div class="p-meta">
             ${product.color_name ? `<div><span>Цвет</span><strong>${escapeHtml(product.color_name)}</strong></div>` : ''}
             ${product.decoration_type ? `<div><span>Оформление</span><strong>${escapeHtml(product.decoration_type)}</strong></div>` : ''}
-            <div><span>Плотность</span><strong>240 г/м²</strong></div>
-            <div><span>Состав</span><strong>100% хлопок</strong></div>
+${fabricFactsHtml}
           </div>
           <div class="p-sizes-wrap">
             <div class="p-size-head">
@@ -2638,7 +2666,7 @@ async function main() {
   }
 
   const tracker = createPageMetaTracker();
-  const products = sourceProducts.map(mapProductMedia);
+  const products = sourceProducts.map(normalizeProductFabricFacts).map(mapProductMedia);
   writeStorefrontProductsFallback(products);
   const collectionLandings = buildCollectionLandings(products);
   const productRedirects = buildProductRedirects(products);
@@ -2726,6 +2754,12 @@ async function main() {
 
   fs.writeFileSync(path.join(ROOT, 'sitemap.xml'), renderSitemap(products, collectionLandings, tracker), 'utf8');
   tracker.save();
+
+  execFileSync(
+    process.execPath,
+    [path.join(ROOT, 'scripts', 'test-product-fabric-facts.js')],
+    { cwd: ROOT, stdio: 'inherit' },
+  );
 
   await pingIndexNow(sitemapUrls());
 

@@ -3,6 +3,10 @@ import {
   resolvePublicMediaUrl,
   resolvePublicMediaUrls,
 } from "./mediaManifest";
+import {
+  normalizeTshirtProductCopy,
+  productFabricFactsFor,
+} from "./productFabricFacts";
 
 const PUBLIC_PRODUCT_COLUMNS = `
   p.id,
@@ -164,6 +168,8 @@ export type PublicProduct = {
   short_description?: string | null;
   badges: string[];
   compare_at_price?: string | number | null;
+  fabric_composition?: string;
+  fabric_density_gsm?: number;
   slug_redirects?: string[];
   review_summary: PublicReviewSummary;
 };
@@ -295,9 +301,19 @@ export function sanitizeProduct(row: ProductRow): PublicProduct {
       ratingCounts,
     },
   };
+  const fabricFacts = productFabricFactsFor(product);
 
   return {
     ...product,
+    ...(fabricFacts
+      ? {
+          fabric_composition: fabricFacts.composition,
+          fabric_density_gsm: fabricFacts.densityGsm,
+        }
+      : {}),
+    description: normalizeTshirtProductCopy(product, product.description),
+    ozon_description: normalizeTshirtProductCopy(product, product.ozon_description),
+    short_description: normalizeTshirtProductCopy(product, product.short_description),
     primary_image_url: resolvePublicMediaUrl(product.primary_image_url) as
       | string
       | null

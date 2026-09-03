@@ -819,7 +819,7 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
 </style>
 <!--komui:dates:start-->
 <meta name="datePublished" content="2026-07-08" />
-<meta name="dateModified" content="2026-08-27" />
+<meta name="dateModified" content="2026-09-03" />
 <!--komui:dates:end-->
 </head>
 <body>
@@ -1158,7 +1158,7 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
     </div>
   </div>
 <!--komui:updated:start-->
-<div class="page-updated footer-updated static-updated">Обновлено: <time datetime="2026-08-27">27 августа 2026 г.</time></div>
+<div class="page-updated footer-updated static-updated">Обновлено: <time datetime="2026-09-03">3 сентября 2026 г.</time></div>
 <!--komui:updated:end-->
 </footer>
 
@@ -1185,6 +1185,7 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
 <div class="toast" id="toast"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg></span><span class="toast-msg" id="toastMsg">Добавлено в корзину</span><button class="toast-action" id="toastCart" type="button">Открыть</button></div>
 
 <script src="./data/api-config.js"></script>
+<script src="./assets/product-fabric-facts.js"></script>
 <script id="app">
 (function(){
 'use strict';
@@ -1200,6 +1201,13 @@ function publicCopy(value){
     .replace(/[ \t\f\v]+/g,' ')
     .replace(/ *\n */g,'\n')
     .trim();
+}
+function productFabricFacts(product){
+  return window.KomuiProductFabricFacts?.factsFor(product)||null;
+}
+function productCopy(product,value){
+  const normalized=window.KomuiProductFabricFacts?.normalizeTshirtCopy(product,value)??value;
+  return publicCopy(normalized);
 }
 
 /* ---------------- theme ---------------- */
@@ -1418,7 +1426,7 @@ function modalSizeChartHtml(product){
 function localProduct(p,i){
   const priceOld=p.priceOld!=null?Number(p.priceOld):null;
   const reviewSummary=normalizeReviewSummary(p.review_summary||p.reviewSummary||p);
-  return {...p,slug:p.slug||'',desc:publicCopy(p.desc||p.short_description||p.description||''),priceOld:priceOld&&priceOld>Number(p.price||0)?priceOld:null,sizes:sortSizes(p.sizes),accent:p.accent||AC.mag,pop:p.pop||100-i,badges:p.badge?[p.badge]:[],...reviewSummary,source:'local'};
+  return {...p,slug:p.slug||'',desc:productCopy(p,p.desc||p.short_description||p.description||''),priceOld:priceOld&&priceOld>Number(p.price||0)?priceOld:null,sizes:sortSizes(p.sizes),accent:p.accent||AC.mag,pop:p.pop||100-i,badges:p.badge?[p.badge]:[],...reviewSummary,source:'local'};
 }
 function normalizeReviewSummary(value){
   const raw=value&&typeof value==='object'?value:{};
@@ -1460,6 +1468,8 @@ function supabaseProduct(row,i){
     cat:row.category,
     col:row.collection_name||row.title_name||row.design_name||'KOMUI',
     type:row.decoration_type,
+    productTypeSlug:row.product_type_slug,
+    categorySlug:row.category_slug,
     color:row.color_name||'Другой',
     colorHex:row.color_hex,
     accent:AC.mag,
@@ -1470,7 +1480,7 @@ function supabaseProduct(row,i){
     badges:row.badges||[],
     pop:100-i,
     image:primaryImage,
-    desc:publicCopy(row.short_description||row.description||row.ozon_description||''),
+    desc:productCopy(row,row.short_description||row.description||row.ozon_description||''),
     titleName:row.title_name,
     animeTitle:row.anime_title,
     characterName:row.character_name,
@@ -1948,6 +1958,7 @@ function updateCart(){
 /* ---------------- quick view ---------------- */
 function openModal(id,source='catalog'){
   const p=P.find(x=>x.id==id);let sel=p.sizes.includes('M')?'M':p.sizes[0];
+  const fabricFacts=productFabricFacts(p);
   withAnalytics(analytics=>{
     analytics.ecommerce.detail(analyticsProduct(p,{list:source}),{list:source});
     analytics.goal('product_view',{product_id:String(p.id),category:p.cat||'',collection:p.col||'',source});
@@ -1967,7 +1978,7 @@ function openModal(id,source='catalog'){
       <div class="size-pick" id="sizePick">${p.sizes.map(s=>`<button data-size="${s}"${s===sel?' class="sel"':''}>${s}</button>`).join('')}</div>
       ${sizeChart}
       <button class="madd" id="madd">${addBtn}</button>
-      <div class="mfeat"><div>✦ ${p.type}</div><div>✦ 100% хлопок</div><div>✦ Плотность 240 г/м²</div></div>
+      <div class="mfeat"><div>✦ ${p.type}</div>${fabricFacts?`<div>✦ ${fabricFacts.composition}</div><div>✦ Плотность ${fabricFacts.densityLabel}</div>`:''}</div>
     </div></div>`;
   const m=$('#modal');m.classList.add('show');m.classList.remove('madd-floating');setOverlay(true);
   initGalleries();

@@ -36,6 +36,8 @@ test("sanitizeProduct does not leak raw offer fields", () => {
     design_key: "design",
     name: "Product",
     slug: "product",
+    description: "Плотность ткани 230 г/м², состав 92% хлопок, 8% эластан.",
+    ozon_description: "Хлопок 85%, полиэстер 10%, эластан 5%; плотность 90 гр/м2.",
     category: "Футболки",
     category_slug: "tshirts",
     product_type: "Футболка",
@@ -69,6 +71,52 @@ test("sanitizeProduct does not leak raw offer fields", () => {
     withMedia: 1,
     ratingCounts: { 1: 0, 2: 0, 3: 0, 4: 1, 5: 2 },
   });
+  assert.equal(product.fabric_composition, "100% хлопок");
+  assert.equal(product.fabric_density_gsm, 240);
+  assert.equal(
+    product.description,
+    "Плотность ткани 240 г/м², состав 100% хлопок.",
+  );
+  assert.equal(
+    product.ozon_description,
+    "100% хлопок; плотность 240 г/м².",
+  );
+});
+
+test("sanitizeProduct does not attach T-shirt facts when explicit type is hoodie", () => {
+  const description = "Плотность ткани 370 г/м², состав 80% хлопок, 20% полиэстер.";
+  const product = sanitizeProduct({
+    id: "7c169f01-b459-4e25-b74f-a4909a1b4149",
+    design_key: "design",
+    name: "Hoodie",
+    slug: "hoodie",
+    description,
+    category: "Футболки",
+    category_slug: "tshirts",
+    product_type: "Худи",
+    product_type_slug: "hoodie",
+    decoration_type: "Вышивка",
+    decoration_slug: "embroidery",
+    franchise_type: "anime",
+    tags: [],
+    sizes: ["M"],
+    currency: "RUB",
+    image_urls: [],
+    offers: [],
+    is_active: true,
+    sort_order: 1,
+    badges: [],
+    review_summary: {
+      count: 0,
+      averageRating: null,
+      withMedia: 0,
+      ratingCounts: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+    },
+  });
+
+  assert.equal(product.description, description);
+  assert.equal(product.fabric_composition, undefined);
+  assert.equal(product.fabric_density_gsm, undefined);
 });
 
 test("normalizeLimit clamps unsafe values", () => {
