@@ -107,6 +107,18 @@ export type CdekOrderResponse = {
     number?: string;
     im_number?: string;
     cdek_number?: string;
+    statuses?: Array<{
+      code?: string;
+      name?: string;
+      date_time?: string;
+      reason_code?: string;
+      city?: string;
+      city_uuid?: string;
+      deleted?: boolean;
+    }>;
+    planned_delivery_date?: string;
+    keep_free_until?: string;
+    delivery_mode?: number;
   };
   requests?: Array<{
     request_uuid?: string;
@@ -116,18 +128,6 @@ export type CdekOrderResponse = {
     warnings?: CdekResponseError[];
   }>;
   related_entities?: CdekRelatedEntity | CdekRelatedEntity[];
-  statuses?: Array<{
-    code?: string;
-    name?: string;
-    date_time?: string;
-    reason_code?: string;
-    city?: string;
-    city_uuid?: string;
-    deleted?: boolean;
-  }>;
-  planned_delivery_date?: string;
-  keep_free_until?: string;
-  delivery_mode?: number;
 };
 
 export type CdekTariff = {

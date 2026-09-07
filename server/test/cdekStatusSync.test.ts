@@ -120,19 +120,21 @@ function fakeDb(options: {
 test("CDEK statuses are normalized, sorted and hashed without customer data", () => {
   const statuses = normalizeCdekStatuses(
     {
-      statuses: [
-        {
-          code: "accepted_at_pick_up_point",
-          name: "Принят на склад до востребования",
-          date_time: "2026-09-08T13:00:00+03:00",
-          city: "Москва",
-        },
-        {
-          code: "received_at_shipment_warehouse",
-          date_time: "2026-09-07T15:00:00+03:00",
-        },
-        { code: "broken-without-time" },
-      ],
+      entity: {
+        statuses: [
+          {
+            code: "accepted_at_pick_up_point",
+            name: "Принят на склад до востребования",
+            date_time: "2026-09-08T13:00:00+03:00",
+            city: "Москва",
+          },
+          {
+            code: "received_at_shipment_warehouse",
+            date_time: "2026-09-07T15:00:00+03:00",
+          },
+          { code: "broken-without-time" },
+        ],
+      },
     },
     cdekUuid,
   );
@@ -159,23 +161,26 @@ test("latest ready status stores history and enqueues only the ready email", asy
       limit: 1,
       workerId: "status-worker",
       getOrder: async () => ({
-        entity: { uuid: cdekUuid, cdek_number: "1598765432" },
-        planned_delivery_date: "2026-09-09",
-        keep_free_until: "2026-09-15T23:59:59+03:00",
-        delivery_mode: 4,
-        statuses: [
-          {
-            code: "RECEIVED_AT_SHIPMENT_WAREHOUSE",
-            name: "Принят на склад отправителя",
-            date_time: "2026-09-07T15:10:00+03:00",
-          },
-          {
-            code: "ACCEPTED_AT_PICK_UP_POINT",
-            name: "Принят на склад до востребования",
-            date_time: "2026-09-08T13:00:00+03:00",
-            city: "Москва",
-          },
-        ],
+        entity: {
+          uuid: cdekUuid,
+          cdek_number: "1598765432",
+          planned_delivery_date: "2026-09-09",
+          keep_free_until: "2026-09-15T23:59:59+03:00",
+          delivery_mode: 4,
+          statuses: [
+            {
+              code: "RECEIVED_AT_SHIPMENT_WAREHOUSE",
+              name: "Принят на склад отправителя",
+              date_time: "2026-09-07T15:10:00+03:00",
+            },
+            {
+              code: "ACCEPTED_AT_PICK_UP_POINT",
+              name: "Принят на склад до востребования",
+              date_time: "2026-09-08T13:00:00+03:00",
+              city: "Москва",
+            },
+          ],
+        },
       }),
     },
   );
@@ -208,13 +213,16 @@ test("status before rollout cutoff is stored but never back-sent", async () => {
     {
       limit: 1,
       getOrder: async () => ({
-        entity: { uuid: cdekUuid, cdek_number: "1598765432" },
-        statuses: [
-          {
-            code: "RECEIVED_AT_SHIPMENT_WAREHOUSE",
-            date_time: "2026-09-06T15:10:00+03:00",
-          },
-        ],
+        entity: {
+          uuid: cdekUuid,
+          cdek_number: "1598765432",
+          statuses: [
+            {
+              code: "RECEIVED_AT_SHIPMENT_WAREHOUSE",
+              date_time: "2026-09-06T15:10:00+03:00",
+            },
+          ],
+        },
       }),
     },
   );
@@ -234,13 +242,16 @@ test("shipment created before rollout never enters the new email chain", async (
     { config: config(), db },
     {
       getOrder: async () => ({
-        entity: { uuid: cdekUuid, cdek_number: "1598765432" },
-        statuses: [
-          {
-            code: "RECEIVED_AT_SHIPMENT_WAREHOUSE",
-            date_time: "2026-09-07T15:10:00+03:00",
-          },
-        ],
+        entity: {
+          uuid: cdekUuid,
+          cdek_number: "1598765432",
+          statuses: [
+            {
+              code: "RECEIVED_AT_SHIPMENT_WAREHOUSE",
+              date_time: "2026-09-07T15:10:00+03:00",
+            },
+          ],
+        },
       }),
     },
   );
@@ -257,13 +268,16 @@ test("terminal delivery updates fulfillment and suppresses stale status mail", a
     { config: config(), db },
     {
       getOrder: async () => ({
-        entity: { uuid: cdekUuid, cdek_number: "1598765432" },
-        statuses: [
-          {
-            code: "DELIVERED",
-            date_time: "2026-09-08T16:00:00+03:00",
-          },
-        ],
+        entity: {
+          uuid: cdekUuid,
+          cdek_number: "1598765432",
+          statuses: [
+            {
+              code: "DELIVERED",
+              date_time: "2026-09-08T16:00:00+03:00",
+            },
+          ],
+        },
       }),
     },
   );

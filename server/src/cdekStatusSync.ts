@@ -161,7 +161,7 @@ export function normalizeCdekStatuses(
   cdekUuid: string,
 ): NormalizedCdekStatus[] {
   const normalized: NormalizedCdekStatus[] = [];
-  for (const rawStatus of response.statuses ?? []) {
+  for (const rawStatus of response.entity?.statuses ?? []) {
     const code = boundedText(rawStatus.code, 100).toUpperCase();
     const dateTime = validIsoTimestamp(rawStatus.date_time);
     if (!code || !dateTime) continue;
@@ -347,7 +347,7 @@ function deliveryPointType(
   metadata: Record<string, unknown>,
 ): "pickup_point" | "postamat" {
   const cdekMetadata = metadataObject(metadata.cdek);
-  const providerMode = finiteInteger(response.delivery_mode);
+  const providerMode = finiteInteger(response.entity?.delivery_mode);
   const storedMode = finiteInteger(cdekMetadata.delivery_mode);
   const pointType = boundedText(cdekMetadata.delivery_point_type, 40).toUpperCase();
   if (
@@ -500,13 +500,13 @@ async function persistResponse(
 ): Promise<{ eventsStored: number; emailEnqueued: boolean; skipped: boolean }> {
   const statuses = normalizeCdekStatuses(response, due.cdek_uuid);
   const latest = latestActiveStatus(statuses);
-  const plannedDeliveryDate = validIsoDate(response.planned_delivery_date);
-  const keepFreeUntil = validIsoTimestamp(response.keep_free_until);
+  const plannedDeliveryDate = validIsoDate(response.entity?.planned_delivery_date);
+  const keepFreeUntil = validIsoTimestamp(response.entity?.keep_free_until);
   const providerUuid = boundedText(response.entity?.uuid, 80);
   if (providerUuid && providerUuid !== due.cdek_uuid) {
     throw new Error("cdek_status_uuid_mismatch");
   }
-  const deliveryMode = finiteInteger(response.delivery_mode);
+  const deliveryMode = finiteInteger(response.entity?.delivery_mode);
 
   return context.db.withTransaction(async (client) => {
     const shipment = await lockShipment(client, Number(due.id));
