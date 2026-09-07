@@ -46,6 +46,8 @@ class KomuiHealthcheckContractTest(unittest.TestCase):
         self.assertIn("cdekStatusEmailsSinceConfigured", self.script)
         self.assertIn("delivery_status_sync_attempts >= 3", self.script)
         self.assertIn("delivery_status_synced_at is null", self.script)
+        self.assertIn("and created_at >= '$cutoff'::timestamptz", self.script)
+        self.assertIn("CDEK_STATUS_EMAILS_SINCE", self.script)
         self.assertIn("KOMUI_HEALTHCHECK_CDEK_STATUS_STALE_MINUTES:-60", self.script)
         self.assertIn('config.get("emailWorkerEnabled") is not True', self.script)
 

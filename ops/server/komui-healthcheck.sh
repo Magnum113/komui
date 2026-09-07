@@ -9,6 +9,8 @@ BACKUP_MAX_AGE_HOURS="${KOMUI_HEALTHCHECK_BACKUP_MAX_AGE_HOURS:-36}"
 EMAIL_STALE_MINUTES="${KOMUI_HEALTHCHECK_EMAIL_STALE_MINUTES:-10}"
 CDEK_STATUS_STALE_MINUTES="${KOMUI_HEALTHCHECK_CDEK_STATUS_STALE_MINUTES:-60}"
 YANDEX_FEED_URL="${KOMUI_HEALTHCHECK_YANDEX_FEED_URL:-https://komui.ru/feeds/yandex-direct.yml}"
+STAGE_BACKEND_ENV="${KOMUI_HEALTHCHECK_STAGE_BACKEND_ENV:-/etc/komui/backend.env}"
+PRODUCTION_BACKEND_ENV="${KOMUI_HEALTHCHECK_PRODUCTION_BACKEND_ENV:-/etc/komui/backend-production.env}"
 
 export YANDEX_FEED_URL
 
@@ -228,12 +230,24 @@ print("1" if enabled else "0")
 cdek_status_sync_is_healthy() {
   local ready_url="$1"
   local database="$2"
-  local enabled columns count
+  local env_file="$3"
+  local enabled columns count cutoff
 
   [[ "$CDEK_STATUS_STALE_MINUTES" =~ ^[1-9][0-9]*$ ]] || return 1
   [[ "$database" =~ ^[A-Za-z0-9_]+$ ]] || return 1
   enabled="$(cdek_status_sync_flag "$ready_url")" || return 1
   [[ "$enabled" == "1" ]] || return 0
+  [[ -r "$env_file" ]] || return 1
+  cutoff="$(
+    awk -F= '
+      $1 == "CDEK_STATUS_EMAILS_SINCE" {
+        sub(/^[^=]*=/, "")
+        print
+        exit
+      }
+    ' "$env_file"
+  )"
+  [[ "$cutoff" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}([.][0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$ ]] || return 1
 
   columns="$(
     runuser -u postgres -- psql -X -At -d "$database" -c "
@@ -259,6 +273,7 @@ cdek_status_sync_is_healthy() {
       where cdek_uuid is not null
         and status not in ('deleting', 'deleted', 'failed', 'invalid')
         and delivery_status_terminal is false
+        and created_at >= '$cutoff'::timestamptz
         and created_at < now() - interval '15 minutes'
         and (
           delivery_status_sync_attempts >= 3
@@ -273,8 +288,8 @@ cdek_status_sync_is_healthy() {
 }
 
 cdek_status_sync_healthy() {
-  cdek_status_sync_is_healthy http://127.0.0.1:3000/health/ready "$DB_NAME" &&
-    cdek_status_sync_is_healthy http://127.0.0.1:3001/health/ready "$PRODUCTION_DB_NAME"
+  cdek_status_sync_is_healthy http://127.0.0.1:3000/health/ready "$DB_NAME" "$STAGE_BACKEND_ENV" &&
+    cdek_status_sync_is_healthy http://127.0.0.1:3001/health/ready "$PRODUCTION_DB_NAME" "$PRODUCTION_BACKEND_ENV"
 }
 
 storefront_offers_unambiguous() {
