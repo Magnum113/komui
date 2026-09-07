@@ -224,6 +224,7 @@ export function cdekStatusSyncConfigurationError(
 async function dueShipments(
   context: StatusSyncContext,
   limit: number,
+  cutoff: Date,
 ): Promise<DueShipmentRow[]> {
   const result = await context.db.query<DueShipmentRow>(
     `
@@ -233,11 +234,12 @@ async function dueShipments(
       where cdek_uuid is not null
         and delivery_status_terminal is false
         and status not in ('deleting', 'deleted', 'failed', 'invalid')
+        and created_at >= $2::timestamptz
         and delivery_status_next_sync_at <= now()
       order by delivery_status_next_sync_at, id
       limit $1
     `,
-    [limit],
+    [limit, cutoff.toISOString()],
   );
   return result.rows;
 }
@@ -629,7 +631,7 @@ export async function processCdekStatusSync(
   );
   const getOrder = options.getOrder ?? getCdekOrder;
   const cutoff = new Date(context.config.CDEK_STATUS_EMAILS_SINCE!);
-  const rows = await dueShipments(context, limit);
+  const rows = await dueShipments(context, limit, cutoff);
   const result: ProcessCdekStatusSyncResult = {
     claimed: rows.length,
     synced: 0,

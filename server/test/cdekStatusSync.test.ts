@@ -194,6 +194,11 @@ test("latest ready status stores history and enqueues only the ready email", asy
   assert.match(String(state.emailPayload?.storageUntil), /15 сентября 2026/);
   assert.equal(state.fulfillment, "shipped");
   assert.equal(state.shipmentUpdate?.[2], "ACCEPTED_AT_PICK_UP_POINT");
+  const dueCall = state.calls.find((call) =>
+    call.sql.includes("cdek_status_sync:due"),
+  );
+  assert.match(dueCall?.sql ?? "", /created_at >= \$2::timestamptz/);
+  assert.deepEqual(dueCall?.values, [1, "2026-09-07T12:00:00.000Z"]);
 });
 
 test("status before rollout cutoff is stored but never back-sent", async () => {
