@@ -20,6 +20,10 @@ test("loadConfig parses safe defaults and hides secrets in publicConfig", () => 
   assert.equal(config.TBANK_RECONCILIATION_STALE_MS, 30_000);
   assert.equal(config.TBANK_RECONCILIATION_LEASE_MS, 60_000);
   assert.equal(config.TBANK_RECONCILIATION_MAX_ATTEMPTS, 20);
+  assert.equal(config.CDEK_STATUS_SYNC_ENABLED, false);
+  assert.equal(config.CDEK_STATUS_SYNC_INTERVAL_MS, 600_000);
+  assert.equal(config.CDEK_STATUS_SYNC_BATCH_SIZE, 10);
+  assert.equal(config.CDEK_STATUS_EMAILS_SINCE, undefined);
   assert.equal(config.EMAIL_ENABLED, false);
   assert.equal(config.EMAIL_WORKER_ENABLED, false);
   assert.equal(config.EMAIL_WORKER_INTERVAL_MS, 10_000);
@@ -39,6 +43,8 @@ test("loadConfig parses safe defaults and hides secrets in publicConfig", () => 
   assert.equal(exposed.emailConfigured, false);
   assert.equal(exposed.emailWebhookEnabled, false);
   assert.equal(exposed.emailWebhookConfigured, false);
+  assert.equal(exposed.cdekStatusSyncEnabled, false);
+  assert.equal(exposed.cdekStatusEmailsSinceConfigured, false);
 });
 
 test("loadConfig rejects non-postgres DATABASE_URL", () => {

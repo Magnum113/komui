@@ -455,8 +455,6 @@ enforce_email_contacts_compatibility() {
     "db/migrations/20260901170000_add_email_contacts_and_subscriptions.sql"
     "server/src/email/contacts.ts"
     "server/src/email/subscriptions.ts"
-    "server/src/email/templates/subscription-confirmation/index.ts"
-    "email-confirm.html"
   )
   local present_source_files=0
   local required_file
@@ -498,6 +496,104 @@ enforce_email_contacts_compatibility() {
   log "email_contacts_database=$database_state"
   if [[ "$source_state" == "email-contacts-v1" && "$database_state" != "email-contacts-v1" ]]; then
     fail "email-contacts source requires the migrated schema for $target: source=$source_state database=$database_state; use the controlled migration rollout"
+  fi
+}
+
+cdek_delivery_status_database_signature() {
+  runuser -u postgres -- psql -X -v ON_ERROR_STOP=1 -At -d "$database_name" <<'SQL'
+select concat_ws('|',
+  ((select count(*)
+      from information_schema.columns
+     where table_schema = 'public'
+       and table_name = 'merch_cdek_shipments'
+       and column_name in (
+         'delivery_status_code',
+         'delivery_status_name',
+         'delivery_status_at',
+         'delivery_status_city',
+         'delivery_status_synced_at',
+         'delivery_status_terminal',
+         'delivery_status_sync_attempts',
+         'delivery_status_sync_error',
+         'delivery_status_next_sync_at',
+         'planned_delivery_date',
+         'keep_free_until',
+         'delivery_mode'
+       )) = 12)::int,
+  ((select count(*)
+      from information_schema.columns
+     where table_schema = 'public'
+       and table_name = 'merch_cdek_events'
+       and column_name in (
+         'status_at',
+         'reason_code',
+         'status_city',
+         'status_deleted'
+       )) = 4)::int,
+  (to_regclass('public.merch_cdek_shipments_delivery_sync_due_idx') is not null)::int,
+  (to_regclass('public.merch_cdek_events_status_at_idx') is not null)::int,
+  ((select count(*)
+      from pg_constraint
+     where conrelid = to_regclass('public.merch_cdek_shipments')
+       and conname in (
+         'merch_cdek_shipments_delivery_status_sync_attempts_check',
+         'merch_cdek_shipments_delivery_mode_check'
+       )
+       and convalidated) = 2)::int
+);
+SQL
+}
+
+enforce_cdek_delivery_status_compatibility() {
+  local required_source_files=(
+    "db/migrations/20260907150000_add_cdek_delivery_status_emails.sql"
+    "server/src/cdekStatusSync.ts"
+    "server/src/cdekDeliveryStatuses.ts"
+    "server/src/email/templates/shipment-handed-over/index.ts"
+    "server/src/email/templates/shipment-ready/index.ts"
+  )
+  local present_source_files=0
+  local required_file
+  local source_state
+  local database_signature
+  local database_state
+
+  for required_file in "${required_source_files[@]}"; do
+    if [[ -f "$source_dir/$required_file" ]]; then
+      present_source_files=$((present_source_files + 1))
+    fi
+  done
+
+  if [[ "$present_source_files" -eq 0 ]]; then
+    source_state="legacy"
+  elif [[ "$present_source_files" -eq "${#required_source_files[@]}" ]] &&
+    grep -q 'shipment_handed_over' "$source_dir/server/src/email/outboxWorker.ts" &&
+    grep -q 'startCdekStatusSyncWorker' "$source_dir/server/src/server.ts"; then
+    source_state="cdek-delivery-status-v1"
+  else
+    fail "origin/$branch has a partial CDEK delivery-status source set ($present_source_files/${#required_source_files[@]} required files); refusing deploy"
+  fi
+
+  if ! database_signature="$(cdek_delivery_status_database_signature)"; then
+    fail "could not verify CDEK delivery-status schema in $database_name"
+  fi
+
+  case "$database_signature" in
+    0\|0\|0\|0\|0)
+      database_state="legacy"
+      ;;
+    1\|1\|1\|1\|1)
+      database_state="cdek-delivery-status-v1"
+      ;;
+    *)
+      fail "$database_name has a partial or invalid CDEK delivery-status schema (signature=$database_signature); refusing deploy"
+      ;;
+  esac
+
+  log "cdek_delivery_status_source=$source_state"
+  log "cdek_delivery_status_database=$database_state"
+  if [[ "$source_state" == "cdek-delivery-status-v1" && "$database_state" != "cdek-delivery-status-v1" ]]; then
+    fail "CDEK delivery-status source requires the migrated schema for $target: source=$source_state database=$database_state; use the controlled migration rollout"
   fi
 }
 
@@ -689,6 +785,7 @@ enforce_hoodie_variants_compatibility() {
   enforce_payment_consistency_compatibility
   enforce_email_mvp_compatibility
   enforce_email_contacts_compatibility
+  enforce_cdek_delivery_status_compatibility
   enforce_hoodie_variants_compatibility
   if [[ "$check_compatibility_only" -eq 1 ]]; then
     log "COMPATIBILITY_OK target=$target branch=$branch commit=$commit database=$database_name"
@@ -822,6 +919,8 @@ enforce_hoodie_variants_compatibility() {
   enforce_email_mvp_compatibility
   log "rechecking email-contacts compatibility before activation"
   enforce_email_contacts_compatibility
+  log "rechecking CDEK delivery-status compatibility before activation"
+  enforce_cdek_delivery_status_compatibility
   log "rechecking hoodie-variants compatibility before activation"
   enforce_hoodie_variants_compatibility
 

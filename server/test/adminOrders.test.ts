@@ -65,12 +65,32 @@ function orderRow(overrides: Record<string, unknown> = {}) {
     cdek_uuid: "cdek-uuid",
     cdek_number: "10288069122",
     cdek_error_message: null,
+    cdek_delivery_status_code: "ACCEPTED_AT_PICK_UP_POINT",
+    cdek_delivery_status_name: "Принят на склад до востребования",
+    cdek_delivery_status_at: "2026-07-02T09:00:00.000Z",
+    cdek_delivery_status_city: "Москва",
+    cdek_delivery_status_synced_at: "2026-07-02T09:01:00.000Z",
+    cdek_delivery_status_sync_error: null,
+    cdek_planned_delivery_date: "2026-07-02",
+    cdek_keep_free_until: "2026-07-09T20:59:59.000Z",
     order_paid_email_status: "sent",
     order_paid_email_attempt_count: "1",
     order_paid_email_last_error: null,
     order_paid_email_sent_at: "2026-06-30T09:06:00.000Z",
     order_paid_email_failed_at: null,
     order_paid_email_updated_at: "2026-06-30T09:06:00.000Z",
+    shipment_handed_over_email_status: "sent",
+    shipment_handed_over_email_attempt_count: "1",
+    shipment_handed_over_email_last_error: null,
+    shipment_handed_over_email_sent_at: "2026-07-01T09:06:00.000Z",
+    shipment_handed_over_email_failed_at: null,
+    shipment_handed_over_email_updated_at: "2026-07-01T09:06:00.000Z",
+    shipment_ready_email_status: "pending",
+    shipment_ready_email_attempt_count: "0",
+    shipment_ready_email_last_error: null,
+    shipment_ready_email_sent_at: null,
+    shipment_ready_email_failed_at: null,
+    shipment_ready_email_updated_at: "2026-07-02T09:01:00.000Z",
     ...overrides,
   };
 }
@@ -102,6 +122,22 @@ test("toAdminOrderSummary keeps payment, fulfillment and CDEK statuses separate"
       sentAt: "2026-06-30T09:06:00.000Z",
       failedAt: null,
       updatedAt: "2026-06-30T09:06:00.000Z",
+    },
+    shipmentHandedOver: {
+      status: "sent",
+      attemptCount: 1,
+      lastError: null,
+      sentAt: "2026-07-01T09:06:00.000Z",
+      failedAt: null,
+      updatedAt: "2026-07-01T09:06:00.000Z",
+    },
+    shipmentReady: {
+      status: "pending",
+      attemptCount: 0,
+      lastError: null,
+      sentAt: null,
+      failedAt: null,
+      updatedAt: "2026-07-02T09:01:00.000Z",
     },
   });
   assert.deepEqual(summary.customer, {
@@ -225,10 +261,26 @@ test("admin order summary reports absent order_paid email without inventing deli
       order_paid_email_sent_at: null,
       order_paid_email_failed_at: null,
       order_paid_email_updated_at: null,
+      shipment_handed_over_email_status: null,
+      shipment_handed_over_email_attempt_count: null,
+      shipment_handed_over_email_last_error: null,
+      shipment_handed_over_email_sent_at: null,
+      shipment_handed_over_email_failed_at: null,
+      shipment_handed_over_email_updated_at: null,
+      shipment_ready_email_status: null,
+      shipment_ready_email_attempt_count: null,
+      shipment_ready_email_last_error: null,
+      shipment_ready_email_sent_at: null,
+      shipment_ready_email_failed_at: null,
+      shipment_ready_email_updated_at: null,
     }),
   );
 
-  assert.deepEqual(summary.email, { orderPaid: null });
+  assert.deepEqual(summary.email, {
+    orderPaid: null,
+    shipmentHandedOver: null,
+    shipmentReady: null,
+  });
 });
 
 test("POST /admin/storefront/orders/:id/mark-shipped marks paid order as shipped", async () => {

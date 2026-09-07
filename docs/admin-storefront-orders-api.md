@@ -37,6 +37,11 @@ backend подключается через `DATABASE_URL`. Миграцию и�
 
 Это статус CDEK-заказа/накладной, а не ручной статус “я отправил клиенту”.
 
+Физическое движение посылки хранится отдельно в `delivery_status_*`. Это
+позволяет одновременно видеть, что накладная успешно создана (`status=created`),
+а посылка, например, уже принята выбранным ПВЗ
+(`deliveryStatusCode=ACCEPTED_AT_PICK_UP_POINT`).
+
 ## Что добавлено для админки
 
 Добавлена миграция:
@@ -147,7 +152,20 @@ Query:
         "status": "created",
         "uuid": "cdek-uuid",
         "number": "10288069122",
-        "errorMessage": null
+        "errorMessage": null,
+        "deliveryStatusCode": "SENT_TO_RECIPIENT_CITY",
+        "deliveryStatusName": "Отправлен в город получателя",
+        "deliveryStatusAt": "2026-07-01T08:00:00.000Z",
+        "deliveryStatusCity": "Москва",
+        "deliveryStatusSyncedAt": "2026-07-01T08:01:00.000Z",
+        "deliveryStatusSyncError": null,
+        "plannedDeliveryDate": "2026-07-03",
+        "keepFreeUntil": null
+      },
+      "email": {
+        "orderPaid": { "status": "sent", "attemptCount": 1 },
+        "shipmentHandedOver": { "status": "sent", "attemptCount": 1 },
+        "shipmentReady": null
       },
       "paidAt": "2026-06-30T09:05:00.000Z",
       "shippedAt": null,
@@ -184,6 +202,14 @@ GET /admin/storefront/orders/:orderId
 - `paymentEvents` - последние webhook-события оплаты;
 - `cdekShipment` - накладная/заказ СДЭК, если создана;
 - `cdekEvents` - последние события СДЭК, если есть;
+- `cdekShipment.deliveryStatus*` — последний физический статус, время последней
+  успешной синхронизации, число попыток, безопасный текст ошибки, плановая дата
+  и срок хранения;
+- `cdekEvents.statusAt`, `reasonCode`, `city`, `deleted` — нормализованная
+  история provider statuses без полного ответа СДЭК;
+- `order.email` — состояния `orderPaid`, `shipmentHandedOver` и
+  `shipmentReady`: `pending`, `processing`, `retry`, `sent`, `failed` или
+  `cancelled`, количество попыток и безопасная диагностика;
 - `orderEffects` - безопасная операционная сводка фоновых действий CDEK:
   `type`, `status`, `attempts`, `lastError`, `availableAt`, `updatedAt` и
   `completedAt`. Внутренний `payload` в admin API не возвращается. Статус

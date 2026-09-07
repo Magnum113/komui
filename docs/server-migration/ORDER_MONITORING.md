@@ -37,6 +37,7 @@ Production-заказы проверяет отдельный systemd-тайме
 - пять и более неудачных оплат минимум двух покупателей за пятнадцать минут;
 - заказ без строк в `merch_customer_order_items`;
 - отправление CDEK в статусе `failed` или `invalid`;
+- три и более последовательных ошибки синхронизации физического статуса СДЭК;
 - заказ в `paid`/`partially_refunded`, для которого через десять минут нет CDEK
   shipment в конечном статусе `created`; промежуточные `creating`/`accepted` и
   ошибочные строки проблему не скрывают;
@@ -79,9 +80,10 @@ sudo journalctl -u komui-xray-subscription-update.service -n 100 --no-pager
 
 ## Установка или восстановление после сбоя сервера
 
-Текущая версия monitor читает `merch_order_effects` и новые поля
-reconciliation. На новом или восстановленном сервере сначала должна быть
-применена migration `20260830143000_harden_payment_consistency.sql`.
+Текущая версия monitor читает `merch_order_effects`, поля reconciliation и поля
+синхронизации доставки. На новом или восстановленном сервере сначала должны
+быть применены migrations `20260830143000_harden_payment_consistency.sql` и
+`20260907150000_add_cdek_delivery_status_emails.sql`.
 
 Systemd unit читает `komui_production`; отдельного постоянного staging monitor
 нет. В рабочем production migration уже применена, поэтому это ограничение

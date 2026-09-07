@@ -1176,6 +1176,28 @@ The endpoint:
 - retries only `failed`/`invalid` shipments;
 - stores CDEK request/response/error payload in `public.merch_cdek_shipments`.
 
+Physical delivery tracking and email notifications are a separate workflow:
+
+```text
+CDEK_STATUS_SYNC_ENABLED=true
+CDEK_STATUS_SYNC_INTERVAL_MS=600000
+CDEK_STATUS_SYNC_BATCH_SIZE=10
+CDEK_STATUS_EMAILS_SINCE=<rollout cutoff in ISO 8601>
+```
+
+The backend polls `GET /v2/orders/{uuid}`, stores normalized provider statuses
+in `merch_cdek_events`, and keeps the latest physical state in
+`merch_cdek_shipments.delivery_status_*`. Technical shipment creation status,
+customer-order payment status and fulfillment status remain independent.
+
+Only two customer-facing transitions create transactional outbox jobs:
+`shipment_handed_over` for a physically accepted/in-transit parcel and
+`shipment_ready` for `ACCEPTED_AT_PICK_UP_POINT` or `POSTOMAT_POSTED`. The
+rollout cutoff applies to both the shipment creation time and provider status
+time. Old shipments are synchronized without email. The email worker rechecks
+payment, fulfillment, shipment and current delivery status immediately before
+calling Unisender, cancelling stale jobs instead of sending them.
+
 ### Promo
 
 ```text
@@ -1219,15 +1241,14 @@ T-Bank token/signature logic is implemented in `server/src/crypto.ts`.
 
 ```text
 POST /v1/email/subscribe
-POST /v1/email/confirm
 GET  /v1/webhooks/unisender-go
 POST /v1/webhooks/unisender-go
 ```
 
 `/v1/email/subscribe` требует отдельные privacy и marketing consents. Single
 Opt-In атомарно устанавливает `subscribed` и записывает append-only `granted`
-event без confirmation email. `/v1/email/confirm` сохранён только для старых
-Double Opt-In links. Unsubscribe, hard bounce и complaint создают suppression и
+event без confirmation email. Устаревшие Double Opt-In endpoint, страница и
+шаблон удалены после истечения ранее выданных ссылок. Unsubscribe, hard bounce и complaint создают suppression и
 останавливают ожидающие marketing jobs. Отдельные staging/production workers
 обрабатывают PostgreSQL outbox; HTTP/payment flow не ждёт Unisender.
 

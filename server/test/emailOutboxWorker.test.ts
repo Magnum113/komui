@@ -62,6 +62,9 @@ function fakeOutbox(options: {
   cdekNumber?: string | null;
   cdekStatus?: string | null;
   createdAt?: string;
+  orderStatus?: string;
+  fulfillmentStatus?: string;
+  deliveryStatusCode?: string | null;
   row?: Record<string, unknown>;
 } = {}) {
   const state = {
@@ -122,6 +125,18 @@ function fakeOutbox(options: {
           : [],
       };
     }
+    if (sql.includes("email_outbox:send_eligibility")) {
+      return {
+        rows: [
+          {
+            order_status: options.orderStatus ?? "paid",
+            fulfillment_status: options.fulfillmentStatus ?? "new",
+            shipment_status: options.cdekStatus ?? "created",
+            delivery_status_code: options.deliveryStatusCode ?? null,
+          },
+        ],
+      };
+    }
     if (sql.includes("email_outbox:await_cdek_tracking")) {
       assert.equal(values[1], state.lockedBy);
       state.status = "retry";
@@ -150,6 +165,13 @@ function fakeOutbox(options: {
     if (sql.includes("email_outbox:failed")) {
       assert.equal(values[1], state.lockedBy);
       state.status = "failed";
+      state.lastError = String(values[2]);
+      state.lockedBy = null;
+      return { rows: [] };
+    }
+    if (sql.includes("email_outbox:cancelled")) {
+      assert.equal(values[1], state.lockedBy);
+      state.status = "cancelled";
       state.lastError = String(values[2]);
       state.lockedBy = null;
       return { rows: [] };
@@ -193,16 +215,13 @@ test("email worker claims with SKIP LOCKED and marks provider acceptance sent", 
     deduplicated: 0,
     suppressed: 0,
     deferred: 0,
+    cancelled: 0,
   });
   assert.equal(state.status, "sent");
   assert.equal(state.providerMessageId, "provider-job-1");
   assert.equal(requests.length, 1);
   assert.match(state.queryLog[0], /for update skip locked/i);
   assert.match(state.queryLog[0], /coalesce\(locked_at, updated_at, created_at\)/i);
-  assert.match(
-    state.queryLog.find((sql) => sql.includes("email_outbox:sent")) ?? "",
-    /subscription_confirmation[\s\S]*payload - 'confirmationUrl'/i,
-  );
 });
 
 test("email worker includes CDEK tracking created after payment", async () => {
@@ -273,52 +292,178 @@ test("email worker briefly waits for an in-flight CDEK tracking number", async (
   assert.equal(state.retryDelay, 10_000);
 });
 
-test("subscription confirmation never waits for CDEK tracking", async () => {
-  const { db, state } = fakeOutbox({
-    createdAt: new Date().toISOString(),
-    row: {
-      order_id: null,
-      contact_id: "5bde76c5-5d3e-4a25-b90a-89be9878092c",
-      event_type: "subscription_confirmation",
-      template_key: "subscription_confirmation",
+test("email worker renders the handed-over and ready CDEK templates", async (t) => {
+  const scenarios = [
+    {
+      name: "handed over",
+      eventType: "shipment_handed_over",
       payload: {
         schemaVersion: 1,
-        confirmationUrl: `https://komui.ru/email-confirm#token=${"A".repeat(43)}`,
-        tokenFingerprint: "b".repeat(24),
+        customerFirstName: "Иван",
+        orderNumber: "KOM-123456789",
+        cdekNumber: "1598765432",
+        deliveryCity: "Москва",
+        deliveryAddress: "ул. Тестовая, 1",
+        estimatedDeliveryDate: "10 сентября 2026 г.",
       },
-      idempotency_key: "subscription-confirm:test",
-    },
-  });
-  let sendCalled = false;
-  const result = await processEmailOutbox(
-    {
-      config: config({ CDEK_CREATE_SHIPMENTS: "true" }),
-      db,
+      expected: /Заказ в пути/,
+      deliveryStatusCode: "SENT_TO_RECIPIENT_CITY",
     },
     {
-      limit: 1,
-      workerId: "worker-subscription",
-      sender: {
-        send: async () => {
-          sendCalled = true;
-          return {
-            provider: "unisender_go",
-            providerMessageId: "provider-job-subscription",
-            accepted: true,
-          };
-        },
+      name: "ready",
+      eventType: "shipment_ready",
+      payload: {
+        schemaVersion: 1,
+        customerFirstName: "Иван",
+        orderNumber: "KOM-123456789",
+        cdekNumber: "1598765432",
+        deliveryPointType: "pickup_point",
+        deliveryPointName: "СДЭК на Тверской",
+        deliveryPointCode: "MSK1234",
+        deliveryCity: "Москва",
+        deliveryAddress: "ул. Тестовая, 1",
+        deliveryHours: "10:00–21:00",
+        storageUntil: "15 сентября 2026 г.",
       },
+      expected: /Заказ ждёт вас/,
+      deliveryStatusCode: "ACCEPTED_AT_PICK_UP_POINT",
     },
-  );
+  ];
 
-  assert.equal(sendCalled, true);
-  assert.equal(result.sent, 1);
-  assert.equal(result.deferred, 0);
-  assert.equal(state.status, "sent");
-  assert.equal(
-    state.queryLog.some((sql) => sql.includes("email_outbox:await_cdek_tracking")),
-    false,
-  );
+  for (const scenario of scenarios) {
+    await t.test(scenario.name, async () => {
+      const { db } = fakeOutbox({
+        payload: scenario.payload,
+        cdekStatus: "created",
+        deliveryStatusCode: scenario.deliveryStatusCode,
+        row: {
+          event_type: scenario.eventType,
+          template_key: scenario.eventType,
+          idempotency_key: `${scenario.eventType}:order`,
+        },
+      });
+      const requests: Array<{ rendered: { html: string; text: string } }> = [];
+      const result = await processEmailOutbox(
+        { config: config(), db },
+        {
+          limit: 1,
+          workerId: `worker-${scenario.eventType}`,
+          sender: {
+            send: async (request) => {
+              requests.push(request);
+              return {
+                provider: "unisender_go",
+                providerMessageId: `provider-${scenario.eventType}`,
+                accepted: true,
+              };
+            },
+          },
+        },
+      );
+      assert.equal(result.sent, 1);
+      assert.equal(requests.length, 1);
+      assert.match(requests[0].rendered.html, scenario.expected);
+      assert.match(requests[0].rendered.html, /1598765432/);
+    });
+  }
+});
+
+test("email worker cancels obsolete transactional messages before provider call", async (t) => {
+  const scenarios = [
+    {
+      name: "payment email after refund",
+      database: fakeOutbox({ orderStatus: "refunded" }),
+      reason: "email_order_no_longer_paid",
+    },
+    {
+      name: "ready email after delivery",
+      database: fakeOutbox({
+        payload: {
+          schemaVersion: 1,
+          customerFirstName: "Иван",
+          orderNumber: "KOM-123456789",
+          cdekNumber: "1598765432",
+          deliveryPointType: "pickup_point",
+          deliveryCity: "Москва",
+          deliveryAddress: "ул. Тестовая, 1",
+        },
+        cdekStatus: "created",
+        deliveryStatusCode: "DELIVERED",
+        row: {
+          event_type: "shipment_ready",
+          template_key: "shipment_ready",
+          idempotency_key: `shipment-ready:${orderId}`,
+        },
+      }),
+      reason: "email_shipment_ready_stale_terminal",
+    },
+    {
+      name: "handed-over email after parcel reached pickup point",
+      database: fakeOutbox({
+        payload: {
+          schemaVersion: 1,
+          customerFirstName: "Иван",
+          orderNumber: "KOM-123456789",
+          cdekNumber: "1598765432",
+          deliveryCity: "Москва",
+          deliveryAddress: "ул. Тестовая, 1",
+        },
+        cdekStatus: "created",
+        deliveryStatusCode: "ACCEPTED_AT_PICK_UP_POINT",
+        row: {
+          event_type: "shipment_handed_over",
+          template_key: "shipment_handed_over",
+          idempotency_key: `shipment-handed-over:${orderId}`,
+        },
+      }),
+      reason: "email_shipment_handed_over_stale_ready",
+    },
+    {
+      name: "ready email after parcel left pickup state",
+      database: fakeOutbox({
+        payload: {
+          schemaVersion: 1,
+          customerFirstName: "Иван",
+          orderNumber: "KOM-123456789",
+          cdekNumber: "1598765432",
+          deliveryPointType: "pickup_point",
+          deliveryCity: "Москва",
+          deliveryAddress: "ул. Тестовая, 1",
+        },
+        cdekStatus: "created",
+        deliveryStatusCode: "RETURNED_TO_RECIPIENT_CITY_WAREHOUSE",
+        row: {
+          event_type: "shipment_ready",
+          template_key: "shipment_ready",
+          idempotency_key: `shipment-ready:${orderId}`,
+        },
+      }),
+      reason: "email_shipment_ready_stale_status",
+    },
+  ];
+
+  for (const scenario of scenarios) {
+    await t.test(scenario.name, async () => {
+      let sendCalled = false;
+      const result = await processEmailOutbox(
+        { config: config(), db: scenario.database.db },
+        {
+          limit: 1,
+          workerId: "worker-cancel",
+          sender: {
+            send: async () => {
+              sendCalled = true;
+              throw new Error("must not send obsolete mail");
+            },
+          },
+        },
+      );
+      assert.equal(sendCalled, false);
+      assert.equal(result.cancelled, 1);
+      assert.equal(scenario.database.state.status, "cancelled");
+      assert.equal(scenario.database.state.lastError, scenario.reason);
+    });
+  }
 });
 
 test("temporary provider failures use bounded backoff and eventually fail", async () => {

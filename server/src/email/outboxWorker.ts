@@ -2,10 +2,16 @@ import { hostname } from "node:os";
 import { randomUUID } from "node:crypto";
 import type { QueryResultRow } from "pg";
 import { z } from "zod";
+import {
+  cdekInTransitStatusCodes,
+  cdekReadyStatusCodes,
+  cdekTerminalStatusCodes,
+} from "../cdekDeliveryStatuses";
 import type { AppConfig } from "../config";
 import type { Db } from "../db";
 import { renderOrderPaidEmail } from "./templates/order-paid";
-import { renderSubscriptionConfirmationEmail } from "./templates/subscription-confirmation";
+import { renderShipmentHandedOverEmail } from "./templates/shipment-handed-over";
+import { renderShipmentReadyEmail } from "./templates/shipment-ready";
 import {
   EmailProviderError,
   maskEmail,
@@ -55,6 +61,7 @@ export type ProcessEmailOutboxResult = {
   deduplicated: number;
   suppressed: number;
   deferred: number;
+  cancelled: number;
 };
 
 export type ProcessEmailOutboxOptions = {
@@ -89,10 +96,28 @@ const orderPaidPayloadSchema = z.object({
   deliveryEta: z.string().max(100).nullable(),
 });
 
-const subscriptionConfirmationPayloadSchema = z.object({
+const shipmentHandedOverPayloadSchema = z.object({
   schemaVersion: z.literal(1),
-  confirmationUrl: z.string().url().max(1_000),
-  tokenFingerprint: z.string().regex(/^[0-9a-f]{24}$/),
+  customerFirstName: z.string().max(80),
+  orderNumber: z.string().min(1).max(80),
+  cdekNumber: z.string().min(1).max(80),
+  deliveryCity: z.string().max(100),
+  deliveryAddress: z.string().min(1).max(220),
+  estimatedDeliveryDate: z.string().max(100).nullable().optional(),
+});
+
+const shipmentReadyPayloadSchema = z.object({
+  schemaVersion: z.literal(1),
+  customerFirstName: z.string().max(80),
+  orderNumber: z.string().min(1).max(80),
+  cdekNumber: z.string().min(1).max(80),
+  deliveryPointType: z.enum(["pickup_point", "postamat"]),
+  deliveryPointName: z.string().max(160).nullable().optional(),
+  deliveryPointCode: z.string().max(40).nullable().optional(),
+  deliveryCity: z.string().max(100),
+  deliveryAddress: z.string().min(1).max(220),
+  deliveryHours: z.string().max(160).nullable().optional(),
+  storageUntil: z.string().max(100).nullable().optional(),
 });
 
 const retryDelaysMs = [5 * 60_000, 30 * 60_000, 4 * 60 * 60_000];
@@ -219,42 +244,112 @@ function emailRequest(
   row: EmailOutboxRow,
   cdekNumber: string | null,
 ): EmailSendRequest {
-  if (
-    row.template_key !== "order_paid" ||
-    row.event_type !== "order_paid" ||
-    row.message_class !== "transactional"
-  ) {
-    if (
-      row.template_key === "subscription_confirmation"
-      && row.event_type === "subscription_confirmation"
-      && row.message_class === "transactional"
-    ) {
-      const input = subscriptionConfirmationPayloadSchema.parse(row.payload);
-      return {
-        recipientEmail: row.recipient_email,
-        messageClass: row.message_class,
-        templateKey: row.template_key,
-        idempotencyKey: row.idempotency_key,
-        rendered: renderSubscriptionConfirmationEmail(input),
-        metadata: {
-          contact_id: row.contact_id ?? "",
-        },
-      };
-    }
+  if (row.message_class !== "transactional" || row.template_key !== row.event_type) {
     throw new Error("Unsupported email outbox template");
   }
-  const input = orderPaidPayloadSchema.parse(row.payload);
+  let rendered;
+  let orderNumber: string;
+  switch (row.template_key) {
+    case "order_paid": {
+      const input = orderPaidPayloadSchema.parse(row.payload);
+      rendered = renderOrderPaidEmail({ ...input, cdekNumber });
+      orderNumber = input.orderNumber;
+      break;
+    }
+    case "shipment_handed_over": {
+      const input = shipmentHandedOverPayloadSchema.parse(row.payload);
+      rendered = renderShipmentHandedOverEmail(input);
+      orderNumber = input.orderNumber;
+      break;
+    }
+    case "shipment_ready": {
+      const input = shipmentReadyPayloadSchema.parse(row.payload);
+      rendered = renderShipmentReadyEmail(input);
+      orderNumber = input.orderNumber;
+      break;
+    }
+    default:
+      throw new Error("Unsupported email outbox template");
+  }
   return {
     recipientEmail: row.recipient_email,
     messageClass: row.message_class,
     templateKey: row.template_key,
     idempotencyKey: row.idempotency_key,
-    rendered: renderOrderPaidEmail({ ...input, cdekNumber }),
+    rendered,
     metadata: {
       order_id: row.order_id ?? "",
-      order_number: input.orderNumber,
+      order_number: orderNumber,
     },
   };
+}
+
+const paidOrderStatuses = new Set(["paid", "partially_refunded"]);
+const closedFulfillmentStatuses = new Set(["canceled", "returned"]);
+const closedShipmentStatuses = new Set([
+  "deleting",
+  "deleted",
+  "failed",
+  "invalid",
+]);
+async function sendCancellationReason(
+  context: EmailWorkerContext,
+  row: EmailOutboxRow,
+): Promise<string | null> {
+  if (!row.order_id) return "email_order_missing";
+  const result = await context.db.query<{
+    order_status: string;
+    fulfillment_status: string;
+    shipment_status: string | null;
+    delivery_status_code: string | null;
+  }>(
+    `
+      /* email_outbox:send_eligibility */
+      select
+        orders.status as order_status,
+        orders.fulfillment_status,
+        shipment.status as shipment_status,
+        shipment.delivery_status_code
+      from public.merch_customer_orders orders
+      left join public.merch_cdek_shipments shipment on shipment.order_id = orders.id
+      where orders.id = $1::uuid
+      limit 1
+    `,
+    [row.order_id],
+  );
+  const current = result.rows[0];
+  if (!current) return "email_order_missing";
+  if (!paidOrderStatuses.has(boundedText(current.order_status, 40).toLowerCase())) {
+    return "email_order_no_longer_paid";
+  }
+  if (
+    closedFulfillmentStatuses.has(
+      boundedText(current.fulfillment_status, 40).toLowerCase(),
+    )
+  ) {
+    return "email_fulfillment_closed";
+  }
+  if (row.event_type === "order_paid") return null;
+  const shipmentStatus = boundedText(current.shipment_status, 40).toLowerCase();
+  if (!shipmentStatus) return "email_shipment_missing";
+  if (closedShipmentStatuses.has(shipmentStatus)) return "email_shipment_closed";
+  const deliveryStatus = boundedText(
+    current.delivery_status_code,
+    100,
+  ).toUpperCase();
+  if (row.event_type === "shipment_handed_over") {
+    if (!cdekInTransitStatusCodes.has(deliveryStatus)) {
+      return cdekReadyStatusCodes.has(deliveryStatus)
+        ? "email_shipment_handed_over_stale_ready"
+        : "email_shipment_handed_over_stale_status";
+    }
+  }
+  if (row.event_type === "shipment_ready" && !cdekReadyStatusCodes.has(deliveryStatus)) {
+    return cdekTerminalStatusCodes.has(deliveryStatus)
+      ? "email_shipment_ready_stale_terminal"
+      : "email_shipment_ready_stale_status";
+  }
+  return null;
 }
 
 async function cdekTrackingState(
@@ -339,11 +434,6 @@ async function markSent(
       set status = 'sent',
           provider_message_id = coalesce($3, provider_message_id),
           sent_at = coalesce(sent_at, now()),
-          payload = case
-            when event_type = 'subscription_confirmation'
-              then payload - 'confirmationUrl'
-            else payload
-          end,
           failed_at = null,
           next_attempt_at = null,
           locked_at = null,
@@ -378,6 +468,30 @@ async function markFailed(
         and locked_by = $2
     `,
     [row.id, workerId, boundedText(errorCode, 500)],
+  );
+}
+
+async function markCancelled(
+  context: EmailWorkerContext,
+  row: EmailOutboxRow,
+  workerId: string,
+  reason: string,
+) {
+  await context.db.query(
+    `
+      /* email_outbox:cancelled */
+      update public.merch_email_outbox
+      set status = 'cancelled',
+          failed_at = null,
+          next_attempt_at = null,
+          locked_at = null,
+          locked_by = null,
+          last_error = $3
+      where id = $1::uuid
+        and status = 'processing'
+        and locked_by = $2
+    `,
+    [row.id, workerId, boundedText(reason, 500)],
   );
 }
 
@@ -423,7 +537,7 @@ function errorCode(error: unknown): string {
     error instanceof Error
     && (
       error.message.includes("Order email")
-      || error.message.includes("Subscription confirmation email")
+      || error.message.includes("Shipment email")
     )
   ) {
     return "email_template_invalid";
@@ -452,6 +566,7 @@ export async function processEmailOutbox(
     deduplicated: 0,
     suppressed: 0,
     deferred: 0,
+    cancelled: 0,
   };
 
   for (let index = 0; index < limit; index += 1) {
@@ -497,7 +612,24 @@ export async function processEmailOutbox(
         continue;
       }
 
-      const sent = await sender.send(emailRequest(row, cdek.number));
+      const request = emailRequest(row, cdek.number);
+      const cancellationReason = await sendCancellationReason(context, row);
+      if (cancellationReason) {
+        await markCancelled(context, row, workerId, cancellationReason);
+        result.cancelled += 1;
+        context.logger?.info?.(
+          {
+            outboxId: row.id,
+            orderId: row.order_id,
+            eventType: row.event_type,
+            cancellationReason,
+          },
+          "Stale transactional email cancelled before provider call",
+        );
+        continue;
+      }
+
+      const sent = await sender.send(request);
       await markSent(context, row, workerId, sent.providerMessageId);
       result.sent += 1;
       context.logger?.info?.(
@@ -531,7 +663,7 @@ export async function processEmailOutbox(
             !(error instanceof Error &&
               (error.message === "Unsupported email outbox template" ||
                 error.message.includes("Order email") ||
-                error.message.includes("Subscription confirmation email")));
+                error.message.includes("Shipment email")));
       if (
         retryable &&
         row.attempt_count < context.config.EMAIL_WORKER_MAX_ATTEMPTS

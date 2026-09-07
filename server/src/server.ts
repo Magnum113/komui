@@ -1,5 +1,6 @@
 import { buildApp } from "./app";
 import { startCdekEffectWorker } from "./cdekEffects";
+import { startCdekStatusSyncWorker } from "./cdekStatusSync";
 import { loadConfig } from "./config";
 import { createDb } from "./db";
 import { startTbankInitReconciler } from "./tbankReconciliation";
@@ -9,12 +10,14 @@ async function main() {
   const db = createDb(config);
   const app = buildApp({ config, db });
   let stopCdekEffectWorker: (() => Promise<void>) | null = null;
+  let stopCdekStatusSyncWorker: (() => Promise<void>) | null = null;
   let stopTbankInitReconciler: (() => Promise<void>) | null = null;
 
   const shutdown = async (signal: NodeJS.Signals) => {
     app.log.info({ signal }, "shutting down");
     await Promise.all([
       stopCdekEffectWorker?.(),
+      stopCdekStatusSyncWorker?.(),
       stopTbankInitReconciler?.(),
     ]);
     await app.close();
@@ -28,6 +31,11 @@ async function main() {
     port: config.PORT,
   });
   stopCdekEffectWorker = startCdekEffectWorker({
+    config,
+    db,
+    logger: app.log,
+  });
+  stopCdekStatusSyncWorker = startCdekStatusSyncWorker({
     config,
     db,
     logger: app.log,

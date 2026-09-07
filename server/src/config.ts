@@ -99,6 +99,23 @@ const envSchema = z.object({
     .enum(["true", "false"])
     .default("false")
     .transform((value) => value === "true"),
+  CDEK_STATUS_SYNC_ENABLED: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
+  CDEK_STATUS_SYNC_INTERVAL_MS: z.coerce
+    .number()
+    .int()
+    .min(60_000)
+    .max(3_600_000)
+    .default(600_000),
+  CDEK_STATUS_SYNC_BATCH_SIZE: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(50)
+    .default(10),
+  CDEK_STATUS_EMAILS_SINCE: z.string().datetime({ offset: true }).optional(),
   CDEK_SHIPMENT_POINT: z.string().min(1).default("MKHCH20"),
   CDEK_SHIPMENT_CITY: z.string().min(1).default("Махачкала"),
   CDEK_SHIPMENT_CITY_CODE: z.string().optional(),
@@ -210,6 +227,8 @@ export function publicConfig(config: AppConfig) {
     ),
     cdekMock: config.CDEK_MOCK,
     cdekCreateShipments: config.CDEK_CREATE_SHIPMENTS,
+    cdekStatusSyncEnabled: config.CDEK_STATUS_SYNC_ENABLED,
+    cdekStatusEmailsSinceConfigured: Boolean(config.CDEK_STATUS_EMAILS_SINCE),
     ozonImportEnvFileConfigured: Boolean(config.OZON_IMPORT_ENV_FILE),
     emailProvider: config.EMAIL_PROVIDER,
     emailEnabled: config.EMAIL_ENABLED,

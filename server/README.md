@@ -13,7 +13,8 @@ Production backend self-hosted витрины KOMUI. Один Fastify/TypeScript
 - Fastify;
 - PostgreSQL через `pg`;
 - TypeScript build в `dist/`;
-- отдельный email outbox worker.
+- отдельный email outbox worker;
+- встроенный worker синхронизации физических статусов СДЭК.
 
 Минимальные переменные окружения:
 
@@ -69,15 +70,29 @@ Email:
 
 ```text
 POST /v1/email/subscribe
-POST /v1/email/confirm
 GET  /v1/webhooks/unisender-go
 POST /v1/webhooks/unisender-go
 ```
 
 `POST /v1/email/subscribe` реализует Single Opt-In: два явных согласия сразу
 активируют подписку и append-only consent event, не создавая
-confirmation-письмо. `/v1/email/confirm` временно сохранён для ранее выданных
-Double Opt-In ссылок.
+confirmation-письмо. Устаревший Double Opt-In endpoint и его шаблон удалены.
+
+Для писем о доставке backend периодически читает статус уже созданных
+отправлений СДЭК. Фича включается только вместе с рабочим email worker:
+
+```text
+CDEK_STATUS_SYNC_ENABLED=true
+CDEK_STATUS_SYNC_INTERVAL_MS=600000
+CDEK_STATUS_SYNC_BATCH_SIZE=10
+CDEK_STATUS_EMAILS_SINCE=2026-09-07T00:00:00Z
+```
+
+Дата отсечения обязательна и проверяется также по `created_at` shipment: старые
+отправления синхронизируются для админки, но не запускают новые письма.
+Поддерживаются события `shipment_handed_over` и `shipment_ready`; каждое письмо
+ставится в outbox не более одного раза и повторно проверяется непосредственно
+перед передачей в Unisender.
 
 При публикации через Nginx маршруты доступны под внешним префиксом `/api`;
 Nginx удаляет этот префикс перед передачей запроса Fastify.

@@ -93,6 +93,35 @@ class KomuiDeployFromGitCompatibilityTest(unittest.TestCase):
         self.assertLess(build_offset, final_guard_offset)
         self.assertLess(final_guard_offset, activation_offset)
 
+    def test_cdek_delivery_status_guard_requires_exact_schema_and_source(self) -> None:
+        self.assertIn(
+            "20260907150000_add_cdek_delivery_status_emails.sql",
+            self.script,
+        )
+        self.assertIn('"server/src/cdekStatusSync.ts"', self.script)
+        self.assertIn('"server/src/cdekDeliveryStatuses.ts"', self.script)
+        self.assertIn('"server/src/email/templates/shipment-handed-over/index.ts"', self.script)
+        self.assertIn('"server/src/email/templates/shipment-ready/index.ts"', self.script)
+        self.assertIn("delivery_status_next_sync_at", self.script)
+        self.assertIn("partial or invalid CDEK delivery-status schema", self.script)
+        self.assertIn("CDEK delivery-status source requires the migrated schema", self.script)
+        self.assertIn(
+            '"$source_state" == "cdek-delivery-status-v1" && "$database_state" != "cdek-delivery-status-v1"',
+            self.script,
+        )
+
+        guard_offset = self.script.index("enforce_cdek_delivery_status_compatibility\n")
+        final_guard_offset = self.script.rindex("enforce_cdek_delivery_status_compatibility\n")
+        build_offset = self.script.index('log "removing stale backend dependency/build artifacts"')
+        activation_offset = self.script.index('log "activating backend"')
+        self.assertEqual(
+            self.script.count("  enforce_cdek_delivery_status_compatibility\n"),
+            2,
+        )
+        self.assertLess(guard_offset, build_offset)
+        self.assertLess(build_offset, final_guard_offset)
+        self.assertLess(final_guard_offset, activation_offset)
+
     def test_hoodie_variant_guard_requires_exact_schema_and_partition(self) -> None:
         self.assertIn(
             "20260903125110_split_hoodie_storefront_variants.sql",

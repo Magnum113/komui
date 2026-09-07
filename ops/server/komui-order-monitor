@@ -378,6 +378,36 @@ cdek_failures as (
   ) as value
   from cdek_failure_rows
 ),
+cdek_status_sync_failure_rows as (
+  select
+    o.order_number,
+    s.delivery_status_sync_attempts as attempts,
+    left(coalesce(s.delivery_status_sync_error, ''), 180) as last_error,
+    s.updated_at
+  from public.merch_cdek_shipments s
+  join public.merch_customer_orders o on o.id = s.order_id
+  cross join params p
+  where s.delivery_status_sync_attempts >= 3
+    and s.delivery_status_sync_error is not null
+    and s.updated_at > p.since_at
+  order by s.updated_at
+),
+cdek_status_sync_failures as (
+  select jsonb_build_object(
+    'count', count(*),
+    'items', coalesce(
+      jsonb_agg(
+        jsonb_build_object(
+          'orderNumber', order_number,
+          'attempts', attempts,
+          'lastError', last_error
+        ) order by updated_at
+      ),
+      '[]'::jsonb
+    )
+  ) as value
+  from cdek_status_sync_failure_rows
+),
 paid_without_shipment as (
   select coalesce(
     jsonb_agg(
@@ -414,6 +444,7 @@ select jsonb_build_object(
   'paymentReviews', (select value from payment_reviews),
   'cdekEffectReviews', (select value from cdek_effect_reviews),
   'cdekFailures', (select value from cdek_failures),
+  'cdekStatusSyncFailures', (select value from cdek_status_sync_failures),
   'paidWithoutShipment', (select value from paid_without_shipment)
 )
 from params p;
@@ -937,6 +968,19 @@ def build_alert(
             "🚨 CDEK не создал отправление\n"
             + "\n".join(f"• {sample}" for sample in samples)
             + "\n• действие: открыть заказ в админке и повторить создание после проверки причины"
+        )
+
+    if count_of(report, "cdekStatusSyncFailures"):
+        items = items_of(report, "cdekStatusSyncFailures")
+        samples = [
+            f"{item.get('orderNumber')}: {item.get('attempts')} попыток · "
+            f"{item.get('lastError') or 'ошибка не указана'}"
+            for item in items[:8]
+        ]
+        sections.append(
+            "🚨 Не обновляются статусы СДЭК\n"
+            + "\n".join(f"• {sample}" for sample in samples)
+            + "\n• письма о доставке приостановлены; проверить API СДЭК и заказ в админке"
         )
 
     if count_of(report, "emailFailures"):

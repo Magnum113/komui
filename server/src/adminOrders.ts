@@ -168,12 +168,32 @@ type OrderListRow = OrderRow & {
   cdek_uuid: string | null;
   cdek_number: string | null;
   cdek_error_message: string | null;
+  cdek_delivery_status_code: string | null;
+  cdek_delivery_status_name: string | null;
+  cdek_delivery_status_at: Date | string | null;
+  cdek_delivery_status_city: string | null;
+  cdek_delivery_status_synced_at: Date | string | null;
+  cdek_delivery_status_sync_error: string | null;
+  cdek_planned_delivery_date: Date | string | null;
+  cdek_keep_free_until: Date | string | null;
   order_paid_email_status: EmailOutboxStatus | null;
   order_paid_email_attempt_count: string | number | null;
   order_paid_email_last_error: string | null;
   order_paid_email_sent_at: Date | string | null;
   order_paid_email_failed_at: Date | string | null;
   order_paid_email_updated_at: Date | string | null;
+  shipment_handed_over_email_status: EmailOutboxStatus | null;
+  shipment_handed_over_email_attempt_count: string | number | null;
+  shipment_handed_over_email_last_error: string | null;
+  shipment_handed_over_email_sent_at: Date | string | null;
+  shipment_handed_over_email_failed_at: Date | string | null;
+  shipment_handed_over_email_updated_at: Date | string | null;
+  shipment_ready_email_status: EmailOutboxStatus | null;
+  shipment_ready_email_attempt_count: string | number | null;
+  shipment_ready_email_last_error: string | null;
+  shipment_ready_email_sent_at: Date | string | null;
+  shipment_ready_email_failed_at: Date | string | null;
+  shipment_ready_email_updated_at: Date | string | null;
 };
 
 type OrderItemRow = QueryResultRow & {
@@ -232,6 +252,18 @@ type CdekShipmentRow = QueryResultRow & {
   created_at: Date | string;
   updated_at: Date | string;
   synced_at: Date | string | null;
+  delivery_status_code: string | null;
+  delivery_status_name: string | null;
+  delivery_status_at: Date | string | null;
+  delivery_status_city: string | null;
+  delivery_status_synced_at: Date | string | null;
+  delivery_status_sync_attempts: string | number;
+  delivery_status_sync_error: string | null;
+  delivery_status_next_sync_at: Date | string | null;
+  delivery_status_terminal: boolean;
+  planned_delivery_date: Date | string | null;
+  keep_free_until: Date | string | null;
+  delivery_mode: string | number | null;
 };
 
 type CdekEventRow = QueryResultRow & {
@@ -239,6 +271,10 @@ type CdekEventRow = QueryResultRow & {
   event_type: string | null;
   status_code: string | null;
   status_name: string | null;
+  status_at: Date | string | null;
+  reason_code: string | null;
+  status_city: string | null;
+  status_deleted: boolean;
   received_at: Date | string;
 };
 
@@ -309,9 +345,33 @@ export type AdminOrderSummary = {
     uuid: string | null;
     number: string | null;
     errorMessage: string | null;
+    deliveryStatusCode: string | null;
+    deliveryStatusName: string | null;
+    deliveryStatusAt: string | null;
+    deliveryStatusCity: string | null;
+    deliveryStatusSyncedAt: string | null;
+    deliveryStatusSyncError: string | null;
+    plannedDeliveryDate: string | null;
+    keepFreeUntil: string | null;
   };
   email: {
     orderPaid: {
+      status: EmailOutboxStatus;
+      attemptCount: number;
+      lastError: string | null;
+      sentAt: string | null;
+      failedAt: string | null;
+      updatedAt: string;
+    } | null;
+    shipmentHandedOver: {
+      status: EmailOutboxStatus;
+      attemptCount: number;
+      lastError: string | null;
+      sentAt: string | null;
+      failedAt: string | null;
+      updatedAt: string;
+    } | null;
+    shipmentReady: {
       status: EmailOutboxStatus;
       attemptCount: number;
       lastError: string | null;
@@ -352,6 +412,25 @@ function nullableText(value: string | null | undefined): string | null | undefin
 
 function escapeLike(value: string) {
   return value.replace(/[\\%_]/g, (item) => `\\${item}`);
+}
+
+function emailStatusSummary(
+  status: EmailOutboxStatus | null | undefined,
+  attemptCount: string | number | null | undefined,
+  lastError: string | null | undefined,
+  sentAt: Date | string | null | undefined,
+  failedAt: Date | string | null | undefined,
+  updatedAt: Date | string | null | undefined,
+) {
+  if (!status) return null;
+  return {
+    status,
+    attemptCount: numberValue(attemptCount),
+    lastError: lastError ?? null,
+    sentAt: isoDate(sentAt ?? null),
+    failedAt: isoDate(failedAt ?? null),
+    updatedAt: isoDate(updatedAt ?? null) ?? "",
+  };
 }
 
 function orderIdFromRequest(request: FastifyRequest) {
@@ -418,18 +497,42 @@ export function toAdminOrderSummary(row: OrderListRow): AdminOrderSummary {
       uuid: row.cdek_uuid,
       number: row.cdek_number,
       errorMessage: row.cdek_error_message,
+      deliveryStatusCode: row.cdek_delivery_status_code ?? null,
+      deliveryStatusName: row.cdek_delivery_status_name ?? null,
+      deliveryStatusAt: isoDate(row.cdek_delivery_status_at ?? null),
+      deliveryStatusCity: row.cdek_delivery_status_city ?? null,
+      deliveryStatusSyncedAt: isoDate(
+        row.cdek_delivery_status_synced_at ?? null,
+      ),
+      deliveryStatusSyncError: row.cdek_delivery_status_sync_error ?? null,
+      plannedDeliveryDate: isoDate(row.cdek_planned_delivery_date ?? null),
+      keepFreeUntil: isoDate(row.cdek_keep_free_until ?? null),
     },
     email: {
-      orderPaid: row.order_paid_email_status
-        ? {
-            status: row.order_paid_email_status,
-            attemptCount: numberValue(row.order_paid_email_attempt_count),
-            lastError: row.order_paid_email_last_error,
-            sentAt: isoDate(row.order_paid_email_sent_at),
-            failedAt: isoDate(row.order_paid_email_failed_at),
-            updatedAt: isoDate(row.order_paid_email_updated_at) ?? "",
-          }
-        : null,
+      orderPaid: emailStatusSummary(
+        row.order_paid_email_status,
+        row.order_paid_email_attempt_count,
+        row.order_paid_email_last_error,
+        row.order_paid_email_sent_at,
+        row.order_paid_email_failed_at,
+        row.order_paid_email_updated_at,
+      ),
+      shipmentHandedOver: emailStatusSummary(
+        row.shipment_handed_over_email_status,
+        row.shipment_handed_over_email_attempt_count,
+        row.shipment_handed_over_email_last_error,
+        row.shipment_handed_over_email_sent_at,
+        row.shipment_handed_over_email_failed_at,
+        row.shipment_handed_over_email_updated_at,
+      ),
+      shipmentReady: emailStatusSummary(
+        row.shipment_ready_email_status,
+        row.shipment_ready_email_attempt_count,
+        row.shipment_ready_email_last_error,
+        row.shipment_ready_email_sent_at,
+        row.shipment_ready_email_failed_at,
+        row.shipment_ready_email_updated_at,
+      ),
     },
     paidAt: isoDate(row.paid_at),
     shippedAt: isoDate(row.shipped_at),
@@ -511,6 +614,19 @@ function toCdekShipment(row: CdekShipmentRow | undefined) {
     createdAt: isoDate(row.created_at),
     updatedAt: isoDate(row.updated_at),
     syncedAt: isoDate(row.synced_at),
+    deliveryStatusCode: row.delivery_status_code,
+    deliveryStatusName: row.delivery_status_name,
+    deliveryStatusAt: isoDate(row.delivery_status_at),
+    deliveryStatusCity: row.delivery_status_city,
+    deliveryStatusSyncedAt: isoDate(row.delivery_status_synced_at),
+    deliveryStatusSyncAttempts: numberValue(row.delivery_status_sync_attempts),
+    deliveryStatusSyncError: row.delivery_status_sync_error,
+    deliveryStatusNextSyncAt: isoDate(row.delivery_status_next_sync_at),
+    deliveryStatusTerminal: row.delivery_status_terminal,
+    plannedDeliveryDate: isoDate(row.planned_delivery_date),
+    keepFreeUntil: isoDate(row.keep_free_until),
+    deliveryMode:
+      row.delivery_mode === null ? null : numberValue(row.delivery_mode),
   };
 }
 
@@ -520,6 +636,10 @@ function toCdekEvent(row: CdekEventRow) {
     eventType: row.event_type,
     statusCode: row.status_code,
     statusName: row.status_name,
+    statusAt: isoDate(row.status_at),
+    reasonCode: row.reason_code,
+    city: row.status_city,
+    deleted: row.status_deleted,
     receivedAt: isoDate(row.received_at),
   };
 }
@@ -558,12 +678,32 @@ function orderSelectSql() {
       shipment.cdek_uuid,
       shipment.cdek_number,
       shipment.error_message as cdek_error_message,
+      shipment.delivery_status_code as cdek_delivery_status_code,
+      shipment.delivery_status_name as cdek_delivery_status_name,
+      shipment.delivery_status_at as cdek_delivery_status_at,
+      shipment.delivery_status_city as cdek_delivery_status_city,
+      shipment.delivery_status_synced_at as cdek_delivery_status_synced_at,
+      shipment.delivery_status_sync_error as cdek_delivery_status_sync_error,
+      shipment.planned_delivery_date as cdek_planned_delivery_date,
+      shipment.keep_free_until as cdek_keep_free_until,
       order_paid_email.status as order_paid_email_status,
       order_paid_email.attempt_count as order_paid_email_attempt_count,
       order_paid_email.last_error as order_paid_email_last_error,
       order_paid_email.sent_at as order_paid_email_sent_at,
       order_paid_email.failed_at as order_paid_email_failed_at,
-      order_paid_email.updated_at as order_paid_email_updated_at
+      order_paid_email.updated_at as order_paid_email_updated_at,
+      shipment_handed_over_email.status as shipment_handed_over_email_status,
+      shipment_handed_over_email.attempt_count as shipment_handed_over_email_attempt_count,
+      shipment_handed_over_email.last_error as shipment_handed_over_email_last_error,
+      shipment_handed_over_email.sent_at as shipment_handed_over_email_sent_at,
+      shipment_handed_over_email.failed_at as shipment_handed_over_email_failed_at,
+      shipment_handed_over_email.updated_at as shipment_handed_over_email_updated_at,
+      shipment_ready_email.status as shipment_ready_email_status,
+      shipment_ready_email.attempt_count as shipment_ready_email_attempt_count,
+      shipment_ready_email.last_error as shipment_ready_email_last_error,
+      shipment_ready_email.sent_at as shipment_ready_email_sent_at,
+      shipment_ready_email.failed_at as shipment_ready_email_failed_at,
+      shipment_ready_email.updated_at as shipment_ready_email_updated_at
     from public.merch_customer_orders o
     left join lateral (
       select
@@ -603,6 +743,34 @@ function orderSelectSql() {
       order by created_at desc, id desc
       limit 1
     ) order_paid_email on true
+    left join lateral (
+      select
+        status,
+        attempt_count,
+        last_error,
+        sent_at,
+        failed_at,
+        updated_at
+      from public.merch_email_outbox
+      where order_id = o.id
+        and event_type = 'shipment_handed_over'
+      order by created_at desc, id desc
+      limit 1
+    ) shipment_handed_over_email on true
+    left join lateral (
+      select
+        status,
+        attempt_count,
+        last_error,
+        sent_at,
+        failed_at,
+        updated_at
+      from public.merch_email_outbox
+      where order_id = o.id
+        and event_type = 'shipment_ready'
+      order by created_at desc, id desc
+      limit 1
+    ) shipment_ready_email on true
   `;
 }
 
@@ -745,7 +913,19 @@ async function loadOrderDetails(db: Db, orderId: string) {
             error_message,
             created_at,
             updated_at,
-            synced_at
+            synced_at,
+            delivery_status_code,
+            delivery_status_name,
+            delivery_status_at,
+            delivery_status_city,
+            delivery_status_synced_at,
+            delivery_status_sync_attempts,
+            delivery_status_sync_error,
+            delivery_status_next_sync_at,
+            delivery_status_terminal,
+            planned_delivery_date,
+            keep_free_until,
+            delivery_mode
           from public.merch_cdek_shipments
           where order_id = $1::uuid
           limit 1
@@ -754,7 +934,16 @@ async function loadOrderDetails(db: Db, orderId: string) {
       ),
       db.query<CdekEventRow>(
         `
-          select id, event_type, status_code, status_name, received_at
+          select
+            id,
+            event_type,
+            status_code,
+            status_name,
+            status_at,
+            reason_code,
+            status_city,
+            status_deleted,
+            received_at
           from public.merch_cdek_events
           where order_id = $1::uuid
           order by received_at desc

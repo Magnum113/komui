@@ -165,18 +165,6 @@ function subjectWithPrefix(config: AppConfig, subject: string): string {
     .slice(0, 998);
 }
 
-function providerTemplateEngine(request: EmailSendRequest): "none" | "simple" {
-  if (request.templateKey !== "subscription_confirmation") return "none";
-  if (!request.rendered.html.includes("{{UnsubscribeUrl}}")) {
-    throw new EmailProviderError(
-      "configuration",
-      "email_unsubscribe_link_missing",
-      "Subscription confirmation template must contain an unsubscribe link",
-    );
-  }
-  return "simple";
-}
-
 async function parseResponse(response: Response): Promise<UnisenderResponse> {
   const raw = (await response.text()).slice(0, 64_000);
   if (!raw) return {};
@@ -287,7 +275,7 @@ export class UnisenderGoClient {
         ],
         tags: [request.templateKey.slice(0, 50)],
         global_language: "ru",
-        template_engine: providerTemplateEngine(request),
+        template_engine: "none",
         body: {
           html: request.rendered.html,
           plaintext: request.rendered.text,

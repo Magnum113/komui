@@ -1,0 +1,45 @@
+export const cdekReadyStatusCodes = new Set([
+  "ACCEPTED_AT_PICK_UP_POINT",
+  "POSTOMAT_POSTED",
+]);
+
+export const cdekInTransitStatusCodes = new Set([
+  "RECEIVED_AT_SHIPMENT_WAREHOUSE",
+  "READY_FOR_SHIPMENT_IN_SENDER_CITY",
+  "TAKEN_BY_TRANSPORTER_FROM_SENDER_CITY",
+  "SENT_TO_RECIPIENT_CITY",
+  "ACCEPTED_IN_RECIPIENT_CITY",
+  "ACCEPTED_AT_RECIPIENT_CITY_WAREHOUSE",
+  "TAKEN_BY_COURIER",
+  "ACCEPTED_AT_TRANSIT_WAREHOUSE",
+  "READY_FOR_SHIPMENT_IN_TRANSIT_CITY",
+  "TAKEN_BY_TRANSPORTER_FROM_TRANSIT_CITY",
+  "SENT_TO_TRANSIT_CITY",
+  "ACCEPTED_IN_TRANSIT_CITY",
+  "ENTERED_TO_TRANSIT_WAREHOUSE",
+  "ENTERED_TO_RECIPIENT_CITY_WAREHOUSE",
+  "ENTERED_TO_PICK_UP_POINT",
+  "IN_CUSTOMS_INTERNATIONAL",
+  "SHIPPED_TO_DESTINATION",
+  "PASSED_TO_TRANSIT_CARRIER",
+  "IN_CUSTOMS_LOCAL",
+  "CUSTOMS_COMPLETE",
+]);
+
+export const cdekTerminalStatusCodes = new Set([
+  "DELIVERED",
+  "NOT_DELIVERED",
+  "REMOVED",
+  "INVALID",
+  "POSTOMAT_RECEIVED",
+  "POSTOMAT_SEIZED",
+]);
+
+export const cdekDeliveredStatusCodes = new Set([
+  "DELIVERED",
+  "POSTOMAT_RECEIVED",
+]);
+
+export function normalizedCdekStatusCode(value: unknown): string {
+  return String(value ?? "").trim().toUpperCase().slice(0, 100);
+}

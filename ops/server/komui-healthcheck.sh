@@ -7,6 +7,7 @@ PRODUCTION_DB_NAME="${KOMUI_HEALTHCHECK_PRODUCTION_DB:-komui_production}"
 DISK_WARN_PERCENT="${KOMUI_HEALTHCHECK_DISK_WARN_PERCENT:-80}"
 BACKUP_MAX_AGE_HOURS="${KOMUI_HEALTHCHECK_BACKUP_MAX_AGE_HOURS:-36}"
 EMAIL_STALE_MINUTES="${KOMUI_HEALTHCHECK_EMAIL_STALE_MINUTES:-10}"
+CDEK_STATUS_STALE_MINUTES="${KOMUI_HEALTHCHECK_CDEK_STATUS_STALE_MINUTES:-60}"
 YANDEX_FEED_URL="${KOMUI_HEALTHCHECK_YANDEX_FEED_URL:-https://komui.ru/feeds/yandex-direct.yml}"
 
 export YANDEX_FEED_URL
@@ -198,6 +199,84 @@ email_queues_healthy() {
     email_queue_is_healthy http://127.0.0.1:3001/health/ready "$PRODUCTION_DB_NAME" 0
 }
 
+cdek_status_sync_flag() {
+  local ready_url="$1"
+  curl -fsS --max-time 5 "$ready_url" | python3 -c '
+import json
+import sys
+
+config = json.load(sys.stdin).get("config", {})
+enabled = config.get("cdekStatusSyncEnabled") is True
+if enabled and config.get("cdekCreateShipments") is not True:
+    raise SystemExit(2)
+if enabled and (
+    config.get("emailEnabled") is not True
+    or config.get("emailWorkerEnabled") is not True
+):
+    raise SystemExit(3)
+if enabled and config.get("cdekStatusEmailsSinceConfigured") is not True:
+    raise SystemExit(4)
+if enabled and not (
+    config.get("cdekConfigured") is True
+    or config.get("cdekMock") is True
+):
+    raise SystemExit(5)
+print("1" if enabled else "0")
+'
+}
+
+cdek_status_sync_is_healthy() {
+  local ready_url="$1"
+  local database="$2"
+  local enabled columns count
+
+  [[ "$CDEK_STATUS_STALE_MINUTES" =~ ^[1-9][0-9]*$ ]] || return 1
+  [[ "$database" =~ ^[A-Za-z0-9_]+$ ]] || return 1
+  enabled="$(cdek_status_sync_flag "$ready_url")" || return 1
+  [[ "$enabled" == "1" ]] || return 0
+
+  columns="$(
+    runuser -u postgres -- psql -X -At -d "$database" -c "
+      select count(*)
+      from information_schema.columns
+      where table_schema = 'public'
+        and table_name = 'merch_cdek_shipments'
+        and column_name in (
+          'delivery_status_code',
+          'delivery_status_synced_at',
+          'delivery_status_sync_attempts',
+          'delivery_status_sync_error',
+          'delivery_status_next_sync_at'
+        )
+    "
+  )" || return 1
+  [[ "$columns" == "5" ]] || return 1
+
+  count="$(
+    runuser -u postgres -- psql -X -At -d "$database" -c "
+      select count(*)
+      from public.merch_cdek_shipments
+      where cdek_uuid is not null
+        and status not in ('deleting', 'deleted', 'failed', 'invalid')
+        and delivery_status_terminal is false
+        and created_at < now() - interval '15 minutes'
+        and (
+          delivery_status_sync_attempts >= 3
+          or delivery_status_synced_at is null
+          or delivery_status_synced_at <
+            now() - interval '$CDEK_STATUS_STALE_MINUTES minutes'
+        )
+    "
+  )" || return 1
+  [[ "${count:-}" =~ ^[0-9]+$ ]] || return 1
+  [[ "$count" -eq 0 ]]
+}
+
+cdek_status_sync_healthy() {
+  cdek_status_sync_is_healthy http://127.0.0.1:3000/health/ready "$DB_NAME" &&
+    cdek_status_sync_is_healthy http://127.0.0.1:3001/health/ready "$PRODUCTION_DB_NAME"
+}
+
 storefront_offers_unambiguous() {
   local database invalid_count
 
@@ -252,6 +331,7 @@ check backend_ready curl -fsS --max-time 5 http://127.0.0.1:3000/health/ready -o
 check production_backend_ready curl -fsS --max-time 5 http://127.0.0.1:3001/health/ready -o /dev/null
 check email_worker_active email_workers_active
 check email_failed_or_stale_jobs email_queues_healthy
+check cdek_status_sync cdek_status_sync_healthy
 check storefront_offers_unambiguous storefront_offers_unambiguous
 check tbank_ca_readable runuser -u komui -- test -r /etc/komui/certs/komui-node-ca-bundle.pem
 

@@ -35,6 +35,7 @@ class OrderMonitorAlertTest(unittest.TestCase):
             "paymentReviews": {"count": 0, "items": []},
             "cdekEffectReviews": {"count": 0, "items": []},
             "cdekFailures": {"count": 0, "items": []},
+            "cdekStatusSyncFailures": {"count": 0, "items": []},
             "emailFailures": {"count": 0, "items": []},
             "paidWithoutShipment": [],
         }
@@ -227,6 +228,26 @@ class OrderMonitorAlertTest(unittest.TestCase):
         self.assertIn("b***@e***.com", body)
         self.assertIn("проверить API-ключ Unisender Go", body)
         self.assertNotIn("buyer@example.com", body)
+
+    def test_cdek_status_sync_failure_alert_names_order_without_customer_data(self) -> None:
+        report = self.empty_report()
+        report["cdekStatusSyncFailures"] = {
+            "count": 1,
+            "items": [
+                {
+                    "orderNumber": "KOM-882",
+                    "attempts": 3,
+                    "lastError": "provider temporarily unavailable",
+                }
+            ],
+        }
+
+        body, _ = self.monitor.build_alert(report, set())
+
+        self.assertIn("Не обновляются статусы СДЭК", body)
+        self.assertIn("KOM-882: 3 попыток", body)
+        self.assertIn("письма о доставке приостановлены", body)
+        self.assertNotIn("customer", body.lower())
 
     def test_email_failure_reports_keep_environment_without_recipient_data(self) -> None:
         merged = self.monitor.merge_email_failure_reports(

@@ -40,6 +40,15 @@ class KomuiHealthcheckContractTest(unittest.TestCase):
         self.assertIn("status = 'processing'", self.script)
         self.assertIn("KOMUI_HEALTHCHECK_EMAIL_STALE_MINUTES:-10", self.script)
 
+    def test_cdek_status_sync_check_is_feature_aware_and_detects_stalls(self) -> None:
+        self.assertIn("check cdek_status_sync", self.script)
+        self.assertIn("cdekStatusSyncEnabled", self.script)
+        self.assertIn("cdekStatusEmailsSinceConfigured", self.script)
+        self.assertIn("delivery_status_sync_attempts >= 3", self.script)
+        self.assertIn("delivery_status_synced_at is null", self.script)
+        self.assertIn("KOMUI_HEALTHCHECK_CDEK_STATUS_STALE_MINUTES:-60", self.script)
+        self.assertIn('config.get("emailWorkerEnabled") is not True', self.script)
+
     def test_healthcheck_does_not_read_or_print_email_secrets(self) -> None:
         self.assertNotIn("UNISENDER_GO_API_KEY", self.script)
         self.assertNotIn("recipient_email", self.script)

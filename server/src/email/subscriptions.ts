@@ -13,7 +13,6 @@ import {
   FOOTER_MARKETING_CONSENT_VERSION,
   normalizeContactEmail,
   PRIVACY_POLICY_VERSION,
-  sha256Hex,
   type RequestEvidence,
 } from "./contacts";
 
@@ -24,11 +23,6 @@ type SubscriptionContext = {
 type ContactRow = QueryResultRow & {
   id: string;
   marketing_status: string;
-};
-
-type ConfirmationRow = QueryResultRow & {
-  id: string;
-  email_normalized: string;
 };
 
 type SubscriptionOptions = {
@@ -75,10 +69,6 @@ function consumeRateLimit(key: string | null, now: number): boolean {
   if (bucket.count >= rateLimitMax) return false;
   bucket.count += 1;
   return true;
-}
-
-function blockedSuppression(reason: string | null): boolean {
-  return ["hard_bounce", "spam_complaint", "manual"].includes(reason ?? "");
 }
 
 function blockedStatus(status: string): boolean {
@@ -252,170 +242,6 @@ export async function subscribeFooterEmailContact(
   });
 }
 
-export async function confirmFooterEmailSubscription(
-  context: SubscriptionContext,
-  input: {
-    token: unknown;
-    evidence: RequestEvidence;
-  },
-  options: Pick<SubscriptionOptions, "now"> = {},
-): Promise<{ confirmed: boolean; alreadyConfirmed: boolean }> {
-  const token = boundedText(input.token, 200);
-  if (token.length < 32) {
-    throw new HttpError(400, "invalid_confirmation_link", "Ссылка подтверждения недействительна");
-  }
-  const tokenHash = sha256Hex(token);
-  const now = options.now ?? new Date();
-
-  return context.db.withTransaction(async (client) => {
-    const contactResult = await client.query<ConfirmationRow>(
-      `
-        /* email_contacts:confirmation_lock */
-        select id, email_normalized
-        from public.merch_email_contacts
-        where confirmation_token_hash = $1
-          and confirmation_expires_at >= $2::timestamptz
-        for update
-      `,
-      [tokenHash, now.toISOString()],
-    );
-    const contact = contactResult.rows[0];
-
-    if (!contact) {
-      const repeated = await client.query<{ exists: boolean }>(
-        `
-          /* email_contacts:confirmation_replay */
-          select exists (
-            select 1
-            from public.merch_email_consent_events
-            where action = 'confirmed'
-              and confirmation_token_hash = $1
-          ) as exists
-        `,
-        [tokenHash],
-      );
-      if (repeated.rows[0]?.exists) {
-        return { confirmed: true, alreadyConfirmed: true };
-      }
-      throw new HttpError(
-        400,
-        "invalid_confirmation_link",
-        "Ссылка устарела или уже недействительна. Отправьте форму подписки ещё раз.",
-      );
-    }
-
-    const suppressionResult = await client.query<{ reason: string }>(
-      `
-        /* email_contacts:confirmation_suppression */
-        select reason
-        from public.merch_email_suppressions
-        where email_normalized = $1
-        limit 1
-      `,
-      [contact.email_normalized],
-    );
-    const suppressionReason = boundedText(
-      suppressionResult.rows[0]?.reason,
-      80,
-    ).toLowerCase() || null;
-    if (blockedSuppression(suppressionReason)) {
-      throw new HttpError(
-        409,
-        "subscription_suppressed",
-        "Не удалось активировать подписку для этого адреса.",
-      );
-    }
-
-    await client.query(
-      `
-        /* email_contacts:remove_confirmed_unsubscribe */
-        select private.merch_remove_unsubscribed_email_suppression($1)
-      `,
-      [contact.email_normalized],
-    );
-
-    await client.query(
-      `
-        /* email_contacts:confirm */
-        update public.merch_email_contacts
-        set
-          marketing_status = 'subscribed',
-          marketing_consent_at = $2::timestamptz,
-          marketing_consent_version = $3,
-          marketing_consent_source = $4,
-          confirmation_token_hash = null,
-          confirmation_expires_at = null,
-          unsubscribed_at = null,
-          suppression_reason = null
-        where id = $1::uuid
-      `,
-      [
-        contact.id,
-        now.toISOString(),
-        FOOTER_MARKETING_CONSENT_VERSION,
-        FOOTER_MARKETING_CONSENT_SOURCE,
-      ],
-    );
-
-    await client.query(
-      `
-        /* email_contacts:footer_confirmed_event */
-        insert into public.merch_email_consent_events (
-          event_key,
-          contact_id,
-          action,
-          source,
-          occurred_at,
-          consent_text_version,
-          privacy_policy_version,
-          request_ip_hash,
-          user_agent,
-          confirmation_token_hash,
-          metadata
-        )
-        values (
-          $1,
-          $2::uuid,
-          'confirmed',
-          'footer',
-          $3::timestamptz,
-          $4,
-          $5,
-          $6,
-          $7,
-          $8,
-          jsonb_build_object('double_opt_in', true)
-        )
-        on conflict (event_key) do nothing
-      `,
-      [
-        `footer-confirmed:${contact.id}:${tokenHash.slice(0, 24)}`,
-        contact.id,
-        now.toISOString(),
-        FOOTER_MARKETING_CONSENT_VERSION,
-        PRIVACY_POLICY_VERSION,
-        input.evidence.requestIpHash,
-        input.evidence.userAgent,
-        tokenHash,
-      ],
-    );
-
-    await client.query(
-      `
-        /* email_contacts:redact_confirmation_url */
-        update public.merch_email_outbox
-        set payload = payload - 'confirmationUrl'
-        where contact_id = $1::uuid
-          and event_type = 'subscription_confirmation'
-          and payload ->> 'tokenFingerprint' = $2
-      `,
-      [contact.id, tokenHash.slice(0, 24)],
-    );
-
-    return { confirmed: true, alreadyConfirmed: false };
-  });
-}
-
 export async function registerEmailSubscriptionRoutes(
   app: FastifyInstance,
   context: SubscriptionContext,
@@ -455,19 +281,4 @@ export async function registerEmailSubscriptionRoutes(
     return acceptedReply(reply);
   });
 
-  app.post("/v1/email/confirm", async (request, reply) => {
-    const body = bodyObject(request);
-    const result = await confirmFooterEmailSubscription(context, {
-      token: body.token,
-      evidence: emailRequestEvidence(request),
-    });
-    return reply.send({
-      ok: true,
-      confirmed: result.confirmed,
-      alreadyConfirmed: result.alreadyConfirmed,
-      message: result.alreadyConfirmed
-        ? "Подписка уже подтверждена."
-        : "Подписка подтверждена.",
-    });
-  });
 }
