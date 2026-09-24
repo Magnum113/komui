@@ -30,7 +30,7 @@ test("a complete-looking non-2xx T-Bank Init response cannot be persisted or red
     OrderId: "KOM-HTTP-BOUNDARY",
     Amount: 300_000,
     PaymentId: "payment-from-500",
-    PaymentURL: "https://pay.tbank.ru/new/must-not-redirect",
+    PaymentURL: "https://pay.tbank-online.com/new/must-not-redirect",
   };
   const expected = {
     terminalKey: "demo-terminal",

@@ -1424,8 +1424,17 @@ test("payment URL validation only accepts HTTPS T-Bank domains", () => {
     validTbankPaymentUrl("https://pay.tbank.ru/new/opaque-token"),
     "https://pay.tbank.ru/new/opaque-token",
   );
+  assert.equal(
+    validTbankPaymentUrl("https://pay.tbank-online.com/UuDxpx5l"),
+    "https://pay.tbank-online.com/UuDxpx5l",
+  );
   assert.equal(validTbankPaymentUrl("http://pay.tbank.ru/new/token"), "");
   assert.equal(validTbankPaymentUrl("https://tbank.ru.attacker.example/new/token"), "");
+  assert.equal(validTbankPaymentUrl("https://evil.tbank-online.com/new/token"), "");
+  assert.equal(
+    validTbankPaymentUrl("https://pay.tbank-online.com.attacker.example/new/token"),
+    "",
+  );
 });
 
 test("successful Init response must match terminal, OrderId and amount", () => {

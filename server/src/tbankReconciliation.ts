@@ -225,6 +225,7 @@ export function validTbankPaymentUrl(value: unknown): string {
     if (url.protocol !== "https:") return "";
     const hostname = url.hostname.toLowerCase();
     if (
+      hostname !== "pay.tbank-online.com" &&
       hostname !== "tbank.ru" &&
       !hostname.endsWith(".tbank.ru") &&
       hostname !== "tinkoff.ru" &&
