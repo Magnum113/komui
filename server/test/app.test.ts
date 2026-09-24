@@ -42,21 +42,11 @@ test("a complete-looking non-2xx T-Bank Init response cannot be persisted or red
   assert.equal(tbankInitResponseAllowsPersistence(true, response, expected), true);
 });
 
-test("T-Bank Init identifies a regular checkout as customer-initiated", () => {
+test("T-Bank Init sends only documented DATA required for a regular checkout", () => {
   assert.deepEqual(
-    buildTbankCustomerData(
-      "Иван",
-      "Иванов",
-      "+7 999 533-00-15",
-      "ivan@example.com",
-      "KOM-123456789",
-    ),
+    buildTbankCustomerData(),
     {
       OperationInitiatorType: "0",
-      Phone: "+7 999 533-00-15",
-      Email: "ivan@example.com",
-      name: "Иванов Иван",
-      order_number: "KOM-123456789",
     },
   );
 });
