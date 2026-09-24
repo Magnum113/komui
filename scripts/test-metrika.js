@@ -148,7 +148,7 @@ analytics.goalAndWait('navigation_test', { order_id: 'KOM-TEST' }, 250)
     const navigationGoal = ymCalls.find(call => call[2] === 'navigation_test');
     assert(navigationGoal, 'goalAndWait did not send the goal');
     assert.strictEqual(typeof navigationGoal[4], 'function', 'goalAndWait must pass a callback to Yandex');
-    console.log(`✓ Yandex Metrika: ${ROOT_PAGES.length} root pages, canonical product pages and collection pages verified`);
+    console.log(`✓ Yandex Metrika: ${ROOT_PAGES.length} root pages, canonical product, collection and catalog pages verified`);
     console.log(`✓ ${GOALS.length} JavaScript goals, reliable redirect tracking and ecommerce purchase deduplication verified`);
   })
   .catch(error => {
