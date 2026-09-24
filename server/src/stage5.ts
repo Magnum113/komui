@@ -90,6 +90,24 @@ function siteUrl(config: AppConfig) {
   return config.SITE_URL.replace(/\/$/, "");
 }
 
+export function buildTbankCustomerData(
+  firstName: string,
+  lastName: string,
+  phone: string,
+  email: string,
+  orderNumber: string,
+): Record<string, string> {
+  return {
+    // A regular checkout is initiated by the customer without saving card
+    // credentials. T-Bank requires this regulatory operation marker in DATA.
+    OperationInitiatorType: "0",
+    Phone: phone,
+    Email: email,
+    name: `${lastName} ${firstName}`.slice(0, 100),
+    order_number: orderNumber,
+  };
+}
+
 function buildReceipt(
   config: AppConfig,
   items: OrderItemInput[],
@@ -807,12 +825,7 @@ export async function handleTbankCreatePayment(
     NotificationURL: `${publicApiBaseUrl(config)}/v1/webhooks/tbank`,
     SuccessURL: `${siteUrl(config)}/payment-result?status=success&order=${encodeURIComponent(number)}`,
     FailURL: `${siteUrl(config)}/payment-result?status=fail&order=${encodeURIComponent(number)}`,
-    DATA: {
-      Phone: phone,
-      Email: email,
-      name: `${lastName} ${firstName}`.slice(0, 100),
-      order_number: number,
-    },
+    DATA: buildTbankCustomerData(firstName, lastName, phone, email, number),
   };
   const receipt = buildReceipt(config, orderItems, discount, delivery, phone, email);
   if (receipt) initPayload.Receipt = receipt;

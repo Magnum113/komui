@@ -4,7 +4,10 @@ import { buildApp } from "../src/app";
 import { loadConfig } from "../src/config";
 import { sha256Hex } from "../src/crypto";
 import type { Db } from "../src/db";
-import { tbankInitResponseAllowsPersistence } from "../src/stage5";
+import {
+  buildTbankCustomerData,
+  tbankInitResponseAllowsPersistence,
+} from "../src/stage5";
 
 function mockDb(): Db {
   return {
@@ -37,6 +40,25 @@ test("a complete-looking non-2xx T-Bank Init response cannot be persisted or red
 
   assert.equal(tbankInitResponseAllowsPersistence(false, response, expected), false);
   assert.equal(tbankInitResponseAllowsPersistence(true, response, expected), true);
+});
+
+test("T-Bank Init identifies a regular checkout as customer-initiated", () => {
+  assert.deepEqual(
+    buildTbankCustomerData(
+      "Иван",
+      "Иванов",
+      "+7 999 533-00-15",
+      "ivan@example.com",
+      "KOM-123456789",
+    ),
+    {
+      OperationInitiatorType: "0",
+      Phone: "+7 999 533-00-15",
+      Email: "ivan@example.com",
+      name: "Иванов Иван",
+      order_number: "KOM-123456789",
+    },
+  );
 });
 
 test("delivery config exposes configured Yandex Maps browser key", async () => {
