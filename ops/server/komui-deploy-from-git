@@ -870,7 +870,7 @@ enforce_hoodie_variants_compatibility() {
 
   log "checking public static artifacts for external Ozon image URLs"
   if grep -R "ir\\.ozone\\.ru" \
-    index.html p collections data sitemap.xml llms-full.txt llms.txt nginx-product-redirects.conf \
+    index.html p collections catalog data sitemap.xml llms-full.txt llms.txt nginx-product-redirects.conf \
     >/tmp/komui-ozon-url-check.log 2>/dev/null; then
     tail -n 20 /tmp/komui-ozon-url-check.log || true
     fail "public static artifacts still contain ir.ozone.ru"
@@ -898,6 +898,7 @@ enforce_hoodie_variants_compatibility() {
   rsync -a --delete \
     --include '/assets/***' \
     --include '/collections/***' \
+    --include '/catalog/***' \
     --include '/data/***' \
     --include '/p/***' \
     --include '/*.html' \

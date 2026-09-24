@@ -39,6 +39,7 @@ function assertTrackedPage(relativePath) {
 
 ROOT_PAGES.forEach(assertTrackedPage);
 htmlFiles('collections').forEach(assertTrackedPage);
+htmlFiles('catalog').forEach(assertTrackedPage);
 htmlFiles('p')
   .filter(file => !read(file).includes('http-equiv="refresh"'))
   .forEach(assertTrackedPage);

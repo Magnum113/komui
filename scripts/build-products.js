@@ -469,6 +469,76 @@ const COLLECTION_LANDINGS = [
   },
 ];
 
+const COMMERCIAL_LANDINGS = [
+  {
+    path: '/catalog/anime-futbolki', name: 'Аниме-футболки', title: 'Аниме-футболки с принтом и вышивкой',
+    h1: 'Аниме-футболки', metaDescription: 'Футболки KOMUI по Naruto и Jujutsu Kaisen: модели с принтом и вышивкой, фото, размеры и цены. Доставка СДЭК по России.',
+    lead: 'Футболки по Naruto и Jujutsu Kaisen — от заметных принтов до лаконичной вышивки.',
+    matches: p => p.category === 'Футболки' && Boolean(p.anime_title),
+    copy: ['Выбирайте по любимой истории и способу нанесения: футболки с принтом заметнее в образе, а вышивка выглядит сдержаннее. В подборке есть модели с Сатору Годжо, Итачи, Акацуки и другими персонажами.', 'В карточке каждой футболки можно посмотреть фотографии, цвет, доступные размеры и цену. Сравните замеры со своей вещью перед заказом; доставка СДЭК рассчитывается при оформлении.'],
+    faq: [{ question: 'Как выбрать размер аниме-футболки?', answer: 'Сверьте замеры в карточке товара с футболкой, которая уже хорошо сидит. Для свободной посадки учитывайте желаемый запас по ширине.' }, { question: 'Как ухаживать за принтом и вышивкой?', answer: 'Стирайте вещь наизнанку при температуре до 30 °C и не гладьте рисунок напрямую.' }],
+  },
+  {
+    path: '/catalog/anime-hudi', name: 'Аниме-худи', title: 'Аниме-худи с вышивкой',
+    h1: 'Аниме-худи', metaDescription: 'Аниме-худи KOMUI по Naruto и Итачи Учиха: черная и синяя модели с вышивкой, фото, размеры и цены. Доставка СДЭК.',
+    lead: 'Худи с вышивкой по Naruto: спокойные цвета и узнаваемая деталь.',
+    matches: p => p.category === 'Худи' && Boolean(p.anime_title),
+    copy: ['Сейчас в подборке худи с Итачи Учиха в черном и синем цветах. Вышивка дает аккуратный акцент, который легко сочетать с повседневной одеждой.', 'Перед заказом сравните фотографии и замеры в карточках. Доступность размеров и итоговая стоимость доставки СДЭК показываются при оформлении.'],
+    faq: [{ question: 'Какие аниме-худи есть в каталоге?', answer: 'На этой странице показаны доступные худи по Naruto. Актуальные размеры и цвета указаны в карточках товаров.' }, { question: 'Как выбрать размер худи?', answer: 'Ориентируйтесь на замеры конкретной модели в карточке и сравните их со своим худи.' }],
+  },
+  {
+    path: '/catalog/odezhda-s-vyshivkoy', name: 'Одежда с вышивкой', title: 'Одежда с вышивкой: футболки, худи и свитшоты',
+    h1: 'Одежда с вышивкой', metaDescription: 'Футболки, худи и свитшоты KOMUI с вышивкой по аниме и играм. Выбирайте по фото, размерам и цене; доставка СДЭК.',
+    lead: 'Футболки, худи и свитшоты с аккуратной вышивкой для повседневных образов.',
+    matches: p => p.decoration_type === 'Вышивка',
+    copy: ['Вышивка — вариант для тех, кто хочет узнаваемую отсылку без крупного принта. В каталоге есть вещи по Naruto, Gravity и GTA в разных цветах и категориях.', 'Сравнивайте модели по фотографиям и замерам: посадка футболки, худи и свитшота отличается. Информация о размерах и цене всегда доступна в карточке товара.'],
+    faq: [{ question: 'Какие вещи с вышивкой есть в KOMUI?', answer: 'В подборку входят доступные футболки, худи и свитшоты с вышивкой. Цвета и размеры смотрите в карточках.' }, { question: 'Как ухаживать за вышивкой?', answer: 'Стирайте вещь наизнанку в деликатном режиме и не гладьте вышивку напрямую.' }],
+  },
+  {
+    path: '/catalog/odezhda-s-printom', name: 'Одежда с принтом', title: 'Одежда с принтом: футболки по аниме и играм',
+    h1: 'Одежда с принтом', metaDescription: 'Футболки KOMUI с принтами по Naruto, Jujutsu Kaisen и Gravity: фотографии, размеры, цены и доставка СДЭК.',
+    lead: 'Выразительные принты по аниме и играм на футболках KOMUI.',
+    matches: p => p.decoration_type === 'Принт',
+    copy: ['Принт делает изображение главным элементом вещи. Здесь собраны доступные модели по Сатору Годжо, Сукуне, Naruto, Gravity и другим темам.', 'Выберите цвет и дизайн, затем проверьте фотографии, размерную сетку и цену в карточке. Для сохранения рисунка стирайте вещь наизнанку и не гладьте нанесение напрямую.'],
+    faq: [{ question: 'Как выбрать футболку с принтом?', answer: 'Сравните расположение рисунка на фотографиях, цвет ткани и замеры в карточке конкретной модели.' }, { question: 'Как стирать вещь с принтом?', answer: 'Стирайте наизнанку при температуре до 30 °C, без отбеливателя и прямого утюга по рисунку.' }],
+  },
+  {
+    path: '/catalog/futbolki-varenka', name: 'Футболки-варёнки', title: 'Футболки-варёнки с принтом и вышивкой',
+    h1: 'Футболки-варёнки', metaDescription: 'Футболки-варёнки KOMUI по Naruto, Jujutsu Kaisen и Gravity: принты, вышивка, фото и размеры. Доставка СДЭК.',
+    lead: 'Футболки с эффектом варёной ткани, принтами и вышивкой.',
+    matches: p => p.category === 'Футболки' && p.slug.startsWith('futbolka-varenka-'),
+    copy: ['Варёная фактура добавляет глубину цвету и хорошо сочетается с аниме-принтами и вышивкой. В подборке представлены разные дизайны — от Годжо и Сукуны до персонажей Naruto.', 'Смотрите фотографии конкретной модели: характер окрашивания у варёной ткани может немного различаться. Размеры и актуальная цена указаны в карточке товара.'],
+    faq: [{ question: 'Чем футболка-варёнка отличается от обычной?', answer: 'Она имеет характерный неоднородный оттенок ткани. Для выбора ориентируйтесь на фото и замеры конкретной модели.' }, { question: 'Как ухаживать за футболкой-варёнкой?', answer: 'Стирайте наизнанку при температуре до 30 °C с вещами похожих цветов.' }],
+  },
+  {
+    path: '/collections/satoru-gojo', name: 'Сатору Годжо', title: 'Футболки Сатору Годжо',
+    h1: 'Футболки Сатору Годжо', metaDescription: 'Футболки KOMUI с Сатору Годжо: белые, черные и варёные модели, разные принты, фото и размеры. Доставка СДЭК.',
+    lead: 'Все доступные футболки с Сатору Годжо в одной подборке.',
+    matches: p => p.collection_name === 'Satoru Gojo',
+    copy: ['Выбирайте между базовыми белой и черной футболками и варёными моделями. Принты отличаются композицией и расположением — детали лучше сравнить на фотографиях каждой вещи.', 'Перед заказом проверьте цвет, размеры и актуальную цену в карточке. Если хочется свободную посадку, сравните замеры с любимой футболкой.'],
+    faq: [{ question: 'Какие варианты футболки Годжо есть?', answer: 'Здесь собраны доступные модели с Сатору Годжо. Дизайн, цвет и размеры указаны в карточках товаров.' }, { question: 'Есть ли доставка по России?', answer: 'Да, доставка СДЭК рассчитывается при оформлении заказа.' }],
+  },
+  {
+    path: '/collections/itachi-uchiha', name: 'Итачи Учиха', title: 'Одежда с Итачи Учиха',
+    h1: 'Одежда с Итачи Учиха', metaDescription: 'Футболки, худи и свитшот KOMUI с Итачи Учиха и вышивкой: фото, размеры, цены и доставка СДЭК.',
+    lead: 'Футболки, худи и свитшот с вышивкой по Итачи Учиха.',
+    matches: p => p.collection_name === 'Itachi',
+    copy: ['В этой подборке вещи с Итачи разных категорий: футболки для повседневной базы, худи для прохладной погоды и свитшот. Вышивка остается заметной деталью без крупного рисунка.', 'Сравните посадку, цвет и доступные размеры в карточках. Для конкретной модели там же показаны фотографии и актуальная цена.'],
+    faq: [{ question: 'Что есть с Итачи Учиха?', answer: 'В подборку входят доступные футболки, худи и свитшот с Итачи. Размеры и цвета указаны в карточках.' }, { question: 'Как выбрать между худи и футболкой?', answer: 'Сравните замеры и фотографии: футболка подойдет как легкий слой, худи — для более теплого образа.' }],
+  },
+  {
+    path: '/collections/akatsuki', name: 'Акацуки', title: 'Футболки Акацуки с принтом и вышивкой',
+    h1: 'Футболки Акацуки', metaDescription: 'Футболки KOMUI с символикой Акацуки: белые и черные модели с принтом и вышивкой, фото, размеры и доставка СДЭК.',
+    lead: 'Футболки с символикой Акацуки: разные рисунки, цвета и техники нанесения.',
+    matches: p => p.collection_name === 'Akatsuki',
+    copy: ['В подборке есть лаконичная вышивка и более заметные принты. Несколько моделей представлены в похожих цветах, но с разными рисунками — внимательно сравните фотографии.', 'Актуальные размеры и цены указаны в карточках товаров. Чтобы подобрать посадку, сравните замеры с футболкой, которая уже хорошо сидит.'],
+    faq: [{ question: 'Какие футболки Акацуки представлены?', answer: 'Доступные варианты с принтом и вышивкой показаны на этой странице. Дизайн и цвет можно сравнить по фотографиям.' }, { question: 'Как сохранить принт или вышивку?', answer: 'Стирайте вещь наизнанку в деликатном режиме и не гладьте нанесение напрямую.' }],
+  },
+];
+
+const ALL_LANDINGS = [...COLLECTION_LANDINGS, ...COMMERCIAL_LANDINGS];
+function landingPath(landing) { return landing.path || `/collections/${landing.slug}`; }
+
 function loadFromLocalFile() {
   const src = fs.readFileSync(path.join(ROOT, 'data/storefront-products.js'), 'utf8');
   const sandbox = { window: {} };
@@ -738,22 +808,30 @@ function productSearchText(product) {
 }
 
 function productMatchesLanding(product, landing) {
+  if (landing.matches) return landing.matches(product);
   const text = productSearchText(product);
   return landing.aliases.some(alias => text.includes(normalizeSearch(alias)));
 }
 
 function buildCollectionLandings(products) {
-  return COLLECTION_LANDINGS
+  return ALL_LANDINGS
     .map(landing => ({
       ...landing,
+      slug: landing.slug || landing.path.split('/').pop(),
       products: products.filter(product => productMatchesLanding(product, landing)),
     }))
     .filter(landing => landing.products.length);
 }
 
 function renderCollectionFooterLinks() {
-  return COLLECTION_LANDINGS
-    .map(landing => `<a href="/collections/${escapeAttr(landing.slug)}">${escapeHtml(landing.name)}</a>`)
+  return ALL_LANDINGS.filter(landing => landingPath(landing).startsWith('/collections/'))
+    .map(landing => `<a href="${escapeAttr(landingPath(landing))}">${escapeHtml(landing.name)}</a>`)
+    .join('');
+}
+
+function renderCatalogFooterLinks() {
+  return COMMERCIAL_LANDINGS.filter(landing => landing.path.startsWith('/catalog/'))
+    .map(landing => `<a href="${escapeAttr(landing.path)}">${escapeHtml(landing.name)}</a>`)
     .join('');
 }
 
@@ -800,8 +878,11 @@ function renderHeaderPanels() {
   </div>
   <nav class="shop-menu-list">
     <a href="/#catalog">Каталог</a>
-    <a href="/#catalog" data-shop-cat="Футболки">Футболки</a>
-    <a href="/#catalog" data-shop-cat="Худи">Худи</a>
+    <a href="/catalog/anime-futbolki">Аниме-футболки</a>
+    <a href="/catalog/anime-hudi">Аниме-худи</a>
+    <a href="/catalog/odezhda-s-vyshivkoy">С вышивкой</a>
+    <a href="/catalog/odezhda-s-printom">С принтом</a>
+    <a href="/catalog/futbolki-varenka">Футболки-варёнки</a>
     <a href="/collections/naruto">Naruto</a>
     <a href="/collections/jujutsu-kaisen">Jujutsu Kaisen</a>
     <a href="/delivery">Доставка и оплата</a>
@@ -1271,8 +1352,27 @@ function buildBreadcrumbLd(product) {
 }
 
 function buildTitle(product) {
-  // Keep under ~60 chars where possible. Brand suffix added.
-  const base = product.name;
+  // Names in the catalog are intentionally short, but search results must
+  // distinguish separate colors, techniques and designs.
+  const titles = {
+    'futbolka-varenka-jujutsu-kaisen-satoru-gojo-print-seraya': 'Футболка-варёнка Сатору Годжо, серая',
+    'futbolka-varenka-jujutsu-kaisen-satoru-gojo-print-bezhevaya': 'Футболка-варёнка Сатору Годжо, бежевая',
+    'futbolka-naruto-akatsuki-vyshivka-belaya': 'Футболка Акацуки с вышивкой, белая',
+    'futbolka-naruto-akatsuki-print-belaya': 'Футболка Акацуки с принтом, белая',
+    'futbolka-naruto-akatsuki-print-chernaya': 'Футболка Акацуки с облаком и принтом, чёрная',
+    'futbolka-naruto-akatsuki-print-chernaya-2': 'Чёрная футболка Акацуки с красным символом',
+    'futbolka-naruto-itachi-uchiha-vyshivka-chernaya': 'Футболка Итачи с вышивкой, чёрная',
+    'futbolka-naruto-itachi-uchiha-vyshivka-belaya': 'Футболка Итачи с вышивкой, белая',
+    'hudi-naruto-itachi-uchiha-vyshivka-chernaya': 'Худи Итачи с вышивкой, чёрное',
+    'hudi-naruto-itachi-uchiha-vyshivka-sinyaya': 'Худи Итачи с вышивкой, синее',
+    'futbolka-jujutsu-kaisen-satoru-gojo-print-belaya': 'Белая футболка Сатору Годжо The Honored One',
+    'futbolka-jujutsu-kaisen-satoru-gojo-print-chernaya': 'Футболка Сатору Годжо с принтом, чёрная',
+    'futbolka-jujutsu-kaisen-satoru-gojo-print-belaya-2': 'Белая футболка Сатору Годжо с чёрно-белым принтом',
+    'futbolka-gravity-vyshivka-belaya': 'Футболка Gravity с вышивкой, белая',
+    'futbolka-gravity-print-belaya': 'Футболка Gravity с принтом, белая',
+    'futbolka-gravity-print-chernaya': 'Футболка Gravity с принтом, чёрная',
+  };
+  const base = titles[product.slug] || product.name;
   const suffix = ' — KOMUI';
   if ((base + suffix).length <= 65) return base + suffix;
   return base;
@@ -1973,6 +2073,7 @@ ${renderHeaderScript()}
 <footer><div class="wrap foot">
   <div><h5>KOMUI</h5><p>Аниме-мерч: футболки, худи и свитшоты с принтами и вышивкой.</p></div>
   <div><h5>Покупателю</h5><a href="/delivery">Доставка и оплата</a><a href="/returns">Возврат и обмен</a><a href="/sizes">Размерная сетка</a><a href="/care">Уход</a></div>
+  <div><h5>Каталог</h5>${renderCatalogFooterLinks()}</div>
   <div><h5>Коллекции</h5>${renderCollectionFooterLinks()}</div>
   <div><h5>Документы</h5><a href="/seller">Продавец</a><a href="/offer">Публичная оферта</a><a href="/privacy">Политика ПДн</a></div>
   <div><h5>Контакты</h5><a href="mailto:smmshit@ya.ru">smmshit@ya.ru</a><a href="/#catalog">Каталог</a></div>
@@ -2244,6 +2345,7 @@ function joinedList(values, fallback) {
 }
 
 function collectionSeoSections(landing, stats) {
+  if (landing.copy && landing.faq) return [];
   const count = productCountText(landing.products.length);
   const categories = joinedList(mapNames(stats.categories).map(value => value.toLowerCase()), 'футболки, худи и свитшоты');
   const techniques = joinedList(mapNames(stats.techniques).map(value => value.toLowerCase()), 'принт и вышивка');
@@ -2262,6 +2364,7 @@ function collectionSeoSections(landing, stats) {
 }
 
 function collectionFaq(landing, stats) {
+  if (landing.faq) return landing.faq;
   const count = productCountText(landing.products.length);
   const categories = joinedList(mapNames(stats.categories).map(value => value.toLowerCase()), 'футболки, худи и свитшоты');
   const techniques = joinedList(mapNames(stats.techniques).map(value => value.toLowerCase()), 'принт и вышивка');
@@ -2303,7 +2406,7 @@ function buildCollectionPageLd(landing) {
     '@type': 'CollectionPage',
     name: landing.h1,
     description: landing.metaDescription,
-    url: `${SITE_ORIGIN}/collections/${landing.slug}`,
+    url: `${SITE_ORIGIN}${landingPath(landing)}`,
     inLanguage: 'ru-RU',
     datePublished: DATE_PUBLISHED_PLACEHOLDER,
     dateModified: DATE_MODIFIED_PLACEHOLDER,
@@ -2322,19 +2425,21 @@ function buildCollectionPageLd(landing) {
 }
 
 function buildCollectionBreadcrumbLd(landing) {
+  const catalog = landingPath(landing).startsWith('/catalog/');
   return JSON.stringify({
     '@context': 'https://schema.org/',
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'KOMUI', item: SITE_ORIGIN + '/' },
-      { '@type': 'ListItem', position: 2, name: 'Коллекции', item: SITE_ORIGIN + '/#strip' },
-      { '@type': 'ListItem', position: 3, name: landing.name, item: `${SITE_ORIGIN}/collections/${landing.slug}` },
+      { '@type': 'ListItem', position: 2, name: catalog ? 'Каталог' : 'Коллекции', item: SITE_ORIGIN + (catalog ? '/#catalog' : '/#strip') },
+      { '@type': 'ListItem', position: 3, name: landing.name, item: `${SITE_ORIGIN}${landingPath(landing)}` },
     ],
   });
 }
 
 function renderCollectionPage(landing) {
-  const canonical = `${SITE_ORIGIN}/collections/${landing.slug}`;
+  const catalog = landingPath(landing).startsWith('/catalog/');
+  const canonical = `${SITE_ORIGIN}${landingPath(landing)}`;
   const stats = collectionStats(landing.products);
   const categories = [...stats.categories.entries()]
     .map(([name, count]) => `<span>${escapeHtml(name)} · ${count}</span>`)
@@ -2343,9 +2448,9 @@ function renderCollectionPage(landing) {
     .map(([name, count]) => `<span>${escapeHtml(name)} · ${count}</span>`)
     .join('');
   const cards = landing.products.map(product => collectionProductCard(product, `collection_${landing.slug}`)).join('');
-  const related = COLLECTION_LANDINGS
-    .filter(item => item.slug !== landing.slug)
-    .map(item => `<a href="/collections/${escapeAttr(item.slug)}">${escapeHtml(item.name)}</a>`)
+  const related = ALL_LANDINGS
+    .filter(item => landingPath(item) !== landingPath(landing) && landingPath(item).startsWith(catalog ? '/catalog/' : '/collections/'))
+    .map(item => `<a href="${escapeAttr(landingPath(item))}">${escapeHtml(item.name)}</a>`)
     .join('');
   const introCopy = landing.copy.map(text => `<p>${escapeHtml(text)}</p>`).join('');
   const seoSections = collectionSeoSections(landing, stats)
@@ -2404,8 +2509,8 @@ ${renderHeaderPanels()}
 <main class="c-page">
   <section class="c-hero">
     <div class="wrap">
-      <nav class="crumb" aria-label="Хлебные крошки"><a href="/">KOMUI</a><span>/</span><a href="/#strip">Коллекции</a><span>/</span><span>${escapeHtml(landing.name)}</span></nav>
-      <div class="eyebrow">Коллекция</div>
+      <nav class="crumb" aria-label="Хлебные крошки"><a href="/">KOMUI</a><span>/</span><a href="/${catalog ? '#catalog' : '#strip'}">${catalog ? 'Каталог' : 'Коллекции'}</a><span>/</span><span>${escapeHtml(landing.name)}</span></nav>
+      <div class="eyebrow">${catalog ? 'Каталог' : 'Коллекция'}</div>
       <h1>${escapeHtml(landing.h1)}</h1>
       <p class="lead">${escapeHtml(landing.lead)}</p>
       <div class="c-actions">
@@ -2418,9 +2523,9 @@ ${renderHeaderPanels()}
     <div class="wrap">
       <div class="c-head">
         <div>
-          <div class="eyebrow">Фильтр по теме</div>
+          <div class="eyebrow">Подборка товаров</div>
           <h2>${escapeHtml(landing.name)}: товары в наличии</h2>
-          <p>На странице показаны товары KOMUI, отобранные по теме ${escapeHtml(landing.name)}. Можно сравнить принты, вышивку, цвета, категории и перейти в карточку нужной вещи.</p>
+          <p>Сравните фотографии, цвета, размеры и цены. Нажмите на карточку, чтобы узнать подробности о модели.</p>
         </div>
         <div class="c-count">${landing.products.length}</div>
       </div>
@@ -2439,14 +2544,14 @@ ${renderHeaderPanels()}
   </section>
   <section class="c-faq">
     <div class="wrap">
-      <div class="eyebrow">Вопросы по коллекции</div>
+      <div class="eyebrow">Вопросы перед заказом</div>
       <h2>${escapeHtml(landing.name)}: коротко перед заказом</h2>
       <div class="c-faq-list">${faqHtml}</div>
     </div>
   </section>
   <section class="c-related">
     <div class="wrap">
-      <h2>Другие коллекции</h2>
+      <h2>${catalog ? 'Другие категории' : 'Другие коллекции'}</h2>
       <div class="c-related-links">${related}</div>
     </div>
   </section>
@@ -2468,6 +2573,7 @@ ${renderHeaderScript()}
 <footer><div class="wrap foot">
   <div><h5>KOMUI</h5><p>Аниме-мерч: футболки, худи и свитшоты с принтами и вышивкой.</p></div>
   <div><h5>Покупателю</h5><a href="/delivery">Доставка и оплата</a><a href="/returns">Возврат и обмен</a><a href="/sizes">Размерная сетка</a><a href="/care">Уход</a></div>
+  <div><h5>Каталог</h5>${renderCatalogFooterLinks()}</div>
   <div><h5>Коллекции</h5>${renderCollectionFooterLinks()}</div>
   <div><h5>Документы</h5><a href="/seller">Продавец</a><a href="/offer">Публичная оферта</a><a href="/privacy">Политика ПДн</a></div>
   <div><h5>Контакты</h5><a href="mailto:smmshit@ya.ru">smmshit@ya.ru</a><a href="/#catalog">Каталог</a></div>
@@ -2489,8 +2595,8 @@ function renderSitemap(products, collectionLandings = [], tracker) {
     { loc: `${SITE_ORIGIN}/llms.txt`, lastmod: tracker.sitemapDate('/llms.txt'), changefreq: 'weekly', priority: '0.3' },
     { loc: `${SITE_ORIGIN}/llms-full.txt`, lastmod: tracker.sitemapDate('/llms-full.txt'), changefreq: 'weekly', priority: '0.3' },
     ...collectionLandings.map(landing => ({
-      loc: `${SITE_ORIGIN}/collections/${landing.slug}`,
-      lastmod: tracker.sitemapDate(`/collections/${landing.slug}`),
+      loc: `${SITE_ORIGIN}${landingPath(landing)}`,
+      lastmod: tracker.sitemapDate(landingPath(landing)),
       changefreq: 'weekly',
       priority: '0.75',
     })),
@@ -2522,7 +2628,9 @@ function renderCatalogPrerender(products, limit = 12) {
       : '';
     const sizes = catalogSizesHtml(p.sizes || []);
     const collection = p.collection_name || p.anime_title || '';
-    const altParts = [p.color_name, p.category, p.decoration_type ? `с ${p.decoration_type.toLowerCase()}ом` : '', p.collection_name && `«${p.collection_name}»`].filter(Boolean);
+    const decoration = p.decoration_type === 'Вышивка' ? 'с вышивкой'
+      : p.decoration_type === 'Принт' ? 'с принтом' : '';
+    const altParts = [p.color_name, p.category, decoration, p.collection_name && `«${p.collection_name}»`].filter(Boolean);
     const alt = altParts.length ? altParts.join(' ') : p.name;
     return `<article class="card prerender" data-id="${escapeAttr(p.id)}">` +
       `<a class="media" href="/p/${escapeAttr(p.slug)}" aria-label="${escapeAttr(p.name)}">` +
@@ -2779,7 +2887,8 @@ async function main() {
   let written = 0;
   for (const product of products) {
     const htmlWithPlaceholders = renderProductPage(product, products);
-    const meta = tracker.track(`/p/${product.slug}`, htmlWithPlaceholders, productFallbackDate);
+    const meta = tracker.track(`/p/${product.slug}`, htmlWithPlaceholders,
+      product.slug === 'futbolka-varenka-naruto-hashirama-senju-chb-print-seraya' ? TODAY : productFallbackDate);
     const html = replaceDatePlaceholders(htmlWithPlaceholders, meta);
     fs.writeFileSync(path.join(outDir, `${product.slug}.html`), html, 'utf8');
     written += 1;
@@ -2797,16 +2906,19 @@ async function main() {
     'utf8',
   );
 
-  const collectionDir = path.join(ROOT, 'collections');
-  fs.mkdirSync(collectionDir, { recursive: true });
-  for (const file of fs.readdirSync(collectionDir)) {
-    if (file.endsWith('.html')) fs.unlinkSync(path.join(collectionDir, file));
+  for (const subdir of ['collections', 'catalog']) {
+    const dir = path.join(ROOT, subdir);
+    fs.mkdirSync(dir, { recursive: true });
+    for (const file of fs.readdirSync(dir)) {
+      if (file.endsWith('.html')) fs.unlinkSync(path.join(dir, file));
+    }
   }
   for (const landing of collectionLandings) {
     const htmlWithPlaceholders = renderCollectionPage(landing);
-    const meta = tracker.track(`/collections/${landing.slug}`, htmlWithPlaceholders, productFallbackDate);
+    const meta = tracker.track(landingPath(landing), htmlWithPlaceholders,
+      landing.path ? TODAY : productFallbackDate);
     const html = replaceDatePlaceholders(htmlWithPlaceholders, meta);
-    fs.writeFileSync(path.join(collectionDir, `${landing.slug}.html`), html, 'utf8');
+    fs.writeFileSync(path.join(ROOT, `${landingPath(landing)}.html`), html, 'utf8');
   }
 
   // Inject 12 prerendered catalog cards into index.html between markers
@@ -2858,7 +2970,7 @@ async function main() {
 
   console.log(`✓ Wrote ${written} product page(s) to /p`);
   console.log(`✓ Wrote ${productRedirects.length} product redirect(s)`);
-  console.log(`✓ Wrote ${collectionLandings.length} collection page(s) to /collections`);
+  console.log(`✓ Wrote ${collectionLandings.length} collection and catalog landing page(s)`);
   console.log('✓ Wrote sitemap.xml');
   console.log('✓ Wrote robots.txt');
 }

@@ -2,6 +2,257 @@
 /* Используется как fallback, если KOMUI API временно недоступен. */
 window.KOMUI_PRODUCTS = [
   {
+    "id": "7cc7c332-940f-41de-b1e9-eba04001963b",
+    "design_key": "var28|print|tshirt|washed-grey",
+    "ozon_variant": "var28",
+    "name": "Футболка-варёнка Хаширама Сенджу ЧБ",
+    "slug": "futbolka-varenka-naruto-hashirama-senju-chb-print-seraya",
+    "description": "Серая футболка-варёнка оверсайз из 100% хлопка плотностью 240 г/м². Винтажная обработка подчёркивает фактуру ткани, а свободный крой обеспечивает комфортную посадку.\n\nКрупный принт с Хаширамой Сенджу выполнен в чёрно-серой гамме с красными акцентами. Рекомендуется деликатная стирка с изнаночной стороны при температуре до 30 °C.",
+    "ozon_description": "Серая футболка-варёнка оверсайз из 100% хлопка плотностью 240 г/м². Винтажная обработка подчёркивает фактуру ткани, а свободный крой обеспечивает комфортную посадку.\n\nКрупный принт с Хаширамой Сенджу выполнен в чёрно-серой гамме с красными акцентами. Рекомендуется деликатная стирка с изнаночной стороны при температуре до 30 °C.",
+    "category": "Футболки",
+    "category_slug": "tshirts",
+    "product_type": "Футболка",
+    "product_type_slug": "tshirt",
+    "decoration_type": "Принт",
+    "decoration_slug": "print",
+    "color_name": "Вареный серый",
+    "color_slug": "washed-grey",
+    "color_hex": "#9ca3af",
+    "franchise_type": "anime",
+    "title_name": "Naruto",
+    "title_slug": "naruto",
+    "anime_title": "Naruto",
+    "anime_slug": "naruto",
+    "character_name": "Hashirama Senju",
+    "character_slug": "hashirama-senju",
+    "collection_name": "Hashirama Senju",
+    "collection_slug": "hashirama-senju",
+    "design_name": "Hashirama Senju Monochrome",
+    "design_slug": "hashirama-senju-monochrome",
+    "tags": [
+      "tshirt",
+      "print",
+      "washed-grey",
+      "anime",
+      "naruto",
+      "hashirama-senju"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "price_min": "2900.00",
+    "price_max": "2900.00",
+    "currency": "RUB",
+    "primary_image_url": "/media/products/31/315542a738423f28/800.webp",
+    "main_image_path": "/media/products/31/315542a738423f28/800.webp",
+    "image_urls": [
+      "/media/products/31/315542a738423f28/800.webp",
+      "/media/products/62/621d1a8cc34bcea4/800.webp",
+      "/media/products/76/76c8c6d59d138dc9/800.webp",
+      "/media/products/9e/9e642c8d0ac9ef69/800.webp",
+      "/media/products/43/43488530d5788546/800.webp",
+      "/media/products/43/4323161c64a7636f/800.webp",
+      "/media/products/be/be614b276fff6bff/800.webp",
+      "/media/products/39/39f8350a08bd7780/800.webp",
+      "/media/products/49/4911f91ac320dfc3/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp"
+    ],
+    "size_chart_json": {
+      "content": [
+        {
+          "table": {
+            "body": [
+              {
+                "data": [
+                  [
+                    "RU",
+                    "Российский размер"
+                  ],
+                  "    46",
+                  "    48",
+                  "    50",
+                  "52",
+                  "54"
+                ]
+              },
+              {
+                "data": [
+                  [
+                    "INT",
+                    "Международный размер"
+                  ],
+                  "    S",
+                  "    M",
+                  "    L",
+                  "XL",
+                  "XXL"
+                ]
+              },
+              {
+                "data": [
+                  [
+                    "Длина, см",
+                    ""
+                  ],
+                  "    69",
+                  "    71",
+                  "    73",
+                  "75",
+                  "77"
+                ]
+              },
+              {
+                "data": [
+                  [
+                    "Ширина, см",
+                    ""
+                  ],
+                  "    53",
+                  "    56",
+                  "    58",
+                  "62",
+                  "65"
+                ]
+              }
+            ],
+            "title": "Размеры"
+          },
+          "widgetName": "tcTable"
+        }
+      ],
+      "version": 0.1
+    },
+    "offers": [
+      {
+        "sku": 5827338483,
+        "offer_id": "D28-TSH-PRT-WGRY-S",
+        "name": "Вареная футболка с принтом Хаширама ЧБ S",
+        "size": "S",
+        "price": 2900,
+        "images": [
+          "/media/products/31/315542a738423f28/800.webp",
+          "/media/products/62/621d1a8cc34bcea4/800.webp",
+          "/media/products/76/76c8c6d59d138dc9/800.webp",
+          "/media/products/9e/9e642c8d0ac9ef69/800.webp",
+          "/media/products/43/43488530d5788546/800.webp",
+          "/media/products/43/4323161c64a7636f/800.webp",
+          "/media/products/be/be614b276fff6bff/800.webp",
+          "/media/products/39/39f8350a08bd7780/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp"
+        ],
+        "primary_image": "/media/products/31/315542a738423f28/800.webp"
+      },
+      {
+        "sku": 5873136731,
+        "offer_id": "D28-TSH-PRT-WGRY-M",
+        "name": "Вареная футболка с принтом Хаширама ЧБ M",
+        "size": "M",
+        "price": 2900,
+        "images": [
+          "/media/products/31/315542a738423f28/800.webp",
+          "/media/products/62/621d1a8cc34bcea4/800.webp",
+          "/media/products/76/76c8c6d59d138dc9/800.webp",
+          "/media/products/9e/9e642c8d0ac9ef69/800.webp",
+          "/media/products/43/43488530d5788546/800.webp",
+          "/media/products/43/4323161c64a7636f/800.webp",
+          "/media/products/be/be614b276fff6bff/800.webp",
+          "/media/products/39/39f8350a08bd7780/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp"
+        ],
+        "primary_image": "/media/products/31/315542a738423f28/800.webp"
+      },
+      {
+        "sku": 5873146584,
+        "offer_id": "D28-TSH-PRT-WGRY-L",
+        "name": "Вареная футболка с принтом Хаширама ЧБ L",
+        "size": "L",
+        "price": 2900,
+        "images": [
+          "/media/products/31/315542a738423f28/800.webp",
+          "/media/products/62/621d1a8cc34bcea4/800.webp",
+          "/media/products/76/76c8c6d59d138dc9/800.webp",
+          "/media/products/9e/9e642c8d0ac9ef69/800.webp",
+          "/media/products/43/43488530d5788546/800.webp",
+          "/media/products/43/4323161c64a7636f/800.webp",
+          "/media/products/be/be614b276fff6bff/800.webp",
+          "/media/products/39/39f8350a08bd7780/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp"
+        ],
+        "primary_image": "/media/products/31/315542a738423f28/800.webp"
+      },
+      {
+        "sku": 5873146623,
+        "offer_id": "D28-TSH-PRT-WGRY-XL",
+        "name": "Вареная футболка с принтом Хаширама ЧБ XL",
+        "size": "XL",
+        "price": 2900,
+        "images": [
+          "/media/products/31/315542a738423f28/800.webp",
+          "/media/products/62/621d1a8cc34bcea4/800.webp",
+          "/media/products/76/76c8c6d59d138dc9/800.webp",
+          "/media/products/9e/9e642c8d0ac9ef69/800.webp",
+          "/media/products/43/43488530d5788546/800.webp",
+          "/media/products/43/4323161c64a7636f/800.webp",
+          "/media/products/be/be614b276fff6bff/800.webp",
+          "/media/products/39/39f8350a08bd7780/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp"
+        ],
+        "primary_image": "/media/products/31/315542a738423f28/800.webp"
+      },
+      {
+        "sku": 5873146769,
+        "offer_id": "D28-TSH-PRT-WGRY-XXL",
+        "name": "Вареная футболка с принтом Хаширама ЧБ XXL",
+        "size": "XXL",
+        "price": 2900,
+        "images": [
+          "/media/products/31/315542a738423f28/800.webp",
+          "/media/products/62/621d1a8cc34bcea4/800.webp",
+          "/media/products/76/76c8c6d59d138dc9/800.webp",
+          "/media/products/9e/9e642c8d0ac9ef69/800.webp",
+          "/media/products/43/43488530d5788546/800.webp",
+          "/media/products/43/4323161c64a7636f/800.webp",
+          "/media/products/be/be614b276fff6bff/800.webp",
+          "/media/products/39/39f8350a08bd7780/800.webp",
+          "/media/products/49/4911f91ac320dfc3/800.webp",
+          "/media/products/eb/eb63be4e7c210c93/800.webp"
+        ],
+        "primary_image": "/media/products/31/315542a738423f28/800.webp"
+      }
+    ],
+    "is_active": true,
+    "sort_order": 0,
+    "short_description": "Серая футболка-варёнка оверсайз с принтом Хаширама Сенджу.",
+    "badges": [
+      "new"
+    ],
+    "compare_at_price": "4500",
+    "requires_offer_id_sizes": [],
+    "slug_redirects": [],
+    "review_summary": {
+      "count": 0,
+      "averageRating": null,
+      "withMedia": 0,
+      "ratingCounts": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0
+      }
+    },
+    "fabric_composition": "100% хлопок",
+    "fabric_density_gsm": 240
+  },
+  {
     "id": "7c169f01-b459-4e25-b74f-a4909a1b4149",
     "design_key": "var16|print|tshirt|washed-grey",
     "ozon_variant": "var16",
@@ -813,10 +1064,11 @@ window.KOMUI_PRODUCTS = [
     "main_image_path": "/media/products/fa/fa91b2aee200f5b1/800.webp",
     "image_urls": [
       "/media/products/fa/fa91b2aee200f5b1/800.webp",
-      "/media/products/5c/5cbc799b717d6154/800.webp",
-      "/media/products/f3/f3b4c70aee3d048c/800.webp",
-      "/media/products/ad/ad7a42eaa5799384/800.webp",
-      "/media/products/93/932601cd10b4adcb/800.webp",
+      "/media/products/8f/8f5cbf242ae3b6a7/800.webp",
+      "/media/products/de/deaae6d54777e90b/800.webp",
+      "/media/products/83/8314a7fec43e7bf7/800.webp",
+      "/media/products/f4/f47622eeade7c6ed/800.webp",
+      "/media/products/1b/1bb4d2db44ba5e6b/800.webp",
       "/media/products/eb/eb63be4e7c210c93/800.webp"
     ],
     "size_chart_json": {
@@ -906,10 +1158,11 @@ window.KOMUI_PRODUCTS = [
         "price": 2900,
         "images": [
           "/media/products/fa/fa91b2aee200f5b1/800.webp",
-          "/media/products/5c/5cbc799b717d6154/800.webp",
-          "/media/products/f3/f3b4c70aee3d048c/800.webp",
-          "/media/products/ad/ad7a42eaa5799384/800.webp",
-          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/8f/8f5cbf242ae3b6a7/800.webp",
+          "/media/products/de/deaae6d54777e90b/800.webp",
+          "/media/products/83/8314a7fec43e7bf7/800.webp",
+          "/media/products/f4/f47622eeade7c6ed/800.webp",
+          "/media/products/1b/1bb4d2db44ba5e6b/800.webp",
           "/media/products/eb/eb63be4e7c210c93/800.webp"
         ],
         "primary_image": "/media/products/fa/fa91b2aee200f5b1/800.webp",
@@ -924,10 +1177,11 @@ window.KOMUI_PRODUCTS = [
         "price": 2900,
         "images": [
           "/media/products/fa/fa91b2aee200f5b1/800.webp",
-          "/media/products/5c/5cbc799b717d6154/800.webp",
-          "/media/products/f3/f3b4c70aee3d048c/800.webp",
-          "/media/products/ad/ad7a42eaa5799384/800.webp",
-          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/8f/8f5cbf242ae3b6a7/800.webp",
+          "/media/products/de/deaae6d54777e90b/800.webp",
+          "/media/products/83/8314a7fec43e7bf7/800.webp",
+          "/media/products/f4/f47622eeade7c6ed/800.webp",
+          "/media/products/1b/1bb4d2db44ba5e6b/800.webp",
           "/media/products/eb/eb63be4e7c210c93/800.webp"
         ],
         "primary_image": "/media/products/fa/fa91b2aee200f5b1/800.webp",
@@ -942,10 +1196,11 @@ window.KOMUI_PRODUCTS = [
         "price": 2900,
         "images": [
           "/media/products/fa/fa91b2aee200f5b1/800.webp",
-          "/media/products/5c/5cbc799b717d6154/800.webp",
-          "/media/products/f3/f3b4c70aee3d048c/800.webp",
-          "/media/products/ad/ad7a42eaa5799384/800.webp",
-          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/8f/8f5cbf242ae3b6a7/800.webp",
+          "/media/products/de/deaae6d54777e90b/800.webp",
+          "/media/products/83/8314a7fec43e7bf7/800.webp",
+          "/media/products/f4/f47622eeade7c6ed/800.webp",
+          "/media/products/1b/1bb4d2db44ba5e6b/800.webp",
           "/media/products/eb/eb63be4e7c210c93/800.webp"
         ],
         "primary_image": "/media/products/fa/fa91b2aee200f5b1/800.webp",
@@ -960,10 +1215,11 @@ window.KOMUI_PRODUCTS = [
         "price": 2900,
         "images": [
           "/media/products/fa/fa91b2aee200f5b1/800.webp",
-          "/media/products/5c/5cbc799b717d6154/800.webp",
-          "/media/products/f3/f3b4c70aee3d048c/800.webp",
-          "/media/products/ad/ad7a42eaa5799384/800.webp",
-          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/8f/8f5cbf242ae3b6a7/800.webp",
+          "/media/products/de/deaae6d54777e90b/800.webp",
+          "/media/products/83/8314a7fec43e7bf7/800.webp",
+          "/media/products/f4/f47622eeade7c6ed/800.webp",
+          "/media/products/1b/1bb4d2db44ba5e6b/800.webp",
           "/media/products/eb/eb63be4e7c210c93/800.webp"
         ],
         "primary_image": "/media/products/fa/fa91b2aee200f5b1/800.webp",
@@ -978,10 +1234,11 @@ window.KOMUI_PRODUCTS = [
         "price": 2900,
         "images": [
           "/media/products/fa/fa91b2aee200f5b1/800.webp",
-          "/media/products/5c/5cbc799b717d6154/800.webp",
-          "/media/products/f3/f3b4c70aee3d048c/800.webp",
-          "/media/products/ad/ad7a42eaa5799384/800.webp",
-          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/8f/8f5cbf242ae3b6a7/800.webp",
+          "/media/products/de/deaae6d54777e90b/800.webp",
+          "/media/products/83/8314a7fec43e7bf7/800.webp",
+          "/media/products/f4/f47622eeade7c6ed/800.webp",
+          "/media/products/1b/1bb4d2db44ba5e6b/800.webp",
           "/media/products/eb/eb63be4e7c210c93/800.webp"
         ],
         "primary_image": "/media/products/fa/fa91b2aee200f5b1/800.webp",
@@ -5606,13 +5863,13 @@ window.KOMUI_PRODUCTS = [
     "image_urls": [
       "/media/products/cf/cf80f3cfbe5d1481/800.webp",
       "/media/products/67/67effc76ec4ac364/800.webp",
-      "/media/products/9c/9c83197f51b307c5/800.webp",
       "/media/products/25/25b874ae03eab84e/800.webp",
       "/media/products/63/633f2dcf3d5b602f/800.webp",
       "/media/products/b6/b60d17031444bffe/800.webp",
       "/media/products/5d/5d40839ef441c0fd/800.webp",
-      "/media/products/93/932601cd10b4adcb/800.webp",
-      "/media/products/eb/eb63be4e7c210c93/800.webp"
+      "/media/products/1b/1bb4d2db44ba5e6b/800.webp",
+      "/media/products/eb/eb63be4e7c210c93/800.webp",
+      "/media/products/93/932601cd10b4adcb/800.webp"
     ],
     "size_chart_json": {
       "content": [
@@ -5702,12 +5959,11 @@ window.KOMUI_PRODUCTS = [
         "images": [
           "/media/products/cf/cf80f3cfbe5d1481/800.webp",
           "/media/products/67/67effc76ec4ac364/800.webp",
-          "/media/products/9c/9c83197f51b307c5/800.webp",
           "/media/products/25/25b874ae03eab84e/800.webp",
           "/media/products/63/633f2dcf3d5b602f/800.webp",
           "/media/products/b6/b60d17031444bffe/800.webp",
           "/media/products/5d/5d40839ef441c0fd/800.webp",
-          "/media/products/93/932601cd10b4adcb/800.webp",
+          "/media/products/1b/1bb4d2db44ba5e6b/800.webp",
           "/media/products/eb/eb63be4e7c210c93/800.webp"
         ],
         "primary_image": "/media/products/cf/cf80f3cfbe5d1481/800.webp",
