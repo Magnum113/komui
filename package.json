@@ -7,6 +7,7 @@
     "test:product-offers": "node scripts/test-product-offers.js",
     "test:product-offer-frontend": "node scripts/test-product-offer-frontend.js",
     "test:metrika": "node scripts/test-metrika.js",
+    "test:collection-menu": "node scripts/test-collection-menu.js",
     "test:seo-landings": "node scripts/test-seo-landings.js",
     "sync:media": "node scripts/sync-product-media.js",
     "sync:media:dry-run": "node scripts/sync-product-media.js --dry-run"

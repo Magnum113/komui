@@ -1525,11 +1525,30 @@ function apiProduct(row,i){
   product.sizes=sortSizes(productAvailableSizes(product));
   return product;
 }
+const COLLECTION_LABELS={
+  'hashirama senju':'Хаширама Сенджу',
+  'satoru gojo':'Сатору Годжо',
+  'akatsuki':'Акацуки',
+  'itachi':'Итачи Учиха',
+  'itachi uchiha':'Итачи Учиха',
+  'naruto':'Наруто Узумаки',
+  'naruto uzumaki':'Наруто Узумаки',
+  'madara':'Мадара Учиха',
+  'madara uchiha':'Мадара Учиха',
+  'ryomen sukuna':'Рёмен Сукуна',
+  'gta':'ГТА',
+  'gravity':'Гравити Дифайд',
+  'gravity defied':'Гравити Дифайд'
+};
+function collectionLabel(name){
+  const value=String(name||'').trim();
+  return COLLECTION_LABELS[value.toLowerCase().replace(/\s+/g,' ')]||value;
+}
 function setProducts(products,stats={}){
   P=products.map((p,i)=>p.design_key?apiProduct(p,i):localProduct(p,i));
   OSTAT=stats||{};
   CATS=[...new Set(P.map(p=>p.cat).filter(Boolean))];
-  COLS=[...new Set(P.map(p=>p.col).filter(Boolean))];
+  COLS=[...new Set(P.map(p=>collectionLabel(p.col)).filter(Boolean))];
   TYPES=[...new Set(P.map(p=>p.type).filter(Boolean))];
   SIZES=sortSizes(P.flatMap(p=>p.sizes||[]));
   COLORLIST=[...new Set(P.map(p=>p.color).filter(Boolean))].sort((a,b)=>{
@@ -1596,9 +1615,9 @@ function resetCatalogFilters(){
 function jumpToCatalog(){if(location.hash!=='#catalog')history.replaceState(null,'','#catalog');closeAll();setTimeout(()=>$('#catalog').scrollIntoView({behavior:'smooth'}),50);}
 
 /* facet predicates */
-const chk={cat:p=>!st.cat||p.cat===st.cat,col:p=>!st.cols.size||st.cols.has(p.col),type:p=>!st.types.size||st.types.has(p.type),size:p=>!st.sizes.size||p.sizes.some(s=>st.sizes.has(s)),color:p=>!st.color||p.color===st.color,price:p=>p.price>=st.min&&p.price<=st.max,q:p=>{const q=st.q.trim().toLowerCase();return !q||[p.name,p.col,p.titleName,p.animeTitle,p.characterName].filter(Boolean).some(v=>v.toLowerCase().includes(q));}};
+const chk={cat:p=>!st.cat||p.cat===st.cat,col:p=>!st.cols.size||st.cols.has(collectionLabel(p.col)),type:p=>!st.types.size||st.types.has(p.type),size:p=>!st.sizes.size||p.sizes.some(s=>st.sizes.has(s)),color:p=>!st.color||p.color===st.color,price:p=>p.price>=st.min&&p.price<=st.max,q:p=>{const q=st.q.trim().toLowerCase();return !q||[p.name,p.col,collectionLabel(p.col),p.titleName,p.animeTitle,p.characterName].filter(Boolean).some(v=>v.toLowerCase().includes(q));}};
 function passExcept(p,ex){for(const k in chk){if(k===ex)continue;if(!chk[k](p))return false;}return true;}
-function countFor(f,v){return P.filter(p=>{if(!passExcept(p,f))return false;if(f==='cat')return p.cat===v;if(f==='col')return p.col===v;if(f==='type')return p.type===v;if(f==='size')return p.sizes.includes(v);return true;}).length;}
+function countFor(f,v){return P.filter(p=>{if(!passExcept(p,f))return false;if(f==='cat')return p.cat===v;if(f==='col')return collectionLabel(p.col)===v;if(f==='type')return p.type===v;if(f==='size')return p.sizes.includes(v);return true;}).length;}
 function filtered(){let r=P.filter(p=>Object.values(chk).every(fn=>fn(p)));const s=st.sort;r=r.slice().sort((a,b)=> s==='asc'?a.price-b.price : s==='desc'?b.price-a.price : s==='new'?((b.badges||[]).includes('new')-(a.badges||[]).includes('new'))||b.pop-a.pop : b.pop-a.pop);return r;}
 
 /* ---------------- render filters ---------------- */
@@ -1608,20 +1627,20 @@ function colorSwatchStyle(color){
   return fromProduct||SWATCH[color]||SWATCH['Другой'];
 }
 function collectionTotals(){
-  return COLS.map(name=>({name,count:P.filter(p=>p.col===name).length}))
+  return COLS.map(name=>({name,count:P.filter(p=>collectionLabel(p.col)===name).length}))
     .sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name,'ru'));
 }
 function collectionMeta(name){
-  const items=P.filter(p=>p.col===name);
+  const items=P.filter(p=>collectionLabel(p.col)===name);
   const collectionName=String(name||'').toLowerCase();
   const hay=[collectionName,...items.flatMap(p=>[p.name,p.titleName,p.animeTitle,p.characterName,p.designKey])].filter(Boolean).join(' ').toLowerCase();
-  if(/akatsuki|акацуки/.test(collectionName))return {brand:'Naruto',logo:'./assets/collection-logos/akatsuki-cloud-single.svg'};
-  if(/itachi|итачи/.test(collectionName))return {brand:'Naruto',logo:'./assets/collection-logos/itachi-sharingan.svg'};
-  if(/madara|мадара/.test(collectionName))return {brand:'Naruto',logo:'./assets/collection-logos/madara-sharingan.svg'};
+  if(/akatsuki|акацуки/.test(collectionName))return {brand:'Наруто',logo:'./assets/collection-logos/akatsuki-cloud-single.svg'};
+  if(/itachi|итачи/.test(collectionName))return {brand:'Наруто',logo:'./assets/collection-logos/itachi-sharingan.svg'};
+  if(/madara|мадара/.test(collectionName))return {brand:'Наруто',logo:'./assets/collection-logos/madara-sharingan.svg'};
   if(/satoru|gojo|годжо|jujutsu|магичес|jjk|呪術/.test(collectionName)||/satoru|gojo|годжо|jujutsu|магичес|jjk|呪術/.test(hay))return {brand:'Магическая битва',logo:'./assets/collection-logos/jujutsu-kaisen.svg'};
-  if(/naruto|наруто/.test(collectionName)||/naruto|наруто/.test(hay))return {brand:'Naruto',logo:'./assets/collection-logos/naruto.svg'};
-  if(/gta|grand theft/.test(collectionName)||/gta|grand theft/.test(hay))return {brand:'GTA',logo:'./assets/collection-logos/gta.svg'};
-  if(/gravity|гравити|defied/.test(collectionName)||/gravity|гравити|defied/.test(hay))return {brand:'Gravity Defied',logo:'./assets/collection-logos/gravity-defied.png'};
+  if(/naruto|наруто/.test(collectionName)||/naruto|наруто/.test(hay))return {brand:'Наруто',logo:'./assets/collection-logos/naruto.svg'};
+  if(/gta|гта|grand theft/.test(collectionName)||/gta|grand theft/.test(hay))return {brand:'ГТА',logo:'./assets/collection-logos/gta.svg'};
+  if(/gravity|гравити|defied/.test(collectionName)||/gravity|гравити|defied/.test(hay))return {brand:'Гравити Дифайд',logo:'./assets/collection-logos/gravity-defied.png'};
   return {brand:'KOMUI',logo:'./favicon.svg'};
 }
 function collectionLogo(meta){
@@ -1629,7 +1648,7 @@ function collectionLogo(meta){
 }
 function collectionItemHtml({name,count}){
   const meta=collectionMeta(name);
-  const cats=[...new Set(P.filter(p=>p.col===name).map(p=>p.cat).filter(Boolean))].join(' · ');
+  const cats=[...new Set(P.filter(p=>collectionLabel(p.col)===name).map(p=>p.cat).filter(Boolean))].join(' · ');
   return `<button class="collection-item" type="button" data-nav-col="${esc(name)}">
     ${collectionLogo(meta)}
     <span class="collection-copy">
