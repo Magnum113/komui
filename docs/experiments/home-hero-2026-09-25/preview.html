@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="../../../favicon.svg" type="image/svg+xml">
+  <meta name="color-scheme" content="light">
+  <title>KOMUI — сравнение главной A/B/C/D</title>
+  <style>
+    :root{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#191c25;background:#f3f5fb}
+    *{box-sizing:border-box}
+    body{margin:0}
+    button,a{font:inherit}
+    button{cursor:pointer}
+    .top{max-width:1520px;margin:auto;padding:40px clamp(18px,4vw,60px) 26px}
+    .eyebrow{margin:0 0 12px;color:#103cff;font-size:12px;font-weight:850;letter-spacing:.15em;text-transform:uppercase}
+    h1{margin:0;font-size:clamp(30px,4vw,56px);line-height:1.04;letter-spacing:-.06em}
+    .intro{max-width:840px;margin:15px 0 0;color:#5c657a;font-size:15px;line-height:1.55}
+    .toolbar{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-top:30px}
+    .switch{display:inline-flex;gap:4px;padding:4px;border:1px solid #dce2f0;border-radius:14px;background:white}
+    .switch button{min-height:40px;padding:0 17px;border:0;border-radius:10px;background:transparent;color:#586078;font-weight:750}
+    .switch button[aria-pressed="true"]{background:#113bfb;color:white;box-shadow:0 4px 10px #173cff33}
+    .hint{color:#778197;font-size:13px}
+    main{max-width:1520px;margin:auto;padding:0 clamp(18px,4vw,60px) 72px}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+    .card{overflow:hidden;border:1px solid #dee3ee;border-radius:25px;background:white;box-shadow:0 16px 40px #1c30610c}
+    .card-head{display:flex;align-items:flex-start;gap:15px;min-height:108px;padding:22px 23px 16px}
+    .letter{display:grid;place-items:center;flex:none;width:44px;height:44px;border-radius:13px;background:#e9eeff;color:#153df5;font-size:21px;font-weight:900}
+    .card[data-variant="A"] .letter{background:#e9ebf1;color:#2a3042}
+    h2{margin:1px 0 5px;font-size:21px;letter-spacing:-.035em}
+    .desc{margin:0;color:#6a7284;font-size:13px;line-height:1.45}
+    .shot{display:block;width:100%;padding:0;border:0;border-top:1px solid #e8ebf2;background:#eef1f8;text-align:center}
+    .shot img{display:block;width:100%;height:auto;aspect-ratio:16/10;object-fit:contain}
+    body[data-device="mobile"] .shot{padding:19px 12px;background:linear-gradient(135deg,#e9edfa,#f8f9ff)}
+    body[data-device="mobile"] .shot img{width:auto;height:460px;max-width:100%;aspect-ratio:auto;margin:auto;border:5px solid #171b29;border-radius:18px;box-shadow:0 18px 32px #18213e30;object-fit:contain}
+    .card-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 23px;color:#7b8497;font-size:12px}
+    .open{border:0;background:none;color:#123bfa;font-weight:800}
+    .open:hover{text-decoration:underline}
+    button:focus-visible,a:focus-visible{outline:3px solid #6385ff;outline-offset:3px}
+    dialog{width:min(95vw,1500px);max-height:96vh;padding:0;border:0;border-radius:20px;background:#fff;box-shadow:0 30px 80px #0c152b55}
+    dialog::backdrop{background:#101827d9;backdrop-filter:blur(7px)}
+    .modal-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 17px;border-bottom:1px solid #e4e8f1}
+    .modal-top strong{font-size:15px}
+    .modal-actions{display:flex;align-items:center;gap:12px}
+    .modal-actions a{color:#123bfa;font-size:13px;font-weight:750;text-decoration:none}
+    .close{width:35px;height:35px;border:0;border-radius:9px;background:#eff2fa;font-size:23px;line-height:1}
+    .modal-image{display:block;width:auto;max-width:100%;max-height:calc(96vh - 62px);margin:auto;object-fit:contain}
+    @media(max-width:760px){.grid{grid-template-columns:1fr}.top{padding-top:25px}.card-head{min-height:0}.hint{width:100%}}
+    @media(prefers-reduced-motion:no-preference){.card{transition:transform .18s ease,box-shadow .18s ease}.card:hover{transform:translateY(-3px);box-shadow:0 20px 40px #1c306119}}
+  </style>
+</head>
+<body data-device="desktop">
+  <header class="top">
+    <p class="eyebrow">KOMUI / эксперимент главной</p>
+    <h1>Сравнение вариантов A–D</h1>
+    <p class="intro">Снимки первого экрана сделаны с рабочего сайта: A — текущая главная, B/C/D — альтернативные изображения, временно включённые только в браузере для этих превью. Сам A/B-тест пока не запущен.</p>
+    <div class="toolbar">
+      <div class="switch" role="group" aria-label="Размер экрана">
+        <button type="button" data-select-device="desktop" aria-pressed="true">Десктоп · 1440 × 900</button>
+        <button type="button" data-select-device="mobile" aria-pressed="false">Телефон · 390 × 844</button>
+      </div>
+      <span class="hint">Нажмите на изображение, чтобы увеличить</span>
+    </div>
+  </header>
+  <main>
+    <div class="grid">
+      <article class="card" data-variant="A">
+        <div class="card-head"><span class="letter">A</span><div><h2>Текущая главная</h2><p class="desc">Контрольный вариант без новых изображений.</p></div></div>
+        <button class="shot" type="button" data-open="A" aria-label="Увеличить вариант A"><img data-preview="A" src="previews/a-desktop.webp" alt="Текущая главная KOMUI, десктоп" width="1440" height="900"></button>
+        <div class="card-foot"><span>Контроль</span><button class="open" type="button" data-open="A">Открыть крупно ↗</button></div>
+      </article>
+      <article class="card" data-variant="B">
+        <div class="card-head"><span class="letter">B</span><div><h2>Аниме-персонажи · Nano Banana</h2><p class="desc">Наруто и Годжо на японской улице, версия 2K.</p></div></div>
+        <button class="shot" type="button" data-open="B" aria-label="Увеличить вариант B"><img data-preview="B" src="previews/b-desktop.webp" alt="Вариант B главной KOMUI, десктоп" width="1440" height="900"></button>
+        <div class="card-foot"><span>Иллюстративный</span><button class="open" type="button" data-open="B">Открыть крупно ↗</button></div>
+      </article>
+      <article class="card" data-variant="C">
+        <div class="card-head"><span class="letter">C</span><div><h2>Аниме-персонажи · крупнее</h2><p class="desc">Фигуры ближе к центру, больше акцент на футболках.</p></div></div>
+        <button class="shot" type="button" data-open="C" aria-label="Увеличить вариант C"><img data-preview="C" src="previews/c-desktop.webp" alt="Вариант C главной KOMUI, десктоп" width="1440" height="900"></button>
+        <div class="card-foot"><span>Иллюстративный</span><button class="open" type="button" data-open="C">Открыть крупно ↗</button></div>
+      </article>
+      <article class="card" data-variant="D">
+        <div class="card-head"><span class="letter">D</span><div><h2>Фотореалистичный · лестница</h2><p class="desc">Исходный кадр для десктопа и отдельная вертикальная версия.</p></div></div>
+        <button class="shot" type="button" data-open="D" aria-label="Увеличить вариант D"><img data-preview="D" src="previews/d-desktop.webp" alt="Вариант D главной KOMUI, десктоп" width="1440" height="900"></button>
+        <div class="card-foot"><span>Фотореалистичный</span><button class="open" type="button" data-open="D">Открыть крупно ↗</button></div>
+      </article>
+    </div>
+  </main>
+  <dialog id="viewer" aria-labelledby="viewerTitle">
+    <div class="modal-top"><strong id="viewerTitle"></strong><div class="modal-actions"><a id="openImage" href="previews/a-desktop.webp" target="_blank" rel="noopener">Открыть файл ↗</a><button class="close" type="button" aria-label="Закрыть">×</button></div></div>
+    <img id="viewerImage" class="modal-image" alt="">
+  </dialog>
+  <script>
+    const variants={A:'Текущая главная',B:'Аниме-персонажи · Nano Banana',C:'Аниме-персонажи · крупнее',D:'Фотореалистичный · лестница'};
+    const viewer=document.querySelector('#viewer');
+    const params=new URLSearchParams(location.search);
+    function currentDevice(){return document.body.dataset.device}
+    function source(variant){return `previews/${variant.toLowerCase()}-${currentDevice()}.webp`}
+    function selectDevice(device){
+      if(device!=='desktop'&&device!=='mobile')return;
+      document.body.dataset.device=device;
+      document.querySelectorAll('[data-select-device]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.selectDevice===device)));
+      document.querySelectorAll('[data-preview]').forEach(image=>{
+        image.src=source(image.dataset.preview);
+        image.alt=`${variants[image.dataset.preview]}, ${device==='mobile'?'телефон':'десктоп'}`;
+        image.width=device==='mobile'?390:1440;
+        image.height=device==='mobile'?844:900;
+      });
+      params.set('device',device);
+      history.replaceState(null,'',`${location.pathname}?${params}`);
+      if(viewer.open)showVariant(viewer.dataset.variant);
+    }
+    function showVariant(variant){
+      if(!Object.hasOwn(variants,variant))return;
+      const src=source(variant);
+      viewer.dataset.variant=variant;
+      document.querySelector('#viewerTitle').textContent=`${variant} — ${variants[variant]} · ${currentDevice()==='mobile'?'телефон':'десктоп'}`;
+      const img=document.querySelector('#viewerImage');
+      img.src=src;
+      img.alt=document.querySelector('#viewerTitle').textContent;
+      document.querySelector('#openImage').href=src;
+      if(!viewer.open)viewer.showModal();
+    }
+    document.querySelectorAll('[data-select-device]').forEach(button=>button.addEventListener('click',()=>selectDevice(button.dataset.selectDevice)));
+    document.querySelectorAll('[data-open]').forEach(button=>button.addEventListener('click',()=>showVariant(button.dataset.open)));
+    document.querySelector('.close').addEventListener('click',()=>viewer.close());
+    viewer.addEventListener('click',event=>{if(event.target===viewer)viewer.close()});
+    if(params.get('device')==='mobile')selectDevice('mobile');
+  </script>
+</body>
+</html>
