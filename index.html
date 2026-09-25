@@ -21,6 +21,30 @@
 <script src="/assets/metrika.js" defer></script>
 <!-- /Yandex.Metrika counter -->
 <!-- komui:metrika:end -->
+<!-- Varioqub: homepage hero experiment; no flag keeps the existing hero. -->
+<script type="text/javascript">
+if (/^(?:www\.)?komui\.ru$/i.test(location.hostname)) {
+  (function(e, x, pe, r, i, me, nt){
+    e[i]=e[i]||function(){(e[i].a=e[i].a||[]).push(arguments)};
+    me=x.createElement(pe);me.async=1;me.src=r;
+    nt=x.getElementsByTagName(pe)[0];
+    me.addEventListener('error',function(){
+      function cb(t){t=t[t.length-1];if(typeof t==='function')t({flags:{}})}
+      if(Array.isArray(e[i].a))e[i].a.forEach(cb);
+      e[i]=function(){cb(arguments)};
+    });
+    nt.parentNode.insertBefore(me,nt);
+  })(window,document,'script','https://abt.s3.yandex.net/expjs/latest/exp.js','ymab');
+  ymab('metrika.110916310','init',function(answer){
+    var values=answer&&answer.flags&&answer.flags.komui_home_hero;
+    var variant=Array.isArray(values)?values[values.length-1]:null;
+    if(variant==='B'||variant==='C'){
+      document.documentElement.setAttribute('data-komui-hero-variant',variant);
+      if(typeof window.komuiStopHeroFX==='function')window.komuiStopHeroFX();
+    }
+  });
+}
+</script>
 <title>Аниме-мерч KOMUI по России — футболки, худи и доставка СДЭК</title>
 <meta name="description" content="Магазин аниме-мерча KOMUI: футболки, худи и свитшоты с принтами и фирменной вышивкой. Доставка СДЭК по России — оформи заказ онлайн." />
 <link rel="canonical" href="https://komui.ru/" />
@@ -830,6 +854,7 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
   html{scroll-behavior:auto}
 }
 </style>
+<link rel="stylesheet" href="/assets/experiments/home-hero-2026-09-25/hero.css" />
 <!--komui:dates:start-->
 <meta name="datePublished" content="2026-07-08" />
 <meta name="dateModified" content="2026-09-24" />
@@ -938,6 +963,13 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
     </div>
     <div class="hero-product fourth" data-hero-slot="3">
       <img class="is-active" src="/media/products/98/987ce89062aaa768/800.webp" srcset="/media/products/98/987ce89062aaa768/480.webp 480w, /media/products/98/987ce89062aaa768/800.webp 800w, /media/products/98/987ce89062aaa768/1200.webp 1200w" sizes="(max-width: 768px) 32vw, 250px" width="800" height="1067" loading="eager" decoding="async" alt="" draggable="false"><img alt="" draggable="false" decoding="async">
+    </div>
+  </div>
+  <div class="hero-experiment">
+    <div class="hero-experiment-image" role="img" aria-label="Наруто и Сатору Годжо в футболках KOMUI на японской улице"></div>
+    <div class="hero-experiment-copy">
+      <h1><span>Аниме-мерч</span><span>на каждый день</span></h1>
+      <a href="#catalog" class="hero-experiment-cta">Смотреть каталог <span aria-hidden="true">→</span></a>
     </div>
   </div>
 </section>
@@ -2415,6 +2447,7 @@ function initRunway(){
   observer.observe(section);
 }
 function initHeroProducts(){
+  if(document.documentElement.hasAttribute('data-komui-hero-variant'))return;
   const slots=$$('[data-hero-slot]');
   if(!slots.length||!P.length)return;
   const popular=[
@@ -2497,6 +2530,7 @@ function initHeroProducts(){
   // On small screens keep the hero steady: autoplay introduces a late LCP
   // candidate and downloads extra full-size photos before interaction.
   if(!reduce && !matchMedia('(max-width: 768px)').matches) setInterval(()=>{
+    if(document.documentElement.hasAttribute('data-komui-hero-variant'))return;
     step=(step+1)%heroItems.length;
     slotState.forEach((state,i)=>{
       const item=heroItems[(step+i*2)%heroItems.length];
@@ -2524,8 +2558,9 @@ function tick(){ctx.clearRect(0,0,W,H);
   for(let i=0;i<parts.length;i++)for(let j=i+1;j<parts.length;j++){const a=parts[i],b=parts[j],dx=a.x-b.x,dy=a.y-b.y,d=Math.hypot(dx,dy);if(d<118){ctx.strokeStyle='rgba(23,60,255,'+(1-d/118)*.26+')';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}}
   for(const p of parts){const dx=p.x-mouse.x,dy=p.y-mouse.y,d=Math.hypot(dx,dy);if(d<160){ctx.strokeStyle='rgba(0,38,249,'+(1-d/160)*.4+')';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(mouse.x,mouse.y);ctx.stroke();}}
   raf=requestAnimationFrame(tick);}
-function startFX(){if(running||reduce)return;running=true;tick();}
+function startFX(){if(running||reduce||document.documentElement.hasAttribute('data-komui-hero-variant'))return;running=true;tick();}
 function stopFX(){running=false;if(raf)cancelAnimationFrame(raf);}
+window.komuiStopHeroFX=stopFX;
 canvas.addEventListener('mousemove',e=>{const r=canvas.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top;});
 canvas.addEventListener('mouseleave',()=>{mouse.x=-999;mouse.y=-999;});
 addEventListener('resize',()=>{sizeCanvas();initParts();});
