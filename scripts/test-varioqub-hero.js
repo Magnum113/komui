@@ -18,7 +18,7 @@ assert(html.includes('class="hero-experiment"'), 'Alternate hero markup is missi
 assert(html.includes('/assets/experiments/home-hero-2026-09-25/hero.css'), 'Alternate hero CSS is missing');
 assert(css.includes('#home .hero-experiment{display:none}'), 'Alternate hero must be hidden by default');
 
-function execute(hostname, answer) {
+function execute(hostname, answer, { pathname = '/', search = '' } = {}) {
   const calls = [];
   const attrs = new Map();
   const firstScript = { parentNode: { insertBefore(node) { calls.push(['insert', node.src]); } } };
@@ -27,7 +27,7 @@ function execute(hostname, answer) {
     createElement() { return { addEventListener() {} }; },
     getElementsByTagName() { return [firstScript]; },
   };
-  const window = { document, location: { hostname }, Array };
+  const window = { document, location: { hostname, pathname, search }, Array, URLSearchParams };
   window.window = window;
   vm.runInNewContext(scriptMatch[1], window);
   if (typeof window.ymab === 'function') {
@@ -42,6 +42,15 @@ function execute(hostname, answer) {
 
 assert.strictEqual(execute('localhost', { flags: { komui_home_hero: ['B'] } }).calls.length, 0);
 assert.strictEqual(execute('stage.komui.ru', { flags: { komui_home_hero: ['B'] } }).calls.length, 0);
+for (const variant of ['B', 'C', 'D']) {
+  const stage = execute('stage.komui.ru', { flags: {} }, { search: `?komui_home_hero=${variant}` });
+  assert.strictEqual(stage.attrs.get('data-komui-hero-variant'), variant);
+  assert.strictEqual(stage.calls.length, 0, 'Staging must not call Varioqub');
+}
+assert.strictEqual(execute('stage.komui.ru', { flags: {} }, { search: '?komui_home_hero=A' }).attrs.size, 0);
+assert.strictEqual(execute('stage.komui.ru', { flags: {} }, { search: '?komui_home_hero=invalid' }).attrs.size, 0);
+assert.strictEqual(execute('stage.komui.ru', { flags: {} }, { pathname: '/checkout', search: '?komui_home_hero=B' }).attrs.size, 0);
+assert.strictEqual(execute('komui.ru', { flags: {} }, { search: '?komui_home_hero=B' }).attrs.size, 0, 'Production query must not force a variant');
 assert.strictEqual(execute('komui.ru', { flags: {} }).attrs.size, 0);
 assert.strictEqual(execute('komui.ru', { flags: { komui_home_hero: ['unknown'] } }).attrs.size, 0);
 assert.strictEqual(execute('komui.ru', { flags: { komui_home_hero: ['A', 'B'] } }).attrs.get('data-komui-hero-variant'), 'B');
@@ -63,7 +72,7 @@ async function checkAssets() {
     assert.deepStrictEqual([actualWidth, actualHeight, format], [width, height, 'webp']);
     assert(css.includes(`${name}.webp`), `${name} is not referenced by the responsive hero CSS`);
   }
-  console.log('✓ Varioqub: production-only init, A fallback, B/C/D flags and six hero images verified');
+  console.log('✓ Varioqub: production-only init, stage-only preview URLs, A fallback, B/C/D flags and six hero images verified');
 }
 
 checkAssets().catch(error => { console.error(error); process.exitCode = 1; });

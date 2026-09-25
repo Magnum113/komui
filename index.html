@@ -23,6 +23,12 @@
 <!-- komui:metrika:end -->
 <!-- Varioqub: homepage hero experiment; no flag keeps the existing hero. -->
 <script type="text/javascript">
+if (location.hostname==='stage.komui.ru' && (location.pathname==='/' || location.pathname==='/index.html')) {
+  var stageHeroVariant=new URLSearchParams(location.search).get('komui_home_hero');
+  if(stageHeroVariant==='B'||stageHeroVariant==='C'||stageHeroVariant==='D'){
+    document.documentElement.setAttribute('data-komui-hero-variant',stageHeroVariant);
+  }
+}
 if (/^(?:www\.)?komui\.ru$/i.test(location.hostname)) {
   (function(e, x, pe, r, i, me, nt){
     e[i]=e[i]||function(){(e[i].a=e[i].a||[]).push(arguments)};

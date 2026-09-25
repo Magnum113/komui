@@ -86,23 +86,28 @@ html[data-komui-hero-variant="D"] #home .hero-experiment-image{
   html:is([data-komui-hero-variant="B"],[data-komui-hero-variant="C"],[data-komui-hero-variant="D"]) #home{
     height:clamp(520px,calc(100svh - 98px),760px);
     min-height:520px;
+    overflow:hidden;
+  }
+  #home .hero-experiment-image{
+    background-position:center bottom;
+    transform-origin:center bottom;
   }
   html[data-komui-hero-variant="B"] #home .hero-experiment-image{
     background-image:url('/assets/experiments/home-hero-2026-09-25/b-mobile-2k.webp');
-    background-position:center 52%;
+    transform:scale(1.22);
   }
   html[data-komui-hero-variant="C"] #home .hero-experiment-image{
     background-image:url('/assets/experiments/home-hero-2026-09-25/c-mobile.webp');
-    background-position:center 48%;
+    transform:scale(1.04);
   }
   html[data-komui-hero-variant="D"] #home .hero-experiment-image{
     background-image:url('/assets/experiments/home-hero-2026-09-25/d-mobile.webp');
-    background-position:center 48%;
+    transform:scale(1.08);
   }
   #home .hero-experiment::after{
     background:linear-gradient(180deg,transparent 53%,rgba(2,4,12,.06) 67%,rgba(2,4,12,.82) 100%);
   }
-  #home .hero-experiment-copy{gap:16px;padding:0 16px calc(24px + env(safe-area-inset-bottom))}
+  #home .hero-experiment-copy{gap:16px;padding:0 16px calc(50px + env(safe-area-inset-bottom))}
   #home .hero-experiment-copy h1{font-size:clamp(27px,7.4vw,43px);line-height:1.1}
   #home .hero-experiment-cta{width:min(100%,320px);min-height:50px}
 }
@@ -112,9 +117,19 @@ html[data-komui-hero-variant="D"] #home .hero-experiment-image{
     height:calc(100svh - 98px);
     min-height:450px;
   }
-  #home .hero-experiment-copy{gap:12px;padding-bottom:18px}
+  #home .hero-experiment-copy{gap:12px;padding-bottom:32px}
   #home .hero-experiment-copy h1{font-size:clamp(25px,6.8vw,32px)}
   #home .hero-experiment-cta{min-height:44px}
+}
+
+/* Short phone screens crop portrait photos by width; keep every face in frame. */
+@media(max-width:800px) and (orientation:portrait) and (max-height:760px){
+  html[data-komui-hero-variant="B"] #home .hero-experiment-image{transform:scale(1.15)}
+  html[data-komui-hero-variant="C"] #home .hero-experiment-image{background-position:center 50%;transform:none}
+  html[data-komui-hero-variant="D"] #home .hero-experiment-image{background-position:center 80%;transform:none}
+}
+@media(max-width:800px) and (orientation:portrait) and (max-height:700px){
+  html[data-komui-hero-variant="B"] #home .hero-experiment-image{transform:scale(1.03)}
 }
 
 @media(prefers-reduced-motion:reduce){
