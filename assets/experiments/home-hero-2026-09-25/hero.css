@@ -94,15 +94,15 @@ html[data-komui-hero-variant="D"] #home .hero-experiment-image{
   }
   html[data-komui-hero-variant="B"] #home .hero-experiment-image{
     background-image:url('/assets/experiments/home-hero-2026-09-25/b-mobile-2k.webp');
-    transform:scale(1.22);
+    transform:translateY(clamp(12px,calc(100vw - 390px),100px)) scale(1.22);
   }
   html[data-komui-hero-variant="C"] #home .hero-experiment-image{
     background-image:url('/assets/experiments/home-hero-2026-09-25/c-mobile.webp');
-    transform:scale(1.04);
+    transform:translateY(clamp(10px,calc(50vw - 185px),24px)) scale(1.04);
   }
   html[data-komui-hero-variant="D"] #home .hero-experiment-image{
     background-image:url('/assets/experiments/home-hero-2026-09-25/d-mobile.webp');
-    transform:scale(1.08);
+    transform:translateY(clamp(10px,calc(50vw - 185px),28px)) scale(1.08);
   }
   #home .hero-experiment::after{
     background:linear-gradient(180deg,transparent 53%,rgba(2,4,12,.06) 67%,rgba(2,4,12,.82) 100%);
@@ -110,6 +110,27 @@ html[data-komui-hero-variant="D"] #home .hero-experiment-image{
   #home .hero-experiment-copy{gap:16px;padding:0 16px calc(50px + env(safe-area-inset-bottom))}
   #home .hero-experiment-copy h1{font-size:clamp(27px,7.4vw,43px);line-height:1.1}
   #home .hero-experiment-cta{width:min(100%,320px);min-height:50px}
+}
+
+/* Wider portrait screens crop more of the source image when cover is used. */
+@media(min-width:460px) and (max-width:800px) and (orientation:portrait){
+  html[data-komui-hero-variant="C"] #home .hero-experiment-image,
+  html[data-komui-hero-variant="D"] #home .hero-experiment-image{background-position:center 60%}
+}
+@media(min-width:500px) and (max-width:800px) and (orientation:portrait){
+  html[data-komui-hero-variant="B"] #home .hero-experiment-image{background-position:center 50%}
+  html[data-komui-hero-variant="C"] #home .hero-experiment-image,
+  html[data-komui-hero-variant="D"] #home .hero-experiment-image{background-position:center 30%}
+}
+@media(min-width:640px) and (max-width:800px) and (orientation:portrait){
+  html[data-komui-hero-variant="B"] #home .hero-experiment-image{background-position:center 30%}
+  html[data-komui-hero-variant="C"] #home .hero-experiment-image,
+  html[data-komui-hero-variant="D"] #home .hero-experiment-image{background-position:center 20%}
+}
+@media(min-width:700px) and (max-width:800px) and (orientation:portrait){
+  html[data-komui-hero-variant="B"] #home .hero-experiment-image{background-position:center 25%}
+  html[data-komui-hero-variant="C"] #home .hero-experiment-image,
+  html[data-komui-hero-variant="D"] #home .hero-experiment-image{background-position:center 15%}
 }
 
 @media(max-width:800px) and (orientation:portrait) and (max-height:670px){
@@ -130,6 +151,27 @@ html[data-komui-hero-variant="D"] #home .hero-experiment-image{
 }
 @media(max-width:800px) and (orientation:portrait) and (max-height:700px){
   html[data-komui-hero-variant="B"] #home .hero-experiment-image{transform:scale(1.03)}
+}
+@media(min-width:420px) and (max-width:800px) and (orientation:portrait) and (max-height:760px){
+  html[data-komui-hero-variant="B"] #home .hero-experiment-image{background-position:center 65%}
+  html[data-komui-hero-variant="C"] #home .hero-experiment-image{background-position:center 25%}
+  html[data-komui-hero-variant="D"] #home .hero-experiment-image{background-position:center 50%}
+}
+@media(min-width:460px) and (max-width:800px) and (orientation:portrait) and (max-height:760px){
+  html[data-komui-hero-variant="B"] #home .hero-experiment-image{background-position:center 40%}
+  html[data-komui-hero-variant="C"] #home .hero-experiment-image{background-position:center 15%}
+  html[data-komui-hero-variant="D"] #home .hero-experiment-image{background-position:center 30%}
+}
+@media(min-width:520px) and (max-width:800px) and (orientation:portrait) and (max-height:760px){
+  html[data-komui-hero-variant="B"] #home .hero-experiment-image{background-position:center 20%}
+  html[data-komui-hero-variant="C"] #home .hero-experiment-image{background-position:center 10%}
+  html[data-komui-hero-variant="D"] #home .hero-experiment-image{background-position:center 20%}
+}
+/* Avoid a sudden crop when a wide phone crosses the 760px-height rule. */
+@media(min-width:440px) and (max-width:499px) and (orientation:portrait) and (min-height:761px) and (max-height:850px){
+  html[data-komui-hero-variant="B"] #home .hero-experiment-image{background-position:center 65%}
+  html[data-komui-hero-variant="C"] #home .hero-experiment-image{background-position:center 25%}
+  html[data-komui-hero-variant="D"] #home .hero-experiment-image{background-position:center 50%}
 }
 
 @media(prefers-reduced-motion:reduce){
