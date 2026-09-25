@@ -7,7 +7,8 @@ server_tokens off;
 
 add_header X-Content-Type-Options "nosniff" always;
 add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-add_header X-Frame-Options "SAMEORIGIN" always;
+# Metrika click maps/Webvisor embed the storefront. Keep all other framing blocked.
+add_header Content-Security-Policy "frame-ancestors 'self' https://metrika.yandex.ru https://metrika.yandex.by https://metrica.yandex.com https://metrica.yandex.com.tr https://webvisor.com https://*.webvisor.com" always;
 
 location ^~ /.well-known/acme-challenge/ {
     root /var/lib/komui/acme;

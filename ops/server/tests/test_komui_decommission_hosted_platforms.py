@@ -12,6 +12,7 @@ SCRIPT_PATH = (
 )
 API_VHOST_PATH = Path(__file__).resolve().parents[1] / "komui-api-retired.nginx"
 PRODUCTION_VHOST_PATH = Path(__file__).resolve().parents[1] / "komui-production.nginx"
+PRODUCTION_RUNTIME_PATH = Path(__file__).resolve().parents[1] / "komui-production-runtime.nginx"
 
 
 class KomuiHostedPlatformDecommissionTest(unittest.TestCase):
@@ -20,6 +21,7 @@ class KomuiHostedPlatformDecommissionTest(unittest.TestCase):
         cls.script = SCRIPT_PATH.read_text(encoding="utf-8")
         cls.api_vhost = API_VHOST_PATH.read_text(encoding="utf-8")
         cls.production_vhost = PRODUCTION_VHOST_PATH.read_text(encoding="utf-8")
+        cls.production_runtime = PRODUCTION_RUNTIME_PATH.read_text(encoding="utf-8")
 
     def restore_function(self) -> str:
         start = self.script.index("restore_path() {")
@@ -86,6 +88,27 @@ class KomuiHostedPlatformDecommissionTest(unittest.TestCase):
         )
         self.assertIn('rm -f -- "$old_runtime_path"', self.script)
         self.assertIn("Runtime snippet contains an external proxy target", self.script)
+
+    def test_metrika_can_embed_storefront_without_allowing_other_sites(self) -> None:
+        self.assertNotIn("X-Frame-Options", self.production_runtime)
+        policy = next(
+            line for line in self.production_runtime.splitlines()
+            if line.startswith("add_header Content-Security-Policy ")
+        )
+        directive, *sources = policy.split('"', 2)[1].split()
+        self.assertEqual(directive, "frame-ancestors")
+        self.assertEqual(
+            set(sources),
+            {
+                "'self'",
+                "https://metrika.yandex.ru",
+                "https://metrika.yandex.by",
+                "https://metrica.yandex.com",
+                "https://metrica.yandex.com.tr",
+                "https://webvisor.com",
+                "https://*.webvisor.com",
+            },
+        )
 
     def test_legacy_api_is_a_tombstone_without_an_upstream(self) -> None:
         self.assertIn("server_name api.komui.ru", self.api_vhost)
