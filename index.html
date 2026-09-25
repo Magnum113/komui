@@ -38,7 +38,7 @@ if (/^(?:www\.)?komui\.ru$/i.test(location.hostname)) {
   ymab('metrika.110916310','init',function(answer){
     var values=answer&&answer.flags&&answer.flags.komui_home_hero;
     var variant=Array.isArray(values)?values[values.length-1]:null;
-    if(variant==='B'||variant==='C'){
+    if(variant==='B'||variant==='C'||variant==='D'){
       document.documentElement.setAttribute('data-komui-hero-variant',variant);
       if(typeof window.komuiStopHeroFX==='function')window.komuiStopHeroFX();
     }

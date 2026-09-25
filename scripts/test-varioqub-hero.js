@@ -46,6 +46,7 @@ assert.strictEqual(execute('komui.ru', { flags: {} }).attrs.size, 0);
 assert.strictEqual(execute('komui.ru', { flags: { komui_home_hero: ['unknown'] } }).attrs.size, 0);
 assert.strictEqual(execute('komui.ru', { flags: { komui_home_hero: ['A', 'B'] } }).attrs.get('data-komui-hero-variant'), 'B');
 assert.strictEqual(execute('www.komui.ru', { flags: { komui_home_hero: ['C'] } }).attrs.get('data-komui-hero-variant'), 'C');
+assert.strictEqual(execute('komui.ru', { flags: { komui_home_hero: ['D'] } }).attrs.get('data-komui-hero-variant'), 'D');
 
 async function checkAssets() {
   const expected = [
@@ -53,6 +54,8 @@ async function checkAssets() {
     ['b-mobile-2k', 1536, 2752],
     ['c-desktop', 1672, 941],
     ['c-mobile', 941, 1672],
+    ['d-desktop', 1672, 941],
+    ['d-mobile', 941, 1672],
   ];
   for (const [name, width, height] of expected) {
     const file = path.join(root, 'assets/experiments/home-hero-2026-09-25', `${name}.webp`);
@@ -60,7 +63,7 @@ async function checkAssets() {
     assert.deepStrictEqual([actualWidth, actualHeight, format], [width, height, 'webp']);
     assert(css.includes(`${name}.webp`), `${name} is not referenced by the responsive hero CSS`);
   }
-  console.log('✓ Varioqub: production-only init, A fallback, B/C flags and four hero images verified');
+  console.log('✓ Varioqub: production-only init, A fallback, B/C/D flags and six hero images verified');
 }
 
 checkAssets().catch(error => { console.error(error); process.exitCode = 1; });

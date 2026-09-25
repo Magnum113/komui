@@ -1,7 +1,7 @@
-/* Varioqub flag komui_home_hero: absence = A, B/C = image heroes. */
+/* Varioqub flag komui_home_hero: absence = A, B/C/D = image heroes. */
 #home .hero-experiment{display:none}
 
-html:is([data-komui-hero-variant="B"],[data-komui-hero-variant="C"]) #home{
+html:is([data-komui-hero-variant="B"],[data-komui-hero-variant="C"],[data-komui-hero-variant="D"]) #home{
   display:block;
   width:100%;
   height:clamp(620px,calc(100svh - 108px),900px);
@@ -10,8 +10,8 @@ html:is([data-komui-hero-variant="B"],[data-komui-hero-variant="C"]) #home{
   background:#14151b;
   isolation:isolate;
 }
-html:is([data-komui-hero-variant="B"],[data-komui-hero-variant="C"]) #home > :not(.hero-experiment){display:none}
-html:is([data-komui-hero-variant="B"],[data-komui-hero-variant="C"]) #home .hero-experiment{
+html:is([data-komui-hero-variant="B"],[data-komui-hero-variant="C"],[data-komui-hero-variant="D"]) #home > :not(.hero-experiment){display:none}
+html:is([data-komui-hero-variant="B"],[data-komui-hero-variant="C"],[data-komui-hero-variant="D"]) #home .hero-experiment{
   position:absolute;
   inset:0;
   display:flex;
@@ -31,6 +31,9 @@ html[data-komui-hero-variant="B"] #home .hero-experiment-image{
 }
 html[data-komui-hero-variant="C"] #home .hero-experiment-image{
   background-image:url('/assets/experiments/home-hero-2026-09-25/c-desktop.webp');
+}
+html[data-komui-hero-variant="D"] #home .hero-experiment-image{
+  background-image:url('/assets/experiments/home-hero-2026-09-25/d-desktop.webp');
 }
 #home .hero-experiment::after{
   content:"";
@@ -80,7 +83,7 @@ html[data-komui-hero-variant="C"] #home .hero-experiment-image{
 #home .hero-experiment-cta:focus-visible{outline:3px solid #a5b3ff;outline-offset:4px}
 
 @media(max-width:800px) and (orientation:portrait){
-  html:is([data-komui-hero-variant="B"],[data-komui-hero-variant="C"]) #home{
+  html:is([data-komui-hero-variant="B"],[data-komui-hero-variant="C"],[data-komui-hero-variant="D"]) #home{
     height:clamp(520px,calc(100svh - 98px),760px);
     min-height:520px;
   }
@@ -92,6 +95,10 @@ html[data-komui-hero-variant="C"] #home .hero-experiment-image{
     background-image:url('/assets/experiments/home-hero-2026-09-25/c-mobile.webp');
     background-position:center 48%;
   }
+  html[data-komui-hero-variant="D"] #home .hero-experiment-image{
+    background-image:url('/assets/experiments/home-hero-2026-09-25/d-mobile.webp');
+    background-position:center 48%;
+  }
   #home .hero-experiment::after{
     background:linear-gradient(180deg,transparent 53%,rgba(2,4,12,.06) 67%,rgba(2,4,12,.82) 100%);
   }
@@ -101,7 +108,7 @@ html[data-komui-hero-variant="C"] #home .hero-experiment-image{
 }
 
 @media(max-width:800px) and (orientation:portrait) and (max-height:670px){
-  html:is([data-komui-hero-variant="B"],[data-komui-hero-variant="C"]) #home{
+  html:is([data-komui-hero-variant="B"],[data-komui-hero-variant="C"],[data-komui-hero-variant="D"]) #home{
     height:calc(100svh - 98px);
     min-height:450px;
   }
