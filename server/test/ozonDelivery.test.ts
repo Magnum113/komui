@@ -323,3 +323,23 @@ test("Ozon hours bounded for checkout contract", () => {
     }).hours.length <= 160,
   );
 });
+
+ test("Point hydration isolates removed points from a valid listed page", async () => {
+  const { loadOzonPointDetails, OzonApiError } = await import("../src/ozonDelivery");
+  const client = { call: async (_path: string, body: {delivery_point_ids: number[]}) => {
+    if (body.delivery_point_ids.includes(2)) throw new OzonApiError(404, "HTTP_404", null);
+    return { delivery_points: body.delivery_point_ids.map(delivery_point_id => ({delivery_point_id})) };
+  }} as unknown as OzonDeliveryClient;
+  const result = await loadOzonPointDetails(client, [1,2,3,4]);
+  assert.deepEqual(result.points.map(p => p.delivery_point_id), [1,3,4]);
+  assert.deepEqual(result.missingIds, [2]);
+});
+ test("Point hydration never treats outages or authorization errors as deleted points", async () => {
+  const { loadOzonPointDetails, OzonApiError } = await import("../src/ozonDelivery");
+  for (const status of [401,403,503]) {
+    const client = { call: async () => { throw new OzonApiError(status, "Unavailable", null); }} as unknown as OzonDeliveryClient;
+    await assert.rejects(loadOzonPointDetails(client, [1,2]), { providerStatus: status });
+  }
+  const incomplete = { call: async () => ({ delivery_points: [{delivery_point_id:1}] }) } as unknown as OzonDeliveryClient;
+  await assert.rejects(loadOzonPointDetails(incomplete, [1,2]), { providerCode: "IncompletePointResponse" });
+});

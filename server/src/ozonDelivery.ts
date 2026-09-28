@@ -354,6 +354,24 @@ export async function searchOzonPoints(
     points,
   };
 }
+/** A point may disappear between list and info; isolate 404s without dropping its valid neighbours. */
+export async function loadOzonPointDetails(client: OzonDeliveryClient, ids: number[]): Promise<{ points: OzonPoint[]; missingIds: number[] }> {
+  if (!ids.length) return { points: [], missingIds: [] };
+  try {
+    const details = await client.call<{ delivery_points: OzonPoint[] }>("/v1/delivery-point/info", { delivery_point_ids: ids });
+    const points = details.delivery_points.filter(point => ids.includes(point.delivery_point_id));
+    const found = new Set(points.map(point => point.delivery_point_id));
+    if (ids.some(id => !found.has(id))) throw new OzonApiError(502, "IncompletePointResponse", null);
+    return { points, missingIds: [] };
+  } catch (error) {
+    if (!(error instanceof OzonApiError) || error.providerStatus !== 404) throw error;
+    if (ids.length === 1) return { points: [], missingIds: ids };
+    const middle = Math.ceil(ids.length / 2);
+    const left = await loadOzonPointDetails(client, ids.slice(0, middle));
+    const right = await loadOzonPointDetails(client, ids.slice(middle));
+    return { points: [...left.points, ...right.points], missingIds: [...left.missingIds, ...right.missingIds] };
+  }
+}
 /** Refresh one page per worker tick. Only a complete scan marks the cache ready. */
 export async function refreshOzonPointsPage(db: Db, config: AppConfig) {
   const method = config.OZON_DELIVERY_SHIPMENT_METHOD_ID;
@@ -393,12 +411,14 @@ export async function refreshOzonPointsPage(db: Db, config: AppConfig) {
     )
     .map((p) => p.delivery_point_id);
   if (ids.length) {
-    const details = await ozonClient(config).call<{
-      delivery_points: OzonPoint[];
-    }>("/v1/delivery-point/info", { delivery_point_ids: ids });
+    const details = await loadOzonPointDetails(ozonClient(config), ids);
     await db.query(
       `insert into public.merch_ozon_delivery_points(point_id,shipment_method_id,payload) select (p->>'delivery_point_id')::bigint,$1,p from jsonb_array_elements($2::jsonb) p on conflict(point_id) do update set shipment_method_id=excluded.shipment_method_id,payload=excluded.payload,refreshed_at=now()`,
-      [method, JSON.stringify(details.delivery_points)],
+      [method, JSON.stringify(details.points)],
+    );
+    if (details.missingIds.length) await db.query(
+      `delete from public.merch_ozon_delivery_points where shipment_method_id=$1 and point_id=any($2::bigint[])`,
+      [method, details.missingIds],
     );
   }
   if (result.next_cursor && result.next_cursor === state.cursor)
