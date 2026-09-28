@@ -129,6 +129,18 @@ img,svg{display:block}
 .cdek-mark img{
   width:82px;height:auto;display:block
 }
+.delivery-providers{min-width:0;border:0;padding:0;margin:0 0 16px}
+.delivery-providers legend{margin-bottom:10px;font-weight:600}
+.delivery-provider-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.delivery-provider-option{
+  display:flex;align-items:center;gap:10px;min-height:56px;padding:12px;
+  border:2px solid var(--line);border-radius:12px;background:var(--panel);
+  font-weight:600;cursor:pointer
+}
+.delivery-provider-option input{width:20px;height:20px;flex:0 0 auto;margin:0;accent-color:var(--blue);cursor:pointer}
+.delivery-provider-option:hover{border-color:var(--line-2)}
+.delivery-provider-option:has(input:checked){border-color:var(--blue);background:rgba(0,38,249,.05)}
+.delivery-provider-option:has(input:focus-visible){box-shadow:var(--focus)}
 .delivery-empty{
   display:flex;align-items:center;justify-content:space-between;gap:18px;
   padding:18px;border:1px dashed #c9cddd;border-radius:14px;background:var(--panel-2)
@@ -504,10 +516,12 @@ img,svg{display:block}
               <img src="/assets/cdek-logo.svg" alt="СДЭК" width="145" height="41" loading="lazy">
             </span>
           </div>
-          <fieldset id="deliveryProviders" hidden style="border:0;padding:0;margin:0 0 16px">
-            <legend style="margin-bottom:10px;font-weight:600">Служба доставки</legend>
-            <label style="display:inline-flex;align-items:center;gap:8px;margin-right:24px"><input type="radio" name="deliveryProvider" value="cdek" checked> СДЭК</label>
-            <label style="display:inline-flex;align-items:center;gap:8px"><input type="radio" name="deliveryProvider" value="ozon"> Ozon</label>
+          <fieldset class="delivery-providers" id="deliveryProviders" hidden>
+            <legend>Служба доставки</legend>
+            <div class="delivery-provider-options">
+              <label class="delivery-provider-option"><input type="radio" name="deliveryProvider" value="cdek" checked> СДЭК</label>
+              <label class="delivery-provider-option"><input type="radio" name="deliveryProvider" value="ozon"> Ozon</label>
+            </div>
           </fieldset>
           <p id="ozonDeliveryHint" hidden style="font-size:13px;color:var(--txt-2);margin-bottom:16px">Укажите телефон своего аккаунта Ozon. После подготовки заказа он появится в приложении Ozon, где будет доступен код получения.</p>
           <div class="delivery-empty" id="deliveryEmpty">
