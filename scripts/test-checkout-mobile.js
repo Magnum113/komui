@@ -52,9 +52,10 @@ assert.equal(result.errors['#consents'], true);
 assert.equal(validate({ fields: filled, point: { code: 'TEST' }, consent: true }).valid, true);
 assert.equal(validate({ fields: filled, point: { code: 'TEST' }, consent: true, invalidOffer: true }).valid, false);
 
-assert.match(html, /class="summary-card collapsed"/);
+assert.match(html, /class="summary-card"/);
+assert.doesNotMatch(html, /summaryToggle|summary-toggle|summary-card\.collapsed|summary-card collapsed/);
 assert.match(html, /class="summary-edit" href="\/#cart"/);
-assert.match(html, /aria-controls="summaryContent"/);
+assert.match(html, /id="summaryContent"/);
 assert.match(html, /id="summaryBrief"/);
 assert.match(html, /\['lastName','firstName','phone','email'\]\.forEach/);
 
@@ -82,9 +83,9 @@ assert.equal(renders, 1);
 viewContext.matchMedia = () => ({ matches: false });
 vm.runInContext('setPickupView("list");', viewContext);
 assert.equal(inits, 2, 'Desktop keeps the side-by-side map');
-console.log('✓ checkout: staged validation, collapsed summary, cart return and responsive pickup views');
+console.log('✓ checkout: staged validation, always-visible summary, cart return and responsive pickup views');
 
-// Promo stays outside the disclosure; the same controller serves both viewports.
+// Promo keeps its independent disclosure; the order summary stays expanded.
 assert(html.indexOf('id="promo"') < html.indexOf('id="summaryContent"'));
 assert.match(html, /aria-controls="promoForm"/);
 const promoNodes = new Map();

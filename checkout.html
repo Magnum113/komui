@@ -153,7 +153,7 @@ img,svg{display:block}
   font-size:13px;font-weight:800;white-space:nowrap;transition:border-color .18s,color .18s,transform .18s
 }
 .secondary-button:hover{border-color:var(--blue);color:var(--blue);transform:translateY(-1px)}
-.secondary-button:focus-visible,.primary-button:focus-visible,.icon-button:focus-visible,.point-card:focus-visible,.summary-toggle:focus-visible{outline:0;box-shadow:var(--focus)}
+.secondary-button:focus-visible,.primary-button:focus-visible,.icon-button:focus-visible,.point-card:focus-visible{outline:0;box-shadow:var(--focus)}
 .selected-point{display:none}
 .selected-point.show{display:block}
 .point-selected-card{
@@ -193,9 +193,8 @@ img,svg{display:block}
 .summary-head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px 16px;padding:18px 24px;border-bottom:1px solid var(--line)}
 .summary-head h2{font-family:'Unbounded',sans-serif;font-size:18px}
 .summary-edit{display:flex;align-items:center;justify-content:center;min-height:44px;padding:0 6px;color:var(--blue);font-size:12px;font-weight:800}
-.summary-brief{font-size:13px;font-weight:700;line-height:1.5;min-width:0}
+.summary-brief{grid-column:1 / -1;font-size:13px;font-weight:700;line-height:1.5;min-width:0}
 .summary-brief small{display:block;color:var(--txt-3);font-size:11px;font-weight:500}
-.summary-toggle{display:none}
 .summary-content{padding:0 24px 24px}
 .order-items{max-height:330px;overflow:auto}
 .order-item{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:13px;padding:18px 0;border-bottom:1px solid var(--line)}
@@ -342,10 +341,6 @@ img,svg{display:block}
   .summary-card{position:static;order:-1}
   .summary-head{padding:12px 18px}
   .promo{padding:4px 18px 12px}
-  .summary-toggle{display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 6px;color:var(--blue);font-size:12px;font-weight:800}
-  .summary-toggle svg{width:16px;height:16px;transition:transform .18s}
-  .summary-card.collapsed .summary-toggle svg{transform:rotate(180deg)}
-  .summary-card.collapsed .summary-content{display:none}
   .checkout-main{padding-bottom:118px}
   .desktop-pay{display:none}
   .mobile-action{
@@ -581,15 +576,11 @@ img,svg{display:block}
         </section>
       </form>
 
-      <aside class="summary-card collapsed" id="summaryCard">
+      <aside class="summary-card" id="summaryCard">
         <div class="summary-head">
           <h2>Ваш заказ</h2>
           <a class="summary-edit" href="/#cart">Изменить</a>
           <p class="summary-brief"><span id="summaryBrief"></span><small id="summaryDeliveryNote"></small></p>
-          <button class="summary-toggle" id="summaryToggle" type="button" aria-expanded="false" aria-controls="summaryContent">
-            <span id="summaryToggleText">Подробнее</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>
-          </button>
         </div>
           <div class="promo" id="promo">
             <button class="promo-toggle" id="promoToggle" type="button" aria-expanded="false" aria-controls="promoForm">
@@ -1284,9 +1275,6 @@ function validate(){
   const invalidSelection=invalidOfferSelection();
   if(invalidSelection){
     showToast('Заново выберите вариант товара в корзине');
-    $('#summaryCard').classList.remove('collapsed');
-    $('#summaryToggle').setAttribute('aria-expanded','true');
-    $('#summaryToggleText').textContent='Свернуть';
     const link=document.querySelector('[data-selection-error] a');
     link?.focus();link?.scrollIntoView({behavior:'smooth',block:'center'});
     return false;
@@ -1739,11 +1727,6 @@ function init(){
   });
   $('#promoApply').addEventListener('click',applyPromo);
   $('#promoInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();applyPromo()}});
-  $('#summaryToggle').addEventListener('click',()=>{
-    const card=$('#summaryCard');const collapsed=card.classList.toggle('collapsed');
-    $('#summaryToggle').setAttribute('aria-expanded',collapsed?'false':'true');
-    $('#summaryToggleText').textContent=collapsed?'Подробнее':'Свернуть';
-  });
   $('#payButton').addEventListener('click',submitCheckout);
   $('#mobilePayButton').addEventListener('click',submitCheckout);
   $('#checkoutForm').addEventListener('submit',e=>{e.preventDefault();submitCheckout()});
