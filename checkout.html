@@ -208,18 +208,10 @@ img,svg{display:block}
 .item-selection-error a:focus-visible{outline:2px solid var(--blue);outline-offset:3px;border-radius:3px}
 .item-price{text-align:right;font-family:'Unbounded',sans-serif;font-size:12px;font-weight:700;white-space:nowrap}
 .item-price span{display:block;margin-top:6px;color:var(--txt-3);font-family:'Inter',sans-serif;font-size:11px;font-weight:600}
-.promo{padding:4px 24px 12px;border-bottom:1px solid var(--line)}
-.promo-toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:44px;text-align:left;color:var(--blue);font-size:13px;font-weight:700}
-.promo-toggle span:first-child{min-width:0;overflow-wrap:anywhere}
-.promo-edit{font-size:12px;flex-shrink:0}
-.promo-edit[hidden]{display:none}
-.promo.applied .promo-toggle svg{display:none}
-.promo.applied .promo-toggle span:first-child{color:var(--green)}
-.promo-toggle:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:6px}
-.promo-toggle svg{width:16px;height:16px;transition:transform .18s}
-.promo.open .promo-toggle svg{transform:rotate(180deg)}
-.promo-form{display:none;grid-template-columns:1fr auto;gap:8px;margin-top:12px}
-.promo.open .promo-form{display:grid}
+.promo{padding:16px 24px;border-bottom:1px solid var(--line)}
+.promo-label{display:block;font-size:13px;font-weight:700;overflow-wrap:anywhere}
+.promo.applied .promo-label{color:var(--green)}
+.promo-form{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:12px}
 .promo-form input{min-width:0;height:44px;padding:0 12px;border:1px solid var(--line-2);border-radius:10px;background:#fff;text-transform:uppercase;font-size:16px}
 .promo-form input:focus{outline:0;border-color:var(--blue);box-shadow:var(--focus)}
 .promo-apply{padding:0 13px;border-radius:10px;background:var(--panel-2);font-size:12px;font-weight:800}
@@ -340,7 +332,7 @@ img,svg{display:block}
   .checkout-layout{grid-template-columns:1fr}
   .summary-card{position:static;order:-1}
   .summary-head{padding:12px 18px}
-  .promo{padding:4px 18px 12px}
+  .promo{padding:16px 18px}
   .checkout-main{padding-bottom:118px}
   .desktop-pay{display:none}
   .mobile-action{
@@ -583,11 +575,7 @@ img,svg{display:block}
           <p class="summary-brief"><span id="summaryBrief"></span><small id="summaryDeliveryNote"></small></p>
         </div>
           <div class="promo" id="promo">
-            <button class="promo-toggle" id="promoToggle" type="button" aria-expanded="false" aria-controls="promoForm">
-              <span id="promoSummary">Добавить промокод</span>
-              <span class="promo-edit" id="promoEdit" hidden>Изменить</span>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
-            </button>
+            <label class="promo-label" id="promoSummary" for="promoInput">Промокод</label>
             <div class="promo-form" id="promoForm">
               <input id="promoInput" type="text" autocomplete="off" placeholder="Промокод" aria-label="Промокод" aria-describedby="promoMessage" spellcheck="false">
               <button class="promo-apply" id="promoApply" type="button">Применить</button>
@@ -1545,17 +1533,10 @@ function showToast(message){
   toastTimer=setTimeout(()=>toast.classList.remove('show'),2600);
 }
 
-function setPromoOpen(open){
-  $('#promo').classList.toggle('open',open);
-  $('#promoToggle').setAttribute('aria-expanded',String(open));
-  $('#promoEdit').textContent=open?'Свернуть':'Изменить';
-}
-
 function renderPromoSummary(){
   const applied=!!appliedPromo?.code&&Number.isFinite(appliedPromo.discountAmount);
   $('#promo').classList.toggle('applied',applied);
-  $('#promoSummary').textContent=applied?appliedPromo.code+' · −'+money(totalPromoDiscount()):'Добавить промокод';
-  $('#promoEdit').hidden=!applied;
+  $('#promoSummary').textContent=applied?appliedPromo.code+' · −'+money(totalPromoDiscount()):'Промокод';
 }
 
 function promoPayload(code){
@@ -1585,7 +1566,6 @@ function resetPromo(messageText=''){
   savePromoState();
   renderTotals();
   if(messageText){
-    setPromoOpen(true);
     const message=$('#promoMessage');
     message.className='promo-message show error';
     message.textContent=messageText;
@@ -1648,9 +1628,6 @@ async function applyPromo(){
     message.classList.add('success');
     message.textContent=result.message||'Промокод применён';
     renderTotals();
-    setPromoOpen(false);
-    message.className='promo-message';
-    $('#promoToggle').focus();
     withAnalytics(analytics=>analytics.goal('promo_applied',{
       promo_code:result.code||code,
       discount_amount:totalPromoDiscount(),
@@ -1720,11 +1697,6 @@ function init(){
   $('#pointSearch').addEventListener('input',()=>searchDeliveryPoints());
   $('#pointList').addEventListener('click',e=>{const card=e.target.closest('[data-code]');if(card)choosePointByCode(card.dataset.code)});
   $('#confirmPoint').addEventListener('click',choosePendingPoint);
-  $('#promoToggle').addEventListener('click',()=>{
-    const open=!$('#promo').classList.contains('open');
-    setPromoOpen(open);
-    if(open)setTimeout(()=>$('#promoInput').focus(),50);
-  });
   $('#promoApply').addEventListener('click',applyPromo);
   $('#promoInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();applyPromo()}});
   $('#payButton').addEventListener('click',submitCheckout);

@@ -85,9 +85,10 @@ vm.runInContext('setPickupView("list");', viewContext);
 assert.equal(inits, 2, 'Desktop keeps the side-by-side map');
 console.log('✓ checkout: staged validation, always-visible summary, cart return and responsive pickup views');
 
-// Promo keeps its independent disclosure; the order summary stays expanded.
+// Both promo input and order summary stay expanded, including after applying a code.
 assert(html.indexOf('id="promo"') < html.indexOf('id="summaryContent"'));
-assert.match(html, /aria-controls="promoForm"/);
+assert.match(html, /\.promo-form\{display:grid;/);
+assert.doesNotMatch(html, /promoToggle|promo-toggle|setPromoOpen|promoEdit|promo\.open/);
 const promoNodes = new Map();
 const promoContext = {
   $: selector => {
@@ -100,18 +101,13 @@ const promoContext = {
   appliedPromo: null, totalPromoDiscount: () => 290, money: value => value + ' ₽',
 };
 vm.createContext(promoContext);
-vm.runInContext(html.slice(html.indexOf('function setPromoOpen('), html.indexOf('function promoPayload(')), promoContext);
-vm.runInContext('renderPromoSummary();setPromoOpen(true);', promoContext);
-assert.equal(promoNodes.get('#promoSummary').textContent, 'Добавить промокод');
-assert.equal(promoNodes.get('#promoEdit').hidden, true);
-assert.equal(promoNodes.get('#promoToggle')['aria-expanded'], 'true');
+vm.runInContext(html.slice(html.indexOf('function renderPromoSummary('), html.indexOf('function promoPayload(')), promoContext);
+vm.runInContext('renderPromoSummary();', promoContext);
+assert.equal(promoNodes.get('#promoSummary').textContent, 'Промокод');
 promoContext.appliedPromo = { code: 'KOMUI10', discountAmount: 290 };
-vm.runInContext('renderPromoSummary();setPromoOpen(false);', promoContext);
+vm.runInContext('renderPromoSummary();', promoContext);
 assert.equal(promoNodes.get('#promoSummary').textContent, 'KOMUI10 · −290 ₽');
-assert.equal(promoNodes.get('#promoEdit').textContent, 'Изменить');
-assert.equal(promoNodes.get('#promoEdit').hidden, false);
-assert.equal(promoNodes.get('#promoToggle')['aria-expanded'], 'false');
 promoContext.appliedPromo = { code: 'UNVERIFIED' };
 vm.runInContext('renderPromoSummary();', promoContext);
-assert.equal(promoNodes.get('#promoSummary').textContent, 'Добавить промокод');
-console.log('✓ checkout promo: independent disclosure, verified discount summary and edit state');
+assert.equal(promoNodes.get('#promoSummary').textContent, 'Промокод');
+console.log('✓ checkout promo: always-visible input and verified discount summary');
