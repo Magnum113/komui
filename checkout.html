@@ -178,9 +178,11 @@ img,svg{display:block}
 .consent-error{display:none;color:var(--red);font-size:12px;font-weight:600;margin-top:3px}
 .consents.has-error .consent-error{display:block}
 .summary-card{position:sticky;top:96px;overflow:hidden}
-.summary-head{display:flex;align-items:center;justify-content:space-between;padding:24px;border-bottom:1px solid var(--line)}
+.summary-head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px 16px;padding:18px 24px;border-bottom:1px solid var(--line)}
 .summary-head h2{font-family:'Unbounded',sans-serif;font-size:18px}
-.summary-edit{color:var(--blue);font-size:12px;font-weight:800}
+.summary-edit{display:flex;align-items:center;justify-content:center;min-height:44px;padding:0 6px;color:var(--blue);font-size:12px;font-weight:800}
+.summary-brief{font-size:13px;font-weight:700;line-height:1.5;min-width:0}
+.summary-brief small{display:block;color:var(--txt-3);font-size:11px;font-weight:500}
 .summary-toggle{display:none}
 .summary-content{padding:0 24px 24px}
 .order-items{max-height:330px;overflow:auto}
@@ -262,9 +264,10 @@ img,svg{display:block}
 }
 .icon-button:hover{color:var(--blue);border-color:rgba(0,38,249,.35)}
 .icon-button svg{width:18px;height:18px}
-.pickup-layout{min-height:0;flex:1;display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);background:var(--bg-2)}
-.point-panel{display:flex;min-height:0;flex-direction:column;border-right:1px solid var(--line);background:#fff}
-.point-search{display:flex;flex-direction:column;gap:10px;padding:14px;border-bottom:1px solid var(--line)}
+.pickup-layout{min-height:0;flex:1;display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);background:var(--bg-2)}
+.pickup-views{display:none}
+.point-panel{grid-column:1;grid-row:2;display:flex;min-height:0;flex-direction:column;border-right:1px solid var(--line);background:#fff}
+.point-search{grid-column:1;grid-row:1;display:flex;flex-direction:column;gap:10px;padding:14px;border-bottom:1px solid var(--line);background:#fff}
 .point-search input{
   width:100%;height:44px;padding:0 13px;border:1px solid var(--line-2);border-radius:11px;background:#fff;
   color:var(--txt);font-size:13px
@@ -282,8 +285,8 @@ img,svg{display:block}
 .point-card address{margin-top:5px;color:var(--txt-2);font-style:normal;font-size:12px;line-height:1.4}
 .point-card div{display:flex;justify-content:space-between;gap:12px;margin-top:10px;color:var(--txt-3);font-size:11px}
 .point-card b{color:var(--blue);font-size:12px}
-.map-wrap{position:relative;min-height:0;background:#eef2f7}
-#pickupMap{width:100%;height:100%;min-height:620px;background:#eef2f7}
+.map-wrap{grid-column:2;grid-row:1 / span 2;position:relative;min-height:0;background:#eef2f7}
+#pickupMap{width:100%;height:100%;min-height:0;background:#eef2f7}
 .map-fallback{
   display:none;position:absolute;inset:auto 16px 16px 16px;z-index:500;padding:12px 14px;border-radius:12px;
   background:rgba(255,255,255,.95);box-shadow:0 18px 45px -30px rgba(0,0,0,.55);color:var(--txt-2);font-size:12px
@@ -319,8 +322,8 @@ img,svg{display:block}
 @media(max-width:960px){
   .checkout-layout{grid-template-columns:1fr}
   .summary-card{position:static;order:-1}
-  .summary-head{padding:18px 20px}
-  .summary-toggle{display:flex;align-items:center;gap:8px;color:var(--blue);font-size:12px;font-weight:800}
+  .summary-head{padding:12px 18px}
+  .summary-toggle{display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 6px;color:var(--blue);font-size:12px;font-weight:800}
   .summary-toggle svg{width:16px;height:16px;transition:transform .18s}
   .summary-card.collapsed .summary-toggle svg{transform:rotate(180deg)}
   .summary-card.collapsed .summary-content{display:none}
@@ -357,9 +360,18 @@ img,svg{display:block}
   .pickup-dialog{width:100%;height:100dvh;border:0;border-radius:0}
   .dialog-head{padding:16px 16px 13px}
   .dialog-head h2{font-size:17px}
-  .pickup-layout{grid-template-columns:1fr;grid-template-rows:minmax(260px,48%) minmax(240px,1fr)}
-  .point-panel{border-right:0;border-bottom:1px solid var(--line)}
-  #pickupMap{min-height:240px}
+  .pickup-views{display:flex;flex-shrink:0;gap:4px;padding:4px;margin:10px 14px 0;border-radius:12px;background:var(--panel-2)}
+  .pickup-views button{flex:1;min-height:44px;border-radius:9px;font-size:14px;font-weight:700;color:var(--txt-2)}
+  .pickup-views button[aria-pressed="true"]{background:#fff;color:var(--blue);box-shadow:0 2px 8px rgba(0,0,0,.07)}
+  .pickup-views button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+  .pickup-layout{display:flex;flex-direction:column}
+  .point-search{flex-shrink:0;padding:12px 14px}
+  .point-search input{font-size:16px}
+  .point-demo-note{display:none}
+  .point-panel{flex:1;border:0}
+  .map-wrap{display:none;flex:1}
+  .pickup-dialog[data-view="map"] .point-panel{display:none}
+  .pickup-dialog[data-view="map"] .map-wrap{display:block}
   .pickup-actions{padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
   .pickup-actions .primary-button{width:100%;min-width:0}
   .notice-dialog{min-height:100dvh;width:100%;display:flex;flex-direction:column;justify-content:center;border-radius:0;padding:28px}
@@ -542,16 +554,17 @@ img,svg{display:block}
         </section>
       </form>
 
-      <aside class="summary-card" id="summaryCard">
+      <aside class="summary-card collapsed" id="summaryCard">
         <div class="summary-head">
           <h2>Ваш заказ</h2>
-          <a class="summary-edit" href="/">Изменить</a>
-          <button class="summary-toggle" id="summaryToggle" type="button" aria-expanded="true">
-            <span id="summaryToggleText">Свернуть</span>
+          <a class="summary-edit" href="/#cart">Изменить</a>
+          <p class="summary-brief"><span id="summaryBrief"></span><small id="summaryDeliveryNote"></small></p>
+          <button class="summary-toggle" id="summaryToggle" type="button" aria-expanded="false" aria-controls="summaryContent">
+            <span id="summaryToggleText">Подробнее</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>
           </button>
         </div>
-        <div class="summary-content">
+        <div class="summary-content" id="summaryContent">
           <div class="order-items" id="orderItems"></div>
           <div class="promo" id="promo">
             <button class="promo-toggle" id="promoToggle" type="button" aria-expanded="false">
@@ -602,7 +615,7 @@ img,svg{display:block}
 </div>
 
 <div class="dialog-backdrop" id="pickupBackdrop" aria-hidden="true">
-  <div class="pickup-dialog" role="dialog" aria-modal="true" aria-labelledby="pickupTitle">
+  <div class="pickup-dialog" data-view="list" role="dialog" aria-modal="true" aria-labelledby="pickupTitle">
     <div class="dialog-head">
       <div>
         <h2 id="pickupTitle">Пункт выдачи СДЭК</h2>
@@ -612,14 +625,18 @@ img,svg{display:block}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
     </div>
+    <div class="pickup-views" role="group" aria-label="Способ выбора пункта">
+      <button id="pickupListView" type="button" aria-pressed="true" aria-controls="pointList">Список</button>
+      <button id="pickupMapView" type="button" aria-pressed="false" aria-controls="pickupMap">Карта</button>
+    </div>
     <div class="pickup-layout">
-      <div class="point-panel">
         <div class="point-search">
           <input class="ym-disable-keys" id="citySearch" type="search" placeholder="Город получения" autocomplete="address-level2">
           <input class="ym-disable-keys" id="pointSearch" type="search" placeholder="Метро, улица или код пункта" autocomplete="off">
           <p class="point-demo-note">Пункты и стоимость доставки загружаются из СДЭК.</p>
         </div>
-        <div class="point-list" id="pointList"></div>
+      <div class="point-panel">
+        <div class="point-list" id="pointList" aria-live="polite"></div>
       </div>
       <div class="map-wrap">
         <div id="pickupMap"></div>
@@ -839,6 +856,8 @@ function renderTotals(){
   $('#discountTotal').textContent='−'+money(totalPromoDiscount());
   $('#deliveryTotal').textContent=selectedPoint?money(chargedDeliveryCost()):'после выбора ПВЗ';
   $('#grandTotal').textContent=money(orderTotal());
+  $('#summaryBrief').textContent=items.reduce((sum,item)=>sum+Number(item.qty||1),0)+' шт. · '+money(orderTotal());
+  $('#summaryDeliveryNote').textContent=selectedPoint?'С доставкой':'+ доставка после выбора ПВЗ';
   const label='Перейти к оплате · '+money(orderTotal());
   $('#payButtonText').textContent=label;
   $('#mobilePayText').textContent=label;
@@ -856,8 +875,7 @@ function renderSelectedPoint(){
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 2.7 2.7L16.5 9"/></svg>
         Пункт выбран · ${escapeHtml(selectedPoint.code)}
       </div>
-      <h3>${escapeHtml(selectedPoint.title)}</h3>
-      <address>${escapeHtml(selectedPoint.city+', '+selectedPoint.address)}</address>
+      <h3>${escapeHtml(selectedPoint.city+', '+selectedPoint.address)}</h3>
       <div class="point-meta">
         <span>${escapeHtml(selectedPoint.hours)}</span>
         <span>${escapeHtml(selectedPoint.days)}</span>
@@ -959,9 +977,10 @@ function renderPointList(query=''){
   const filtered=filteredPoints(query);
   $('#pointList').innerHTML=filtered.length?filtered.map(point=>`
     <button class="point-card${pendingPoint&&pendingPoint.code===point.code?' active':''}" type="button" data-code="${escapeHtml(point.code)}"${quoteLoading?' disabled':''}>
-      <strong>${escapeHtml(point.title)} · ${escapeHtml(point.code)}</strong>
-      <address>${escapeHtml(point.address)}${point.metro?' · м. '+escapeHtml(point.metro):''}</address>
-      <div><span>${escapeHtml(point.hours)}</span><b>${quoteLoading&&pendingPoint?.code===point.code?'считаем...':point.price?money(point.price):'выбрать'}</b></div>
+      <strong>${escapeHtml(point.city+', '+point.address)}</strong>
+      <address>${escapeHtml(point.hours)}</address>
+      ${point.metro?`<address>Ориентир: ${escapeHtml(point.metro)}</address>`:''}
+      <div><span>ПВЗ ${escapeHtml(point.code)}</span><b>${quoteLoading&&pendingPoint?.code===point.code?'Считаем…':'Выбрать'}</b></div>
     </button>`).join(''):`<div style="padding:26px 14px;color:var(--txt-2);font-size:13px;text-align:center">${escapeHtml(pointEmptyMessage())}</div>`;
 }
 
@@ -972,15 +991,16 @@ function clearMarkers(){
 
 function renderMarkers(){
   if(!map||!window.ymaps)return;
+  if(matchMedia('(max-width:720px)').matches&&document.querySelector('.pickup-dialog').dataset.view!=='map')return;
   clearMarkers();
   const visible=filteredPoints($('#pointSearch').value).filter(point=>Number.isFinite(point.lat)&&Number.isFinite(point.lng));
   markers=visible.map(point=>{
     const active=pendingPoint&&pendingPoint.code===point.code;
     const marker=new window.ymaps.Placemark([point.lat,point.lng],{
       hintContent:point.code+' · '+point.address,
-      balloonContentHeader:escapeHtml(point.title+' · '+point.code),
-      balloonContentBody:escapeHtml(point.address),
-      balloonContentFooter:'Нажмите маркер или пункт в списке, чтобы выбрать'
+      balloonContentHeader:escapeHtml(point.city+', '+point.address),
+      balloonContentBody:escapeHtml(point.hours),
+      balloonContentFooter:escapeHtml('ПВЗ '+point.code)
     },{
       preset:active?'islands#blueDeliveryIcon':'islands#blueDotIcon',
       iconColor:active?'#0026F9':'#1787e0',
@@ -1003,8 +1023,19 @@ function renderMarkers(){
   }
 }
 
+let mapLoading=false;
+function setPickupView(view){
+  document.querySelector('.pickup-dialog').dataset.view=view;
+  $('#pickupListView').setAttribute('aria-pressed',String(view==='list'));
+  $('#pickupMapView').setAttribute('aria-pressed',String(view==='map'));
+  if(view==='map'||!matchMedia('(max-width:720px)').matches){
+    initMap();
+    requestAnimationFrame(()=>{if(map){map.container.fitToViewport();renderMarkers()}});
+  }
+}
 function initMap(){
-  if(map)return;
+  if(map||mapLoading)return;
+  mapLoading=true;
   $('#mapFallback').classList.remove('show');
   loadYandexMaps().then(ymaps=>{
     map=new ymaps.Map('pickupMap',{
@@ -1019,9 +1050,10 @@ function initMap(){
     renderMarkers();
     setTimeout(()=>{try{map.container.fitToViewport()}catch(e){}},80);
   }).catch(error=>{
-    $('#mapFallback').textContent=error?.message||'Карта временно недоступна. Выберите пункт из списка слева.';
+    $('#mapFallback').textContent='Карта временно недоступна. Выберите пункт из списка.';
     $('#mapFallback').classList.add('show');
-  });
+    if(matchMedia('(max-width:720px)').matches){setPickupView('list');showToast('Карта не загрузилась. Выберите пункт из списка.');}
+  }).finally(()=>{mapLoading=false});
 }
 
 async function loadDeliveryPoints(){
@@ -1124,7 +1156,7 @@ function openPickup(){
   $('#pickupBackdrop').classList.add('show');
   $('#pickupBackdrop').setAttribute('aria-hidden','false');
   document.body.classList.add('modal-open');
-  initMap();
+  setPickupView('list');
   if(!pointsLoaded||selectedPoint?.city!==$('#citySearch').value.trim())loadDeliveryPoints();
   setTimeout(()=>{try{if(map)map.container.fitToViewport()}catch(e){};$('#citySearch').focus()},120);
 }
@@ -1161,6 +1193,9 @@ function validate(){
   const invalidSelection=invalidOfferSelection();
   if(invalidSelection){
     showToast('Заново выберите вариант товара в корзине');
+    $('#summaryCard').classList.remove('collapsed');
+    $('#summaryToggle').setAttribute('aria-expanded','true');
+    $('#summaryToggleText').textContent='Свернуть';
     const link=document.querySelector('[data-selection-error] a');
     link?.focus();link?.scrollIntoView({behavior:'smooth',block:'center'});
     return false;
@@ -1172,16 +1207,17 @@ function validate(){
     email:!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test($('#email').value.trim())
   };
   Object.entries(checks).forEach(([id,invalid])=>setFieldError(id,invalid));
-  const consentInvalid=!$('#legalConsent').checked;
-  $('#consents').classList.toggle('has-error',consentInvalid);
+  $('#consents').classList.remove('has-error');
+  const firstInvalid=Object.keys(checks).find(id=>checks[id]);
+  if(firstInvalid){$('#'+firstInvalid).focus();$('#'+firstInvalid).scrollIntoView({behavior:'smooth',block:'center'});return false}
   if(!selectedPoint){
     $('#deliverySection').scrollIntoView({behavior:'smooth',block:'center'});
     setTimeout(openPickup,260);
     showToast('Выберите пункт выдачи СДЭК');
     return false;
   }
-  const firstInvalid=Object.keys(checks).find(id=>checks[id]);
-  if(firstInvalid){$('#'+firstInvalid).focus();$('#'+firstInvalid).scrollIntoView({behavior:'smooth',block:'center'});return false}
+  const consentInvalid=!$('#legalConsent').checked;
+  $('#consents').classList.toggle('has-error',consentInvalid);
   if(consentInvalid){$('#legalConsent').focus();$('#consents').scrollIntoView({behavior:'smooth',block:'center'});return false}
   return true;
 }
@@ -1546,7 +1582,7 @@ function init(){
     validateAppliedPromo({silent:true}).catch(()=>resetPromo('Промокод больше недоступен'));
   }
 
-  ['lastName','firstName','phone'].forEach(id=>{
+  ['lastName','firstName','phone','email'].forEach(id=>{
     $('#'+id).addEventListener('input',()=>{
       if(id==='phone')$('#phone').value=formatPhone($('#phone').value);
       setFieldError(id,false);saveForm();
@@ -1555,6 +1591,11 @@ function init(){
   ['legalConsent','marketingConsent'].forEach(id=>$('#'+id).addEventListener('change',()=>{$('#consents').classList.remove('has-error');saveForm()}));
   $('#openPickup').addEventListener('click',openPickup);
   $('#closePickup').addEventListener('click',closePickup);
+  $('#pickupListView').addEventListener('click',()=>setPickupView('list'));
+  $('#pickupMapView').addEventListener('click',()=>setPickupView('map'));
+  matchMedia('(max-width:720px)').addEventListener('change',()=>{
+    if($('#pickupBackdrop').classList.contains('show'))setPickupView(document.querySelector('.pickup-dialog').dataset.view);
+  });
   $('#pickupBackdrop').addEventListener('click',e=>{if(e.target===e.currentTarget)closePickup()});
   $('#citySearch').addEventListener('input',()=>{
     pendingPoint=null;
@@ -1574,7 +1615,7 @@ function init(){
   $('#summaryToggle').addEventListener('click',()=>{
     const card=$('#summaryCard');const collapsed=card.classList.toggle('collapsed');
     $('#summaryToggle').setAttribute('aria-expanded',collapsed?'false':'true');
-    $('#summaryToggleText').textContent=collapsed?'Показать':'Свернуть';
+    $('#summaryToggleText').textContent=collapsed?'Подробнее':'Свернуть';
   });
   $('#payButton').addEventListener('click',submitCheckout);
   $('#mobilePayButton').addEventListener('click',submitCheckout);
