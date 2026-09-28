@@ -31,10 +31,12 @@ test("changing carrier clears selected quote, point cache and payment identity",
 
 test("selected Ozon point uses safe display text while preserving its original address", () => {
   const p = page();
-  p.run(`selectedPoint={code:'445692',city:'Махачкала',address:'Россия, Республика, Махачкала, улица, 1',displayAddress:'Махачкала, улица, 1',hours:'Ежедневно, 09:00–21:00',hoursDetails:'28 сент. – 18 окт.: 09:00–21:00 <test>',days:'6 дн.',price:123}; renderSelectedPoint()`);
+  p.run(`selectedPoint={code:'445692',city:'Махачкала',address:'Россия, Республика, Махачкала, улица, 1',displayAddress:'Махачкала, улица, 1',hours:'Ежедневно, 09:00–21:00 <test>',hoursDetails:'28 сент. – 18 окт.: 09:00–21:00',days:'6 дн.',price:123}; renderSelectedPoint()`);
   const html = p.node("#selectedPoint").innerHTML;
   assert.ok(html.includes('<h3>Махачкала, улица, 1</h3>'));
-  assert.ok(html.includes('График по датам'));
+  assert.ok(html.includes('Ежедневно, 09:00–21:00'));
+  assert.ok(!html.includes('График по датам'));
+  assert.ok(!html.includes('28 сент.'));
   assert.ok(html.includes('&lt;test&gt;'));
   assert.ok(!html.includes('<test>'));
   assert.equal(p.run("selectedPoint.address"), 'Россия, Республика, Махачкала, улица, 1');

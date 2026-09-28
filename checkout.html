@@ -166,9 +166,6 @@ img,svg{display:block}
 .point-selected-card address{font-style:normal;color:var(--txt-2);font-size:14px}
 .point-meta{display:flex;gap:10px 18px;flex-wrap:wrap;margin-top:14px;color:var(--txt-2);font-size:12px}
 .point-meta span{display:inline-flex;align-items:center;gap:6px}
-.point-hours-details{margin-top:12px;color:var(--txt-2);font-size:13px}
-.point-hours-details summary{cursor:pointer;padding:8px 0;font-weight:600}
-.point-hours-details p{margin-top:4px;line-height:1.6}
 .point-change{margin-top:16px}
 .payment-option{
   display:flex;align-items:center;gap:15px;padding:18px;border:1px solid rgba(0,38,249,.25);
@@ -915,7 +912,6 @@ function renderSelectedPoint(){
         <span>${escapeHtml(selectedPoint.days)}</span>
         <span>${money(selectedPoint.price)}</span>
       </div>
-      ${selectedPoint.hoursDetails&&selectedPoint.hoursDetails!==selectedPoint.hours?`<details class="point-hours-details"><summary>График по датам</summary><p>${escapeHtml(selectedPoint.hoursDetails)}</p></details>`:''}
       <button class="secondary-button point-change" id="changePoint" type="button">Изменить пункт</button>
     </div>`;
   $('#changePoint').addEventListener('click',openPickup);
