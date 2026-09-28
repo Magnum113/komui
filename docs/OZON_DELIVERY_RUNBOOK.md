@@ -31,7 +31,7 @@ From the backend release directory, with the existing protected service environm
 
 ## Monitoring and rollback
 
-Check service health, runtime delivery providers, public city/PVZ search, admin provider filter and shipping card. Inspect effect status/attempts/errors and worker logs without dumping payloads/phones/tokens. `needs_review` requires an operator; do not blindly create another Ozon order. Retry retains the persisted request identity.
+Check service health, runtime delivery providers, public city/PVZ search, admin provider filter and shipping card. Inspect effect status/attempts/errors and worker logs without dumping payloads/phones/tokens. The installed order monitor must include the provider-aware missing-shipment check from `ops/server/komui-order-monitor`; paid Ozon orders must never be tested against CDEK shipment records. Review alerts cover both provider effect types. `needs_review` requires an operator; do not blindly create another Ozon order. Retry retains the persisted request identity.
 
 To pause new Ozon orders, set ENABLED=false while leaving WORKER_ENABLED=true. Existing shipments continue status/cancellation processing. After actual Ozon orders exist, prefer disabling new selection over reverting to pre-Ozon backend. Do not remove delivery tables/jobs while orders remain active. Preserve previous immutable release and env backup for rollback.
 
