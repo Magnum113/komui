@@ -672,8 +672,10 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
 .toast.has-action .toast-action{display:inline-flex}
 
 /* mobile nav */
-.mobile-menu{position:fixed;inset:0;z-index:110;background:var(--bg);transform:translateX(100%);transition:transform .35s;padding:90px 28px 28px;display:flex;flex-direction:column;gap:6px}
+.mobile-menu{position:fixed;inset:0;z-index:110;background:var(--bg);transform:translateX(100%);transition:transform .35s;padding:calc(90px + env(safe-area-inset-top,0px)) 28px 28px;display:flex;flex-direction:column;gap:6px;overflow-y:auto;overscroll-behavior:contain}
 .mobile-menu.show{transform:translateX(0)}
+.mobile-menu .mobile-menu-close{position:absolute;top:calc(20px + env(safe-area-inset-top,0px));right:20px;width:44px;height:44px;flex-shrink:0;color:var(--txt)}
+.mobile-menu-close:focus-visible{outline:2px solid var(--mag);outline-offset:3px}
 .mobile-menu a{font-family:'Unbounded',sans-serif;font-size:28px;font-weight:700;padding:14px 0;border-bottom:1px solid var(--line)}
 .mobile-collections{display:block;border-bottom:1px solid var(--line)}
 .mobile-collection-trigger{width:100%;display:flex;align-items:center;justify-content:space-between;font-family:'Unbounded',sans-serif;font-size:28px;font-weight:700;padding:14px 0;color:var(--txt)}
@@ -914,7 +916,7 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
         <span class="cart-count" id="cartCount">0</span>
       </button>
-      <button class="icon-btn burger" id="burger" aria-label="Меню">
+      <button class="icon-btn burger" id="burger" type="button" aria-label="Меню" aria-controls="mobileMenu" aria-expanded="false">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
       </button>
     </div>
@@ -922,7 +924,10 @@ footer{border-top:1px solid var(--line);padding:64px 0 30px;background:var(--bg)
 </header>
 
 <!-- mobile menu -->
-<div class="mobile-menu" id="mobileMenu">
+<div class="mobile-menu" id="mobileMenu" role="dialog" aria-modal="true" aria-label="Меню" aria-hidden="true" tabindex="-1" inert>
+  <button class="icon-btn mobile-menu-close" id="mobileMenuClose" type="button" aria-label="Закрыть меню">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+  </button>
   <a href="#catalog">Каталог</a>
   <a href="#catalog" data-cat="Футболки">Футболки</a>
   <a href="#catalog" data-cat="Худи">Худи</a>
@@ -2207,7 +2212,7 @@ function setModalBackgroundInert(inert){
   $$('body > .announce,body > header,body > main,body > footer').forEach(node=>{node.inert=!!inert});
 }
 function trapModalFocus(event){
-  const modal=$('#modal');
+  const modal=$('#mobileMenu').classList.contains('show')?$('#mobileMenu'):$('#modal');
   if(event.key!=='Tab'||!modal.classList.contains('show'))return;
   const focusable=$$('a[href],button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex]:not([tabindex="-1"])')
     .filter(node=>modal.contains(node)&&node.offsetParent!==null);
@@ -2249,7 +2254,16 @@ function setMobileCollectionMenu(open){
   box?.classList.toggle('open',open);btn?.setAttribute('aria-expanded',open?'true':'false');
 }
 function closeCollectionMenus(){setCollectionMenu(false);setMobileCollectionMenu(false);}
-function closeAll(){closePhotoLightbox();closeCollectionMenus();const _m=$('#modal');const modalWasOpen=_m.classList.contains('show');_m.classList.remove('show');_m.classList.remove('madd-floating');_m.classList.remove('size-sheet-open');_m.setAttribute('aria-hidden','true');setModalBackgroundInert(false);if(window.__maddIO){try{window.__maddIO.disconnect();}catch(e){}window.__maddIO=null;}if(window.__modalAutoplay){clearInterval(window.__modalAutoplay);window.__modalAutoplay=null;}$('#cart').classList.remove('show');$('#filters').classList.remove('show');$('#mobileMenu').classList.remove('show');setOverlay(false);if(modalWasOpen&&lastModalFocus?.isConnected)requestAnimationFrame(()=>lastModalFocus.focus());}
+function setMobileMenu(open){
+  const menu=$('#mobileMenu'),burger=$('#burger');
+  if(!open&&menu.contains(document.activeElement))burger.focus({preventScroll:true});
+  menu.classList.toggle('show',open);
+  menu.inert=!open;
+  menu.setAttribute('aria-hidden',String(!open));
+  burger.setAttribute('aria-expanded',String(open));
+  if(open)$('#mobileMenuClose').focus({preventScroll:true});
+}
+function closeAll(){closePhotoLightbox();closeCollectionMenus();const _m=$('#modal');const modalWasOpen=_m.classList.contains('show');_m.classList.remove('show');_m.classList.remove('madd-floating');_m.classList.remove('size-sheet-open');_m.setAttribute('aria-hidden','true');setModalBackgroundInert(false);if(window.__maddIO){try{window.__maddIO.disconnect();}catch(e){}window.__maddIO=null;}if(window.__modalAutoplay){clearInterval(window.__modalAutoplay);window.__modalAutoplay=null;}$('#cart').classList.remove('show');$('#filters').classList.remove('show');setMobileMenu(false);setOverlay(false);if(modalWasOpen&&lastModalFocus?.isConnected)requestAnimationFrame(()=>lastModalFocus.focus());}
 function openCart(){
   updateCart();$('#cart').classList.add('show');setOverlay(true);
   withAnalytics(analytics=>analytics.goal('cart_open',{
@@ -2334,7 +2348,9 @@ $('#overlay').onclick=closeAll;document.addEventListener('keydown',e=>{trapModal
 $('#searchBtn').onclick=()=>{$('#catalog').scrollIntoView({behavior:'smooth'});setTimeout(()=>$('#searchInput').focus(),500);};
 $('#filterToggle').onclick=()=>{$('#filters').classList.add('show');setOverlay(true);$('#applyMobile').style.display='block';};
 $('#applyMobile').onclick=closeAll;
-$('#burger').onclick=()=>{const m=$('#mobileMenu');const open=m.classList.toggle('show');setOverlay(open);};
+$('#burger').onclick=()=>{const open=!$('#mobileMenu').classList.contains('show');setMobileMenu(open);setOverlay(open);};
+$('#mobileMenuClose').onclick=closeAll;
+$('#mobileMenu').addEventListener('click',e=>{if(e.target.closest('a[href]'))closeAll();});
 $('#collectionMenuBtn')?.addEventListener('click',e=>{e.stopPropagation();const open=!$('#navCollections').classList.contains('open');setCollectionMenu(open);setMobileCollectionMenu(false);});
 $('#mobileCollectionBtn')?.addEventListener('click',e=>{e.stopPropagation();const open=!$('#mobileCollections').classList.contains('open');setMobileCollectionMenu(open);});
 document.addEventListener('click',e=>{if(e.target.closest('#navCollections,#mobileCollections'))return;closeCollectionMenus();});
