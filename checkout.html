@@ -1146,6 +1146,15 @@ async function loadDeliveryPoints(){
   }
 }
 
+function searchDeliveryPoints(){
+  if(deliveryProvider==='ozon'){
+    deliveryRevision++;pointsRequest++;pointsLoading=true;pendingPoint=null;
+    $('#confirmPoint').disabled=true;
+    schedulePointLoad();
+  }
+  renderPointList($('#pointSearch').value);renderMarkers();
+}
+
 function schedulePointLoad(){
   clearTimeout(pointLoadTimer);
   pointLoadTimer=setTimeout(loadDeliveryPoints,360);
@@ -1676,7 +1685,7 @@ function init(){
     $('#confirmPoint').disabled=true;
     schedulePointLoad();
   });
-  $('#pointSearch').addEventListener('input',e=>{renderPointList(e.target.value);renderMarkers()});
+  $('#pointSearch').addEventListener('input',()=>searchDeliveryPoints());
   $('#pointList').addEventListener('click',e=>{const card=e.target.closest('[data-code]');if(card)choosePointByCode(card.dataset.code)});
   $('#confirmPoint').addEventListener('click',choosePendingPoint);
   $('#promoToggle').addEventListener('click',()=>{

@@ -73,3 +73,16 @@ test("restoring a different cart invalidates the saved delivery price", () => {
   p.run("sessionStorage.setItem(FORM_KEY,JSON.stringify({point:{code:'C',cityCode:44,price:350},cartFingerprint:'different'})); restoreForm()");
   assert.equal(p.run("selectedPoint"), null);
 });
+
+ test("Ozon address search requests matching points beyond the initial city page", async () => {
+  let body: any;
+  const p=page(async (_url, options) => { body=JSON.parse(options.body); return {ok:true,json:async()=>({city:{name:"Москва"},points:[{code:"BEYOND-120",address:"Новый адрес"}]})}; });
+  p.node("#citySearch").value="Москва";
+  p.node("#pointSearch").value="Новый адрес";
+  p.run("deliveryProvider='ozon'; points=[{code:'INITIAL'}]; pendingPoint=points[0]; searchDeliveryPoints(); clearTimeout(pointLoadTimer)");
+  assert.equal(p.run("pendingPoint"),null);
+  await p.run("loadDeliveryPoints()");
+  assert.equal(body.query,"Новый адрес");
+  assert.equal(body.provider,"ozon");
+  assert.equal(p.run("points[0].code"),"BEYOND-120");
+});

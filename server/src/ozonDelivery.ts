@@ -335,7 +335,7 @@ export async function searchOzonPoints(
     );
   const escape = (s: string) => s.replace(/[\\%_]/g, "\\$&");
   const rows = await db.query<{ payload: OzonPoint }>(
-    `select payload from public.merch_ozon_delivery_points where shipment_method_id=$1 and refreshed_at>now()-interval '3 days' and payload->>'is_active'='true' and payload->>'type'='pvz' and payload->>'full_address' ilike $2 and (payload->>'full_address' ilike $3 or payload->>'name' ilike $3) order by point_id limit 120`,
+    `select payload from public.merch_ozon_delivery_points where shipment_method_id=$1 and refreshed_at>now()-interval '3 days' and payload->>'is_active'='true' and payload->>'type'='pvz' and payload->>'full_address' ilike $2 and (payload->>'full_address' ilike $3 or payload->>'name' ilike $3 or point_id::text ilike $3) order by point_id limit 120`,
     [
       config.OZON_DELIVERY_SHIPMENT_METHOD_ID,
       `%${escape(city)}%`,
