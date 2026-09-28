@@ -130,6 +130,43 @@ const envSchema = z.object({
     .min(0)
     .max(50)
     .default(1),
+  OZON_DELIVERY_CLIENT_ID: z.string().min(1).optional(),
+  OZON_DELIVERY_CLIENT_SECRET: z.string().min(1).optional(),
+  OZON_DELIVERY_SHIPMENT_METHOD_ID: z.coerce
+    .number()
+    .int()
+    .positive()
+    .optional(),
+  OZON_DELIVERY_ENABLED: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((v) => v === "true"),
+  OZON_DELIVERY_WORKER_ENABLED: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((v) => v === "true"),
+  OZON_DELIVERY_REQUEST_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .min(1000)
+    .max(30000)
+    .default(15000),
+  OZON_DELIVERY_STATUS_EMAILS_SINCE: z
+    .string()
+    .datetime({ offset: true })
+    .optional(),
+  OZON_DELIVERY_PREPARATION_HOURS: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(336)
+    .default(48),
+  OZON_DELIVERY_SYNC_INTERVAL_MS: z.coerce
+    .number()
+    .int()
+    .min(60000)
+    .max(3600000)
+    .default(600000),
   OZON_IMPORT_ENV_FILE: z.string().min(1).default("/etc/komui/ozon-sync.env"),
   OZON_IMPORT_MAX_ITEMS: z.coerce
     .number()
@@ -152,24 +189,14 @@ const envSchema = z.object({
     .min(1_000)
     .max(300_000)
     .default(10_000),
-  EMAIL_WORKER_BATCH_SIZE: z.coerce
-    .number()
-    .int()
-    .min(1)
-    .max(100)
-    .default(10),
+  EMAIL_WORKER_BATCH_SIZE: z.coerce.number().int().min(1).max(100).default(10),
   EMAIL_WORKER_LEASE_MS: z.coerce
     .number()
     .int()
     .min(10_000)
     .max(900_000)
     .default(120_000),
-  EMAIL_WORKER_MAX_ATTEMPTS: z.coerce
-    .number()
-    .int()
-    .min(1)
-    .max(10)
-    .default(4),
+  EMAIL_WORKER_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(10).default(4),
   EMAIL_FROM: z.string().email().optional(),
   EMAIL_FROM_NAME: z.string().trim().min(1).max(100).default("KOMUI"),
   EMAIL_REPLY_TO: z.string().email().optional(),
@@ -229,19 +256,22 @@ export function publicConfig(config: AppConfig) {
     cdekCreateShipments: config.CDEK_CREATE_SHIPMENTS,
     cdekStatusSyncEnabled: config.CDEK_STATUS_SYNC_ENABLED,
     cdekStatusEmailsSinceConfigured: Boolean(config.CDEK_STATUS_EMAILS_SINCE),
+    ozonDeliveryConfigured: Boolean(
+      config.OZON_DELIVERY_CLIENT_ID &&
+        config.OZON_DELIVERY_CLIENT_SECRET &&
+        config.OZON_DELIVERY_SHIPMENT_METHOD_ID,
+    ),
+    ozonDeliveryEnabled: config.OZON_DELIVERY_ENABLED,
+    ozonDeliveryWorkerEnabled: config.OZON_DELIVERY_WORKER_ENABLED,
     ozonImportEnvFileConfigured: Boolean(config.OZON_IMPORT_ENV_FILE),
     emailProvider: config.EMAIL_PROVIDER,
     emailEnabled: config.EMAIL_ENABLED,
     emailWorkerEnabled: config.EMAIL_WORKER_ENABLED,
     emailConfigured: Boolean(
-      config.EMAIL_FROM &&
-        config.EMAIL_REPLY_TO &&
-        config.UNISENDER_GO_API_KEY,
+      config.EMAIL_FROM && config.EMAIL_REPLY_TO && config.UNISENDER_GO_API_KEY,
     ),
     emailTestMode: config.EMAIL_TEST_MODE,
-    emailAllowlistConfigured: Boolean(
-      config.EMAIL_ALLOWED_RECIPIENTS.trim(),
-    ),
+    emailAllowlistConfigured: Boolean(config.EMAIL_ALLOWED_RECIPIENTS.trim()),
     emailWebhookEnabled: config.UNISENDER_GO_WEBHOOK_ENABLED,
     emailWebhookConfigured: Boolean(config.UNISENDER_GO_API_KEY),
   };

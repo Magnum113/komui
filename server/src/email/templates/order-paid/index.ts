@@ -21,6 +21,7 @@ export type OrderPaidTemplateInput = {
   deliveryAddress: string;
   deliveryEta?: string | null;
   cdekNumber?: string | null;
+  deliveryProvider?: "cdek" | "ozon";
 };
 
 function escapeHtml(value: unknown): string {
@@ -133,7 +134,9 @@ function normalizedInput(input: OrderPaidTemplateInput) {
     deliveryAddress,
     deliveryEta,
     cdekNumber,
-    trackingUrl: cdekTrackingUrl(cdekNumber),
+    trackingUrl: input.deliveryProvider === "ozon" ? null : cdekTrackingUrl(cdekNumber),
+    providerName: input.deliveryProvider === "ozon" ? "Ozon" : "СДЭК",
+    isOzon: input.deliveryProvider === "ozon",
     items,
     subtotalAmount,
     discountAmount,
@@ -190,9 +193,11 @@ export function renderOrderPaidEmail(
     })
     .join("\n");
   const deliveryText = destination
-    ? `Доставка СДЭК: ${destination}${order.deliveryEta ? `. ${order.deliveryEta}` : ""}.`
-    : "Доставка: выбранный пункт СДЭК.";
-  const trackingText = order.trackingUrl
+    ? `Доставка ${order.providerName}: ${destination}${order.deliveryEta ? `. ${order.deliveryEta}` : ""}.`
+    : `Доставка: выбранный пункт ${order.providerName}.`;
+  const trackingText = order.isOzon
+    ? "После подготовки отправления заказ появится в приложении Ozon. Код получения будет доступен там же."
+    : order.trackingUrl
     ? `Отследить заказ в СДЭК: ${order.trackingUrl}`
     : "Трек-номер СДЭК создаётся. Он появится после оформления отправления.";
   const amountText = [
@@ -207,7 +212,9 @@ export function renderOrderPaidEmail(
           <td style="padding:6px 0 6px 16px;text-align:right;white-space:nowrap;font-size:15px;line-height:1.4;color:#147a44;">−${escapeHtml(order.discount)}</td>
         </tr>`
     : "";
-  const trackingBlock = order.trackingUrl
+  const trackingBlock = order.isOzon
+    ? `<p style="font-size:13px;line-height:1.5;color:#656a7e;">${escapeHtml(trackingText)}</p>`
+    : order.trackingUrl
     ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;margin-top:18px;">
         <tr>
           <td align="center" style="border-radius:14px;background:#1238ff;">
@@ -236,7 +243,7 @@ export function renderOrderPaidEmail(
       deliveryText,
       trackingText,
       "",
-      "Что дальше: мы соберём заказ, передадим его в СДЭК и обновим статус доставки.",
+      `Что дальше: мы соберём заказ, передадим его в ${order.providerName} и обновим статус доставки.`,
       "Если нужно что-то уточнить, ответьте на это письмо.",
       "",
       "KOMUI",
@@ -319,8 +326,8 @@ export function renderOrderPaidEmail(
               </table>
 
               <div style="margin-top:30px;padding:20px;border-radius:18px;background:#f1f3ff;border:1px solid #e0e5ff;">
-                <div style="font-size:12px;line-height:1.2;font-weight:800;letter-spacing:.09em;color:#1238ff;">ДОСТАВКА СДЭК</div>
-                <div style="margin-top:9px;font-size:16px;line-height:1.45;font-weight:700;color:#14151c;">${escapeHtml(destination || "Выбранный пункт СДЭК")}</div>
+                <div style="font-size:12px;line-height:1.2;font-weight:800;letter-spacing:.09em;color:#1238ff;">ДОСТАВКА ${order.providerName}</div>
+                <div style="margin-top:9px;font-size:16px;line-height:1.45;font-weight:700;color:#14151c;">${escapeHtml(destination || `Выбранный пункт ${order.providerName}`)}</div>
                 ${order.deliveryEta ? `<div style="margin-top:6px;font-size:14px;line-height:1.45;color:#656a7e;">${escapeHtml(order.deliveryEta)}</div>` : ""}
                 ${trackingBlock}
               </div>
@@ -337,7 +344,7 @@ export function renderOrderPaidEmail(
                 </tr>
                 <tr>
                   <td width="36" valign="top" style="width:36px;padding:0 12px 0 0;"><div style="width:28px;height:28px;border-radius:50%;background:#eef1ff;color:#1238ff;font-size:13px;line-height:28px;font-weight:900;text-align:center;">3</div></td>
-                  <td valign="top" style="padding:2px 0 0;font-size:15px;line-height:1.5;color:#14151c;"><strong>Передадим в СДЭК</strong><br><span style="color:#656a7e;">Статус доставки обновится у перевозчика.</span></td>
+                  <td valign="top" style="padding:2px 0 0;font-size:15px;line-height:1.5;color:#14151c;"><strong>Передадим в ${order.providerName}</strong><br><span style="color:#656a7e;">Статус доставки обновится у перевозчика.</span></td>
                 </tr>
               </table>
 

@@ -246,10 +246,18 @@ function paid(result,session){
   localStorage.removeItem(CHECKOUT_KEY);
   sessionStorage.removeItem(FORM_KEY);
   sessionStorage.removeItem(PAYMENT_DRAFT_KEY);
-  showCdek(result?.cdek||null);
+  const shipping=result?.shipping;
+  if(shipping?.provider==='ozon'){
+    $('#cdekOrder').style.display='flex';
+    $('#cdekOrder span').textContent='Ozon';
+    $('#cdekStatus').textContent=shipping.number?String(shipping.number):shipping.error?'Проверим доставку вручную':shipping.statusName||'Готовим отправление';
+  }else showCdek(result?.cdek||null);
   render('paid','Заказ оплачен','Подтверждение получено. Мы начнём готовить заказ и свяжемся, если потребуется уточнение.','Сохраните номер заказа до получения уведомления.',
-    cdekAction(result?.cdek||null));
-  scheduleCdekRefresh(result?.cdek||null);
+    shipping?.provider==='ozon'?'':cdekAction(result?.cdek||null));
+  if(shipping?.provider==='ozon'){
+    $('#statusHint').textContent='После подготовки отправления заказ появится в приложении Ozon. Для получения используйте код из приложения.';
+    if(!shipping.number&&++polls<20)timer=setTimeout(check,3000);
+  }else scheduleCdekRefresh(result?.cdek||null);
 }
 
 function failed(message){

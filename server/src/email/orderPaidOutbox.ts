@@ -97,6 +97,7 @@ export async function enqueueOrderPaidEmail(
             'deliveryAmount', orders.delivery_amount,
             'totalAmount', orders.total_amount,
             'currency', orders.currency,
+            'deliveryProvider', orders.delivery_provider,
             'deliveryCity', orders.delivery_city,
             'deliveryAddress', orders.delivery_address,
             'deliveryEta', orders.delivery_eta,

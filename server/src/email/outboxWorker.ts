@@ -12,6 +12,7 @@ import type { Db } from "../db";
 import { renderOrderPaidEmail } from "./templates/order-paid";
 import { renderShipmentHandedOverEmail } from "./templates/shipment-handed-over";
 import { renderShipmentReadyEmail } from "./templates/shipment-ready";
+import { renderOzonShipmentEmail } from "./ozonShipment";
 import {
   EmailProviderError,
   maskEmail,
@@ -53,6 +54,10 @@ type CdekTrackingState = {
   number: string | null;
 };
 
+function isOzonPayload(payload: unknown): boolean {
+  return !!payload && typeof payload === "object" && "deliveryProvider" in payload && payload.deliveryProvider === "ozon";
+}
+
 export type ProcessEmailOutboxResult = {
   claimed: number;
   sent: number;
@@ -72,6 +77,7 @@ export type ProcessEmailOutboxOptions = {
 
 const orderPaidPayloadSchema = z.object({
   schemaVersion: z.literal(1),
+  deliveryProvider: z.enum(["cdek", "ozon"]).optional(),
   customerFirstName: z.string().max(80),
   orderNumber: z.string().min(1).max(80),
   items: z
@@ -98,6 +104,7 @@ const orderPaidPayloadSchema = z.object({
 
 const shipmentHandedOverPayloadSchema = z.object({
   schemaVersion: z.literal(1),
+  deliveryProvider: z.enum(["cdek", "ozon"]).optional(),
   customerFirstName: z.string().max(80),
   orderNumber: z.string().min(1).max(80),
   cdekNumber: z.string().min(1).max(80),
@@ -108,6 +115,7 @@ const shipmentHandedOverPayloadSchema = z.object({
 
 const shipmentReadyPayloadSchema = z.object({
   schemaVersion: z.literal(1),
+  deliveryProvider: z.enum(["cdek", "ozon"]).optional(),
   customerFirstName: z.string().max(80),
   orderNumber: z.string().min(1).max(80),
   cdekNumber: z.string().min(1).max(80),
@@ -258,13 +266,13 @@ function emailRequest(
     }
     case "shipment_handed_over": {
       const input = shipmentHandedOverPayloadSchema.parse(row.payload);
-      rendered = renderShipmentHandedOverEmail(input);
+      rendered = input.deliveryProvider === "ozon" ? renderOzonShipmentEmail(input, "shipment_handed_over") : renderShipmentHandedOverEmail(input);
       orderNumber = input.orderNumber;
       break;
     }
     case "shipment_ready": {
       const input = shipmentReadyPayloadSchema.parse(row.payload);
-      rendered = renderShipmentReadyEmail(input);
+      rendered = input.deliveryProvider === "ozon" ? renderOzonShipmentEmail(input, "shipment_ready") : renderShipmentReadyEmail(input);
       orderNumber = input.orderNumber;
       break;
     }
@@ -330,6 +338,21 @@ async function sendCancellationReason(
     return "email_fulfillment_closed";
   }
   if (row.event_type === "order_paid") return null;
+  if (isOzonPayload(row.payload)) {
+    const payload = row.payload as { cdekNumber?: string };
+    const shipment = await context.db.query<{ status: string }>(`
+      /* email_outbox:ozon_eligibility */
+      select s.status from public.merch_ozon_delivery_shipments s
+      join public.merch_customer_orders o on o.id=s.order_id
+      where s.order_id=$1::uuid and s.posting_number=$2 and o.delivery_provider='ozon'
+      limit 1
+    `, [row.order_id, payload.cdekNumber]);
+    const status = shipment.rows[0]?.status?.toLowerCase();
+    if (!status) return "email_shipment_missing";
+    if (row.event_type === "shipment_handed_over" && status !== "on_way") return "email_shipment_handed_over_stale_status";
+    if (row.event_type === "shipment_ready" && status !== "in_delivery_point") return "email_shipment_ready_stale_status";
+    return null;
+  }
   const shipmentStatus = boundedText(current.shipment_status, 40).toLowerCase();
   if (!shipmentStatus) return "email_shipment_missing";
   if (closedShipmentStatuses.has(shipmentStatus)) return "email_shipment_closed";
@@ -356,6 +379,7 @@ async function cdekTrackingState(
   context: EmailWorkerContext,
   row: EmailOutboxRow,
 ): Promise<CdekTrackingState> {
+  if (isOzonPayload(row.payload)) return { status: null, number: null };
   if (!context.config.CDEK_CREATE_SHIPMENTS || !row.order_id) {
     return { status: null, number: null };
   }
@@ -384,6 +408,7 @@ function shouldWaitForCdekTracking(
   row: EmailOutboxRow,
   cdek: CdekTrackingState,
 ): boolean {
+  if (isOzonPayload(row.payload)) return false;
   if (row.event_type !== "order_paid" || row.template_key !== "order_paid") {
     return false;
   }

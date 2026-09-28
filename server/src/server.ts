@@ -1,3 +1,4 @@
+import { startOzonDeliveryWorker } from './ozonDeliveryJobs';
 import { buildApp } from "./app";
 import { startCdekEffectWorker } from "./cdekEffects";
 import { startCdekStatusSyncWorker } from "./cdekStatusSync";
@@ -9,6 +10,7 @@ async function main() {
   const config = loadConfig();
   const db = createDb(config);
   const app = buildApp({ config, db });
+  let stopOzonWorker: (() => Promise<void>) | null = null;
   let stopCdekEffectWorker: (() => Promise<void>) | null = null;
   let stopCdekStatusSyncWorker: (() => Promise<void>) | null = null;
   let stopTbankInitReconciler: (() => Promise<void>) | null = null;
@@ -16,6 +18,7 @@ async function main() {
   const shutdown = async (signal: NodeJS.Signals) => {
     app.log.info({ signal }, "shutting down");
     await Promise.all([
+      stopOzonWorker?.(),
       stopCdekEffectWorker?.(),
       stopCdekStatusSyncWorker?.(),
       stopTbankInitReconciler?.(),
@@ -30,6 +33,7 @@ async function main() {
     host: config.HOST,
     port: config.PORT,
   });
+  stopOzonWorker = startOzonDeliveryWorker({config,db,logger:app.log});
   stopCdekEffectWorker = startCdekEffectWorker({
     config,
     db,

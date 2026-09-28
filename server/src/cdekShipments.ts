@@ -41,6 +41,7 @@ type ShipmentRow = QueryResultRow & {
 type OrderRow = QueryResultRow & {
   id: string;
   order_number: string;
+  delivery_provider: string;
   status: string;
   customer_first_name: string | null;
   customer_last_name: string | null;
@@ -296,6 +297,7 @@ async function loadOrder(
       select
         id,
         order_number,
+        delivery_provider,
         status,
         customer_first_name,
         customer_last_name,
@@ -686,6 +688,9 @@ export async function createCdekShipmentForOrder(
   input: CreateShipmentInput,
 ): Promise<ShipmentRow | null> {
   const order = await loadOrder(context.db, input);
+  if (order.delivery_provider && order.delivery_provider !== "cdek") {
+    throw new HttpError(409, "wrong_delivery_provider", "Заказ не относится к СДЭК");
+  }
   context.logger?.info(
     {
       orderId: order.id,

@@ -25,6 +25,7 @@ function validate({ fields = {}, point = null, consent = false, invalidOffer = f
     setFieldError: (id, invalid) => { errors[id] = invalid; },
     setTimeout: fn => fn(), openPickup: () => actions.push('pickup'),
     showToast: text => actions.push('toast:' + text),
+    deliveryName: () => 'СДЭК',
   };
   vm.createContext(context);
   vm.runInContext(validateSource + '\nresult=validate();', context);

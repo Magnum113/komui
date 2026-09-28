@@ -1,3 +1,9 @@
+import {
+  searchOzonPoints,
+  quoteOzonDelivery,
+  normalizeOzonPoint,
+} from "./ozonDelivery";
+import { loadOzonShipping } from "./ozonDeliveryJobs";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import type { PoolClient } from "pg";
 import type { AppConfig } from "./config";
@@ -104,7 +110,7 @@ function buildReceipt(
   config: AppConfig,
   items: OrderItemInput[],
   discountAmount: number,
-  delivery: { amount: number },
+  delivery: { amount: number; provider?: string },
   phone: string,
   email: string,
 ): Record<string, unknown> | undefined {
@@ -146,7 +152,7 @@ function buildReceipt(
 
   if (delivery.amount > 0) {
     receiptItems.push({
-      Name: "Доставка СДЭК",
+      Name: delivery.provider === "ozon" ? "Доставка Ozon" : "Доставка СДЭК",
       Price: delivery.amount,
       Quantity: 1,
       Amount: delivery.amount,
@@ -162,7 +168,7 @@ function buildReceipt(
 export async function handleCdekDeliveryPoints(
   request: FastifyRequest,
   _reply: FastifyReply,
-  { config }: HandlerContext,
+  { config, db }: HandlerContext,
 ) {
   assertPost(request);
   const body = bodyObject(request);
@@ -172,6 +178,8 @@ export async function handleCdekDeliveryPoints(
     return { city: null, points: [], message: "Введите город" };
   }
 
+  if (body.provider === "ozon") return searchOzonPoints(db, config, cityQuery, pointQuery);
+  if (body.provider && body.provider !== "cdek") throw new HttpError(400,"invalid_provider","Неизвестная служба доставки");
   const city = await findCdekCity(config, cityQuery);
   if (!city) {
     return { city: null, points: [], message: "Город не найден в CDEK" };
@@ -202,6 +210,12 @@ export async function handleCdekDeliveryQuote(
   assertPost(request);
   const body = bodyObject(request);
   const delivery = (body.delivery ?? {}) as Record<string, unknown>;
+  if (delivery.provider === "ozon") {
+    const items = await new CheckoutRepository(db).orderItemsFromCart(validatedCart(body.items));
+    const snapshot = await quoteOzonDelivery(config, items, text(delivery.code,40), (body.customer as Record<string,unknown> | undefined)?.phone);
+    return {provider:"ozon",deliveryPointCode:String(snapshot.point.delivery_point_id),amount:snapshot.amount,amountRub:snapshot.amount/100,currency:"RUB",eta:snapshot.eta,tariffCode:null,tariffName:"Ozon Доставка",deliveryCost:snapshot.deliveryCost,insuranceCost:snapshot.insuranceCost,packages:[snapshot.posting.dimensions]};
+  }
+  if(delivery.provider && delivery.provider!=="cdek")throw new HttpError(400,"invalid_provider","Неизвестная служба доставки");
   const deliveryPointCode = text(delivery.code, 40);
   const deliveryCityCode = Number(delivery.cityCode);
   if (!deliveryPointCode || !Number.isInteger(deliveryCityCode)) {
@@ -522,7 +536,7 @@ async function insertCheckoutOrder(
       values (
         $1::uuid, $2, $3, $4, $5, $6, $7, $8, $9::boolean,
         $10::timestamptz, $11, $12, $13::timestamptz,
-        'cdek', $14, $15, $16, $17, $18, $19, 'RUB', $20, $21, $22, $23,
+        $25, $14, $15, $16, $17, $18, $19, 'RUB', $20, $21, $22, $23,
         'storefront', $24::jsonb
       )
       returning id
@@ -552,6 +566,7 @@ async function insertCheckoutOrder(
       order.total_amount,
       order.promo_code,
       JSON.stringify(order.metadata ?? {}),
+      order.delivery_provider ?? "cdek",
     ],
   );
 
@@ -664,6 +679,8 @@ export async function handleTbankCreatePayment(
   const body = bodyObject(request);
   const customer = (body.customer ?? {}) as Record<string, unknown>;
   const deliveryInput = (body.delivery ?? {}) as Record<string, unknown>;
+  const provider = deliveryInput.provider ?? "cdek";
+  if (provider !== "ozon" && provider !== "cdek") throw new HttpError(400,"invalid_provider","Неизвестная служба доставки");
   const cart = validatedCart(body.items);
   const firstName = text(customer.firstName, 80);
   const lastName = text(customer.lastName, 80);
@@ -694,7 +711,7 @@ export async function handleTbankCreatePayment(
     Number.isInteger(requestedTariffCode) && requestedTariffCode > 0
       ? requestedTariffCode
       : null;
-  if (!deliveryPointCode || !Number.isInteger(deliveryCityCode) || deliveryCityCode <= 0) {
+  if (!deliveryPointCode || (provider === "cdek" && (!Number.isInteger(deliveryCityCode) || deliveryCityCode <= 0))) {
     throw new HttpError(
       400,
       "delivery_point_required",
@@ -734,7 +751,12 @@ export async function handleTbankCreatePayment(
     cdekPackageInputsFromOrderItems(orderItems),
     config.CDEK_PACKING_HEIGHT_EXTRA_CM,
   );
-  const deliveryPoint = await findCdekDeliveryPoint(
+  const ozonSnapshot = provider === "ozon" ? await quoteOzonDelivery(config, orderItems, deliveryPointCode, phone) : null;
+  if (ozonSnapshot && (!Number.isSafeInteger(deliveryInput.expectedAmount) || Number(deliveryInput.expectedAmount) !== ozonSnapshot.amount)) {
+    throw new HttpError(409,"delivery_quote_changed","Стоимость доставки изменилась. Рассчитайте доставку ещё раз",{amount:ozonSnapshot.amount});
+  }
+  const ozonPoint = ozonSnapshot ? normalizeOzonPoint(ozonSnapshot.point) : null;
+  const deliveryPoint = ozonSnapshot ? {code:String(ozonSnapshot.point.delivery_point_id),name:ozonSnapshot.point.name,type:ozonSnapshot.point.type,work_time:ozonPoint!.hours,location:{city:"",address_full:ozonSnapshot.point.full_address,address:ozonSnapshot.point.full_address,latitude:ozonSnapshot.point.coordinates?.latitude,longitude:ozonSnapshot.point.coordinates?.longitude}} : await findCdekDeliveryPoint(
     config,
     deliveryCityCode,
     deliveryPointCode,
@@ -746,7 +768,7 @@ export async function handleTbankCreatePayment(
       "Выбранный пункт выдачи СДЭК недоступен",
     );
   }
-  const cdekQuote = await quoteCdekDelivery(config, {
+  const cdekQuote = ozonSnapshot ? {amountKopecks:ozonSnapshot.amount,amount:ozonSnapshot.amount/100,eta:ozonSnapshot.eta,tariffCode:null,tariffName:"Ozon Доставка",deliveryMode:null,periodMin:null,periodMax:null,raw:ozonSnapshot} : await quoteCdekDelivery(config, {
     deliveryCityCode,
     packages: cdekPackages,
     tariffCode,
@@ -783,9 +805,10 @@ export async function handleTbankCreatePayment(
     legalAcceptedAt,
   );
   const delivery = {
+    provider,
     code: deliveryPoint.code,
     cityCode: deliveryCityCode,
-    city: text(pointLocation.city, 100) || text(deliveryInput.city, 100),
+    city: text(pointLocation.city, 100) || (provider === "ozon" ? "" : text(deliveryInput.city, 100)),
     address:
       text(pointLocation.address_full ?? pointLocation.address, 220) ||
       text(deliveryInput.address, 220),
@@ -843,8 +866,9 @@ export async function handleTbankCreatePayment(
           marketing_consent_version: consentEvidence.version,
           marketing_consent_source: consentEvidence.source,
           legal_accepted_at: legalAcceptedAt,
+          delivery_provider: provider,
           delivery_point_code: delivery.code,
-          delivery_city: delivery.city || "СДЭК",
+          delivery_city: delivery.city || (provider === "ozon" ? "" : "СДЭК"),
           delivery_address: delivery.address || delivery.title || delivery.code,
           delivery_hours: delivery.hours || null,
           delivery_eta: delivery.eta,
@@ -865,7 +889,8 @@ export async function handleTbankCreatePayment(
                   original_delivery_amount: cdekQuote.amountKopecks,
                 }
               : null,
-            cdek: {
+            ozon: ozonSnapshot,
+            cdek: provider === "cdek" ? {
               mock: config.CDEK_MOCK,
               shipment_point: config.CDEK_SHIPMENT_POINT,
               delivery_point: delivery.code,
@@ -881,7 +906,7 @@ export async function handleTbankCreatePayment(
               period_max: delivery.periodMax,
               package_snapshot: cdekPackages,
               quote: cdekQuote.raw,
-            },
+            } : null,
           },
         },
         orderItems,
@@ -1202,12 +1227,13 @@ export async function handleTbankPaymentStatus(
     total_amount: number;
     currency: string;
     delivery_point_code: string;
+    delivery_provider: string;
     created_at: string;
     paid_at: string | null;
   }>(
     `
       select id, order_number, access_token_hash, status, total_amount, currency,
-             delivery_point_code, created_at, paid_at
+             delivery_point_code, delivery_provider, created_at, paid_at
       from public.merch_customer_orders
       where order_number = $1
       limit 1
@@ -1264,6 +1290,7 @@ export async function handleTbankPaymentStatus(
     paidAt: order.paid_at,
     errorCode: attempt?.error_code ?? null,
     errorMessage: attempt?.error_message ?? null,
+    shipping: order.delivery_provider === "ozon" ? await loadOzonShipping(db,order.id,order.status === "paid") : {provider:"cdek",status:shipment?.status??"pending",number:shipment?.cdek_number??null,updatedAt:shipment?.updated_at??null,error:shipment?.error_message??null},
     cdek: shipment
       ? {
           status: shipment.status,

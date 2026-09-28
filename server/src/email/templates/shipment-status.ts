@@ -13,6 +13,7 @@ export type ShipmentStatusView = {
   intro: string;
   orderNumber: string;
   cdekNumber: string;
+  deliveryProvider?: "cdek" | "ozon";
   sectionLabel: string;
   locationTitle: string;
   details: ShipmentStatusDetail[];
@@ -92,7 +93,7 @@ export function renderShipmentStatusEmail(
       value: compactEmailText(detail.value, 240),
     }))
     .filter((detail) => detail.label && detail.value);
-  const trackingUrl = cdekTrackingUrl(cdekNumber);
+  const trackingUrl = input.deliveryProvider === "ozon" ? "https://www.ozon.ru/" : cdekTrackingUrl(cdekNumber);
 
   const detailRows = details
     .map(

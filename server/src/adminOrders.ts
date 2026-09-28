@@ -1,3 +1,4 @@
+import { loadOzonShipping, loadOzonEvents } from "./ozonDeliveryJobs";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import type { PoolClient, QueryResultRow } from "pg";
 import { z } from "zod";
@@ -72,6 +73,8 @@ const listOrdersQuerySchema = z.object({
   paymentStatus: z.enum(paymentStatuses).optional(),
   status: z.enum(paymentStatuses).optional(),
   fulfillmentStatus: z.enum(fulfillmentStatuses).optional(),
+  deliveryProvider: z.enum(["cdek","ozon"]).optional(),
+  toShip: z.enum(["true","false"]).optional(),
   dateFrom: z.string().trim().max(40).optional(),
   dateTo: z.string().trim().max(40).optional(),
 });
@@ -784,7 +787,9 @@ function listWhere(
     values.push(paymentStatus);
     where.push(`o.status = $${values.length}`);
   }
-  if (query.fulfillmentStatus) {
+  if (query.toShip === "true") where.push("o.status = 'paid' and o.fulfillment_status in ('new','processing')");
+  if (query.deliveryProvider) { values.push(query.deliveryProvider); where.push(`o.delivery_provider = $${values.length}`); }
+  if (query.fulfillmentStatus && query.toShip !== "true") {
     values.push(query.fulfillmentStatus);
     where.push(`o.fulfillment_status = $${values.length}`);
   }
@@ -807,6 +812,7 @@ function listWhere(
         or o.customer_first_name ilike $${index} escape '\\'
         or o.customer_last_name ilike $${index} escape '\\'
         or o.delivery_city ilike $${index} escape '\\'
+        or o.delivery_address ilike $${index} escape '\\'
         or o.delivery_point_code ilike $${index} escape '\\'
       )
     `);
@@ -982,6 +988,7 @@ async function loadOrderDetails(db: Db, orderId: string) {
 }
 
 function ensureCanShip(order: OrderListRow) {
+  if (order.delivery_provider === "ozon") throw new HttpError(409,"provider_managed_fulfillment","Статус отправки Ozon обновляется по данным перевозчика");
   if (order.fulfillment_status === "shipped") return;
   if (order.fulfillment_status === "delivered") {
     throw new HttpError(
@@ -1015,6 +1022,7 @@ async function setFulfillmentStatus(
     note?: string | null;
   },
 ) {
+  if (order.delivery_provider === "ozon" && (!["new","processing"].includes(input.status) || !["new","processing"].includes(order.fulfillment_status))) throw new HttpError(409,"provider_managed_fulfillment","Движение посылки Ozon обновляется по данным перевозчика");
   if (input.status === "shipped") ensureCanShip(order);
   if (input.status === "delivered" && !["shipped", "delivered"].includes(order.fulfillment_status)) {
     ensureCanShip(order);
@@ -1078,7 +1086,7 @@ export async function handleAdminListOrders(
   ]);
 
   return {
-    orders: orders.rows.map(toAdminOrderSummary),
+    orders: await Promise.all(orders.rows.map(async row => ({...toAdminOrderSummary(row),shipping:row.delivery_provider === "ozon" ? await loadOzonShipping(db,row.id,row.status === "paid") : {provider:"cdek",status:row.cdek_delivery_status_code??row.cdek_status,statusName:row.cdek_delivery_status_name,number:row.cdek_number,orderNumber:null,updatedAt:isoDate(row.cdek_delivery_status_synced_at),error:row.cdek_error_message,availableActions:[],shipments:[]}}))),
     pagination: {
       limit: query.limit,
       offset: query.offset,
@@ -1100,7 +1108,8 @@ export async function handleAdminGetOrder(
   const order = await loadOrderSummary(db, orderId);
   const details = await loadOrderDetails(db, orderId);
   return {
-    order: toAdminOrderSummary(order),
+    order: {...toAdminOrderSummary(order),...(order.delivery_provider === "ozon" ? {shipping:await loadOzonShipping(db,orderId,order.status === "paid")} : {})},
+    shippingEvents: order.delivery_provider === "ozon" ? await loadOzonEvents(db,orderId) : [],
     ...details,
   };
 }

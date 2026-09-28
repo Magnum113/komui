@@ -180,7 +180,7 @@ export async function enqueueCdekEffect(
   effectType: CdekEffectType,
   orderId: string,
   payload: Record<string, unknown> = {},
-): Promise<CdekEffectRow> {
+): Promise<CdekEffectRow | null> {
   const normalizedOrderId = boundedText(orderId, 36);
   if (!normalizedOrderId) {
     throw new Error("CDEK effect orderId is required");
@@ -209,7 +209,8 @@ export async function enqueueCdekEffect(
           payload,
           available_at
         )
-        values ($2::uuid, $1, $3, 'pending', $4::jsonb, now())
+        select $2::uuid, $1, $3, 'pending', $4::jsonb, now()
+        from public.merch_customer_orders where id=$2::uuid and delivery_provider='cdek'
         on conflict (dedupe_key) do update
         set
           status = case
@@ -350,7 +351,7 @@ export async function enqueueCdekEffect(
   );
 
   const effect = result.rows[0];
-  if (!effect) throw new Error("Failed to enqueue CDEK effect");
+  if (!effect) return null;
   return effect;
 }
 
@@ -365,6 +366,7 @@ async function claimNextEffect(
         select id
         from public.merch_order_effects
         where effect_type in ('cdek_create', 'cdek_cancel')
+          and exists(select 1 from public.merch_customer_orders o where o.id=merch_order_effects.order_id and o.delivery_provider='cdek')
           and (
             (
               status in ('pending', 'retry')

@@ -1,3 +1,5 @@
+import { ozonCacheReady, ozonConfigured } from "./ozonDelivery";
+import { handleOzonShippingAction } from "./ozonDeliveryJobs";
 import Fastify, {
   type FastifyInstance,
   type FastifyReply,
@@ -73,10 +75,10 @@ function jsonError(
   });
 }
 
-function deliveryConfigScript(config: AppConfig) {
+function deliveryConfigScript(config: AppConfig, ozonReady = false) {
   return `window.KOMUI_DELIVERY = Object.assign({}, window.KOMUI_DELIVERY, { yandexMapsApiKey: ${JSON.stringify(
     yandexMapsApiKey(config),
-  )} });`;
+  )}, providers: [{id:"cdek",enabled:true},{id:"ozon",enabled:${ozonReady}}] });`;
 }
 
 async function requireAdmin(
@@ -296,7 +298,7 @@ export function buildApp({ config, db = createDb(config) }: AppOptions) {
         "Cache-Control",
         configured ? "public, max-age=300, s-maxage=300" : "no-store",
       )
-      .send(deliveryConfigScript(config));
+      .send(deliveryConfigScript(config, config.OZON_DELIVERY_ENABLED && config.OZON_DELIVERY_WORKER_ENABLED && ozonConfigured(config) && await ozonCacheReady(db,config)));
   });
 
   app.post("/v1/delivery/points", async (request, reply) =>
@@ -396,6 +398,14 @@ export function buildApp({ config, db = createDb(config) }: AppOptions) {
 
     return handleAdminMarkOrderShipped(request, reply, { config, db });
   });
+
+  for (const action of ['approve','sync','retry','cancel','label']) {
+    app.route({method:action==='label'?'GET':'POST',url:`/admin/storefront/orders/:orderId/shipping/${action}`,handler:async(request,reply)=>{
+      const authResult=await requireAdmin(config,request,reply); if(reply.sent)return authResult;
+      request.params={...(request.params as object),action};
+      return handleOzonShippingAction(request,reply,{config,db,logger:request.log});
+    }});
+  }
 
   app.post("/admin/ozon/products/import-preview", async (request, reply) => {
     const authResult = await requireAdmin(config, request, reply);

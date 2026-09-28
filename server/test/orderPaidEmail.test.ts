@@ -103,3 +103,11 @@ test("order_paid template rejects incomplete or invalid order data", () => {
     }),
   );
 });
+
+test("Ozon paid email never points to CDEK even if a legacy tracking field is present", () => {
+  const email = renderOrderPaidEmail({ ...orderPaidFixture, deliveryProvider: "ozon" });
+  for (const body of [email.text, email.html]) {
+    assert.doesNotMatch(body, /СДЭК|cdek\.ru/);
+    assert.match(body, /приложении Ozon/);
+  }
+});

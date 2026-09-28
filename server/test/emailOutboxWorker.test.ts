@@ -61,6 +61,7 @@ function fakeOutbox(options: {
   marketingStatus?: string | null;
   cdekNumber?: string | null;
   cdekStatus?: string | null;
+  ozonStatus?: string | null;
   createdAt?: string;
   orderStatus?: string;
   fulfillmentStatus?: string;
@@ -124,6 +125,9 @@ function fakeOutbox(options: {
             ]
           : [],
       };
+    }
+    if (sql.includes("email_outbox:ozon_eligibility")) {
+      return { rows: options.ozonStatus ? [{ status: options.ozonStatus }] : [] };
     }
     if (sql.includes("email_outbox:send_eligibility")) {
       return {
@@ -613,3 +617,24 @@ test("worker configuration guard refuses unsafe startup before claiming jobs", (
     "Email test mode requires a non-empty recipient allowlist",
   );
 });
+
+test("Ozon payment email does not wait for or read a CDEK shipment", async () => {
+  const { db, state } = fakeOutbox({ payload: payload({ deliveryProvider: "ozon", deliveryAddress: "ПВЗ Ozon" }), createdAt: new Date().toISOString() });
+  const result = await processEmailOutbox({ config: config({ CDEK_CREATE_SHIPMENTS: "true" }), db }, { workerId: "ozon-paid", sender: { send: async (request) => {
+    assert.doesNotMatch(request.rendered.html, /cdek\.ru|СДЭК/);
+    return { provider: "unisender_go", providerMessageId: "ozon-test", accepted: true };
+  } } });
+  assert.equal(result.sent, 1);
+  assert.equal(result.deferred, 0);
+  assert.equal(state.queryLog.some(sql => sql.includes("email_outbox:cdek_tracking")), false);
+});
+
+for (const status of ["in_delivery_point", "delivered", "canceled"]) {
+  test(`Ozon ready email eligibility follows actual ${status} state`, async () => {
+    const { db } = fakeOutbox({ ozonStatus: status, payload: { schemaVersion: 1, deliveryProvider: "ozon", customerFirstName: "Иван", orderNumber: "KOM-1", cdekNumber: "OZ-1", deliveryPointType: "pickup_point", deliveryCity: "Москва", deliveryAddress: "Тестовый ПВЗ" }, row: { event_type: "shipment_ready", template_key: "shipment_ready" } });
+    let sent = 0;
+    const result = await processEmailOutbox({ config: config(), db }, { workerId: "ozon-ready", sender: { send: async () => { sent++; return { provider: "unisender_go", providerMessageId: "test", accepted: true }; } } });
+    assert.equal(sent, status === "in_delivery_point" ? 1 : 0);
+    assert.equal(result.cancelled, status === "in_delivery_point" ? 0 : 1);
+  });
+}
