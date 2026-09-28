@@ -83,3 +83,34 @@ viewContext.matchMedia = () => ({ matches: false });
 vm.runInContext('setPickupView("list");', viewContext);
 assert.equal(inits, 2, 'Desktop keeps the side-by-side map');
 console.log('✓ checkout: staged validation, collapsed summary, cart return and responsive pickup views');
+
+// Promo stays outside the disclosure; the same controller serves both viewports.
+assert(html.indexOf('id="promo"') < html.indexOf('id="summaryContent"'));
+assert.match(html, /aria-controls="promoForm"/);
+const promoNodes = new Map();
+const promoContext = {
+  $: selector => {
+    if (!promoNodes.has(selector)) promoNodes.set(selector, {
+      classList: { toggle: (key, value) => { promoNodes.get(selector)[key] = value; } },
+      setAttribute: (key, value) => { promoNodes.get(selector)[key] = value; },
+    });
+    return promoNodes.get(selector);
+  },
+  appliedPromo: null, totalPromoDiscount: () => 290, money: value => value + ' ₽',
+};
+vm.createContext(promoContext);
+vm.runInContext(html.slice(html.indexOf('function setPromoOpen('), html.indexOf('function promoPayload(')), promoContext);
+vm.runInContext('renderPromoSummary();setPromoOpen(true);', promoContext);
+assert.equal(promoNodes.get('#promoSummary').textContent, 'Добавить промокод');
+assert.equal(promoNodes.get('#promoEdit').hidden, true);
+assert.equal(promoNodes.get('#promoToggle')['aria-expanded'], 'true');
+promoContext.appliedPromo = { code: 'KOMUI10', discountAmount: 290 };
+vm.runInContext('renderPromoSummary();setPromoOpen(false);', promoContext);
+assert.equal(promoNodes.get('#promoSummary').textContent, 'KOMUI10 · −290 ₽');
+assert.equal(promoNodes.get('#promoEdit').textContent, 'Изменить');
+assert.equal(promoNodes.get('#promoEdit').hidden, false);
+assert.equal(promoNodes.get('#promoToggle')['aria-expanded'], 'false');
+promoContext.appliedPromo = { code: 'UNVERIFIED' };
+vm.runInContext('renderPromoSummary();', promoContext);
+assert.equal(promoNodes.get('#promoSummary').textContent, 'Добавить промокод');
+console.log('✓ checkout promo: independent disclosure, verified discount summary and edit state');
