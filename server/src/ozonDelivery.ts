@@ -1,6 +1,7 @@
 import type { AppConfig } from "./config";
 import type { Db } from "./db";
 import { HttpError } from "./errors";
+import { ozonDisplayAddress, ozonOpeningHours } from "./ozonPointPresentation";
 import {
   normalizePhone,
   subtotalAmount,
@@ -298,14 +299,8 @@ export function normalizeOzonPoint(point: OzonPoint, city = "") {
     city,
     cityCode: null,
     address: point.full_address,
-    hours: (point.schedule ?? [])
-      .slice(0, 7)
-      .map(
-        (d) =>
-          `${d.date}: ${d.periods.map((p) => `${p.from_local.slice(0, 5)}–${p.to_local.slice(0, 5)}`).join(", ")}`,
-      )
-      .join("; ")
-      .slice(0, 160),
+    displayAddress: ozonDisplayAddress(point.full_address, city),
+    ...ozonOpeningHours(point.schedule),
     lat: point.coordinates?.latitude ?? null,
     lng: point.coordinates?.longitude ?? null,
     type: point.type,

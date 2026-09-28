@@ -166,6 +166,9 @@ img,svg{display:block}
 .point-selected-card address{font-style:normal;color:var(--txt-2);font-size:14px}
 .point-meta{display:flex;gap:10px 18px;flex-wrap:wrap;margin-top:14px;color:var(--txt-2);font-size:12px}
 .point-meta span{display:inline-flex;align-items:center;gap:6px}
+.point-hours-details{margin-top:12px;color:var(--txt-2);font-size:13px}
+.point-hours-details summary{cursor:pointer;padding:8px 0;font-weight:600}
+.point-hours-details p{margin-top:4px;line-height:1.6}
 .point-change{margin-top:16px}
 .payment-option{
   display:flex;align-items:center;gap:15px;padding:18px;border:1px solid rgba(0,38,249,.25);
@@ -890,6 +893,10 @@ function renderTotals(){
   $('#mobilePayText').textContent=label;
 }
 
+function pointDisplayAddress(point){
+  return point.displayAddress||[point.city,point.address].filter(Boolean).join(', ');
+}
+
 function renderSelectedPoint(){
   const empty=$('#deliveryEmpty');
   const box=$('#selectedPoint');
@@ -902,12 +909,13 @@ function renderSelectedPoint(){
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 2.7 2.7L16.5 9"/></svg>
         Пункт выбран · ${escapeHtml(selectedPoint.code)}
       </div>
-      <h3>${escapeHtml(selectedPoint.city+', '+selectedPoint.address)}</h3>
+      <h3>${escapeHtml(pointDisplayAddress(selectedPoint))}</h3>
       <div class="point-meta">
         <span>${escapeHtml(selectedPoint.hours)}</span>
         <span>${escapeHtml(selectedPoint.days)}</span>
         <span>${money(selectedPoint.price)}</span>
       </div>
+      ${selectedPoint.hoursDetails&&selectedPoint.hoursDetails!==selectedPoint.hours?`<details class="point-hours-details"><summary>График по датам</summary><p>${escapeHtml(selectedPoint.hoursDetails)}</p></details>`:''}
       <button class="secondary-button point-change" id="changePoint" type="button">Изменить пункт</button>
     </div>`;
   $('#changePoint').addEventListener('click',openPickup);
@@ -1037,7 +1045,7 @@ function renderPointList(query=''){
   const filtered=filteredPoints(query);
   $('#pointList').innerHTML=filtered.length?filtered.map(point=>`
     <button class="point-card${pendingPoint&&pendingPoint.code===point.code?' active':''}" type="button" data-code="${escapeHtml(point.code)}"${quoteLoading?' disabled':''}>
-      <strong>${escapeHtml(point.city+', '+point.address)}</strong>
+      <strong>${escapeHtml(pointDisplayAddress(point))}</strong>
       <address>${escapeHtml(point.hours)}</address>
       ${point.metro?`<address>Ориентир: ${escapeHtml(point.metro)}</address>`:''}
       <div><span>ПВЗ ${escapeHtml(point.code)}</span><b>${quoteLoading&&pendingPoint?.code===point.code?'Считаем…':'Выбрать'}</b></div>
@@ -1058,7 +1066,7 @@ function renderMarkers(){
     const active=pendingPoint&&pendingPoint.code===point.code;
     const marker=new window.ymaps.Placemark([point.lat,point.lng],{
       hintContent:point.code+' · '+point.address,
-      balloonContentHeader:escapeHtml(point.city+', '+point.address),
+      balloonContentHeader:escapeHtml(pointDisplayAddress(point)),
       balloonContentBody:escapeHtml(point.hours),
       balloonContentFooter:escapeHtml('ПВЗ '+point.code)
     },{

@@ -29,6 +29,17 @@ test("changing carrier clears selected quote, point cache and payment identity",
   assert.equal(p.run("sessionStorage.getItem(PAYMENT_DRAFT_KEY)"), null);
 });
 
+test("selected Ozon point uses safe display text while preserving its original address", () => {
+  const p = page();
+  p.run(`selectedPoint={code:'445692',city:'Махачкала',address:'Россия, Республика, Махачкала, улица, 1',displayAddress:'Махачкала, улица, 1',hours:'Ежедневно, 09:00–21:00',hoursDetails:'28 сент. – 18 окт.: 09:00–21:00 <test>',days:'6 дн.',price:123}; renderSelectedPoint()`);
+  const html = p.node("#selectedPoint").innerHTML;
+  assert.ok(html.includes('<h3>Махачкала, улица, 1</h3>'));
+  assert.ok(html.includes('График по датам'));
+  assert.ok(html.includes('&lt;test&gt;'));
+  assert.ok(!html.includes('<test>'));
+  assert.equal(p.run("selectedPoint.address"), 'Россия, Республика, Махачкала, улица, 1');
+});
+
 test("Ozon cannot be selected when not enabled by server configuration", () => {
   const p = page();
   p.run("window.KOMUI_DELIVERY.providers=[]; changeDeliveryProvider('ozon')");
